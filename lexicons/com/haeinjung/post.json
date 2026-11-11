@@ -23,7 +23,7 @@
           "body": {
             "type": "string",
             "maxLength": 262144,
-            "description": "CommonMark. Use media:ID as an image destination to place an attachment at that point in the body. The ID refers to an entry in this post's media array."
+            "description": "CommonMark, with footnotes ([^1] in the text and [^1]: for the note). Use media:ID as an image destination to place an attachment at that point in the body. The ID refers to an entry in this post's media array."
           },
           "summary": { "type": "string" },
           "publishedAt": { "type": "string", "format": "datetime" },

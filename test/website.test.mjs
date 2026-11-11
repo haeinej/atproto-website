@@ -67,6 +67,12 @@ test('an individual post resolves its record and escapes untrusted content', asy
   assert.match(card, /<title>A &lt;b&gt;page&lt;\/b&gt;<\/title>/);
   assert.match(card, /class="link-card" href="https:\/\/www\.example\.org\/a"><img src="https:\/\/pds\.example\.test\/xrpc\/com\.atproto\.sync\.getBlob[^"]*" alt=""/);
   assert.match(card, /<strong>A &lt;b&gt;page&lt;\/b&gt;<\/strong><span>About it\.<\/span><small>example\.org<\/small>/);
+  const noted = await servePost(request, config, 'test-post', async () => Response.json({ uri, value: {
+    ...example, media: [], body: 'Discovery[^1] demands disclosure[^2].\n\n[^1]: Testing whether alignment exists.\n[^2]: Revealing private context.',
+  } }));
+  const footnoted = await noted.text();
+  assert.match(footnoted, /Discovery<sup class="footnote-ref"><a href="#fn-test-post-1" id="fnref-test-post-1">1<\/a><\/sup>/);
+  assert.match(footnoted, /<li id="fn-test-post-2" class="footnote-item"><p>Revealing private context\.\s*<\/p>/);
   const missing = await servePost(request, config, 'test-post', async () =>
     Response.json({ error: 'RecordNotFound' }, { status: 400 }));
   assert.equal(missing.status, 404);

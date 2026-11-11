@@ -1,8 +1,13 @@
 import MarkdownIt from 'markdown-it';
+import footnotes from 'markdown-it-footnote';
 import { identifyForm } from './forms.mjs';
 import { postLink } from './pds.mjs';
 
-const markdown = new MarkdownIt('commonmark', { html: false });
+const markdown = new MarkdownIt('commonmark', { html: false }).use(footnotes);
+// A footnote is written [^1] in the text and [^1]: … for the note. It shows as a small number that
+// jumps to its note, without brackets or a return arrow, the way a printed page has it.
+markdown.renderer.rules.footnote_caption = (tokens, index) => String(tokens[index].meta.id + 1);
+markdown.renderer.rules.footnote_anchor = () => '';
 const escape = markdown.utils.escapeHtml;
 
 markdown.renderer.rules.link_open = (tokens, index, options, env, renderer) => {
@@ -67,7 +72,8 @@ export function dateLabel(value) {
 // `links` is the post's full set of connections: its `connect` field plus posts linked in the body.
 export function renderArchivePost({ body, media, ...post }, { did, collection } = {}) {
   const links = new Set(post.connect);
-  const env = { media, did, collection, links };
+  // Footnote anchors carry the post's key, so two posts on one page do not share them.
+  const env = { media, did, collection, links, docId: post.permalink?.split('/').at(-1) };
   const tokens = markdown.parse(body, env);
   const bodyHtml = markdown.renderer.render(tokens, markdown.options, env);
   // A link is known by its page's title, the way a bookmark is.
