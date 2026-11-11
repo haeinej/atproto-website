@@ -17,6 +17,19 @@ export function postCollection(value = ARCHIVE_POST) {
   return value;
 }
 
+// A label or sublabel as one step of an address: "things i make" -> "things-i-make". Letters of any
+// script are kept, so "서울" stays "서울".
+export function pathSegment(name) {
+  return name.normalize('NFC').toLowerCase().replace(/[^\p{L}\p{N}\p{M}]+/gu, '-').replace(/^-|-$/g, '');
+}
+
+// Where a post lives on the site. The address follows the folders the post is filed in, and always
+// ends in the post's own key: /posts/writings/collisions/trap-of-independency.
+export function postPath({ label, sublabel } = {}, key) {
+  const folders = [label, label && sublabel].map(name => name && pathSegment(name)).filter(Boolean);
+  return `/posts/${[...folders, key].map(encodeURIComponent).join('/')}`;
+}
+
 // A record type beside the post type: com.example.post -> com.example.profile.
 export function siblingCollection(collection, name) {
   return `${collection.slice(0, collection.lastIndexOf('.'))}.${name}`;
@@ -34,7 +47,8 @@ export function postLink(uri, ownerDid, archiveCollection = ARCHIVE_POST) {
   if (!match) return null;
   const [, did, collection, key] = match;
   if (!DID.test(did) || !isRecordKey(key)) return null;
-  if (collection === archiveCollection && did === ownerDid) return `/posts/${encodeURIComponent(key)}`;
+  // The short address; the site sends it on to the post's full one.
+  if (collection === archiveCollection && did === ownerDid) return postPath({}, key);
   if (collection === BSKY_POST) return `https://bsky.app/profile/${did}/post/${encodeURIComponent(key)}`;
   return null;
 }
@@ -185,7 +199,7 @@ export function normalizeArchivePost(value, key, pds) {
     summary: typeof value.summary === 'string' ? value.summary.trim().slice(0, 300) : '',
     createdAt: new Date(time).toISOString(),
     canonicalUrl,
-    permalink: `/posts/${encodeURIComponent(key)}`,
+    permalink: postPath({ label, sublabel }, key),
     sourceUrl: webUrl(value.source?.uri),
     // Where the post was first published. A post written for this site is from the website.
     platform: (typeof value.source?.platform === 'string' && value.source.platform.trim().slice(0, 40)) || 'website',

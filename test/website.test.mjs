@@ -34,7 +34,7 @@ test('the scheduled feed displays an archive post without a Bluesky copy', async
   const response = await worker.fetch(new Request('https://example.test/notes.json'), env);
   const { notes } = await response.json();
   assert.equal(response.status, 200);
-  assert.equal(notes[0].permalink, '/posts/test-post');
+  assert.equal(notes[0].permalink, '/posts/photographs/daily-notes/test-post');
   assert.deepEqual([notes[0].form, notes[0].label, notes[0].sublabel], ['note', 'Photographs', 'Daily notes']);
   assert.match(notes[0].bodyHtml, /<img.*The light changed.*<img.*<video/s);
   assert.match(notes[0].bodyHtml, /https:\/\/pds\.example\.test\/xrpc\/com\.atproto\.sync\.getBlob/);
@@ -42,7 +42,8 @@ test('the scheduled feed displays an archive post without a Bluesky copy', async
 
 test('an individual post resolves its record and escapes untrusted content', async () => {
   const request = new Request('https://example.test/posts/test-post');
-  const result = await servePost(request, config, 'test-post', async url => {
+  const filed = new Request('https://example.test/posts/things-i-make/script/test-post');
+  const result = await servePost(filed, config, 'test-post', async url => {
     assert.equal(url.searchParams.get('rkey'), 'test-post');
     return Response.json({ uri, value: {
       ...example, title: '<script>alert(1)</script>', form: 'writing', label: 'Things I make', sublabel: '<script>', body: example.body + '\n\n' +
@@ -54,6 +55,7 @@ test('an individual post resolves its record and escapes untrusted content', asy
   assert.match(html, /&lt;script&gt;/);
   assert.match(html, /Things I make · &lt;script&gt;/);
   assert.match(html, /data-form="writing"/);
+  assert.match(html, /<link rel="alternate" href="at:\/\/did:web:pds\.example\.test\/com\.haeinjung\.post\/test-post">/);
   assert.doesNotMatch(html, /<script|<img src=x|href="javascript:|src="https:\/\/other\.example/);
   const linked = await servePost(request, config, 'test-post', async () => Response.json({ uri, value: {
     ...example, media: [], body: '<https://example.org/a>', form: 'link',
@@ -167,7 +169,7 @@ test('connections stay off the pages and shape the tree view', async () => {
   const graph = await (await worker.fetch(new Request('https://example.test/notes/graph.json'), env)).json();
   assert.deepEqual(graph, {
     [earlier]: {
-      href: '/posts/earlier', name: 'The street went quiet.', createdAt: '2024-11-06T09:00:00.000Z',
+      href: '/posts/field-notes/earlier', name: 'The street went quiet.', createdAt: '2024-11-06T09:00:00.000Z',
       platform: 'x', form: 'note', label: 'Field notes', branches: [later],
     },
     [later]: {
@@ -176,13 +178,20 @@ test('connections stay off the pages and shape the tree view', async () => {
     },
   });
 
-  const page = key => servePost(new Request(`https://example.test/posts/${key}`), env, key, async () =>
-    Response.json(records.find(record => record.uri.endsWith(`/${key}`)))).then(response => response.text());
-  const untitled = await page('earlier');
+  const open = (path, key = path.split('/').at(-1)) => servePost(new Request(`https://example.test${path}`), env, key, async () =>
+    Response.json(records.find(record => record.uri.endsWith(`/${key}`))));
+  const page = path => open(path).then(response => response.text());
+  // A post's address follows its label. The short address and a stale one are sent on to it.
+  for (const path of ['/posts/earlier', '/posts/an-old-label/earlier']) {
+    const moved = await open(path);
+    assert.equal(moved.status, 308);
+    assert.equal(moved.headers.get('Location'), 'https://example.test/posts/field-notes/earlier');
+  }
+  const untitled = await page('/posts/field-notes/earlier');
   assert.match(untitled, /<title>The street went quiet\.<\/title>/);
   assert.match(untitled, /<a class="note-platform" href="https:\/\/x\.com\/i\/web\/status\/1">x<\/a>/);
   assert.doesNotMatch(untitled, /<h1>|\/posts\/later/);
-  assert.doesNotMatch(await page('later'), /\/posts\/earlier|example\.org/);
+  assert.doesNotMatch(await page('/posts/later'), /\/posts\/earlier|example\.org/);
 });
 
 test('private posts stay off the PDS and are served only to a signed-in owner', async () => {
@@ -397,4 +406,19 @@ test('the author\'s profile has Bluesky\'s fields and falls back to the Bluesky 
   });
   assert.deepEqual(await profileFor(['app.bsky.actor.profile/self']), { name: 'From Bluesky', website: 'https://example.org/' });
   assert.deepEqual(await profileFor([]), {});
+});
+
+test('addresses follow labels in any script, and a folder address shows the list', async () => {
+  const { postPath } = await import('../feed/pds.mjs');
+  assert.equal(postPath({ label: 'things i make' }, 'ohm'), '/posts/things-i-make/ohm');
+  assert.equal(postPath({ label: 'Writings', sublabel: 'Collisions' }, 'trap-of-independency'), '/posts/writings/collisions/trap-of-independency');
+  assert.equal(decodeURIComponent(postPath({ label: 'photographs', sublabel: '서울' }, 'a')), '/posts/photographs/서울/a');
+  assert.equal(postPath({ label: 'photographs', sublabel: 'Ciudad de México' }, 'a'), '/posts/photographs/ciudad-de-m%C3%A9xico/a');
+  assert.equal(postPath({ sublabel: 'No label, so no folder' }, 'a'), '/posts/a');
+  const assets = { fetch: async request => new Response(new URL(request.url).pathname) };
+  for (const path of ['/posts/', '/posts/writings/', '/posts/writings/collisions/']) {
+    assert.equal(await (await worker.fetch(new Request(`https://example.test${path}`), { ASSETS: assets })).text(), '/index.html');
+  }
+  const bare = await worker.fetch(new Request('https://example.test/posts'), { ASSETS: assets });
+  assert.equal(bare.headers.get('Location'), 'https://example.test/posts/');
 });

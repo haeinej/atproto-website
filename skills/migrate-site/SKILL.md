@@ -16,7 +16,8 @@ Only the content side of the website changes.
 | You may change | You must not change |
 | --- | --- |
 | Where the site gets its content: content files, data files, the code that loads content and hands it to a page | Layout, templates' markup, CSS, fonts, images that are part of the design |
-| Build steps whose only job is to assemble content | Navigation, URLs, redirects, and the sitemap's addresses |
+| Build steps whose only job is to assemble content | Navigation, and the addresses of pages that are not posts |
+| Redirects from an item's old address to its post, and the sitemap entries for moved items | |
 | New files this project needs: its configuration, the Lexicon, a content loader | Scripts unrelated to content, analytics, SEO tags, deploy and hosting configuration |
 
 If a page mixes content and layout in one file, lift the content out and leave the markup around it exactly as it was. If you think something on the right-hand side has to change, stop and ask the owner. Do not tidy, modernise, or fix unrelated code, even when it is clearly wrong; mention it instead.
@@ -52,7 +53,7 @@ Convert a single item, preview its record, render its page in the copy, and comp
 
 Go one label at a time. For each item keep its text exactly, its original date, every media file, every alt text, and its public URL.
 
-- **The website's own content** is published with the [publish command](../../README.md#publish-a-post). Use the item's existing URL path as its slug where the site allows, so addresses do not change.
+- **The website's own content** is published with the [publish command](../../README.md#publish-a-post). A post's address is `/posts/<label>/<sublabel>/<slug>`, so it follows where the post is filed. Use the old page's name as the slug, and record each old address beside its new one.
 - **X** has [an importer](../../README.md#import-an-x-archive). It reports the replies, reposts, and quote posts it leaves out. Pass that list on to the owner.
 - **Other platforms** have no importer. Map the export's fields yourself, convert a sample of five, and show them before doing the rest. Keep each post's original ID, URL, and date, and name its platform with `--source-platform`.
 - **Never set a post's form.** The command identifies it. If the result looks wrong for a post, say so and ask; `--form` exists for the owner's decision, not yours.
@@ -63,7 +64,7 @@ Do not drop, merge, shorten, or reword anything. If an item cannot be carried ov
 
 ## 5. Change the content side of the copy
 
-Make the copy's pages read from the records instead of from the old content files. Each page keeps its address and its markup. Remove an old content file only after the page that used it renders identically from records.
+Make the copy's pages read from the records instead of from the old content files. Each page keeps its markup. Every old address of an item that became a post redirects to that post's new address, so no link anywhere breaks. Remove an old content file only after the page that used it renders identically from records.
 
 ## 6. Check for loss
 
@@ -75,7 +76,7 @@ Compare the copy against the baseline and report every difference, including the
 | Text | Each item's text is the same, ignoring only whitespace |
 | Media | Every file is present with the same hash and the same alt text |
 | Dates and order | Each item has its original date and sits in the same position on its page |
-| Addresses | Every baseline route answers with the same status, and every internal link resolves |
+| Addresses | Every baseline route still answers: with the same page, or with a redirect to the post it became. Every internal link resolves |
 | Markup | The rendered HTML of each page matches the baseline, or each difference is explained |
 | Appearance | Screenshots at both widths match the baseline |
 

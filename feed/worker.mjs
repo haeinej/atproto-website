@@ -127,7 +127,13 @@ export async function servePost(request, env, key, get = fetch) {
     const post = data.uri === `at://${pds.did}/${pds.collection}/${key}` &&
       normalizeArchivePost(data.value, key, pds);
     if (!post) return new Response('Post not found', { status: 404 });
-    return new Response(request.method === 'HEAD' ? null : postPage(renderArchivePost(post, pds)), {
+    // A post has one address, which follows its label and sublabel. The short address, an old one
+    // from before it was refiled, or any other path ending in its key is sent on to it.
+    const asked = new URL(request.url).pathname;
+    if (asked.startsWith('/posts/') && decodeURIComponent(asked) !== decodeURIComponent(post.permalink)) {
+      return Response.redirect(new URL(post.permalink, request.url), 308);
+    }
+    return new Response(request.method === 'HEAD' ? null : postPage(renderArchivePost({ ...post, uri: data.uri }, pds)), {
       headers: {
         'Content-Type': 'text/html; charset=utf-8',
         'Cache-Control': 'public, max-age=300',
@@ -145,14 +151,17 @@ export default {
   },
   async fetch(request, env) {
     const url = new URL(request.url);
-    if (['/notes', '/posts', '/posts/'].includes(url.pathname)) {
-      url.pathname = '/notes/';
+    if (['/notes', '/posts'].includes(url.pathname)) {
+      url.pathname += '/';
       return Response.redirect(url, 308);
     }
-    if (url.pathname.startsWith('/posts/')) {
+    // An address ending in a slash is a folder: /posts/ is every post, /posts/writings/ one label.
+    // Any other address under /posts/ is a post, named by its last step.
+    const folder = url.pathname.startsWith('/posts/') && url.pathname.endsWith('/');
+    if (url.pathname.startsWith('/posts/') && !folder) {
       let key;
       try {
-        key = decodeURIComponent(url.pathname.slice('/posts/'.length));
+        key = decodeURIComponent(url.pathname.split('/').at(-1));
       } catch {
         return new Response('Post not found', { status: 404 });
       }
@@ -163,8 +172,8 @@ export default {
     }
     // The graph lives under /notes/ so an attached site needs no extra route.
     const isFeed = ['/notes.json', '/notes/graph.json', '/notes/profile.json'].includes(url.pathname);
-    if (!isFeed && ((url.pathname === '/' && env.STANDALONE_SITE === 'true') || url.pathname.startsWith('/notes/'))) {
-      url.pathname = url.pathname === '/' || url.pathname === '/notes/' ? '/index.html' : url.pathname.slice('/notes'.length);
+    if (!isFeed && ((url.pathname === '/' && env.STANDALONE_SITE === 'true') || url.pathname.startsWith('/notes/') || folder)) {
+      url.pathname = url.pathname === '/' || url.pathname === '/notes/' || folder ? '/index.html' : url.pathname.slice('/notes'.length);
       return env.ASSETS.fetch(new Request(url, request));
     }
     const headers = {

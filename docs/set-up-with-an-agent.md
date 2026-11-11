@@ -5,7 +5,7 @@ A coding agent can do most of this for you: bring in your website and your posts
 Three rules shape the whole process, and the agent is given them in writing.
 
 - **Nothing is lost.** Every piece of text, date, image, and alt text is carried over and checked against what was there before.
-- **Nothing looks different.** Your pages keep their addresses, their layout, and their design.
+- **Nothing looks different.** Your pages keep their layout and their design, and every old address keeps working.
 - **Only the content side changes.** The agent touches where your site gets its content from. It leaves your templates, styles, navigation, scripts, and hosting alone.
 
 It works on a copy of your site the whole time. Your live site keeps running, and nothing is published to your live PDS, until you approve.
@@ -48,7 +48,7 @@ For platforms without an importer, the agent shows you five converted posts befo
 
 ### 5. Switch the copy to read from records
 
-> Change the content side of the copy so its pages read from the records. Keep every address and all markup as they are. Do not change anything outside the content side; if you think you need to, ask me first.
+> Change the content side of the copy so its pages read from the records. Keep all markup as it is, and make every old address lead to the post's new one. Do not change anything outside the content side; if you think you need to, ask me first.
 
 ### 6. Check and report
 
@@ -77,7 +77,7 @@ You get the totals before and after, every difference found, the items left out,
 | A link to an image, video, audio file, or document | Post the link on its own, or attach it with `--media ID=URL`. The file is taken in and the link kept as its source. |
 | A link to a page | Post the link. Its page's title, description, and preview image are saved with it. |
 | Images, audio, or video you have the files for | Upload them as blobs to your PDS. Place them in the body with `media:ID` references. |
-| Existing website URL | Use it as the canonical URL if the page stays there. The starter publisher generates `/posts/<slug>`; adjust the site's writer and routes when keeping an existing path. |
+| Existing website URL | A post's address is `/posts/<label>/<sublabel>/<slug>`, set by the publish command. Use the old page's name as the slug, and redirect the old address to the new one. |
 | Social post ID, URL, and date | Preserve the ID as a string, the original URL in `source.uri`, and the original date in `publishedAt` when available. |
 | A reply, follow-up, or thread | List the earlier post's AT URI, or the web page's URL, in `connect`. |
 | Writings, photographs, projects, or other groups | Use the section's own name as the `label`, and a `sublabel` for a group inside it. [Forms, labels, and sublabels](labels.md) |

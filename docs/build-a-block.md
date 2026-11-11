@@ -47,7 +47,7 @@ The smallest complete record has a type, a body, a publication date, a canonical
   "$type": "com.example.post",
   "body": "I want to remember how the city smelled after the rain.",
   "publishedAt": "2026-01-14T09:00:00Z",
-  "canonicalUrl": "https://example.com/posts/after-the-rain",
+  "canonicalUrl": "https://example.com/posts/field-notes/after-the-rain",
   "form": "note",
   "label": "Field notes"
 }

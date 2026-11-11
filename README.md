@@ -33,6 +33,18 @@ The posts page lists every post by name, with its platform, label, and date. A p
 
 Each post has its own page with its text, date, platform, and label. Your profile sits above the list.
 
+Addresses follow the same folders, and every post also has an AT URI.
+
+| Address | What it is |
+| --- | --- |
+| `/posts/` | Every post |
+| `/posts/writings/` | One label |
+| `/posts/writings/collisions/` | One sublabel |
+| `/posts/writings/collisions/trap-of-independency` | A post |
+| `at://did:web:pds.example.com/com.example.post/trap-of-independency` | The same post's record |
+
+A post's address always ends in its own key. If you file a post under a different label later, its old address and the short `/posts/trap-of-independency` both redirect to the new one.
+
 ## What is in this repository
 
 | Component | Purpose |
@@ -69,7 +81,7 @@ npm run --silent configure -- \
   --mode attach > feed/wrangler.site.jsonc
 ```
 
-- **Attach to a site.** Use `--mode attach` when the hostname already serves a Cloudflare Pages or Workers site. The Worker mounts `/notes/`, `/notes.json`, and `/posts/<slug>`. Choose a host where these paths are available. For a subdomain such as `www.example.com`, pass `--zone example.com`. [Cloudflare Worker routes](https://developers.cloudflare.com/workers/configuration/routing/routes/)
+- **Attach to a site.** Use `--mode attach` when the hostname already serves a Cloudflare Pages or Workers site. The Worker mounts `/notes/`, `/notes.json`, and everything under `/posts/`. Choose a host where these paths are available. For a subdomain such as `www.example.com`, pass `--zone example.com`. [Cloudflare Worker routes](https://developers.cloudflare.com/workers/configuration/routing/routes/)
 - **Start a site.** Use `--mode standalone` with an available hostname such as `journal.example.com`. Cloudflare attaches it as a Custom Domain and serves the posts page at the root. [Cloudflare Custom Domains](https://developers.cloudflare.com/workers/configuration/routing/custom-domains/)
 
 The generated configuration uses a separate Worker name derived from the website hostname. Pass `--name` to select a specific Worker and `--kv` to use an existing KV namespace. Wrangler can create the KV namespace on deploy. [Wrangler provisioning](https://developers.cloudflare.com/workers/wrangler/configuration/#automatic-provisioning)
@@ -123,7 +135,7 @@ Create an app password for your PDS account and expose it to the command as `ATP
 npm run publish:post -- --file ./hello.md --slug hello --title 'Hello' --label 'Writings' --publish
 ```
 
-Your post is available at `https://example.com/posts/hello` once published. `--label` is the section of your site the post belongs to and `--sublabel` is a group inside it; both are optional and in your own words. The form is identified from the content and saved in the record: this post has a title, so it is a writing. The command refuses a post that does not fit its form, such as a writing with no title. [Forms, labels, and sublabels](docs/labels.md)
+Your post is available at `https://example.com/posts/writings/hello` once published. A post's address follows its label and sublabel, and `https://example.com/posts/hello` leads to the same place. `--label` is the section of your site the post belongs to and `--sublabel` is a group inside it; both are optional and in your own words. The form is identified from the content and saved in the record: this post has a title, so it is a writing. The command refuses a post that does not fit its form, such as a writing with no title. [Forms, labels, and sublabels](docs/labels.md)
 
 To include a file in a specific part of the post, use an attachment reference such as `![A short clip](media:clip)` in the Markdown and add `--media clip=./clip.mp4` to the command. Repeat `--media` for additional files. An attachment can be an image, video, audio, or a file such as a PDF, and `--media clip=https://example.org/clip.mp4` takes one in from the web and keeps the address as its source. A post that is nothing but a link to such a file is taken in the same way, so a link to an image becomes an image. A post that links to a page keeps the page's title, description, and preview image. A writing or a note can mix attachments with links and text. [Block guide](docs/build-a-block.md) · [Mixed-media example](examples/image-text-image-video.json)
 

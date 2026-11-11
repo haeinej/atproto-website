@@ -60,19 +60,28 @@ function rows(posts, by, oldestFirst = false) {
 }
 
 // A folder opens and closes; what it holds sits one level in.
-function folder(name, count, children) {
+function folder(name, count, children, address) {
   const item = element('li');
   const details = element('details');
   details.open = true;
   const summary = element('summary');
   const heading = element('span', 'note-row note-folder');
-  heading.append(element('span', 'note-name', name), element('span', 'note-meta', String(count)));
+  const title = element(address ? 'a' : 'span', 'note-name', name);
+  if (address) title.href = address;
+  heading.append(title, element('span', 'note-meta', String(count)));
   summary.append(heading);
   const list = element('ul', 'note-tree');
   list.append(...children);
   details.append(summary, list);
   item.append(details);
   return item;
+}
+
+// The address of the folder a post sits in, `depth` steps under /posts/. A post's own address ends
+// in its key, so its folders are the steps before that.
+function folderOf(post, depth) {
+  const steps = typeof post?.href === 'string' && post.href.startsWith('/posts/') ? post.href.split('/').slice(2, -1) : [];
+  return steps.length >= depth ? `/posts/${steps.slice(0, depth).join('/')}/` : null;
 }
 
 function render(posts, by) {
@@ -87,10 +96,11 @@ function render(posts, by) {
     const series = sorted(members, post => post.sublabel ?? '');
     const single = series.get('') ?? [];
     series.delete('');
+    // A label's folder and each sublabel's folder have addresses of their own.
     return folder(name, members.length, [
-      ...[...series].sort(byNewest).map(([title, parts]) => folder(title, parts.length, rows(parts, by, true))),
+      ...[...series].sort(byNewest).map(([title, parts]) => folder(title, parts.length, rows(parts, by, true), folderOf(parts[0], 2))),
       ...rows(single, by),
-    ]);
+    ], folderOf(members[0], 1));
   });
   return [...folders, ...rows(loose, by)];
 }
@@ -177,7 +187,16 @@ async function loadNotes() {
     };
     for (const [uri, post] of Object.entries(await response.json())) read(uri, post, 'public');
     for (const [uri, post] of Object.entries(await privatePosts())) read(uri, post, 'private');
-    const posts = Object.values(graph);
+    // At a folder's address, such as /posts/writings/, only that folder's posts are listed.
+    const here = location.pathname.startsWith('/posts/') ? location.pathname : '';
+    const inFolder = here.split('/').length - 3;
+    const posts = Object.values(graph).filter(post => !inFolder || (typeof post.href === 'string' && post.href.startsWith(here)));
+    if (inFolder && posts.length) {
+      const names = [posts[0].label, posts[0].sublabel].slice(0, inFolder).filter(Boolean);
+      const heading = document.getElementById('notes-title');
+      if (heading && names.length) heading.textContent = names.at(-1);
+      document.title = names.join(' · ') || document.title;
+    }
     // Visibility is only worth offering once something is private.
     const offered = Object.keys(views).filter(by =>
       by !== 'visibility' || posts.some(post => post.visibility === 'private'));
@@ -195,6 +214,8 @@ async function loadNotes() {
     for (const by of offered) {
       const link = element('a', '', views[by].name);
       link.href = by === 'all' ? location.pathname : `?by=${by}`;
+      // Inside a single sublabel there is nothing left to arrange.
+      link.hidden = inFolder >= 2 && by !== 'all';
       link.dataset.by = by;
       link.addEventListener('click', event => {
         event.preventDefault();

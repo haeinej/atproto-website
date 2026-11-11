@@ -54,7 +54,7 @@ Publish a Markdown post called “Collisions” with links in the order you want
 2. [just buy that jacket](at://did:web:pds.example.com/com.example.post/just-buy-that-jacket)
 ```
 
-The site renders links to your archive posts as clickable `/posts/<record-key>` URLs. It also renders DID-based Bluesky post links as links to Bluesky. Use the other site's public HTTPS URL when linking to a different personal archive.
+The site renders links to your archive posts as clickable `/posts/<record-key>` URLs, which lead on to each post's full address. It also renders DID-based Bluesky post links as links to Bluesky. Use the other site's public HTTPS URL when linking to a different personal archive.
 
 ## Quote a passage
 
@@ -74,7 +74,8 @@ That keeps the selected words in your block and gives the reader a link to the s
 | --- | --- |
 | The post's record type | `com.example.post` |
 | A specific post in someone's repo | `at://did:web:pds.example.com/com.example.post/trap-of-independency` |
-| Its public web page | `https://example.com/posts/trap-of-independency` |
+| Its public web page | `https://example.com/posts/writings/collisions/trap-of-independency` |
+| The folder it sits in | `https://example.com/posts/writings/collisions/` |
 | The schema, when published by its authority | `at://did:web:pds.example.com/com.atproto.lexicon.schema/com.example.post` |
 
 The DID belongs to the author of the record, so posts by different people can use the same Lexicon. Use a DID in durable links. A title can contain spaces and punctuation while the record key must follow AT Protocol's record-key syntax. The `#image` and other suffixes in the Lexicon name definitions inside the schema. [AT URI specification](https://atproto.com/specs/at-uri-scheme) · [Record keys](https://atproto.com/specs/record-key) · [Publishing Lexicons](https://atproto.com/guides/publishing-lexicons)

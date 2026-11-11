@@ -5,7 +5,7 @@ import { extname, join, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { parseArgs } from 'node:util';
 import { cleanName, formProblems, identifyForm, isPlayer } from '../feed/forms.mjs';
-import { connectUri, pdsConfig, webUrl } from '../feed/pds.mjs';
+import { connectUri, pdsConfig, postPath, webUrl } from '../feed/pds.mjs';
 import { PRIVATE_BLOB, PRIVATE_POST } from '../feed/private.mjs';
 import { bodyFacts } from '../feed/render.mjs';
 import { rpc, signIn } from './rpc.mjs';
@@ -207,7 +207,8 @@ async function publish(folder) {
     $type: collection,
     body,
     publishedAt: publishedAt.toISOString(),
-    canonicalUrl: new URL(`${values.private ? '/notes/private' : ''}/posts/${values.slug}`, site).href,
+    // A public post's address follows its label and sublabel.
+    canonicalUrl: new URL(values.private ? `/notes/private/posts/${values.slug}` : postPath({ label, sublabel }, values.slug), site).href,
     ...(values.title ? { title: values.title } : {}),
     form,
     ...(label ? { label } : {}),

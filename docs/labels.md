@@ -35,6 +35,17 @@ Use a sublabel when several posts are parts of one thing. It is also your own wo
 
 In the posts list, a sublabel is a folder inside its label's folder, and its posts read in the order they were written. Most posts have no sublabel.
 
+A post's address follows the same folders, so the web address shows where the post is filed.
+
+| Label | Sublabel | Address |
+| --- | --- | --- |
+| `Writings` | `Collisions` | `/posts/writings/collisions/trap-of-independency` |
+| `Writings` | | `/posts/writings/elsewheren` |
+| `photographs` | `서울` | `/posts/photographs/서울/…` |
+| `things i make` | | `/posts/things-i-make/why-i-started-ohm` |
+
+Each folder has an address too: `/posts/writings/` lists that label and `/posts/writings/collisions/` that sublabel. Names are lowercased and their spaces become hyphens; letters of any script are kept.
+
 ```sh
 npm run publish:post -- --file ./essay.md --slug trap-of-independency \
   --title 'trap of independency' --label Writings --sublabel Collisions

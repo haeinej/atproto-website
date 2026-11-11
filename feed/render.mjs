@@ -146,6 +146,7 @@ export function postPage(post) {
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>${escape(post.name)}</title>
   <link rel="canonical" href="${escape(post.canonicalUrl)}">
+  ${post.uri ? `<link rel="alternate" href="${escape(post.uri)}">` : ''}
   <link rel="stylesheet" href="/notes/notes.css">
   ${summary}
   ${hidden ? '<meta name="robots" content="noindex">' : ''}
