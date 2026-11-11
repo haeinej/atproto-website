@@ -10,11 +10,15 @@ try {
   const url = new URL('/xrpc/com.atproto.repo.listRecords', pds.origin);
   url.search = new URLSearchParams({ repo: pds.did, collection: pds.collection, limit: '100' });
   const posts = [];
+  // A PDS may repeat the record at a page boundary on the next page, so each address is taken once.
+  const seen = new Set();
   for (let page = 0; page < 200; page++) {
     const response = await fetch(url, { redirect: 'error', signal: AbortSignal.timeout(30_000) });
     if (!response.ok) throw new Error(`Listing posts failed (HTTP ${response.status})`);
     const data = await response.json();
     for (const record of data.records ?? []) {
+      if (seen.has(record.uri)) continue;
+      seen.add(record.uri);
       const slug = String(record.uri).split('/').at(-1);
       const normal = normalizeArchivePost(record.value, slug, pds);
       if (!normal) continue;
