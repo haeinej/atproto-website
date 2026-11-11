@@ -27,6 +27,16 @@ function buildGraph(posts) {
     // Posts arrive oldest first, so a post only ever branches from an earlier one.
     for (const link of post.links ?? []) graph[link]?.branches.push(post.uri);
   }
+  // A post with no title and no words, such as a photograph, is named by its folder and a number:
+  // "Lisboa 12". The number is its place among the folder's unnamed posts, oldest first.
+  const counts = new Map();
+  for (const entry of Object.values(graph)) {
+    if (entry.name) continue;
+    const folder = entry.sublabel ?? entry.label;
+    const key = `${entry.label}\u0000${entry.sublabel ?? ''}`;
+    counts.set(key, (counts.get(key) ?? 0) + 1);
+    entry.name = `${folder} ${counts.get(key)}`;
+  }
   return graph;
 }
 
@@ -146,7 +156,12 @@ export async function servePost(request, env, key, get = fetch) {
     if (asked.startsWith('/posts/') && decodeURIComponent(asked) !== decodeURIComponent(post.permalink)) {
       return Response.redirect(new URL(post.permalink, request.url), 308);
     }
-    return new Response(request.method === 'HEAD' ? null : postPage(renderArchivePost({ ...post, uri: data.uri }, pds)), {
+    const rendered = renderArchivePost({ ...post, uri: data.uri }, pds);
+    // An unnamed post takes the name the list gave it, when the list has been built.
+    if (!rendered.name && env.NOTES) {
+      rendered.name = (await env.NOTES.get(SNAPSHOT_KEY, 'json').catch(() => null))?.graph?.[data.uri]?.name ?? '';
+    }
+    return new Response(request.method === 'HEAD' ? null : postPage(rendered), {
       headers: {
         'Content-Type': 'text/html; charset=utf-8',
         'Cache-Control': 'public, max-age=300',

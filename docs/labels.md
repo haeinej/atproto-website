@@ -131,7 +131,7 @@ The form also sets limits, and the publish command refuses a post that breaks th
 
 An attachment is an image, a video, audio, or a file. Files are PDF, EPUB, ZIP, JSON, plain text, CSV, and Markdown.
 
-For the forms without words, describe an attachment in its alt text: `![A wet street at dusk](media:street)`.
+For the forms without words, describe an attachment in its alt text: `![A wet street at dusk](media:street)`. The description also names the post in lists. A post with no title, no words, and no description is named by its folder and a number, such as `Lisboa 12`: its sublabel when it has one, otherwise its label, and its place among that folder's unnamed posts, oldest first.
 
 If the tools identify a post differently from what you meant, pass `--form`. A titled post that is really a link with a comment is `--form link`. The post must still fit the form you name.
 

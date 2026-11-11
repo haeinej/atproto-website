@@ -78,7 +78,9 @@ export function renderArchivePost({ body, media, ...post }, { did, collection } 
   const tokens = markdown.parse(body, env);
   const bodyHtml = markdown.renderer.render(tokens, markdown.options, env);
   // A link is known by its page's title, the way a bookmark is.
-  const name = post.title || post.link?.title || firstLine(tokens) || dateLabel(post.createdAt);
+  // A post with no title and no words of its own has no name here. The list names it by its folder
+  // and a number, since it knows the folder's other posts.
+  const name = post.title || post.link?.title || firstLine(tokens);
   // A record that does not say its form has it identified from its content.
   const form = post.form ?? identifyForm({
     title: post.title, facts: tokenFacts(tokens), kinds: [...media?.values() ?? []].map(item => item.kind),
@@ -152,7 +154,7 @@ export function postPage(post) {
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>${escape(post.name)}</title>
+  <title>${escape(post.name || post.sublabel || post.label || 'Post')}</title>
   <link rel="canonical" href="${escape(post.canonicalUrl)}">
   ${post.uri ? `<link rel="alternate" href="${escape(post.uri)}">` : ''}
   <link rel="stylesheet" href="/notes/notes.css">

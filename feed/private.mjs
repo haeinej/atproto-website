@@ -58,7 +58,7 @@ async function privateGraph(env, pds) {
       if (!post) continue;
       graph[`at://${pds.did}/${pds.collection}/${key}`] = {
         href: post.permalink,
-        name: post.name,
+        name: post.name || post.sublabel || post.label,
         createdAt: post.createdAt,
         platform: post.platform,
         ...(post.form ? { form: post.form } : {}),

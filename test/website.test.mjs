@@ -523,3 +523,30 @@ test('identity starts from the DID, and the site only reads the repository that 
   // A configuration pointing at a server the DID does not name is refused.
   await assert.rejects(refreshNotes(env, net({ hosted: 'https://other-pds.test' })), /is hosted at https:\/\/other-pds\.test, not the configured/);
 });
+
+test('a post with no title and no words is named by its folder and a number', async () => {
+  const photo = (key, publishedAt, filing) => ({ uri: `at://${did}/${ARCHIVE_POST}/${key}`, value: {
+    ...example, body: '![](media:media-1)', media: [example.media[0]], publishedAt, ...filing,
+  } });
+  const records = [
+    photo('b', '2025-01-01T00:00:00Z', { label: 'photographs', sublabel: 'Lisboa' }),
+    photo('a', '2025-01-01T00:00:00Z', { label: 'photographs', sublabel: 'Lisboa' }),
+    photo('c', '2026-01-01T00:00:00Z', { label: 'photographs', sublabel: 'Lisboa' }),
+    photo('d', '2025-01-01T00:00:00Z', { label: 'photographs', sublabel: '서울' }),
+    photo('e', '2025-01-01T00:00:00Z', { label: 'photographs' }),
+    // A description is a name of its own, so this one takes no number.
+    { ...photo('f', '2025-06-01T00:00:00Z', { label: 'photographs', sublabel: 'Lisboa' }), value: {
+      ...example, body: '![A tram at dusk](media:media-1)', media: [example.media[0]], publishedAt: '2025-06-01T00:00:00Z',
+      label: 'photographs', sublabel: 'Lisboa',
+    } },
+  ];
+  let stored;
+  const env = { ...config, NOTES: { put: async (_key, value) => { stored = JSON.parse(value); }, get: async () => stored } };
+  await refreshNotes(env, async url => url.pathname.endsWith('listRecords') ? Response.json({ records }) : Response.json({ error: 'RecordNotFound' }, { status: 400 }));
+  const graph = await (await worker.fetch(new Request('https://example.test/notes/graph.json'), env)).json();
+  const names = Object.fromEntries(Object.entries(graph).map(([address, post]) => [address.split('/').at(-1), post.name]));
+  // Numbered oldest first within each folder; posts on the same day keep a fixed order.
+  assert.deepEqual(names, { a: 'Lisboa 1', b: 'Lisboa 2', c: 'Lisboa 3', d: '서울 1', e: 'photographs 1', f: 'A tram at dusk' });
+  const page = await servePost(new Request('https://example.test/posts/photographs/lisboa/c'), env, 'c', async () => Response.json(records[2]));
+  assert.match(await page.text(), /<title>Lisboa 3<\/title>/);
+});

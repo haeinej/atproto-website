@@ -32,7 +32,7 @@ try {
         label: post.label ?? null,
         sublabel: post.sublabel ?? null,
         platform: post.platform,
-        name: post.name,
+        name: post.name || null,
         opening: post.text.replace(/\s+/g, ' ').slice(0, 240),
         characters: post.text.length,
         attachments,

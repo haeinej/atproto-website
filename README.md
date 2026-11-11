@@ -60,7 +60,7 @@ If you are not sure what your labels should be, a coding agent can help you work
 
 ## The posts list
 
-The posts page lists every post by name, with its platform, label, and date. A post without a title is named by its first line. A switch above the list arranges the same posts four ways.
+The posts page lists every post by name, with its platform, label, and date. A post without a title is named by its first line. One with no words either, such as a photograph, is named by its folder and a number: `Lisboa 12`. A switch above the list arranges the same posts four ways.
 
 | Arrangement | Folders |
 | --- | --- |
