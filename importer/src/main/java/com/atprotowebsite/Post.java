@@ -46,16 +46,15 @@ record Post(String id, Instant createdAt, String text, String body, List<Post.Me
         return new String(key);
     }
 
-    ObjectNode archiveRecord(URI site, String collection, List<String> tags) {
+    ObjectNode archiveRecord(URI site, String collection, String label) {
         String publishedAt = createdAt.toString();
         var record = JSON.createObjectNode().put("$type", collection).put("body", body)
                 .put("publishedAt", publishedAt).put("canonicalUrl", site.resolve("/posts/" + recordKey()).toString());
         record.putObject("source").put("platform", "x").put("id", id)
                 .put("uri", "https://x.com/i/web/status/" + id).put("publishedAt", publishedAt);
-        if (!tags.isEmpty()) {
-            var labels = record.putArray("tags");
-            tags.forEach(labels::add);
-        }
+        // An imported post is a note. The label is the author's own name for where it is filed.
+        record.put("form", "note");
+        if (!label.isEmpty()) record.put("label", label);
         if (!media.isEmpty()) {
             var attachments = record.putArray("media");
             for (Media attachment : media) attachments.add(attachment.archiveEntry(collection));

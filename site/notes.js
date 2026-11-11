@@ -1,109 +1,174 @@
 const notesStatus = document.getElementById('notes-status');
 const notesList = document.getElementById('notes-list');
-const dateLabel = new Intl.DateTimeFormat('en', {
-  dateStyle: 'medium',
-  timeZone: 'UTC',
-});
+const dateLabel = new Intl.DateTimeFormat('en', { dateStyle: 'medium', timeZone: 'UTC' });
 
-function sourceLink(url, label) {
-  if (typeof url !== 'string' || !URL.canParse(url)) return null;
-  const parsed = new URL(url);
-  if (!['https:', 'http:'].includes(parsed.protocol) || parsed.username || parsed.password) return null;
-  const link = document.createElement('a');
-  link.href = parsed.href;
-  link.textContent = label;
-  return link;
+function element(tag, className, text) {
+  const node = document.createElement(tag);
+  if (className) node.className = className;
+  if (text) node.textContent = text;
+  return node;
+}
+
+function safeHref(value) {
+  if (typeof value !== 'string' || !URL.canParse(value, location.href)) return null;
+  const url = new URL(value, location.href);
+  return ['https:', 'http:'].includes(url.protocol) && !url.username && !url.password ? url.href : null;
+}
+
+// The ways to arrange the same posts. Each names the folder a post belongs to.
+const views = {
+  all: { name: 'All' },
+  label: { name: 'Labels', folder: post => post.label },
+  platform: { name: 'Platforms', folder: post => post.platform },
+  visibility: { name: 'Visibility', folder: post => post.visibility },
+};
+
+// One line per post: its name, then its platform, label, and date. The open folder's own name is left out.
+function row(post, by) {
+  const line = element('span', 'note-row');
+  const href = safeHref(post.href);
+  const name = element(href ? 'a' : 'span', 'note-name', post.name);
+  if (href) name.href = href;
+  const meta = element('span', 'note-meta');
+  if (by !== 'platform') meta.append(element('span', 'note-platform', post.platform));
+  if (by !== 'visibility' && post.visibility === 'private') meta.append(element('span', 'note-label', 'private'));
+  if (by !== 'label' && post.label) meta.append(element('span', 'note-label', post.label));
+  const time = element('time', '', dateLabel.format(new Date(post.createdAt)));
+  time.dateTime = post.createdAt;
+  meta.append(time);
+  line.append(name, meta);
+  return line;
+}
+
+const newest = posts => posts.map(post => post.createdAt).sort().at(-1);
+const byNewest = ([, a], [, b]) => newest(b).localeCompare(newest(a));
+
+function sorted(posts, key) {
+  const groups = new Map();
+  for (const post of posts) groups.set(key(post), [...groups.get(key(post)) ?? [], post]);
+  return groups;
+}
+
+// A flat list of posts. A sublabel reads in the order it was written; everything else is newest first.
+function rows(posts, by, oldestFirst = false) {
+  const order = oldestFirst ? 1 : -1;
+  return posts.sort((a, b) => order * a.createdAt.localeCompare(b.createdAt)).map(post => {
+    const item = element('li');
+    item.append(row(post, by));
+    return item;
+  });
+}
+
+// A folder opens and closes; what it holds sits one level in.
+function folder(name, count, children) {
+  const item = element('li');
+  const details = element('details');
+  details.open = true;
+  const summary = element('summary');
+  const heading = element('span', 'note-row note-folder');
+  heading.append(element('span', 'note-name', name), element('span', 'note-meta', String(count)));
+  summary.append(heading);
+  const list = element('ul', 'note-tree');
+  list.append(...children);
+  details.append(summary, list);
+  item.append(details);
+  return item;
+}
+
+function render(posts, by) {
+  if (by === 'all') return rows([...posts], by);
+  const groups = sorted(posts, post => views[by].folder(post) ?? '');
+  const loose = groups.get('') ?? [];
+  groups.delete('');
+  // Folders with the newest activity come first. Posts that belong to none follow, outside any folder.
+  const folders = [...groups].sort(byNewest).map(([name, members]) => {
+    // Only a label has folders inside it: one per sublabel. Platforms and visibility stay flat.
+    if (by !== 'label') return folder(name, members.length, rows(members, by));
+    const series = sorted(members, post => post.sublabel ?? '');
+    const single = series.get('') ?? [];
+    series.delete('');
+    return folder(name, members.length, [
+      ...[...series].sort(byNewest).map(([title, parts]) => folder(title, parts.length, rows(parts, by, true))),
+      ...rows(single, by),
+    ]);
+  });
+  return [...folders, ...rows(loose, by)];
+}
+
+// The owner's private posts, if this browser is signed in. Visitors never ask for them: the request
+// is only made after the owner has arrived from signing in at /notes/private/.
+async function privatePosts() {
+  const remember = value => {
+    try {
+      if (value) localStorage.setItem('notes-owner', '1');
+      else localStorage.removeItem('notes-owner');
+    } catch {}
+  };
+  let asked = new URLSearchParams(location.search).get('by') === 'visibility';
+  try {
+    asked ||= localStorage.getItem('notes-owner') === '1';
+  } catch {}
+  if (!asked) return {};
+  try {
+    const response = await fetch('/notes/private/graph.json', { redirect: 'error', signal: AbortSignal.timeout(10_000) });
+    if (!response.ok) throw new Error('Signed out');
+    const posts = await response.json();
+    remember(true);
+    return posts;
+  } catch {
+    remember(false);
+    return {};
+  }
 }
 
 async function loadNotes() {
   notesStatus.textContent = 'Loading posts…';
   try {
-    const response = await fetch('/notes.json', { signal: AbortSignal.timeout(10_000) });
+    const response = await fetch('/notes/graph.json', { signal: AbortSignal.timeout(10_000) });
     if (!response.ok) throw new Error('Feed unavailable');
-    const { notes } = await response.json();
-    if (!Array.isArray(notes)) throw new Error('Invalid feed');
-
-    const items = document.createDocumentFragment();
-    for (const note of notes) {
-      if (typeof note?.text !== 'string' || !Number.isFinite(Date.parse(note.createdAt))) continue;
-
-      const item = document.createElement('li');
-      const permalink = typeof note.permalink === 'string' && note.permalink.startsWith('/posts/') ? note.permalink : '';
-      if (note.title && permalink) {
-        const title = document.createElement('h2');
-        const link = document.createElement('a');
-        link.href = permalink;
-        link.textContent = note.title;
-        title.append(link);
-        item.append(title);
+    const graph = {};
+    const read = (uri, post, visibility) => {
+      if (graph[uri] || typeof post?.name !== 'string' || !Number.isFinite(Date.parse(post.createdAt))) return;
+      graph[uri] = {
+        ...post,
+        label: typeof post.label === 'string' && post.label ? post.label : undefined,
+        sublabel: typeof post.sublabel === 'string' && post.sublabel ? post.sublabel : undefined,
+        platform: typeof post.platform === 'string' && post.platform ? post.platform : 'website',
+        visibility,
+      };
+    };
+    for (const [uri, post] of Object.entries(await response.json())) read(uri, post, 'public');
+    for (const [uri, post] of Object.entries(await privatePosts())) read(uri, post, 'private');
+    const posts = Object.values(graph);
+    // Visibility is only worth offering once something is private.
+    const offered = Object.keys(views).filter(by =>
+      by !== 'visibility' || posts.some(post => post.visibility === 'private'));
+    const switcher = element('nav', 'note-views');
+    switcher.setAttribute('aria-label', 'Arrange posts');
+    function show(by) {
+      for (const link of switcher.children) {
+        if (link.dataset.by === by) link.setAttribute('aria-current', 'true');
+        else link.removeAttribute('aria-current');
       }
-      const meta = document.createElement('div');
-      meta.className = 'note-meta';
-      const time = document.createElement('time');
-      time.dateTime = note.createdAt;
-      time.textContent = dateLabel.format(new Date(note.createdAt));
-      if (permalink && !note.title) {
-        const link = document.createElement('a');
-        link.href = permalink;
-        link.setAttribute('aria-label', `Post from ${time.textContent}`);
-        link.append(time);
-        meta.append(link);
-      } else {
-        meta.append(time);
-      }
-      if (Array.isArray(note.tags) && note.tags.length) {
-        const labels = document.createElement('span');
-        labels.textContent = note.tags.join(' · ');
-        meta.append(labels);
-      }
-      const original = sourceLink(note.sourceUrl, 'Original post');
-      if (original) meta.append(original);
-
-      if (typeof note.postUrl === 'string' && note.postUrl.startsWith('https://bsky.app/profile/')) {
-        const source = document.createElement('a');
-        source.href = note.postUrl;
-        source.textContent = 'View on Bluesky';
-        source.setAttribute('aria-label', `View on Bluesky, ${time.textContent}`);
-        meta.append(source);
-      }
-
-      item.append(meta);
-      if (typeof note.bodyHtml === 'string') {
-        const body = document.createElement('div');
-        body.className = 'post-body';
-        // The same-origin Worker renders CommonMark with raw HTML disabled.
-        body.innerHTML = note.bodyHtml;
-        item.append(body);
-      } else if (note.text) {
-        const text = document.createElement('p');
-        text.className = 'note-text';
-        text.textContent = note.text;
-        item.append(text);
-      }
-      if (Array.isArray(note.images) && note.images.length) {
-        const gallery = document.createElement('div');
-        gallery.className = 'note-images';
-        for (const image of note.images) {
-          const img = document.createElement('img');
-          img.src = image.url;
-          img.alt = image.alt;
-          img.loading = 'lazy';
-          img.decoding = 'async';
-          gallery.append(img);
-        }
-        item.append(gallery);
-      }
-      if (typeof note.video === 'string') {
-        const video = document.createElement('video');
-        video.src = note.video;
-        video.preload = 'none';
-        video.controls = true;
-        item.append(video);
-      }
-      items.append(item);
+      const items = render(posts, by);
+      notesList.replaceChildren(...items);
+      notesStatus.textContent = items.length ? '' : 'No posts yet.';
     }
-    notesList.replaceChildren(items);
-    notesStatus.textContent = notesList.childElementCount ? '' : 'No posts yet.';
+    for (const by of offered) {
+      const link = element('a', '', views[by].name);
+      link.href = by === 'all' ? location.pathname : `?by=${by}`;
+      link.dataset.by = by;
+      link.addEventListener('click', event => {
+        event.preventDefault();
+        history.replaceState(null, '', link.href);
+        show(by);
+      });
+      switcher.append(link);
+    }
+    notesList.classList.add('note-tree');
+    notesList.before(switcher);
+    const chosen = new URLSearchParams(location.search).get('by');
+    show(offered.includes(chosen) ? chosen : 'all');
   } catch {
     notesStatus.textContent = 'Posts are temporarily unavailable.';
   }

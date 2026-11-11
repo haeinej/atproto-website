@@ -1,6 +1,6 @@
 # Group and connect blocks
 
-Each essay, photograph, or project has one post record. A section page can show posts with a label you choose. A curated group can be an ordinary post with a title and an ordered list of links. The same essay can appear under Writings, inside a series, and in a second group about independence. Each view links to the same record.
+Each essay, photograph, or project has one post record, filed under one label. A sublabel groups posts inside a label. A curated group can also be an ordinary post with a title and an ordered list of links, so the same essay can sit in its sublabel and in a second group about independence. Each view links to the same record. [Forms, labels, and sublabels](labels.md)
 
 For example, a site could present these sections.
 
@@ -18,6 +18,33 @@ For example, a site could present these sections.
 
 The labels and groups organize the site. A published block has its own stable record key, so moving it between groups does not change what a link points to.
 
+## Connect a block
+
+A block can say what it came from: an earlier block of yours, or a page on the web. There is one kind of connection. A reply, a follow-up, a response to an article, and the next part of a thread are each a block connected to what came before it.
+
+```sh
+npm run publish:post -- \
+  --file ./rain-again.md \
+  --slug rain-again \
+  --connect after-the-rain \
+  --connect https://example.org/the-article-that-started-it
+```
+
+`--connect` takes the slug of one of your posts, an AT URI, or an HTTPS URL. The record keeps them in `connect`.
+
+```json
+"connect": [
+  "at://did:web:pds.example.com/com.example.post/after-the-rain",
+  "https://example.org/the-article-that-started-it"
+]
+```
+
+A post's own page stays the same: its text, date, platform, and label. Connections do not change the posts list either. The list opens on All, a plain list with the newest post first, and can be arranged by label or by platform instead. When you are signed in, it can also be arranged by visibility. [Keep a post private](../README.md#keep-a-post-private) The folders are then the labels in use, or the platforms your posts came from. Posts inside a folder are a flat list. Only a label has folders inside it, one for each sublabel. Posts without a label follow the label folders. A link to one of your posts inside the body counts as a connection too.
+
+The list reads `/notes/graph.json`, which has every post by AT URI with its name, date, platform, form, label, sublabel, and the posts that branch from it. An untitled post is named by its first line. In `/notes.json`, each post keeps `connect` and has `links` with every connected address.
+
+`source` is a different field. It records where the same post first appeared, such as the X URL of an imported post.
+
 ## Make an ordered group
 
 Publish a Markdown post called “Collisions” with links in the order you want people to read them. Use the DID of the account that holds the records, your site's post collection, and the record keys you used when publishing. The example below assumes the two target records have been published at the example addresses.
@@ -27,9 +54,7 @@ Publish a Markdown post called “Collisions” with links in the order you want
 2. [just buy that jacket](at://did:web:pds.example.com/com.example.post/just-buy-that-jacket)
 ```
 
-Put the same kind of link inside a paragraph to connect related blocks. The site renders links to your archive posts as clickable `/posts/<record-key>` URLs. It also renders DID-based Bluesky post links as links to Bluesky. Use the other site's public HTTPS URL when linking to a different personal archive. The JSON feed includes recognized AT URIs in each post's `links` array. A backlinks view can build a reverse index from the links in all its source records.
-
-Obsidian uses internal links to connect notes and can show which other notes link back. It also lets an author embed all or part of another note. Markdown links serve as the portable authoring format here. [Obsidian internal links](https://obsidian.md/help/links) · [Obsidian backlinks](https://obsidian.md/help/plugins/backlinks) · [Obsidian embeds](https://obsidian.md/help/embeds)
+The site renders links to your archive posts as clickable `/posts/<record-key>` URLs. It also renders DID-based Bluesky post links as links to Bluesky. Use the other site's public HTTPS URL when linking to a different personal archive.
 
 ## Quote a passage
 
@@ -41,7 +66,7 @@ Put the quoted passage in a Markdown blockquote and link to the source underneat
 [trap of independency](at://did:web:pds.example.com/com.example.post/trap-of-independency)
 ```
 
-That keeps the selected words in your block and gives the reader a link to the source. Bluesky's native quote card uses an `app.bsky.embed.record` containing a strong reference. The AT URI identifies the target record and the CID identifies the version. Use a strong reference if adding version-specific quote cards to this project. [Bluesky posting tutorial](https://github.com/bluesky-social/bsky-docs/blob/main/docs/tutorials/creating-a-post.mdx#quote-posts) · [AT URI specification](https://atproto.com/specs/at-uri-scheme)
+That keeps the selected words in your block and gives the reader a link to the source.
 
 ## Address a record
 

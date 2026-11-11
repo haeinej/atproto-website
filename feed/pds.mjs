@@ -1,3 +1,5 @@
+import { cleanName, isForm } from './forms.mjs';
+
 export const COLLECTION = 'com.haeinjung.note';
 export const BSKY_POST = 'app.bsky.feed.post';
 export const ARCHIVE_POST = 'com.haeinjung.post';
@@ -18,9 +20,11 @@ export function isRecordKey(key) {
   return typeof key === 'string' && RECORD_KEY.test(key) && key !== '.' && key !== '..';
 }
 
+const AT_URI = /^at:\/\/([^/]+)\/([^/]+)\/([^/]+)$/;
+
 export function postLink(uri, ownerDid, archiveCollection = ARCHIVE_POST) {
   if (typeof uri !== 'string') return null;
-  const match = /^at:\/\/([^/]+)\/([^/]+)\/([^/]+)$/.exec(uri);
+  const match = AT_URI.exec(uri);
   if (!match) return null;
   const [, did, collection, key] = match;
   if (!DID.test(did) || !isRecordKey(key)) return null;
@@ -35,9 +39,21 @@ export function webUrl(value) {
   if (['https:', 'http:'].includes(url.protocol) && !url.username && !url.password) return url.href;
 }
 
-export function normalizeTags(tags) {
-  if (!Array.isArray(tags)) return [];
-  return [...new Set(tags.filter(tag => typeof tag === 'string').map(tag => tag.trim()).filter(Boolean))];
+// A connection is an AT URI or a web URL. Anything else is dropped.
+export function connectUri(value) {
+  const match = typeof value === 'string' && AT_URI.exec(value);
+  if (!match) return webUrl(value);
+  const [, did, collection, key] = match;
+  return DID.test(did) && NSID.test(collection) && isRecordKey(key) ? value : undefined;
+}
+
+// What a post is and where it is filed. A record written before labels existed has free-form
+// `tags` instead: the first is read as its label and the second as its sublabel.
+export function filing(value) {
+  const tags = Array.isArray(value.tags) ? value.tags.map(cleanName).filter(Boolean) : [];
+  const label = cleanName(value.label) || tags[0] || '';
+  const sublabel = label && (cleanName(value.sublabel) || (value.label ? '' : tags[1] ?? ''));
+  return { form: isForm(value.form) ? value.form : undefined, label, sublabel };
 }
 
 export function pdsConfig(env) {
@@ -56,18 +72,26 @@ export function normalizeNote(value) {
       new TextEncoder().encode(value.text).length > 10_000 || typeof value.createdAt !== 'string') return null;
   const time = Date.parse(value.createdAt);
   if (!Number.isFinite(time)) return null;
-  const note = { text: value.text, createdAt: new Date(time).toISOString() };
+  const note = { text: value.text, createdAt: new Date(time).toISOString(), platform: 'website' };
   if (value.sourceUrl !== undefined) {
     if (typeof value.sourceUrl !== 'string' || !/^https:\/\/x\.com\/i\/web\/status\/\d{1,19}$/.test(value.sourceUrl)) return null;
     note.sourceUrl = value.sourceUrl;
+    note.platform = 'x';
   }
   return note;
 }
 
-function blobUrl(blob, type, { did, origin }) {
+function blobCid(blob, type) {
   const cid = blob?.ref?.$link;
-  if (blob?.$type !== 'blob' || !type.test(blob.mimeType) || typeof cid !== 'string' ||
-      !/^b[a-z2-7]{20,120}$/.test(cid)) return null;
+  // When listing records, Cirrus moves the blob's type onto a nested copy of it.
+  const typed = blob?.$type === 'blob' || blob?.original?.$type === 'blob';
+  return typed && type.test(blob.mimeType) && typeof cid === 'string' &&
+    /^b[a-z2-7]{20,120}$/.test(cid) ? cid : null;
+}
+
+function blobUrl(blob, type, { did, origin }) {
+  const cid = blobCid(blob, type);
+  if (!cid) return null;
   const url = new URL('/xrpc/com.atproto.sync.getBlob', origin);
   url.search = new URLSearchParams({ did, cid });
   return url.href;
@@ -93,6 +117,7 @@ export function normalizePost(value, key, pds) {
     text: value.text,
     createdAt: new Date(time).toISOString(),
     postUrl: `https://bsky.app/profile/${pds.did}/post/${encodeURIComponent(key)}`,
+    platform: 'bluesky',
     ...(images.length ? { images } : {}),
     ...(video ? { video } : {}),
   };
@@ -102,6 +127,7 @@ const MEDIA_TYPES = {
   image: /^image\/(?:jpeg|png|webp|gif|avif)$/,
   video: /^video\/(?:mp4|webm|ogg|quicktime)$/,
   audio: /^audio\/(?:mpeg|mp4|ogg|wav|wave|webm|aac|flac|x-wav|x-m4a)$/,
+  file: /^(?:application\/(?:pdf|zip|epub\+zip|json)|text\/(?:plain|csv|markdown))$/,
 };
 
 export function normalizeArchivePost(value, key, pds) {
@@ -111,21 +137,27 @@ export function normalizeArchivePost(value, key, pds) {
   const time = Date.parse(value.publishedAt);
   const canonicalUrl = webUrl(value.canonicalUrl);
   if (!Number.isFinite(time) || !canonicalUrl) return null;
-  const tags = normalizeTags(value.tags);
+  const { form, label, sublabel } = filing(value);
+  const self = `at://${pds.did}/${collection}/${key}`;
+  const connect = [...new Set((Array.isArray(value.connect) ? value.connect : []).slice(0, 32).map(connectUri))]
+    .filter(uri => uri && uri !== self);
   const media = new Map();
   if (Array.isArray(value.media)) {
     for (const attachment of value.media) {
       const kind = typeof attachment?.$type === 'string' && attachment.$type.startsWith(collection + '#')
         ? attachment.$type.slice(collection.length + 1) : '';
       if (!Object.hasOwn(MEDIA_TYPES, kind) || typeof attachment.id !== 'string' || media.has(attachment.id)) continue;
-      const url = blobUrl(attachment.original, MEDIA_TYPES[kind], pds);
+      // A private post's media is served by the site, so the caller supplies where to find it.
+      const url = pds.mediaHref
+        ? blobCid(attachment.original, MEDIA_TYPES[kind]) && pds.mediaHref(attachment.id)
+        : blobUrl(attachment.original, MEDIA_TYPES[kind], pds);
       if (!url) continue;
       media.set(attachment.id, {
         kind,
         url,
         alt: typeof attachment.alt === 'string' ? attachment.alt : '',
         caption: typeof attachment.caption === 'string' ? attachment.caption : '',
-        poster: kind === 'video' ? blobUrl(attachment.poster, MEDIA_TYPES.image, pds) : null,
+        poster: kind === 'video' && !pds.mediaHref ? blobUrl(attachment.poster, MEDIA_TYPES.image, pds) : null,
       });
     }
   }
@@ -137,7 +169,12 @@ export function normalizeArchivePost(value, key, pds) {
     canonicalUrl,
     permalink: `/posts/${encodeURIComponent(key)}`,
     sourceUrl: webUrl(value.source?.uri),
-    ...(tags.length ? { tags } : {}),
+    // Where the post was first published. A post written for this site is from the website.
+    platform: (typeof value.source?.platform === 'string' && value.source.platform.trim().slice(0, 40)) || 'website',
+    ...(form ? { form } : {}),
+    ...(label ? { label } : {}),
+    ...(sublabel ? { sublabel } : {}),
+    ...(connect.length ? { connect } : {}),
     media,
   };
 }

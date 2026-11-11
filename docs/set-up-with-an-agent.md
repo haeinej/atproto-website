@@ -1,6 +1,8 @@
 # Give your website a content layer
 
-Start with your existing site. Keep its navigation, routes, and visual design. Give the content a home in your own AT Protocol repository, then use the records to render the views you want. The same photograph can appear in a gallery and in a travel note, with one record and one set of media.
+If you have no website yet, begin by asking your coding agent to follow [the suggest-labels skill](../skills/suggest-labels/SKILL.md): it offers a plain starting header and asks you questions until the structure fits you.
+
+With an existing site, start there. Keep its navigation, routes, and visual design. Give the content a home in your own AT Protocol repository, then use the records to render the views you want. The same photograph can appear in a gallery and in a travel note, with one record and one set of media.
 
 [Cirrus](https://github.com/ascorbic/cirrus) runs the repository. This project gives you a starter post schema, publishing tools, and a feed Worker. The Worker refreshes its copy of the feed from your PDS; your site can render that feed or read records directly. The Worker does not fetch new posts from social accounts.
 
@@ -10,9 +12,9 @@ Open your existing website source with your coding agent and point it at this re
 
 > Give my existing site at example.com a content layer on AT Protocol. Start with one section. Inspect its routes and markup and identify the content separately from its layout. Keep the site's current public URLs and style.
 >
-> Use this repo's post template to generate a Lexicon under a domain I control. Use Markdown for the body, labels for categories, and AT URI links for connections between records. Add optional fields only where a real example needs them. Update the writer and the site's renderer for any new fields they use.
+> Use this repo's post template to generate a Lexicon under a domain I control. Use Markdown for the body and `connect` for the earlier post or web page a post came from. Take labels from the names my site already uses for its sections, and use a sublabel for a group inside one. Follow skills/suggest-labels/SKILL.md to settle the labels with me by asking, and wait for my approval. Never set or mention a post's form: the publish command identifies it. Add optional fields only where a real example needs them. Update the writer and the site's renderer for any new fields they use.
 >
-> Convert one existing item first. Keep its text, original date, media, alt text, and source ID and URL when available. Preview the record, the public page, and one link between posts. Check that the writer, importer, and reader all use the same collection. Show me the result before publishing records or changing live routes.
+> Convert one existing item first. Keep its text, original date, media, alt text, and source ID and URL when available. Preview the record, the public page, and one connection between posts. Check that the writer, importer, and reader all use the same collection. Show me the result before publishing records or changing live routes.
 
 ## What to keep in the record
 
@@ -22,7 +24,8 @@ Open your existing website source with your coding agent and point it at this re
 | Images, audio, or video you have the files for | Upload them as blobs to your PDS. Place them in the body with `media:ID` references. |
 | Existing website URL | Use it as the canonical URL if the page stays there. The starter publisher generates `/posts/<slug>`; adjust the site's writer and routes when keeping an existing path. |
 | Social post ID, URL, and date | Preserve the ID as a string, the original URL in `source.uri`, and the original date in `publishedAt` when available. |
-| Writings, photographs, projects, or other groups | Start with labels in `tags`. Use ordered AT URI links for a curated group. |
+| A reply, follow-up, or thread | List the earlier post's AT URI, or the web page's URL, in `connect`. |
+| Writings, photographs, projects, or other groups | Use the section's own name as the `label`, and a `sublabel` for a group inside it. [Forms, labels, and sublabels](labels.md) |
 
 The [Java importer](../README.md#import-an-x-archive) handles X exports. The [Markdown publisher](../README.md#publish-a-markdown-post) works with local text and media from other sources and accepts source metadata. For another platform's export, have your agent map the fields and convert a sample first. Each export has its own format and may omit media or other context.
 

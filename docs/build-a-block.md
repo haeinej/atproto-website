@@ -18,18 +18,11 @@ The street went quiet after the rain.
 
 `media:street` places the attachment exactly where it appears in the body. Match it to a file with `--media street=./street.jpg`. Leave out the media option for a text or link block.
 
-## Choose your own labels
+## Give it a label
 
-Labels are optional. Use any words that make sense for your site, including multiple words or names in your own language. A block can have several labels, so the same photograph can belong with both `Photographs` and `Field notes`.
+A label is the section of your site the block belongs to, in your own words: `Writings`, `photographs`, `Field notes`. Add a sublabel when the block is part of a group inside that section, such as an essay series. Both are optional, and a block has one of each at most.
 
-| Example | Possible labels |
-| --- | --- |
-| A site like haeinjung.com | `Writings`, `Photographs`, `Projects` |
-| A personal notebook | `Thoughts`, `Daily notes`, `Ideas` |
-| A writing archive | `Essays`, `Blogs`, `Draft reflections` |
-| An archive of old social posts | `Tweets`, `Threads`, `Things I made` |
-
-Choose labels by repeating `--label`. The CLI saves them in the record's `tags` field, and the site displays them with the block. Your labels are available in the JSON feed if you want to build a view for one of them.
+You do not say what kind of thing the block is. The publish command identifies its form from the content and saves it: `rain.md` has words and a photo and no title, so it is a note. With a title it would be a writing, and with only the photo it would be an image. There are thirteen forms in all, covering galleries, video, audio, files, links, embeds, quotes, lists, and code. [Forms, labels, and sublabels](labels.md)
 
 ## Preview and publish
 
@@ -39,16 +32,15 @@ After [setting up your site](../README.md#set-up-your-site), run this command fr
 npm run publish:post -- \
   --file ./rain.md \
   --slug after-the-rain \
-  --label 'Photographs' \
   --label 'Field notes' \
   --media street=./street.jpg
 ```
 
-This prints a local preview. When ready, set `ATPROTO_APP_PASSWORD` and rerun the command with `--publish` to make the block public. For an X archive, the Java importer accepts the same repeatable `--label` option. It applies those labels to the posts in that selection. [X archive import](../README.md#import-an-x-archive)
+This prints a local preview. When ready, set `ATPROTO_APP_PASSWORD` and rerun the command with `--publish` to make the block public. For an X archive, the Java importer accepts one `--label` for the posts in that selection. [X archive import](../README.md#import-an-x-archive)
 
 ## What the record needs
 
-The smallest complete record has a type, a body, a publication date, and a canonical URL. This example adds two author labels. Replace `com.example.post` with your site's collection.
+The smallest complete record has a type, a body, a publication date, a canonical URL, and its form. This example adds a label. Replace `com.example.post` with your site's collection.
 
 ```json
 {
@@ -56,7 +48,8 @@ The smallest complete record has a type, a body, a publication date, and a canon
   "body": "I want to remember how the city smelled after the rain.",
   "publishedAt": "2026-01-14T09:00:00Z",
   "canonicalUrl": "https://example.com/posts/after-the-rain",
-  "tags": ["Thoughts", "Field notes"]
+  "form": "note",
+  "label": "Field notes"
 }
 ```
 

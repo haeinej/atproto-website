@@ -21,15 +21,27 @@ a:focus-visible { outline: 2px solid currentColor; outline-offset: 3px; }
   font-weight: 600;
   letter-spacing: -.035em;
 }
-.notes-list { list-style: none; margin: 0; padding: 0; }
-.notes-list > li { padding: 22px 0; border-top: 1px solid var(--rule); }
-.notes-list h2 { margin: 0 0 6px; font-size: 1.25rem; line-height: 1.3; }
-.note-meta { display: flex; flex-wrap: wrap; align-items: baseline; gap: 6px 16px; color: var(--muted); font-size: .875rem; }
-.note-text { margin: 8px 0 0; white-space: pre-wrap; overflow-wrap: anywhere; }
-.note-images { display: grid; gap: 8px; grid-template-columns: repeat(auto-fit, minmax(min(100%, 180px), 1fr)); }
-.note-images, .notes-list video { margin-top: 10px; }
-.note-images img, .notes-list video { display: block; width: 100%; height: auto; }
+.note-tree { list-style: none; margin: 0; padding: 0; }
+.note-tree .note-tree { margin-left: 7px; padding-left: 16px; border-left: 1px solid var(--rule); }
+.note-tree summary { list-style: none; cursor: pointer; }
+.note-tree summary::-webkit-details-marker { display: none; }
+.note-row { position: relative; display: flex; flex-wrap: wrap; align-items: baseline; gap: 2px 16px; padding: 5px 0 5px 20px; }
+summary > .note-row::before { content: "›"; position: absolute; left: 3px; color: var(--muted); }
+details[open] > summary > .note-row::before { transform: rotate(90deg); }
+.note-name { flex: 1 1 8rem; text-decoration: none; overflow-wrap: anywhere; }
+a.note-name:hover { text-decoration: underline; }
+.note-meta { display: flex; flex-wrap: wrap; align-items: baseline; gap: 4px 12px; color: var(--muted); font-size: .8125rem; }
+.note-platform { padding: 0 .55em; border: 1px solid var(--rule); border-radius: 999px; text-decoration: none; }
+.note-folder .note-name { font-weight: 600; }
+.note-views { display: flex; flex-wrap: wrap; gap: 4px 20px; margin: 0 0 16px; color: var(--muted); font-size: .875rem; }
+.note-views a { text-decoration: none; }
+.note-views a[aria-current] { color: var(--ink); text-decoration: underline; }
 .post-page { margin-top: 32px; }
+/* Each form has one look. A writing reads as an article; image, video, audio and media posts are their attachments. */
+.post-page[data-form="writing"] .post-body { max-width: 38rem; font-size: 1.0625rem; line-height: 1.75; }
+.post-page:is([data-form="image"], [data-form="video"], [data-form="audio"], [data-form="media"], [data-form="file"]) .post-body p { margin: 0 0 12px; }
+.post-page[data-form="gallery"] .post-body { display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 8px; }
+.post-page[data-form="gallery"] .post-body p { margin: 0; }
 .post-body { overflow-wrap: anywhere; }
 .post-body img, .post-body video { display: block; max-width: 100%; height: auto; }
 .post-body audio { width: 100%; }

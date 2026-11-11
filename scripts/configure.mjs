@@ -8,6 +8,7 @@ try {
       site: { type: 'string' }, pds: { type: 'string' }, did: { type: 'string' },
       zone: { type: 'string' }, mode: { type: 'string', default: 'attach' },
       name: { type: 'string' }, kv: { type: 'string' }, collection: { type: 'string' },
+      'access-team': { type: 'string' }, 'access-aud': { type: 'string' },
     },
   });
   const siteUrl = webUrl(values.site);
@@ -40,6 +41,13 @@ try {
       pattern: route.pattern.replace(/^example\.com/, site.hostname),
       zone_name: zone,
     }));
+  }
+  if (values['access-team'] || values['access-aud']) {
+    if (!/^[a-z0-9-]+\.cloudflareaccess\.com$/.test(values['access-team'] ?? '') || !/^[a-f0-9]{32,128}$/.test(values['access-aud'] ?? '')) {
+      throw new Error('For private posts, set --access-team to your-team.cloudflareaccess.com and --access-aud to the Access application audience tag');
+    }
+    config.vars.ACCESS_TEAM_DOMAIN = values['access-team'];
+    config.vars.ACCESS_AUD = values['access-aud'];
   }
   if (values.kv) config.kv_namespaces[0].id = values.kv;
   console.log(JSON.stringify(config, null, 2));

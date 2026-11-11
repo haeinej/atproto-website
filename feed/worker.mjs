@@ -1,10 +1,32 @@
 import {
   ARCHIVE_POST, BSKY_POST, COLLECTION, isRecordKey, normalizeArchivePost, normalizeNote, normalizePost, pdsConfig,
 } from './pds.mjs';
-import { postPage, renderArchivePost } from './render.mjs';
+import { servePrivate } from './private.mjs';
+import { plainName, postPage, renderArchivePost } from './render.mjs';
 
 const SNAPSHOT_KEY = 'latest';
 const MAX_AGE = 48 * 60 * 60;
+
+// Every post by URI, with the later posts that branch from it. This is what the tree view draws.
+function buildGraph(posts) {
+  const graph = {};
+  for (const post of posts) {
+    graph[post.uri] = {
+      href: post.permalink ?? post.postUrl ?? post.sourceUrl ?? null,
+      name: post.name ?? plainName(post),
+      createdAt: post.createdAt,
+      platform: post.platform,
+      ...(post.form ? { form: post.form } : {}),
+      ...(post.label ? { label: post.label } : {}),
+      ...(post.sublabel ? { sublabel: post.sublabel } : {}),
+      branches: [],
+    };
+    // Posts arrive oldest first, so a post only ever branches from an earlier one.
+    for (const link of post.links ?? []) graph[link]?.branches.push(post.uri);
+  }
+  return graph;
+}
+
 async function listNotes(env, pds, collection, normalize, maxPages, request) {
   const { did, origin } = pds;
   const url = new URL('/xrpc/com.atproto.repo.listRecords', origin);
@@ -49,11 +71,12 @@ export async function refreshNotes(env, request = fetch, now = new Date()) {
     notes.push(...records);
     pagesLeft -= pages;
   }
-  const latest = notes
-    .sort((a, b) => b.createdAt.localeCompare(a.createdAt) || b.uri.localeCompare(a.uri))
-    .slice(0, 20)
-    .map(note => typeof note.body === 'string' ? renderArchivePost(note, pds) : note);
-  const snapshot = { ...pds, refreshedAt: now.toISOString(), notes: latest };
+  const rendered = notes
+    .map(note => typeof note.body === 'string' ? renderArchivePost(note, pds) : note)
+    .sort((a, b) => a.createdAt.localeCompare(b.createdAt) || a.uri.localeCompare(b.uri));
+  const graph = buildGraph(rendered);
+  const latest = rendered.reverse().slice(0, 20).map(({ name, ...note }) => note);
+  const snapshot = { ...pds, refreshedAt: now.toISOString(), notes: latest, graph };
   await env.NOTES.put(SNAPSHOT_KEY, JSON.stringify(snapshot), { expirationTtl: MAX_AGE });
   return snapshot;
 }
@@ -108,7 +131,12 @@ export default {
       }
       return servePost(request, env, key);
     }
-    if ((url.pathname === '/' && env.STANDALONE_SITE === 'true') || url.pathname.startsWith('/notes/')) {
+    if (url.pathname === '/notes/private' || url.pathname.startsWith('/notes/private/')) {
+      return servePrivate(request, env, url.pathname);
+    }
+    // The graph lives under /notes/ so an attached site needs no extra route.
+    const isFeed = ['/notes.json', '/notes/graph.json'].includes(url.pathname);
+    if (!isFeed && ((url.pathname === '/' && env.STANDALONE_SITE === 'true') || url.pathname.startsWith('/notes/'))) {
       url.pathname = url.pathname === '/' || url.pathname === '/notes/' ? '/index.html' : url.pathname.slice('/notes'.length);
       return env.ASSETS.fetch(new Request(url, request));
     }
@@ -117,7 +145,7 @@ export default {
       'Cache-Control': 'no-store',
       'X-Content-Type-Options': 'nosniff',
     };
-    if (url.pathname !== '/notes.json') return new Response(null, { status: 404, headers });
+    if (!isFeed) return new Response(null, { status: 404, headers });
     if (request.method !== 'GET') return new Response(null, { status: 405, headers: { ...headers, Allow: 'GET' } });
     const snapshot = await env.NOTES.get(SNAPSHOT_KEY, 'json');
     const age = Date.now() - Date.parse(snapshot?.refreshedAt);
@@ -127,6 +155,9 @@ export default {
         !(age < MAX_AGE * 1000)) {
       return Response.json({ error: 'Notes are unavailable' }, { status: 503, headers });
     }
-    return Response.json(snapshot, { headers: { ...headers, 'Cache-Control': 'public, max-age=300' } });
+    const { graph = {}, ...feed } = snapshot;
+    return Response.json(url.pathname === '/notes.json' ? feed : graph, {
+      headers: { ...headers, 'Cache-Control': 'public, max-age=300' },
+    });
   },
 };
