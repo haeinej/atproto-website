@@ -8,6 +8,7 @@ const commands = {
   posts: ['posts.mjs', 'List every public post with its form, label, and opening lines.'],
   profile: ['profile.mjs', 'Preview or save your profile: --name, --description, --pronouns, --avatar, --link.'],
   publish: ['publish.mjs', 'Preview or publish a post: --file, --slug, --title, --label, --media. Add --publish to save.'],
+  render: ['render.mjs', 'Rebuild one of your site\'s own pages from a post: render adopt, then render build.'],
   snapshot: ['snapshot.mjs', 'Print the feed snapshot the site Worker would store.'],
 };
 const [name] = process.argv.splice(2, 1);

@@ -99,7 +99,7 @@ Do not drop, merge, shorten, or reword anything. If an item cannot be carried ov
 
 ## 5. Change the content side of the copy
 
-Make the copy's pages read from the records instead of from the old content files. Each page keeps its markup. Every old address of an item that became a post redirects to that post's new address, so no link anywhere breaks. Remove an old content file only after the page that used it renders identically from records.
+Follow [the build-renderer skill](../build-renderer/SKILL.md), which has the method and the checks. Make the copy's pages build from the records instead of from the old content files. Each page keeps its markup. Every old address of an item that became a post redirects to that post's new address, so no link anywhere breaks. Remove an old content file only after the page that used it renders identically from records.
 
 ## 6. Check for loss
 

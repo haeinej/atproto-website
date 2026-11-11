@@ -30,4 +30,5 @@ These are enforced by the commands and tests. Do not work around them.
 - Someone setting this up: [docs/set-up-with-an-agent.md](docs/set-up-with-an-agent.md)
 - Moving a site in: [skills/migrate-site/SKILL.md](skills/migrate-site/SKILL.md)
 - Deciding sections: [skills/suggest-labels/SKILL.md](skills/suggest-labels/SKILL.md)
-- The commands: `npm run identity`, `posts`, `profile`, `publish:post`, `lexicon`, `configure`. Run `npm test` after changing code.
+- Making a site's pages build from records: [skills/build-renderer/SKILL.md](skills/build-renderer/SKILL.md)
+- The commands: `npm run identity`, `posts`, `profile`, `publish:post`, `render`, `lexicon`, `configure`. Run `npm test` after changing code.

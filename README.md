@@ -24,7 +24,7 @@ The commands look for a site configuration named `atproto-website.jsonc` in the 
 
 ## Use it with your coding agent
 
-This repository is also a Claude Code plugin. Installing it gives your agent three skills: `start`, which tells it what this project is for and its rules; `suggest-labels`, for deciding your site's sections with you; and `migrate-site`, for moving a website and social posts in without loss.
+This repository is also a Claude Code plugin. Installing it gives your agent four skills: `start`, which tells it what this project is for and its rules; `suggest-labels`, for deciding your site's sections with you; `migrate-site`, for moving a website and social posts in without loss; and `build-renderer`, for making your site's own pages build from records.
 
 ```
 /plugin install atproto-website --marketplace haeinej/atproto-website
@@ -100,6 +100,8 @@ The address comes from the label and sublabel, so every post has a label; one pu
 | [Plugin manifest](.claude-plugin/plugin.json) | Makes this repository installable as a Claude Code plugin that carries the skills. |
 | [Command entry point](bin/atproto-website.mjs) | Runs every command through `npx`, from any folder. |
 | [start skill](skills/start/SKILL.md) | What an agent reads first: the purpose, the rules, and how to run the commands. |
+| [Renderer](scripts/render-engine.mjs) | Rebuilds your site's own pages from records, keeping each page's design byte for byte. |
+| [build-renderer skill](skills/build-renderer/SKILL.md) | How an agent replaces a site's content layer, and what it must check. |
 | [migrate-site skill](skills/migrate-site/SKILL.md) | Instructions for a coding agent to move a site and social posts in without loss, touching only the content side. |
 | [suggest-labels skill](skills/suggest-labels/SKILL.md) | Instructions for a coding agent to settle your site's labels with you. |
 
@@ -189,6 +191,19 @@ To say what a post came from, add `--connect` with the slug of an earlier post o
 
 Each post shows its platform. A post published this way is `website`. When bringing content from another site, pass `--date` for the original date, `--source-platform` (such as `substack`) and `--source-url` for where it appeared, and optionally `--source-id` for its original identifier.
 
+## Rebuild your own pages from records
+
+The shared posts page is one view of your repository. Your own website is another, and it can build its existing pages from the same records without its design changing. A page is split into three parts: the record holds the content, a template holds the page's own markup with the content cut out, and a rules file says where content sits on each kind of page.
+
+```sh
+npm run render -- adopt --page writing/essay.html --slug essay --rules render-rules.json --kind essay \
+  --template templates/essay.html
+npm run render -- build --slug essay --rules render-rules.json --kind essay \
+  --template templates/essay.html --out built/writing/essay.html --against writing/essay.html
+```
+
+`adopt` cuts the template out of the page you already have, and refuses unless every piece it cuts is exactly what the record would put back. `build` fills the template from the record, and with `--against` fails unless the result is identical to the page. It runs when your site is built, so the site stays plain HTML. It handles paragraphs, emphasis, links, rules, images, headings, and lists, and stops on anything else instead of dropping it. [The build-renderer skill](skills/build-renderer/SKILL.md) has the method and what to check.
+
 ## Say who you are
 
 Your profile is a record too: your name, description, pronouns, a picture, a banner, and up to ten links. It has the same fields as a Bluesky profile, so the two can be copied either way unchanged.
@@ -255,11 +270,12 @@ The starter configuration reads archive posts. To also list native Bluesky posts
 
 ## Status
 
-`npm test` covers identity resolution, the feed, post pages, the posts graph, the profile, the fixed schema, form identification and checks, taking in files and link previews from the web, and access to private posts.
+`npm test` covers identity resolution, the site renderer, the feed, post pages, the posts graph, the profile, the fixed schema, form identification and checks, taking in files and link previews from the web, and access to private posts.
 
 - **Not yet run against Cloudflare.** Private posts are tested with a stand-in for Cloudflare Access and for KV. The step that writes a private post with Wrangler has only been previewed.
 - **X importer not rebuilt.** It now saves each post's form and a single label. That change has not been compiled or run.
 - **The profile command has only been previewed.** Saving a profile, its pictures, and its links to a PDS has not been run.
+- **The site renderer does not handle footnotes, quotations, or code yet.** It stops on them, so a page that uses one is reported as not done.
 - **No command to change a published post.** There is no way yet to change a post's label, move a private post to public, or delete a private post, other than by hand.
 - **Embeds do not play.** An embed keeps its page's title, description, and preview image and is shown as a card that links out, not as a player.
 - **Connections are stored, not shown.** `connect` and links between posts are in the record and in `/notes/graph.json`. There is no graph view.

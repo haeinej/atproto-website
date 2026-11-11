@@ -10,6 +10,7 @@ import { connectUri, pdsConfig, postPath, siblingCollection, webUrl } from '../f
 import { PRIVATE_BLOB, PRIVATE_POST } from '../feed/private.mjs';
 import { bodyFacts } from '../feed/render.mjs';
 import { configPath } from './config.mjs';
+import { imageSize } from './image-size.mjs';
 import { POST_FIELDS, POST_MATCHES, siteLayer } from './layers.mjs';
 import { rpc, signIn } from './rpc.mjs';
 
@@ -105,7 +106,9 @@ async function readAttachments(specs, refs, folder, taken = new Map()) {
     if (!info.isFile() || info.size === 0 || info.size > 60_000_000) {
       throw new Error(`Attachment ${id} must be a nonempty file no larger than 60 MB`);
     }
-    attachments.set(id, { path, mime, size: info.size, ...(sourceUrl ? { sourceUrl } : {}) });
+    // An image's width and height are saved with it, so a page can lay it out before it loads.
+    const dimensions = mime.startsWith('image/') ? imageSize(new Uint8Array(await readFile(path))) : null;
+    attachments.set(id, { path, mime, size: info.size, ...(sourceUrl ? { sourceUrl } : {}), ...(dimensions ?? {}) });
   };
   for (const spec of specs) {
     const match = /^([A-Za-z0-9_-]{1,64})=(.+)$/.exec(spec);
@@ -265,7 +268,7 @@ async function publish(folder) {
   if (values.private) {
     // Nothing is sent to the PDS. Publishing the same slug again replaces the private post.
     if (attachments.size) record.media = [];
-    for (const [id, { path, mime, size, sourceUrl }] of attachments) {
+    for (const [id, { path, mime, size, sourceUrl, width, height }] of attachments) {
       if (size > 25_000_000) throw new Error(`Private attachment ${id} must be no larger than 25 MB`);
       const cid = await blobCid(await readFile(path));
       kvPut(configFile, PRIVATE_BLOB + cid, path);
@@ -273,6 +276,7 @@ async function publish(folder) {
         $type: `${collection}#${kindOf(mime)}`, id,
         original: { $type: 'blob', mimeType: mime, size, ref: { $link: cid } },
         ...(sourceUrl ? { sourceUrl } : {}),
+        ...(width && height ? { width, height } : {}),
       });
     }
     if (preview) {
@@ -289,7 +293,7 @@ async function publish(folder) {
   const token = await signIn(origin, did);
   if (attachments.size) {
     record.media = [];
-    for (const [id, { path, mime, size, sourceUrl }] of attachments) {
+    for (const [id, { path, mime, size, sourceUrl, width, height }] of attachments) {
       const body = await readFile(path);
       if (body.length !== size) throw new Error(`Attachment ${id} changed while preparing the post`);
       const uploaded = await rpc(origin, 'com.atproto.repo.uploadBlob', { body, mime, token });
@@ -298,7 +302,7 @@ async function publish(folder) {
           typeof blob.ref?.$link !== 'string') {
         throw new Error(`Upload failed for ${id} (HTTP ${uploaded.response.status})`);
       }
-      record.media.push({ $type: `${collection}#${kindOf(mime)}`, id, original: blob, ...(sourceUrl ? { sourceUrl } : {}) });
+      record.media.push({ $type: `${collection}#${kindOf(mime)}`, id, original: blob, ...(sourceUrl ? { sourceUrl } : {}), ...(width && height ? { width, height } : {}) });
     }
   }
   if (preview) {

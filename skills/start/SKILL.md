@@ -27,6 +27,7 @@ Read `AGENTS.md` there before doing anything. It holds the ten rules, which the 
 | A field the schema has no place for | `docs/schema-layers.md` |
 | Deciding the site's sections with the owner | the `suggest-labels` skill |
 | Moving a website and social posts in | the `migrate-site` skill |
+| Making the site's own pages build from records | the `build-renderer` skill |
 
 ## Running the commands
 

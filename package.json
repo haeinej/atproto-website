@@ -33,7 +33,8 @@
     "posts": "node scripts/posts.mjs",
     "profile": "node scripts/profile.mjs",
     "snapshot": "node scripts/snapshot.mjs",
-    "test": "node --test"
+    "test": "node --test",
+    "render": "node scripts/render.mjs"
   },
   "dependencies": {
     "markdown-it": "15.0.3",
