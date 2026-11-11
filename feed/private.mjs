@@ -100,7 +100,9 @@ export async function servePrivate(request, env, pathname, get = fetch) {
     });
   }
   if (section === 'blob' && parts.length === 3) {
-    const blob = Array.isArray(value?.media) && value.media.find(item => item?.id === id)?.original;
+    // `~link` is the preview image of a link post; any other ID is one of the post's attachments.
+    const blob = id === '~link' ? value?.link?.image
+      : Array.isArray(value?.media) && value.media.find(item => item?.id === id)?.original;
     const cid = blob?.ref?.$link;
     if (!/^(?:image|video|audio|application|text)\/[a-z0-9.+-]+$/.test(blob?.mimeType ?? '') || !/^b[a-z2-7]{20,120}$/.test(cid ?? '')) return missing();
     const bytes = await env.NOTES.get(PRIVATE_BLOB + cid, 'arrayBuffer');

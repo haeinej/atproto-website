@@ -43,6 +43,7 @@ Each post has its own page with its text, date, platform, and label.
 | [Forms](feed/forms.mjs) | The thirteen forms, how each is identified, and what each may hold. |
 | [Publish command](scripts/publish.mjs) | Previews and publishes a Markdown post with its attachments, publicly or privately. |
 | [X archive importer](importer/) | A Java CLI that previews an export and publishes selected posts and media to your PDS. |
+| [migrate-site skill](skills/migrate-site/SKILL.md) | Instructions for a coding agent to move a site and social posts in without loss, touching only the content side. |
 | [suggest-labels skill](skills/suggest-labels/SKILL.md) | Instructions for a coding agent to settle your site's labels with you. |
 
 ## Set up your site
@@ -79,7 +80,7 @@ mkdir -p lexicons/com/example
 npm run --silent lexicon > lexicons/com/example/post.json
 ```
 
-Use the path that matches your collection. [Customize the schema with your coding agent](docs/set-up-with-an-agent.md).
+Use the path that matches your collection. [Own the schema and its addresses](docs/set-up-with-an-agent.md#own-the-schema-and-its-addresses).
 
 ### Preview and deploy
 
@@ -123,7 +124,7 @@ npm run publish:post -- --file ./hello.md --slug hello --title 'Hello' --label '
 
 Your post is available at `https://example.com/posts/hello` once published. `--label` is the section of your site the post belongs to and `--sublabel` is a group inside it; both are optional and in your own words. The form is identified from the content and saved in the record: this post has a title, so it is a writing. The command refuses a post that does not fit its form, such as a writing with no title. [Forms, labels, and sublabels](docs/labels.md)
 
-To include a file in a specific part of the post, use an attachment reference such as `![A short clip](media:clip)` in the Markdown and add `--media clip=./clip.mp4` to the command. Repeat `--media` for additional files. An attachment can be an image, video, audio, or a file such as a PDF, and `--media clip=https://example.org/clip.mp4` takes one in from the web and keeps the address as its source. A post that is nothing but a link to such a file is taken in the same way, so a link to an image becomes an image. A writing or a note can mix attachments with links and text. [Block guide](docs/build-a-block.md) · [Mixed-media example](examples/image-text-image-video.json)
+To include a file in a specific part of the post, use an attachment reference such as `![A short clip](media:clip)` in the Markdown and add `--media clip=./clip.mp4` to the command. Repeat `--media` for additional files. An attachment can be an image, video, audio, or a file such as a PDF, and `--media clip=https://example.org/clip.mp4` takes one in from the web and keeps the address as its source. A post that is nothing but a link to such a file is taken in the same way, so a link to an image becomes an image. A post that links to a page keeps the page's title, description, and preview image. A writing or a note can mix attachments with links and text. [Block guide](docs/build-a-block.md) · [Mixed-media example](examples/image-text-image-video.json)
 
 To say what a post came from, add `--connect` with the slug of an earlier post or a web URL. The connection is kept in the record and in `/notes/graph.json`. Nothing on the site draws it yet. [Connect a block](docs/group-and-connect.md#connect-a-block)
 
@@ -181,11 +182,11 @@ The starter configuration reads archive posts. To also list native Bluesky posts
 
 ## Status
 
-`npm test` covers the feed, post pages, the posts graph, form identification and checks, taking in files from the web, and access to private posts.
+`npm test` covers the feed, post pages, the posts graph, form identification and checks, taking in files and link previews from the web, and access to private posts.
 
 - **Not yet run against Cloudflare.** Private posts are tested with a stand-in for Cloudflare Access and for KV. The step that writes a private post with Wrangler has only been previewed.
 - **X importer not rebuilt.** It now saves each post's form and a single label. That change has not been compiled or run.
 - **No command to change a published post.** There is no way yet to change a post's label, move a private post to public, or delete a private post, other than by hand.
-- **Links and embeds are kept as written.** A link post does not store the page's title or a preview image, and an embed is shown as a link, not a player.
+- **Embeds do not play.** An embed keeps its page's title, description, and preview image and is shown as a card that links out, not as a player.
 - **Connections are stored, not shown.** `connect` and links between posts are in the record and in `/notes/graph.json`. There is no graph view.
 - **One look per form is a start.** A writing has an article column and a gallery has a grid. The other forms use the default page.

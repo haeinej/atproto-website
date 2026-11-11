@@ -48,6 +48,11 @@
             "description": "What this post branches from: earlier posts or web pages. Each entry is an AT URI or an HTTP(S) URL.",
             "items": { "type": "string", "format": "uri" }
           },
+          "link": {
+            "type": "ref",
+            "ref": "#link",
+            "description": "For a link or embed post: the page it points to, as that page described itself when the post was made."
+          },
           "source": {
             "type": "ref",
             "ref": "#source",
@@ -66,6 +71,25 @@
               ]
             }
           }
+        }
+      }
+    },
+    "link": {
+      "type": "object",
+      "required": [
+        "uri"
+      ],
+      "properties": {
+        "uri": { "type": "string", "format": "uri" },
+        "title": { "type": "string", "maxLength": 300 },
+        "description": { "type": "string", "maxLength": 1000 },
+        "site": { "type": "string", "maxLength": 100 },
+        "image": {
+          "type": "blob",
+          "accept": [
+            "image/*"
+          ],
+          "description": "A copy of the page's preview image."
         }
       }
     },

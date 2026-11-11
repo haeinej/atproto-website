@@ -161,6 +161,18 @@ export function normalizeArchivePost(value, key, pds) {
       });
     }
   }
+  const text = (field, limit) => typeof field === 'string' ? field.trim().slice(0, limit) : '';
+  const uri = webUrl(value.link?.uri);
+  const image = uri && (pds.mediaHref
+    ? blobCid(value.link.image, MEDIA_TYPES.image) && pds.mediaHref('~link')
+    : blobUrl(value.link.image, MEDIA_TYPES.image, pds));
+  const link = uri && {
+    uri,
+    title: text(value.link.title, 300),
+    description: text(value.link.description, 1000),
+    site: text(value.link.site, 100) || new URL(uri).hostname.replace(/^www\./, ''),
+    ...(image ? { image } : {}),
+  };
   return {
     body: value.body,
     title: typeof value.title === 'string' ? value.title.trim().slice(0, 300) : '',
@@ -174,6 +186,7 @@ export function normalizeArchivePost(value, key, pds) {
     ...(form ? { form } : {}),
     ...(label ? { label } : {}),
     ...(sublabel ? { sublabel } : {}),
+    ...(link ? { link } : {}),
     ...(connect.length ? { connect } : {}),
     media,
   };

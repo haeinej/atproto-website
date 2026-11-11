@@ -70,7 +70,8 @@ export function renderArchivePost({ body, media, ...post }, { did, collection } 
   const env = { media, did, collection, links };
   const tokens = markdown.parse(body, env);
   const bodyHtml = markdown.renderer.render(tokens, markdown.options, env);
-  const name = post.title || firstLine(tokens) || dateLabel(post.createdAt);
+  // A link is known by its page's title, the way a bookmark is.
+  const name = post.title || post.link?.title || firstLine(tokens) || dateLabel(post.createdAt);
   // A record that does not say its form has it identified from its content.
   const form = post.form ?? identifyForm({
     title: post.title, facts: tokenFacts(tokens), kinds: [...media?.values() ?? []].map(item => item.kind),
@@ -132,6 +133,11 @@ export function postPage(post) {
     : `<span class="note-platform">${escape(post.platform)}</span>`;
   const label = post.label ? `<span>${escape([post.label, post.sublabel].filter(Boolean).join(' · '))}</span>` : '';
   const hidden = post.visibility === 'private';
+  const { link } = post;
+  const card = link ? `<a class="link-card" href="${escape(link.uri)}">${
+    link.image ? `<img src="${escape(link.image)}" alt="" loading="lazy" decoding="async">` : ''}<span class="link-text">${
+    link.title ? `<strong>${escape(link.title)}</strong>` : ''}${
+    link.description ? `<span>${escape(link.description)}</span>` : ''}<small>${escape(link.site)}</small></span></a>` : '';
   const summary = post.summary ? `<meta name="description" content="${escape(post.summary)}">` : '';
   return `<!doctype html>
 <html lang="en">
@@ -156,6 +162,7 @@ export function postPage(post) {
         ${hidden ? '<span>private</span>' : ''}
       </div>
       <div class="post-body">${post.bodyHtml}</div>
+      ${card}
     </article>
   </main>
 </body>

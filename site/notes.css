@@ -47,6 +47,11 @@ a.note-name:hover { text-decoration: underline; }
 .post-body audio { width: 100%; }
 .post-body pre { overflow-x: auto; }
 .post-body blockquote { margin-inline: 0; padding-inline-start: 1rem; border-inline-start: 2px solid var(--rule); }
+.link-card { display: flex; margin-top: 16px; border: 1px solid var(--rule); border-radius: 8px; overflow: hidden; text-decoration: none; }
+.link-card img { flex: 0 0 34%; width: 34%; aspect-ratio: 4 / 3; align-self: flex-start; object-fit: cover; }
+.link-text { display: flex; flex-direction: column; gap: 4px; padding: 12px 14px; min-width: 0; font-size: .9375rem; }
+.link-text span { color: var(--muted); display: -webkit-box; -webkit-line-clamp: 3; -webkit-box-orient: vertical; overflow: hidden; }
+.link-text small { color: var(--muted); }
 .attachment-caption { display: block; color: var(--muted); font-size: .875rem; }
 @media (max-width: 720px) {
   .notes-page { padding: 32px 20px 48px; }

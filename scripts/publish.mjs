@@ -4,7 +4,7 @@ import { tmpdir } from 'node:os';
 import { extname, join, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { parseArgs } from 'node:util';
-import { cleanName, formProblems, identifyForm } from '../feed/forms.mjs';
+import { cleanName, formProblems, identifyForm, isPlayer } from '../feed/forms.mjs';
 import { connectUri, pdsConfig, webUrl } from '../feed/pds.mjs';
 import { PRIVATE_BLOB, PRIVATE_POST } from '../feed/private.mjs';
 import { bodyFacts } from '../feed/render.mjs';
@@ -56,41 +56,80 @@ const fileType = url => types[extname(new URL(url).pathname).toLowerCase()];
 const aliases = {
   'image/jpg': 'image/jpeg', 'audio/mp3': 'audio/mpeg', 'audio/x-m4a': 'audio/mp4', 'audio/x-wav': 'audio/wav', 'audio/wave': 'audio/wav',
 };
+const entities = { amp: '&', lt: '<', gt: '>', quot: '"', apos: "'", nbsp: ' ' };
+const plain = (text, limit) => text
+  .replace(/&(?:#(\d+)|#x([0-9a-f]+)|([a-z]+));/gi, (whole, decimal, hex, name) =>
+    decimal ? String.fromCodePoint(Number(decimal)) : hex ? String.fromCodePoint(parseInt(hex, 16)) : entities[name.toLowerCase()] ?? whole)
+  .replace(/\s+/g, ' ').trim().slice(0, limit);
 
-// Take a file in from the web, so the post holds the thing itself and not a pointer to it. The
-// address it came from is kept as its source.
-async function download(url, folder, id) {
-  const response = await fetch(url, { signal: AbortSignal.timeout(60_000) });
-  if (!response.ok) throw new Error(`${url} answered HTTP ${response.status}`);
-  const declared = response.headers.get('content-type')?.split(';')[0].trim().toLowerCase() ?? '';
-  const generic = ['', 'application/octet-stream', 'binary/octet-stream'].includes(declared);
-  const mime = generic ? fileType(url) : aliases[declared] ?? declared;
-  if (!Object.values(types).includes(mime)) throw new Error(`${url} is ${declared || 'an unknown type'}, which cannot be attached`);
-  if (Number(response.headers.get('content-length')) > 60_000_000) throw new Error(`${url} is larger than 60 MB`);
-  const bytes = new Uint8Array(await response.arrayBuffer());
-  const path = join(folder, id);
-  await writeFile(path, bytes);
-  return { path, mime, sourceUrl: url };
+// What a page says about itself: its title, description, site name, and preview image.
+function pageFacts(html, url) {
+  const meta = {};
+  for (const [tag] of html.matchAll(/<meta\b[^>]*>/gi)) {
+    const attributes = Object.fromEntries([...tag.matchAll(/([a-z:-]+)\s*=\s*(?:"([^"]*)"|'([^']*)')/gi)]
+      .map(([, name, double, single]) => [name.toLowerCase(), double ?? single]));
+    const key = (attributes.property ?? attributes.name)?.toLowerCase();
+    if (key && attributes.content && !(key in meta)) meta[key] = attributes.content;
+  }
+  const title = plain(meta['og:title'] ?? /<title[^>]*>([^<]*)<\/title>/i.exec(html)?.[1] ?? '', 300);
+  const description = plain(meta['og:description'] ?? meta.description ?? '', 1000);
+  const site = plain(meta['og:site_name'] ?? '', 100);
+  const image = meta['og:image'] && URL.canParse(plain(meta['og:image'], 2000), url) ? webUrl(new URL(plain(meta['og:image'], 2000), url).href) : undefined;
+  return { ...(title ? { title } : {}), ...(description ? { description } : {}), ...(site ? { site } : {}), ...(image ? { image } : {}) };
 }
 
-async function readAttachments(specs, refs, folder) {
+// Look at what an address points to. A file comes back saved in `folder`, ready to attach, with the
+// address as its source. A web page comes back as what it says about itself.
+// `sure` means the address itself names a file type; otherwise only what is plainly media is taken.
+async function inspect(url, folder, id, sure = Boolean(fileType(url))) {
+  const response = await fetch(url, {
+    headers: { 'User-Agent': 'Mozilla/5.0 (compatible; post-publisher)', Accept: '*/*' },
+    signal: AbortSignal.timeout(60_000),
+  });
+  if (!response.ok) throw new Error(`${url} answered HTTP ${response.status}`);
+  const declared = response.headers.get('content-type')?.split(';')[0].trim().toLowerCase() ?? '';
+  if (['text/html', 'application/xhtml+xml'].includes(declared)) {
+    return { page: pageFacts((await response.text()).slice(0, 1_000_000), response.url || url), declared };
+  }
+  const generic = ['', 'application/octet-stream', 'binary/octet-stream'].includes(declared);
+  const mime = generic ? fileType(url) : aliases[declared] ?? declared;
+  const attachable = Object.values(types).includes(mime) && (sure || /^(?:image|video|audio)\/|^application\/pdf$/.test(mime));
+  if (!attachable || Number(response.headers.get('content-length')) > 60_000_000) {
+    await response.body?.cancel();
+    return { declared };
+  }
+  const path = join(folder, id);
+  await writeFile(path, new Uint8Array(await response.arrayBuffer()));
+  return { file: { path, mime, sourceUrl: url }, declared };
+}
+
+// `taken` holds attachments already brought in from the web, by ID.
+async function readAttachments(specs, refs, folder, taken = new Map()) {
   const attachments = new Map();
-  for (const spec of specs) {
-    const match = /^([A-Za-z0-9_-]{1,64})=(.+)$/.exec(spec);
-    if (!match) throw new Error('Use --media ID=PATH or --media ID=URL');
-    const [, id, location] = match;
-    if (attachments.has(id) || !refs.has(id)) throw new Error(`Duplicate or unreferenced attachment ${id}`);
-    const fromWeb = /^https?:\/\//i.test(location) && webUrl(location);
-    const { path, mime, sourceUrl } = fromWeb
-      ? await download(fromWeb, folder, id)
-      : { path: location, mime: types[extname(location).toLowerCase()] };
+  const add = async (id, { path, mime, sourceUrl }) => {
     if (!mime) throw new Error(`Unsupported media format for ${id}`);
+    if (attachments.has(id) || !refs.has(id)) throw new Error(`Duplicate or unreferenced attachment ${id}`);
     const info = await stat(path);
     if (!info.isFile() || info.size === 0 || info.size > 60_000_000) {
       throw new Error(`Attachment ${id} must be a nonempty file no larger than 60 MB`);
     }
     attachments.set(id, { path, mime, size: info.size, ...(sourceUrl ? { sourceUrl } : {}) });
+  };
+  for (const spec of specs) {
+    const match = /^([A-Za-z0-9_-]{1,64})=(.+)$/.exec(spec);
+    if (!match) throw new Error('Use --media ID=PATH or --media ID=URL');
+    const [, id, location] = match;
+    const address = /^https?:\/\//i.test(location) && webUrl(location);
+    if (!address) {
+      await add(id, { path: location, mime: types[extname(location).toLowerCase()] });
+      continue;
+    }
+    // An attachment named by its address is a file whatever the address looks like.
+    const { file, declared } = await inspect(address, folder, id, true);
+    if (!file) throw new Error(`${address} is ${declared || 'an unknown type'}, which cannot be attached`);
+    await add(id, file);
   }
+  for (const [id, file] of taken) await add(id, file);
   for (const ref of refs) {
     if (!attachments.has(ref)) throw new Error(`Missing --media ${ref}=PATH`);
   }
@@ -138,18 +177,26 @@ async function publish(folder) {
     return uri;
   }))];
   let facts = bodyFacts(body);
-  let attachments;
+  // Look at what the post's link points to. This decides two things below: whether the post is the
+  // file itself, and what a link or embed post keeps about its page.
+  const pointer = webUrl(facts.bareLink || facts.links[0]);
+  const expectsFile = facts.soleLink && pointer && !isPlayer(pointer) && !['link', 'embed'].includes(values.form);
+  const mayBeLink = !facts.media.size &&
+    ['link', 'embed'].includes(values.form ?? identifyForm({ title: values.title, facts, kinds: [] }));
+  let seen = {};
+  if (pointer && (expectsFile || mayBeLink)) {
+    seen = await inspect(pointer, folder, 'web').catch(error => ({ problem: error.message }));
+  }
   // A post that is nothing but a link to an image, video, audio, or file is that object, not a link.
   // Take the file in and keep the link as its source. --form link leaves it as a link.
-  if (facts.soleLink && webUrl(facts.bareLink) && fileType(facts.bareLink) && !['link', 'embed'].includes(values.form)) {
+  let attachments;
+  if (expectsFile && seen.file) {
     const described = `![${/^\[([^\]]*)\]\(/.exec(body)?.[1] ?? ''}](media:web)`;
-    try {
-      attachments = await readAttachments([...values.media, `web=${facts.bareLink}`], bodyFacts(described).media, folder);
-      body = described;
-      facts = bodyFacts(body);
-    } catch (error) {
-      console.error(`Kept ${facts.bareLink} as a link: ${error.message}`);
-    }
+    attachments = await readAttachments(values.media, bodyFacts(described).media, folder, new Map([['web', seen.file]]));
+    body = described;
+    facts = bodyFacts(body);
+  } else if (expectsFile && fileType(pointer)) {
+    console.error(`Kept ${pointer} as a link: ${seen.problem ?? `it is ${seen.declared || 'an unknown type'}`}`);
   }
   attachments ??= await readAttachments(values.media, facts.media, folder);
   // The form is identified from the content and checked. --form overrides it when the author means
@@ -183,11 +230,23 @@ async function publish(folder) {
     ...(connect.length ? { connect } : {}),
     ...(source ? { source } : {}),
   };
+  // A link or embed keeps what its page said about itself, and a copy of the page's preview image.
+  let preview;
+  if (['link', 'embed'].includes(form) && pointer) {
+    const { image, ...page } = seen.page ?? {};
+    record.link = { uri: pointer, ...page };
+    if (image) {
+      const found = await inspect(image, folder, 'link-image', true).catch(() => ({}));
+      const size = found.file?.mime.startsWith('image/') ? (await stat(found.file.path)).size : 0;
+      if (size > 0 && size <= 5_000_000) preview = { ...found.file, size };
+    }
+  }
   if (!values.publish) {
     const fromWeb = Object.fromEntries([...attachments].filter(([, { sourceUrl }]) => sourceUrl).map(([id, { sourceUrl }]) => [id, sourceUrl]));
     console.log(JSON.stringify({
       ...(values.private ? { visibility: 'private' } : {}), record, attachments: [...attachments.keys()],
       ...(Object.keys(fromWeb).length ? { fromWeb } : {}),
+      ...(preview ? { linkImage: preview.sourceUrl } : {}),
     }, null, 2));
     return;
   }
@@ -210,6 +269,11 @@ async function publish(folder) {
         original: { $type: 'blob', mimeType: mime, size, ref: { $link: cid } },
         ...(sourceUrl ? { sourceUrl } : {}),
       });
+    }
+    if (preview) {
+      const cid = await blobCid(await readFile(preview.path));
+      kvPut(values.config, PRIVATE_BLOB + cid, preview.path);
+      record.link.image = { $type: 'blob', mimeType: preview.mime, size: preview.size, ref: { $link: cid } };
     }
     const file = join(folder, 'record.json');
     await writeFile(file, JSON.stringify(record));
@@ -235,6 +299,10 @@ async function publish(folder) {
       }
       record.media.push({ $type: `${collection}#${kindOf(mime)}`, id, original: blob, ...(sourceUrl ? { sourceUrl } : {}) });
     }
+  }
+  if (preview) {
+    const uploaded = await rpc(origin, 'com.atproto.repo.uploadBlob', { body: await readFile(preview.path), mime: preview.mime, token });
+    if (uploaded.response.ok && uploaded.data.blob?.$type === 'blob') record.link.image = uploaded.data.blob;
   }
   const created = await rpc(origin, 'com.atproto.repo.createRecord', { body: { ...target, record }, token });
   if (!created.response.ok || created.data.uri !== `at://${did}/${collection}/${values.slug}`) {

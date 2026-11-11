@@ -84,13 +84,16 @@ How a thing arrives does not change what it is. A photograph is an image whether
 | --- | --- | --- |
 | `<https://example.org/photos/street.jpg>` | The image, with the link as its source | image |
 | `[The paper](https://example.org/paper.pdf)` | The PDF, with the link as its source and "The paper" as its description | file |
-| `<https://www.youtube.com/watch?v=abc>` | The link. It plays something, so nothing is copied | embed |
-| `<https://example.org/an-article>` | The link | link |
+| `<https://images.example.org/photo-123?w=800>` | The image. The address does not look like a file, but the other site says it is one | image |
+| `<https://www.youtube.com/watch?v=abc>` | The link, with the page's title, description, and preview image | embed |
+| `<https://example.org/an-article>` | The link, with the page's title, description, and preview image | link |
 | A sentence, then `<https://example.org/photos/street.jpg>` | The sentence and the link | link |
 
 The last row stays a link because you wrote about it instead of posting the file itself. To place a web image inside a longer post, attach it by address: write `![A wet street](media:street)` in the body and pass `--media street=https://example.org/photos/street.jpg`. To keep a lone file link as a link, pass `--form link`.
 
-A link counts as a file when its address ends in a known file type and the other site confirms it. A page that only looks like a file stays a link.
+The command looks at what a link points to and goes by what the other site returns. An image, video, audio file, or PDF is taken in whatever its address looks like. A page that only looks like a file stays a link.
+
+A link or embed post keeps what its page said about itself: the title, description, site name, and a copy of the preview image. The post's page shows them as a card, and the post is listed under the page's title.
 
 ### What each form may hold
 

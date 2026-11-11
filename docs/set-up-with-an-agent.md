@@ -1,33 +1,88 @@
-# Give your website a content layer
+# Set this up with your coding agent
 
-If you have no website yet, begin by asking your coding agent to follow [the suggest-labels skill](../skills/suggest-labels/SKILL.md): it offers a plain starting header and asks you questions until the structure fits you.
+A coding agent can do most of this for you: bring in your website and your posts from other platforms, and change your site so it reads from records you own. Your job is to answer its questions, check its work, and say when to go live.
 
-With an existing site, start there. Keep its navigation, routes, and visual design. Give the content a home in your own AT Protocol repository, then use the records to render the views you want. The same photograph can appear in a gallery and in a travel note, with one record and one set of media.
+Three rules shape the whole process, and the agent is given them in writing.
 
-[Cirrus](https://github.com/ascorbic/cirrus) runs the repository. This project gives you a starter post schema, publishing tools, and a feed Worker. The Worker refreshes its copy of the feed from your PDS; your site can render that feed or read records directly. The Worker does not fetch new posts from social accounts.
+- **Nothing is lost.** Every piece of text, date, image, and alt text is carried over and checked against what was there before.
+- **Nothing looks different.** Your pages keep their addresses, their layout, and their design.
+- **Only the content side changes.** The agent touches where your site gets its content from. It leaves your templates, styles, navigation, scripts, and hosting alone.
 
-## Give your coding agent this brief
+It works on a copy of your site the whole time. Your live site keeps running, and nothing is published to your live PDS, until you approve.
 
-Open your existing website source with your coding agent and point it at this repository. Replace the example domain and tell it which section you want to try first.
+## Before you start
 
-> Give my existing site at example.com a content layer on AT Protocol. Start with one section. Inspect its routes and markup and identify the content separately from its layout. Keep the site's current public URLs and style.
->
-> Use this repo's post template to generate a Lexicon under a domain I control. Use Markdown for the body and `connect` for the earlier post or web page a post came from. Take labels from the names my site already uses for its sections, and use a sublabel for a group inside one. Follow skills/suggest-labels/SKILL.md to settle the labels with me by asking, and wait for my approval. Never set or mention a post's form: the publish command identifies it. Add optional fields only where a real example needs them. Update the writer and the site's renderer for any new fields they use.
->
-> Convert one existing item first. Keep its text, original date, media, alt text, and source ID and URL when available. Preview the record, the public page, and one connection between posts. Check that the writer, importer, and reader all use the same collection. Show me the result before publishing records or changing live routes.
+- **Set up the tools.** Follow [Set up your site](../README.md#set-up-your-site) to install them and create your PDS. You can ask the agent to walk you through it.
+- **Get your exports.** Download your archive from each platform you want to bring in. X has [an importer](../README.md#import-an-x-archive). For other platforms the agent converts the export itself.
+- **Open your website's source with the agent,** and give it this repository as well.
+
+No website yet? Skip to step 2. The agent helps you decide your sections, and you publish posts into them as you go.
+
+## The steps
+
+Give the agent one step at a time and read what it hands back before moving on. The agent follows [the migrate-site skill](../skills/migrate-site/SKILL.md), which holds the detailed rules.
+
+### 1. Take stock
+
+> Follow skills/migrate-site/SKILL.md. Make a copy of my site to work in and do not touch the live one. Take the baseline in step 1: list every page and every piece of content, save how each page looks now, and count what is in my exports from [X, Substack, …]. Tell me the totals. Change nothing yet.
+
+You get a count of pages, posts, and media files. Check it against what you expect. Anything missing here will be missing later.
+
+### 2. Decide your labels
+
+> Follow skills/suggest-labels/SKILL.md and settle my labels with me.
+
+The agent shows you the sections your site already has, or a plain starting point if you have none, and asks you questions until the structure is yours. [Forms, labels, and sublabels](labels.md)
+
+### 3. Try one item
+
+> Convert one item from my site. Show me its record, the page before and after, and how you mapped each piece. Wait for my approval.
+
+Look at the before and after side by side. This is the cheapest moment to correct how things are mapped.
+
+### 4. Convert everything, on the copy
+
+> Convert the rest, one label at a time, then my exports. Keep every text, date, image, and alt text exactly. List anything you could not carry over.
+
+For platforms without an importer, the agent shows you five converted posts before doing the rest.
+
+### 5. Switch the copy to read from records
+
+> Change the content side of the copy so its pages read from the records. Keep every address and all markup as they are. Do not change anything outside the content side; if you think you need to, ask me first.
+
+### 6. Check and report
+
+> Run the loss checks in step 6 of the skill and give me the report in step 7.
+
+You get the totals before and after, every difference found, the items left out, and a list of every file changed. Open the copy yourself and click through it. The list of changed files should contain content files and loaders, and nothing from your design.
+
+### 7. Go live
+
+> I approve. Publish to my live PDS and deploy, then check the live site and tell me how to go back if I need to.
+
+## What the agent decides and what you decide
+
+| The agent | You |
+| --- | --- |
+| How each piece of content maps to a record field | What your labels and sublabels are called |
+| What kind of object a post is. This is identified automatically and never shown | Which platforms to bring in |
+| Whether a link is really an image, video, or file, and should be saved as one | Whether an item is public, private, or left out |
+| How to prove nothing was lost | When to go live |
 
 ## What to keep in the record
 
 | Content you have | How to carry it over |
 | --- | --- |
 | Essay, caption, thread, or link | Use a Markdown body, with an optional title. |
+| A link to an image, video, audio file, or document | Post the link on its own, or attach it with `--media ID=URL`. The file is taken in and the link kept as its source. |
+| A link to a page | Post the link. Its page's title, description, and preview image are saved with it. |
 | Images, audio, or video you have the files for | Upload them as blobs to your PDS. Place them in the body with `media:ID` references. |
 | Existing website URL | Use it as the canonical URL if the page stays there. The starter publisher generates `/posts/<slug>`; adjust the site's writer and routes when keeping an existing path. |
 | Social post ID, URL, and date | Preserve the ID as a string, the original URL in `source.uri`, and the original date in `publishedAt` when available. |
 | A reply, follow-up, or thread | List the earlier post's AT URI, or the web page's URL, in `connect`. |
 | Writings, photographs, projects, or other groups | Use the section's own name as the `label`, and a `sublabel` for a group inside it. [Forms, labels, and sublabels](labels.md) |
 
-The [Java importer](../README.md#import-an-x-archive) handles X exports. The [Markdown publisher](../README.md#publish-a-markdown-post) works with local text and media from other sources and accepts source metadata. For another platform's export, have your agent map the fields and convert a sample first. Each export has its own format and may omit media or other context.
+The [Java importer](../README.md#import-an-x-archive) handles X exports. The [publish command](../README.md#publish-a-post) works with local text and media from other sources and accepts source metadata. For another platform's export, have your agent map the fields and convert a sample first. Each export has its own format and may omit media or other context.
 
 ## Own the schema and its addresses
 

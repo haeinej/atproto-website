@@ -55,6 +55,14 @@ test('an individual post resolves its record and escapes untrusted content', asy
   assert.match(html, /Things I make · &lt;script&gt;/);
   assert.match(html, /data-form="writing"/);
   assert.doesNotMatch(html, /<script|<img src=x|href="javascript:|src="https:\/\/other\.example/);
+  const linked = await servePost(request, config, 'test-post', async () => Response.json({ uri, value: {
+    ...example, media: [], body: '<https://example.org/a>', form: 'link',
+    link: { uri: 'https://www.example.org/a', title: 'A <b>page</b>', description: 'About it.', image: example.media[0].original },
+  } }));
+  const card = await linked.text();
+  assert.match(card, /<title>A &lt;b&gt;page&lt;\/b&gt;<\/title>/);
+  assert.match(card, /class="link-card" href="https:\/\/www\.example\.org\/a"><img src="https:\/\/pds\.example\.test\/xrpc\/com\.atproto\.sync\.getBlob[^"]*" alt=""/);
+  assert.match(card, /<strong>A &lt;b&gt;page&lt;\/b&gt;<\/strong><span>About it\.<\/span><small>example\.org<\/small>/);
   const missing = await servePost(request, config, 'test-post', async () =>
     Response.json({ error: 'RecordNotFound' }, { status: 400 }));
   assert.equal(missing.status, 404);
@@ -289,7 +297,15 @@ test('a post that is a link to a file takes the file in and keeps its source', a
   const png = Buffer.from('iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR4nGNgYGD4DwABBAEAfbLI3wAAAABJRU5ErkJggg==', 'base64');
   const server = createServer((request, response) => {
     if (request.url === '/street.png') response.writeHead(200, { 'Content-Type': 'image/png' }).end(png);
+    else if (request.url === '/photo-123?w=800') response.writeHead(200, { 'Content-Type': 'image/png' }).end(png);
     else if (request.url === '/page.png') response.writeHead(200, { 'Content-Type': 'text/html' }).end('<p>A page</p>');
+    else if (request.url === '/an-article') {
+      response.writeHead(200, { 'Content-Type': 'text/html; charset=utf-8' }).end(`<html><head><title>Fallback</title>
+        <meta property="og:title" content="On walking in weather &amp; why">
+        <meta content="A short essay about rain." name="description">
+        <meta property="og:site_name" content="Example Review"><meta property="og:image" content="/street.png">
+        </head><body>An article</body></html>`);
+    }
     else response.writeHead(404).end();
   });
   await new Promise(resolve => server.listen(0, '127.0.0.1', resolve));
@@ -311,6 +327,20 @@ test('a post that is a link to a file takes the file in and keeps its source', a
     assert.equal(image.record.form, 'image');
     assert.equal(image.record.body, '![A wet street](media:web)');
     assert.deepEqual(image.fromWeb, { web: `${web}/street.png` });
+
+    // The address need not look like a file: what the other site returns decides it.
+    const bare = await preview(`<${web}/photo-123?w=800>`);
+    assert.equal(bare.record.form, 'image');
+    assert.deepEqual(bare.fromWeb, { web: `${web}/photo-123?w=800` });
+
+    // A link keeps what its page says about itself, and a copy of the page's preview image.
+    const article = await preview(`Worth reading.\n\n<${web}/an-article>`);
+    assert.equal(article.record.form, 'link');
+    assert.deepEqual(article.record.link, {
+      uri: `${web}/an-article`, title: 'On walking in weather & why', description: 'A short essay about rain.', site: 'Example Review',
+    });
+    assert.equal(article.linkImage, `${web}/street.png`);
+    assert.equal(article.stderr, '');
 
     // A comment beside it, a page that only looks like a file, or --form link: each stays a link.
     assert.equal((await preview(`Look at this.\n\n<${web}/street.png>`)).record.form, 'link');
