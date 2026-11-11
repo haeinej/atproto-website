@@ -156,3 +156,29 @@ test('another edition\'s own words stay with the site, and the site\'s way of wr
   assert.match(adoptPage({ record: full }).findings[0].where, /block 2/);
   assert.deepEqual(adoptPage({ record: full, rules: { ...rules, inline: { ownLinksRelative: true } } }).findings, []);
 });
+
+test('headings and lists inside section wrappers are cut and built back', () => {
+  const paper = `<main><h1>A paper</h1><div class="body"><section class="part" aria-labelledby="one">
+<h2 id="one">1. The problem</h2>
+<p>People <strong>rarely</strong> say what they want.</p>
+<ul>
+  <li><strong>Recall:</strong> can it be found?</li>
+  <li>Is it right?</li>
+</ul>
+</section><section class="part"><h3>A smaller point</h3><ol><li>First.</li><li>Second.</li></ol></section></div></article></main>`;
+  const post = {
+    title: 'A paper', publishedAt: '2026-01-01T00:00:00Z',
+    body: '## 1. The problem\n\nPeople **rarely** say what they want.\n\n- **Recall:** can it be found?\n- Is it right?\n\n### A smaller point\n\n1. First.\n2. Second.',
+  };
+  const paperRules = { slots: [{ name: 'title', pattern: '(<h1>)(.*?)(</h1>)' }, { name: 'body', pattern: '(<div class="body">)(.*?)(</div></article>)' }] };
+  const adopted = adopt(paper, post, paperRules, { images: 'page' }, context);
+  assert.deepEqual(adopted.findings, []);
+  assert.deepEqual(adopted.blocks, ['h2', 'p', 'ul', 'h3', 'ol']);
+  // The section wrappers, the heading's id, and the list's own line breaks are design and stay.
+  assert.match(adopted.template, /<section class="part" aria-labelledby="one">\n<h2 id="one">\{\{b\.0\}\}<\/h2>/);
+  assert.match(adopted.template, /<ul>\n  <li>\{\{b\.2\.i\.0\}\}<\/li>\n  <li>\{\{b\.2\.i\.1\}\}<\/li>\n<\/ul>/);
+  assert.equal(build(adopted.template, post, paperRules, { images: 'page' }, context, adopted.blocks), paper);
+  // A list item that differs is named by its position.
+  const changed = adopt(paper, { ...post, body: post.body.replace('Is it right?', 'Is it wrong?') }, paperRules, { images: 'page' }, context);
+  assert.match(changed.findings[0].where, /block 3, item 2/);
+});
