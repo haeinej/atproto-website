@@ -15,8 +15,7 @@ import java.util.List;
 
 final class PdsClient implements AutoCloseable {
     private static final ObjectMapper JSON = new ObjectMapper();
-    private final HttpClient http = HttpClient.newBuilder().connectTimeout(Duration.ofSeconds(10))
-            .followRedirects(HttpClient.Redirect.NEVER).build();
+    private final HttpClient http;
     private final URI origin;
     private final String handle;
     private final String did;
@@ -24,6 +23,11 @@ final class PdsClient implements AutoCloseable {
     private String token;
 
     PdsClient(URI origin, String handle, String did, String password) {
+        var client = HttpClient.newBuilder().connectTimeout(Duration.ofSeconds(10))
+                .followRedirects(HttpClient.Redirect.NEVER);
+        // Local workerd accepts HTTP/1.1 without a cleartext HTTP/2 upgrade.
+        if ("http".equals(origin.getScheme())) client.version(HttpClient.Version.HTTP_1_1);
+        this.http = client.build();
         this.origin = origin;
         this.handle = handle;
         this.did = did;

@@ -17,7 +17,7 @@ public final class Importer {
                    [--site HTTPS_ORIGIN] [--publish --pds HTTPS_ORIGIN --handle HANDLE --did DID]
                    [--also-bluesky]
             Preview is offline. Publishing reads ATPROTO_APP_PASSWORD or prompts for an app password.
-            Site defaults to the handle's HTTPS origin, or https://haeinjung.com for preview.
+            Site defaults to the handle's HTTPS origin, or https://example.com for preview.
             """;
     private static final ObjectMapper JSON = new ObjectMapper();
 
@@ -66,7 +66,7 @@ public final class Importer {
             }
         }
         var selection = Archive.read(Path.of(require(options, "--archive")), selected);
-        URI site = origin(options.getOrDefault("--site", "https://" + options.getOrDefault("--handle", "haeinjung.com")), false);
+        URI site = origin(options.getOrDefault("--site", "https://" + options.getOrDefault("--handle", "example.com")), false);
         if (alsoBluesky) {
             var keys = new HashMap<String, String>();
             for (Post post : selection.posts()) {

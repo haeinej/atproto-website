@@ -7,7 +7,9 @@
   "routes": [
     { "pattern": "example.com/notes", "zone_name": "example.com" },
     { "pattern": "example.com/notes/*", "zone_name": "example.com" },
-    { "pattern": "example.com/notes.json*", "zone_name": "example.com" }
+    { "pattern": "example.com/notes.json*", "zone_name": "example.com" },
+    { "pattern": "example.com/posts", "zone_name": "example.com" },
+    { "pattern": "example.com/posts/*", "zone_name": "example.com" }
   ],
   "assets": {
     "directory": "../site",
@@ -17,8 +19,9 @@
   "vars": {
     "SITE_ORIGIN": "https://example.com",
     "ATPROTO_DID": "did:web:pds.example.com",
-    "ATPROTO_PDS_ORIGIN": "https://pds.example.com"
+    "ATPROTO_PDS_ORIGIN": "https://pds.example.com",
+    "INCLUDE_BLUESKY_POSTS": "false"
   },
-  "kv_namespaces": [{ "binding": "NOTES", "id": "00000000000000000000000000000000" }],
+  "kv_namespaces": [{ "binding": "NOTES" }],
   "triggers": { "crons": ["17 */6 * * *"] }
 }

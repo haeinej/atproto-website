@@ -1,92 +1,113 @@
-# Post Lexicon
+# AT Protocol Website
 
-`com.haeinjung.post` defines a platform-independent post on AT Protocol. A post can contain text, links, images, video, and audio. The same format works for posts you write directly and posts you import from elsewhere. [Lexicon](lexicons/com/haeinjung/post.json) · [Example post](examples/image-text-image-video.json)
+Host your posts and media on your own domain with Cloudflare and AT Protocol. Attach a posts page to an existing Cloudflare site, or run this project's starter site on a new hostname. Write posts in Markdown or bring over your X archive. The website reads public records from your Personal Data Server (PDS), and the files stay with those records.
 
-## Post grammar
-
-| Field | Meaning |
+| Component | Purpose |
 | --- | --- |
-| `body` | Required CommonMark. Use `![Description](media:media-1)` to place an attachment between paragraphs. |
-| `publishedAt` | Required publication date. The importer uses the original date. |
-| `canonicalUrl` | Required primary public URL for the post. |
-| `media` | Optional image, video, and audio attachments stored as blobs. Each attachment ID is unique within the post. Its position in the body determines where it appears. |
-| `source` | Optional provenance for a post published elsewhere. It includes the platform and original URL, with room for the original ID, author, and date. |
-| `title`, `summary`, `tags`, `updatedAt` | Optional metadata for the post. |
+| [Cirrus](cirrus/) | A Cloudflare Worker that runs your PDS. A Durable Object holds the repository and R2 holds its media. |
+| [Website and feed](site/) | A posts page, individual post URLs, and a JSON feed backed by Workers KV. |
+| [Post Lexicon](lexicons/com/haeinjung/post.json) | A shared post format with Markdown, ordered media, publication date, and optional source information. |
+| [X archive importer](importer/) | A Java CLI that previews an export and publishes selected posts and media to your PDS. |
 
-The example shows a photo, a paragraph, another photo, then a video. Cirrus stores the media files and the post references them by content ID. [AT Protocol blob spec](https://atproto.com/specs/blob)
+## Set up your site
 
-| Path | What it does |
-| --- | --- |
-| [`importer/`](importer/) | Java CLI for previewing and importing an archive |
-| [`lexicons/com/haeinjung/post.json`](lexicons/com/haeinjung/post.json) | AT Protocol schema for a post |
-| [`cirrus/`](cirrus/) | Cloudflare Worker project for the Cirrus PDS |
-| [`feed/`](feed/) and [`site/`](site/) | Scheduled post feed and the static page that reads it |
-| [`examples/`](examples/) | A post with text and media, and the website template for haeinjung.com |
-
-## Bluesky quick guide
-
-1. In the Bluesky app or on [bsky.app](https://bsky.app/), choose **Sign in → Hosting provider → Custom**. Enter your Cirrus hostname, then sign in with the handle and password for that account. [Cirrus sign-in guide](https://cirrus.earth/guides/sign-in-to-bluesky/)
-2. To share an imported post on Bluesky, add `--also-bluesky` to the [publish command](#publish-to-cirrus). The importer creates a Bluesky copy for compatible text and images. The preview's `fitsBluesky` field shows which posts qualify.
-3. Check your Bluesky profile for the copy. The website feed can also display it after its next refresh if it reads the same account.
-
-## Import an X archive
-
-The Java CLI currently reads X exports and converts eligible entries into `com.haeinjung.post` records.
-
-Use JDK 21 and Maven. Download your X data export, extract it, and keep `data/tweets.js`, any `tweets-partN.js` files, and `data/tweets_media/` together. [X archive instructions](https://help.x.com/en/managing-your-account/how-to-download-your-x-archive)
-
-From the repository root, build the CLI and run an offline preview. Pass the extracted archive folder or its `data/` directory.
+Use Node.js 22 or newer and pnpm. You'll need a Cloudflare account and a domain in an active Cloudflare zone. Java 21 and Maven are only needed for the X importer.
 
 ```sh
-mvn -f importer/pom.xml package
-java -jar importer/target/x-archive-importer.jar --archive /path/to/extracted-archive
-```
-
-The preview lists the records it would create and reports skipped entries, including replies, reposts, quote posts, and posts with missing or unsupported attachments. Use `--id YOUR_X_POST_ID` to preview a single post. Repeat `--id` to select several posts.
-
-## Publish to Cirrus
-
-Create an [app password](https://cirrus.earth/reference/pds-cli/#app-password) for your Cirrus account. Replace `YOUR_X_POST_ID` with the ID you previewed. The importer prompts for the password in a terminal and also accepts `ATPROTO_APP_PASSWORD` for scripted runs.
-
-```sh
-java -jar importer/target/x-archive-importer.jar \
-  --archive /path/to/extracted-archive \
-  --id YOUR_X_POST_ID \
-  --publish \
-  --pds https://pds.haeinjung.com \
-  --handle haeinjung.com \
-  --did did:web:pds.haeinjung.com \
-  --site https://haeinjung.com
-```
-
-Publishing writes public records to the selected account. Leave out `--id` to import every eligible post. Rerunning the same selection skips records with matching content. If an existing record differs, the importer stops and reports its AT URI.
-
-## Run the website feed
-
-Use Node.js and pnpm for the Cloudflare projects. Set `ATPROTO_DID` and `ATPROTO_PDS_ORIGIN` in [`feed/wrangler.jsonc`](feed/wrangler.jsonc) to the account and HTTPS PDS you want to read.
-
-```sh
+npm ci
 pnpm --dir cirrus install --frozen-lockfile
-pnpm --dir cirrus exec wrangler dev --config ../feed/wrangler.jsonc --test-scheduled
+pnpm --dir cirrus exec wrangler login
 ```
 
-With Wrangler running, trigger a local refresh and open the posts page. Use the port printed by Wrangler if it differs from `8787`. [Cloudflare cron testing](https://developers.cloudflare.com/workers/configuration/cron-triggers/#test-cron-triggers-locally)
+If you already have a PDS, use its HTTPS origin and your account DID. To start a new one, run `pnpm --dir cirrus pds init` and set up a hostname such as `pds.example.com`. Follow the Cirrus instructions to back up your signing key, verify your handle, and deploy the Worker. [Cirrus quick start](https://cirrus.earth/start/quick-start/)
+
+Generate the website configuration from the repository root. Replace the example URLs and DID with yours.
+
+```sh
+npm run --silent configure -- \
+  --site https://example.com \
+  --pds https://pds.example.com \
+  --did did:web:pds.example.com \
+  --mode attach > feed/wrangler.site.jsonc
+```
+
+- **Attach to a site.** Use `--mode attach` when the hostname already serves a Cloudflare Pages or Workers site. The Worker mounts `/notes/`, `/notes.json`, and `/posts/<slug>`. Choose a host where these paths are available. For a subdomain such as `www.example.com`, pass `--zone example.com`. [Cloudflare Worker routes](https://developers.cloudflare.com/workers/configuration/routing/routes/)
+- **Start a site.** Use `--mode standalone` with an available hostname such as `journal.example.com`. Cloudflare attaches it as a Custom Domain and serves the posts page at the root. [Cloudflare Custom Domains](https://developers.cloudflare.com/workers/configuration/routing/custom-domains/)
+
+The generated configuration uses a separate Worker name derived from the website hostname. Pass `--name` to select a specific Worker and `--kv` to use an existing KV namespace. Wrangler can create the KV namespace on deploy. [Wrangler provisioning](https://developers.cloudflare.com/workers/wrangler/configuration/#automatic-provisioning)
+
+### Preview and deploy
+
+Start Wrangler, then trigger a refresh in another terminal. Use the port Wrangler prints if it differs from `8787`.
+
+```sh
+pnpm --dir cirrus exec wrangler dev --config ../feed/wrangler.site.jsonc --test-scheduled
+```
 
 ```sh
 curl -fsS http://localhost:8787/cdn-cgi/local/scheduled
 curl -fsS http://localhost:8787/notes.json
 ```
 
-Open [the local posts page](http://localhost:8787/notes/). In production, the Worker refreshes the latest 20 entries every six hours and caches the result in Workers KV. It reads standard Bluesky posts and can include legacy `com.haeinjung.note` records with `INCLUDE_LEGACY_NOTES=true`.
-
-Direct rendering of `com.haeinjung.post` and its ordered media is pending. The website currently displays the optional Bluesky copies. Cirrus holds the original imported posts.
-
-## Deploy on Cloudflare
-
-For a new PDS, initialize the project in `cirrus/` with `pnpm pds init` after installing dependencies, then follow the Cirrus deployment guide for your hostname, handle, and signing key. Run `pnpm --dir cirrus run deploy` from the repository root once configured. If you already have a Cirrus account, use its existing origin and DID for the importer and feed. [Cirrus deployment guide](https://cirrus.earth/start/quick-start/#deploy)
-
-For the feed Worker, create a KV namespace and put its ID into the `NOTES` binding. Set `SITE_ORIGIN` and replace the example routes in `feed/wrangler.jsonc` with your domain. Those routes mount the posts page and feed on an existing website. [Cloudflare Workers KV setup](https://developers.cloudflare.com/kv/get-started/)
+Open [the local posts page](http://localhost:8787/notes/). Edit [the page](site/index.html) and [its stylesheet](site/notes.css) to match your site.
 
 ```sh
-pnpm --dir cirrus exec wrangler deploy --config ../feed/wrangler.jsonc
+pnpm --dir cirrus exec wrangler deploy --config ../feed/wrangler.site.jsonc
 ```
+
+The feed refreshes every six hours and shows the latest 20 posts by publication date. Individual post URLs read the record directly, so they work as soon as the record is public. To populate the feed immediately after deploying, use the `NOTES` binding written to the generated config or regenerate with `--kv` and your namespace ID.
+
+```sh
+snapshot_file="$(mktemp)"
+npm run --silent snapshot > "$snapshot_file" &&
+  pnpm --dir cirrus exec wrangler kv key put latest \
+    --config ../feed/wrangler.site.jsonc --binding NOTES --remote \
+    --path "$snapshot_file" --ttl 172800
+rm -f "$snapshot_file"
+```
+
+The Worker has a budget of 48 listing requests per refresh. Very large repositories may exceed that budget. The previous snapshot remains available for up to 48 hours after a temporary upstream failure.
+
+## Publish a Markdown post
+
+Create an app password for your PDS account and expose it to the command as `ATPROTO_APP_PASSWORD`. The CLI uses the account and website from the generated feed config. Omitting `--publish` previews the draft offline. [Cirrus app passwords](https://cirrus.earth/guides/create-app-password/)
+
+```sh
+npm run publish:post -- --file ./hello.md --slug hello --title 'Hello' --publish
+```
+
+Your post is available at `https://example.com/posts/hello` once published. To include a file in a specific part of the post, use an attachment reference such as `![A short clip](media:clip)` in the Markdown and add `--media clip=./clip.mp4` to the command. Repeat `--media` for additional files. The post can mix images, video, audio, links, and text. [Mixed-media example](examples/image-text-image-video.json)
+
+## Import an X archive
+
+Extract your X export and keep `data/tweets.js`, any `tweets-partN.js` files, and `data/tweets_media/` together. Build the importer and run an offline preview from the repository root. Use `--id YOUR_X_POST_ID` to preview a single post. [X archive instructions](https://help.x.com/en/managing-your-account/how-to-download-your-x-archive)
+
+```sh
+mvn -f importer/pom.xml package
+java -jar importer/target/x-archive-importer.jar \
+  --archive /path/to/extracted-archive \
+  --site https://example.com
+```
+
+Publish a reviewed selection to Cirrus. The importer prompts for an app password in a terminal and also accepts `ATPROTO_APP_PASSWORD` for scripted runs.
+
+```sh
+java -jar importer/target/x-archive-importer.jar \
+  --archive /path/to/extracted-archive \
+  --id YOUR_X_POST_ID \
+  --publish \
+  --pds https://pds.example.com \
+  --handle example.com \
+  --did did:web:pds.example.com \
+  --site https://example.com
+```
+
+Repeat `--id` to select multiple posts or omit it to import all eligible posts. Publishing writes public records and preserves the original date and URL. A rerun skips records with matching content. The preview reports replies, reposts, quote posts, and entries with missing or unsupported media.
+
+Add `--also-bluesky` to publish compatible text and images on Bluesky too. The preview's `fitsBluesky` field shows which posts qualify. To sign in with a Cirrus account in the Bluesky app, choose a custom hosting provider and enter the PDS hostname. [Cirrus sign-in guide](https://cirrus.earth/guides/sign-in-to-bluesky/)
+
+## Post format and compatibility
+
+Every archive post uses the shared `com.haeinjung.post` collection in the author's own repository. Each record has a Markdown body, a publication date, and a canonical URL. It can include a title, summary, tags, attachments, and the original publishing platform and URL. Attachment order follows the references in the body. [Lexicon](lexicons/com/haeinjung/post.json) · [AT Protocol blob spec](https://atproto.com/specs/blob)
+
+The starter configuration reads archive posts. To also list native Bluesky posts from the same account, set `INCLUDE_BLUESKY_POSTS=true` in the Worker config. The combined feed can show both records when you publish a Bluesky copy. Set `INCLUDE_LEGACY_NOTES=true` to include older `com.haeinjung.note` entries. The [haeinjung.com example](examples/haeinjung.com/notes-index.html) shows how the page can inherit an existing site's navigation.

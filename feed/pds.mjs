@@ -1,13 +1,26 @@
 export const COLLECTION = 'com.haeinjung.note';
 export const BSKY_POST = 'app.bsky.feed.post';
+export const ARCHIVE_POST = 'com.haeinjung.post';
 const DID = /^(?:did:plc:[a-z2-7]{24}|did:web:[a-zA-Z0-9.-]+)$/;
+const RECORD_KEY = /^[a-zA-Z0-9._:~-]{1,512}$/;
+
+export function isRecordKey(key) {
+  return typeof key === 'string' && RECORD_KEY.test(key) && key !== '.' && key !== '..';
+}
+
+export function webUrl(value) {
+  if (typeof value !== 'string' || !URL.canParse(value)) return undefined;
+  const url = new URL(value);
+  if (['https:', 'http:'].includes(url.protocol) && !url.username && !url.password) return url.href;
+}
 
 export function pdsConfig(env) {
   const did = env.ATPROTO_DID;
   const origin = URL.canParse(env.ATPROTO_PDS_ORIGIN) && new URL(env.ATPROTO_PDS_ORIGIN);
   if (!DID.test(did)) throw new Error('Set ATPROTO_DID to your PDS account DID');
-  if (!origin || origin.protocol !== 'https:' || origin.href !== `${origin.origin}/`) {
-    throw new Error('Set ATPROTO_PDS_ORIGIN to the HTTPS origin of your PDS');
+  const loopback = origin?.protocol === 'http:' && ['localhost', '127.0.0.1'].includes(origin.hostname);
+  if (!origin || (origin.protocol !== 'https:' && !loopback) || origin.href !== `${origin.origin}/`) {
+    throw new Error('Set the PDS origin to an HTTPS URL or a loopback HTTP URL for local development');
   }
   return { did, origin: origin.origin };
 }
@@ -56,5 +69,46 @@ export function normalizePost(value, key, pds) {
     postUrl: `https://bsky.app/profile/${pds.did}/post/${encodeURIComponent(key)}`,
     ...(images.length ? { images } : {}),
     ...(video ? { video } : {}),
+  };
+}
+
+const MEDIA_TYPES = {
+  image: /^image\/(?:jpeg|png|webp|gif|avif)$/,
+  video: /^video\/(?:mp4|webm|ogg|quicktime)$/,
+  audio: /^audio\/(?:mpeg|mp4|ogg|wav|wave|webm|aac|flac|x-wav|x-m4a)$/,
+};
+
+export function normalizeArchivePost(value, key, pds) {
+  if (value?.$type !== ARCHIVE_POST || typeof value.body !== 'string' ||
+      typeof value.publishedAt !== 'string' || new TextEncoder().encode(value.body).length > 262_144) return null;
+  const time = Date.parse(value.publishedAt);
+  const canonicalUrl = webUrl(value.canonicalUrl);
+  if (!Number.isFinite(time) || !canonicalUrl) return null;
+  const media = new Map();
+  if (Array.isArray(value.media)) {
+    for (const attachment of value.media) {
+      const kind = typeof attachment?.$type === 'string' && attachment.$type.startsWith(ARCHIVE_POST + '#')
+        ? attachment.$type.slice(ARCHIVE_POST.length + 1) : '';
+      if (!Object.hasOwn(MEDIA_TYPES, kind) || typeof attachment.id !== 'string' || media.has(attachment.id)) continue;
+      const url = blobUrl(attachment.original, MEDIA_TYPES[kind], pds);
+      if (!url) continue;
+      media.set(attachment.id, {
+        kind,
+        url,
+        alt: typeof attachment.alt === 'string' ? attachment.alt : '',
+        caption: typeof attachment.caption === 'string' ? attachment.caption : '',
+        poster: kind === 'video' ? blobUrl(attachment.poster, MEDIA_TYPES.image, pds) : null,
+      });
+    }
+  }
+  return {
+    body: value.body,
+    title: typeof value.title === 'string' ? value.title.trim().slice(0, 300) : '',
+    summary: typeof value.summary === 'string' ? value.summary.trim().slice(0, 300) : '',
+    createdAt: new Date(time).toISOString(),
+    canonicalUrl,
+    permalink: `/posts/${encodeURIComponent(key)}`,
+    sourceUrl: webUrl(value.source?.uri),
+    media,
   };
 }

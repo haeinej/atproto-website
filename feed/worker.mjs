@@ -1,4 +1,7 @@
-import { BSKY_POST, COLLECTION, normalizeNote, normalizePost, pdsConfig } from './pds.mjs';
+import {
+  ARCHIVE_POST, BSKY_POST, COLLECTION, isRecordKey, normalizeArchivePost, normalizeNote, normalizePost, pdsConfig,
+} from './pds.mjs';
+import { postPage, renderArchivePost } from './render.mjs';
 
 const SNAPSHOT_KEY = 'latest';
 const MAX_AGE = 48 * 60 * 60;
@@ -11,7 +14,7 @@ async function listNotes(env, pds, collection, normalize, maxPages, request) {
   const prefix = `at://${did}/${collection}/`;
 
   for (let page = 0; page < maxPages; page++) {
-    const response = await request(url, { redirect: 'error', signal: AbortSignal.timeout(10_000) });
+    const response = await request(url, { redirect: 'manual', signal: AbortSignal.timeout(10_000) });
     if ([400, 401, 403, 404, 410].includes(response.status)) await env.NOTES.delete(SNAPSHOT_KEY);
     if (!response.ok) throw new Error(`PDS returned HTTP ${response.status}`);
     const data = await response.json();
@@ -20,12 +23,12 @@ async function listNotes(env, pds, collection, normalize, maxPages, request) {
     for (const record of data.records) {
       if (typeof record?.uri !== 'string' || !record.uri.startsWith(prefix)) continue;
       const key = record.uri.slice(prefix.length);
-      if (!/^[a-zA-Z0-9._:~-]{1,512}$/.test(key) || key === '.' || key === '..') continue;
+      if (!isRecordKey(key)) continue;
       const note = normalize(record.value, key, pds);
       if (note) notes.set(record.uri, { uri: record.uri, ...note });
     }
 
-    if (!data.cursor) return [...notes.values()];
+    if (!data.cursor) return { records: [...notes.values()], pages: page + 1 };
     if (typeof data.cursor !== 'string' || cursors.has(data.cursor)) throw new Error('PDS returned an invalid cursor');
     cursors.add(data.cursor);
     url.searchParams.set('cursor', data.cursor);
@@ -35,13 +38,55 @@ async function listNotes(env, pds, collection, normalize, maxPages, request) {
 
 export async function refreshNotes(env, request = fetch, now = new Date()) {
   const pds = pdsConfig(env);
-  const includeLegacy = env.INCLUDE_LEGACY_NOTES === 'true';
-  const notes = await listNotes(env, pds, BSKY_POST, normalizePost, includeLegacy ? 40 : 48, request);
-  if (includeLegacy) notes.push(...await listNotes(env, pds, COLLECTION, normalizeNote, 8, request));
-  const latest = notes.sort((a, b) => b.createdAt.localeCompare(a.createdAt) || b.uri.localeCompare(a.uri)).slice(0, 20);
+  const collections = [[ARCHIVE_POST, normalizeArchivePost]];
+  if (env.INCLUDE_BLUESKY_POSTS !== 'false') collections.push([BSKY_POST, normalizePost]);
+  if (env.INCLUDE_LEGACY_NOTES === 'true') collections.push([COLLECTION, normalizeNote]);
+  const notes = [];
+  let pagesLeft = 48;
+  for (const [index, [collection, normalize]] of collections.entries()) {
+    const reservedPages = collections.length - index - 1;
+    const { records, pages } = await listNotes(env, pds, collection, normalize, pagesLeft - reservedPages, request);
+    notes.push(...records);
+    pagesLeft -= pages;
+  }
+  const latest = notes
+    .sort((a, b) => b.createdAt.localeCompare(a.createdAt) || b.uri.localeCompare(a.uri))
+    .slice(0, 20)
+    .map(note => typeof note.body === 'string' ? renderArchivePost(note) : note);
   const snapshot = { ...pds, refreshedAt: now.toISOString(), notes: latest };
   await env.NOTES.put(SNAPSHOT_KEY, JSON.stringify(snapshot), { expirationTtl: MAX_AGE });
   return snapshot;
+}
+
+export async function servePost(request, env, key, get = fetch) {
+  if (request.method !== 'GET' && request.method !== 'HEAD') {
+    return new Response(null, { status: 405, headers: { Allow: 'GET, HEAD' } });
+  }
+  if (!isRecordKey(key)) return new Response('Post not found', { status: 404 });
+  try {
+    const pds = pdsConfig(env);
+    const url = new URL('/xrpc/com.atproto.repo.getRecord', pds.origin);
+    url.search = new URLSearchParams({ repo: pds.did, collection: ARCHIVE_POST, rkey: key });
+    const response = await get(url, { redirect: 'manual', signal: AbortSignal.timeout(10_000) });
+    if (response.status === 404) return new Response('Post not found', { status: 404 });
+    const data = await response.json();
+    if (response.status === 400 && data.error === 'RecordNotFound') {
+      return new Response('Post not found', { status: 404 });
+    }
+    if (!response.ok) throw new Error(`PDS returned HTTP ${response.status}`);
+    const post = data.uri === `at://${pds.did}/${ARCHIVE_POST}/${key}` &&
+      normalizeArchivePost(data.value, key, pds);
+    if (!post) return new Response('Post not found', { status: 404 });
+    return new Response(request.method === 'HEAD' ? null : postPage(renderArchivePost(post)), {
+      headers: {
+        'Content-Type': 'text/html; charset=utf-8',
+        'Cache-Control': 'public, max-age=300',
+        'X-Content-Type-Options': 'nosniff',
+      },
+    });
+  } catch {
+    return new Response('Post is temporarily unavailable', { status: 502 });
+  }
 }
 
 export default {
@@ -50,12 +95,21 @@ export default {
   },
   async fetch(request, env) {
     const url = new URL(request.url);
-    if (url.pathname === '/notes') {
+    if (['/notes', '/posts', '/posts/'].includes(url.pathname)) {
       url.pathname = '/notes/';
       return Response.redirect(url, 308);
     }
-    if (url.pathname.startsWith('/notes/')) {
-      url.pathname = url.pathname === '/notes/' ? '/index.html' : url.pathname.slice('/notes'.length);
+    if (url.pathname.startsWith('/posts/')) {
+      let key;
+      try {
+        key = decodeURIComponent(url.pathname.slice('/posts/'.length));
+      } catch {
+        return new Response('Post not found', { status: 404 });
+      }
+      return servePost(request, env, key);
+    }
+    if ((url.pathname === '/' && env.STANDALONE_SITE === 'true') || url.pathname.startsWith('/notes/')) {
+      url.pathname = url.pathname === '/' || url.pathname === '/notes/' ? '/index.html' : url.pathname.slice('/notes'.length);
       return env.ASSETS.fetch(new Request(url, request));
     }
     const headers = {
