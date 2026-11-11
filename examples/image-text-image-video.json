@@ -1,0 +1,60 @@
+{
+  "$type": "com.haeinjung.post",
+  "body": "![Street after the rain](media:media-1)\n\nThe light changed as I walked toward the station.\n\n![Reflections in a shop window](media:media-2)\n\n![A short clip from the walk](media:media-3)",
+  "publishedAt": "2024-11-06T09:00:00Z",
+  "canonicalUrl": "https://haeinjung.com/posts/x-1854000000000000000",
+  "source": {
+    "platform": "x",
+    "id": "1854000000000000000",
+    "uri": "https://x.com/i/web/status/1854000000000000000",
+    "publishedAt": "2024-11-06T09:00:00Z"
+  },
+  "media": [
+    {
+      "$type": "com.haeinjung.post#image",
+      "id": "media-1",
+      "sourceUrl": "https://pbs.twimg.com/media/street.png",
+      "original": {
+        "$type": "blob",
+        "mimeType": "image/png",
+        "size": 116,
+        "ref": {
+          "$link": "bafkreihdzy2dvbgahbcfwbhwiez7uixljuvceehhq2mhupen255ahrltvu"
+        }
+      },
+      "alt": "Street after the rain",
+      "width": 32,
+      "height": 24
+    },
+    {
+      "$type": "com.haeinjung.post#image",
+      "id": "media-2",
+      "sourceUrl": "https://pbs.twimg.com/media/window.png",
+      "original": {
+        "$type": "blob",
+        "mimeType": "image/png",
+        "size": 116,
+        "ref": {
+          "$link": "bafkreihjqyh7dak57ddty6lrd6juvbhloadxvndtny7k5y5gw7gf7viq7y"
+        }
+      },
+      "alt": "Reflections in a shop window",
+      "width": 32,
+      "height": 24
+    },
+    {
+      "$type": "com.haeinjung.post#video",
+      "id": "media-3",
+      "sourceUrl": "https://video.twimg.com/walk.mp4?tag=12",
+      "original": {
+        "$type": "blob",
+        "mimeType": "video/mp4",
+        "size": 1832,
+        "ref": {
+          "$link": "bafkreiezuscyjzxdcj2f56japh2yr4ka4euz6lrwfooqzzsjbegwer3pyu"
+        }
+      },
+      "durationMs": 1000
+    }
+  ]
+}

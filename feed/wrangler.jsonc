@@ -1,0 +1,24 @@
+{
+  "name": "website-notes",
+  "main": "worker.mjs",
+  "compatibility_date": "2025-12-02",
+  "workers_dev": false,
+  "preview_urls": false,
+  "routes": [
+    { "pattern": "example.com/notes", "zone_name": "example.com" },
+    { "pattern": "example.com/notes/*", "zone_name": "example.com" },
+    { "pattern": "example.com/notes.json*", "zone_name": "example.com" }
+  ],
+  "assets": {
+    "directory": "../site",
+    "binding": "ASSETS",
+    "html_handling": "none"
+  },
+  "vars": {
+    "SITE_ORIGIN": "https://example.com",
+    "ATPROTO_DID": "did:web:pds.example.com",
+    "ATPROTO_PDS_ORIGIN": "https://pds.example.com"
+  },
+  "kv_namespaces": [{ "binding": "NOTES", "id": "00000000000000000000000000000000" }],
+  "triggers": { "crons": ["17 */6 * * *"] }
+}

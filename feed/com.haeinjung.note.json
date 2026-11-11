@@ -1,0 +1,20 @@
+{
+  "lexicon": 1,
+  "id": "com.haeinjung.note",
+  "defs": {
+    "main": {
+      "type": "record",
+      "key": "any",
+      "description": "A public note for haeinjung.com.",
+      "record": {
+        "type": "object",
+        "required": ["text", "createdAt"],
+        "properties": {
+          "text": { "type": "string", "minLength": 1, "maxLength": 10000 },
+          "createdAt": { "type": "string", "format": "datetime" },
+          "sourceUrl": { "type": "string", "format": "uri", "maxLength": 512 }
+        }
+      }
+    }
+  }
+}

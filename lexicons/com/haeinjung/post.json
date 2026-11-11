@@ -1,0 +1,138 @@
+{
+  "lexicon": 1,
+  "id": "com.haeinjung.post",
+  "defs": {
+    "main": {
+      "type": "record",
+      "key": "any",
+      "record": {
+        "type": "object",
+        "required": [
+          "body",
+          "publishedAt",
+          "canonicalUrl"
+        ],
+        "properties": {
+          "title": { "type": "string" },
+          "body": {
+            "type": "string",
+            "maxLength": 262144,
+            "description": "CommonMark with optional media:ID attachment references."
+          },
+          "summary": { "type": "string" },
+          "publishedAt": { "type": "string", "format": "datetime" },
+          "updatedAt": { "type": "string", "format": "datetime" },
+          "canonicalUrl": { "type": "string", "format": "uri" },
+          "tags": {
+            "type": "array",
+            "items": { "type": "string" }
+          },
+          "source": {
+            "type": "ref",
+            "ref": "#source"
+          },
+          "media": {
+            "type": "array",
+            "items": {
+              "type": "union",
+              "refs": [
+                "#image",
+                "#video",
+                "#audio"
+              ]
+            }
+          }
+        }
+      }
+    },
+    "source": {
+      "type": "object",
+      "required": [
+        "platform",
+        "uri"
+      ],
+      "properties": {
+        "platform": {
+          "type": "string",
+          "knownValues": [
+            "x",
+            "instagram",
+            "substack",
+            "bluesky"
+          ]
+        },
+        "uri": { "type": "string", "format": "uri" },
+        "id": { "type": "string" },
+        "author": { "type": "string" },
+        "publishedAt": { "type": "string", "format": "datetime" }
+      }
+    },
+    "image": {
+      "type": "object",
+      "required": [
+        "id",
+        "original"
+      ],
+      "properties": {
+        "id": { "type": "string", "minLength": 1, "maxLength": 64 },
+        "original": {
+          "type": "blob",
+          "accept": [
+            "image/*"
+          ]
+        },
+        "alt": { "type": "string" },
+        "caption": { "type": "string" },
+        "credit": { "type": "string" },
+        "sourceUrl": { "type": "string", "format": "uri" },
+        "width": { "type": "integer", "minimum": 1 },
+        "height": { "type": "integer", "minimum": 1 },
+        "extractedText": { "type": "string" }
+      }
+    },
+    "video": {
+      "type": "object",
+      "required": [
+        "id",
+        "original"
+      ],
+      "properties": {
+        "id": { "type": "string", "minLength": 1, "maxLength": 64 },
+        "original": {
+          "type": "blob",
+          "accept": [
+            "video/*"
+          ]
+        },
+        "poster": {
+          "type": "blob",
+          "accept": [
+            "image/*"
+          ]
+        },
+        "caption": { "type": "string" },
+        "sourceUrl": { "type": "string", "format": "uri" },
+        "durationMs": { "type": "integer", "minimum": 0 }
+      }
+    },
+    "audio": {
+      "type": "object",
+      "required": [
+        "id",
+        "original"
+      ],
+      "properties": {
+        "id": { "type": "string", "minLength": 1, "maxLength": 64 },
+        "original": {
+          "type": "blob",
+          "accept": [
+            "audio/*"
+          ]
+        },
+        "caption": { "type": "string" },
+        "sourceUrl": { "type": "string", "format": "uri" },
+        "durationMs": { "type": "integer", "minimum": 0 }
+      }
+    }
+  }
+}

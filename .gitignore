@@ -1,0 +1,15 @@
+node_modules/
+dist/
+.wrangler/
+.wrangler-auth/
+.dev.vars*
+.env*
+!.env.example
+.account-password
+*.secrets.json
+worker-configuration.d.ts
+target/
+twitter-archive*/
+tweets*.js
+tweets_media/
+.DS_Store

@@ -1,0 +1,27 @@
+* { box-sizing: border-box; }
+body {
+  margin: 0;
+  color: #0409a6;
+  background: #fff;
+  font: 400 .8rem/1.66 "Helvetica Neue", Helvetica, Arial, sans-serif;
+}
+a { color: inherit; text-underline-offset: .2em; }
+a:focus-visible { outline: 2px solid currentColor; outline-offset: 3px; }
+.notes-page { width: 100%; max-width: 650px; padding: 32px 32px 64px; }
+.notes-page h1 {
+  margin: 0 0 24px;
+  font-size: clamp(1.6rem, 3.2vw, 2.64rem);
+  line-height: 1.02;
+  font-weight: 500;
+}
+.notes-list { list-style: none; margin: 0; padding: 0; }
+.notes-list li { padding: 16px 0; border-top: 1px solid currentColor; }
+.note-meta { display: flex; flex-wrap: wrap; align-items: baseline; gap: 8px 16px; }
+.note-text { margin: 8px 0 0; white-space: pre-wrap; overflow-wrap: anywhere; }
+.note-images { display: grid; gap: 8px; grid-template-columns: repeat(auto-fit, minmax(min(100%, 180px), 1fr)); }
+.note-images, .notes-list video { margin-top: 10px; }
+.note-images img, .notes-list video { display: block; width: 100%; height: auto; }
+@media (max-width: 720px) {
+  .notes-page { padding: 28px 18px 48px; }
+  .notes-page h1 { font-size: clamp(1.6rem, 8vw, 2.24rem); }
+}
