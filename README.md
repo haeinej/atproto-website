@@ -1,18 +1,32 @@
 # AT Protocol Website
 
-Import posts from an X data export into a Cirrus Personal Data Server (PDS). The Java importer keeps the original post date and X URL with the text, photos, and videos. A separate Cloudflare Worker serves a Notes page and JSON feed for the website.
+A personal archive for what you share across social platforms. Save posts as notes on your own AT Protocol server, with the original source and date alongside the content.
 
-The archive format uses an Are.na-inspired layout. One post can place text and media in sequence, such as **image → text → image → video**. The importer writes that sequence as Markdown with `media:ID` references and stores the media files as AT Protocol blobs on Cirrus. The same record keeps the original X ID and URL alongside the intended URL on your website. [AT Protocol blob spec](https://atproto.com/specs/blob)
+Think Apple Notes for things you've published online. A note can start with a photo, continue with a paragraph and another photo, then end with a video. The archive stores that order in the note's body and keeps the media files on Cirrus. A separate Cloudflare Worker serves a Notes page and JSON feed for your website. [Mixed-media note example](examples/image-text-image-video.json) · [AT Protocol blob spec](https://atproto.com/specs/blob)
 
 | Path | What it does |
 | --- | --- |
-| [`importer/`](importer/) | Java CLI for previewing and publishing an extracted X archive |
+| [`importer/`](importer/) | Java CLI for previewing and importing an archive |
 | [`lexicons/com/haeinjung/post.json`](lexicons/com/haeinjung/post.json) | Schema for the `com.haeinjung.post` archive record |
 | [`cirrus/`](cirrus/) | Cloudflare Worker project for the Cirrus PDS |
 | [`feed/`](feed/) and [`site/`](site/) | Scheduled Notes feed and the static page that reads it |
 | [`examples/`](examples/) | A mixed-media archive record and the Notes template for haeinjung.com |
 
-## Preview an archive
+## How a note is stored
+
+- `body` contains CommonMark. A reference such as `![Street after the rain](media:media-1)` places an attachment where it belongs in the note.
+- `media` holds images, video, or audio. Each attachment has an ID and an `original` blob reference, plus details such as alt text or a source URL when available.
+- `publishedAt` preserves the original date. `source` can identify the platform, post ID, and original URL. `canonicalUrl` records the intended website permalink.
+
+## Bluesky quick guide
+
+1. In the Bluesky app or on [bsky.app](https://bsky.app/), choose **Sign in → Hosting provider → Custom**. Enter your Cirrus hostname, then sign in with the handle and password for that account. [Cirrus sign-in guide](https://cirrus.earth/guides/sign-in-to-bluesky/)
+2. To share an imported note on Bluesky, add `--also-bluesky` to the publish command below. The importer saves the archive note and creates a separate Bluesky post for compatible text and images. The preview's `fitsBluesky` field shows which entries qualify. Notes with video or longer text can still be saved to the archive.
+3. Check your Bluesky profile for the copy. The website's Notes feed can also display it after its next refresh if the feed reads the same account.
+
+## Import an X archive
+
+The current CLI reads X exports. The note schema can store posts from any platform that supplies the same content and source fields.
 
 Use JDK 21 and Maven. Download your X data export, extract it, and keep `data/tweets.js`, any `tweets-partN.js` files, and `data/tweets_media/` together. [X archive instructions](https://help.x.com/en/managing-your-account/how-to-download-your-x-archive)
 
@@ -41,16 +55,6 @@ java -jar importer/target/x-archive-importer.jar \
 ```
 
 Publishing writes public records to the selected account. Leave out `--id` to import every eligible post. Rerunning the same selection skips records with matching content. If an existing record differs, the importer stops and reports its AT URI.
-
-Add `--also-bluesky` to create a standard `app.bsky.feed.post` for each compatible entry. The current export supports text and compatible image attachments. Posts with video or text over the Bluesky limit are still saved in the archive format.
-
-## How the post format works
-
-- `body` contains CommonMark. A reference such as `![Street after the rain](media:media-1)` places an attachment where it belongs in the post.
-- `media` contains typed attachments. Each attachment has an ID and an `original` blob reference, plus metadata such as alt text or the source URL when available. The schema supports images, video, and audio. The X importer reads photos and supported MP4 attachments from the export.
-- `publishedAt` preserves the original date. `source` tracks the X ID and URL. `canonicalUrl` records the intended website permalink.
-
-See the [image, text, image, video example](examples/image-text-image-video.json) for a full record. This format groups media within a single post. Reusable blocks and channel membership are outside the current schema.
 
 ## Run the website feed
 
