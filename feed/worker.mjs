@@ -1,5 +1,6 @@
 import {
-  ARCHIVE_POST, BSKY_POST, COLLECTION, isRecordKey, normalizeArchivePost, normalizeNote, normalizePost, pdsConfig,
+  ARCHIVE_POST, BSKY_POST, BSKY_PROFILE, COLLECTION, isRecordKey, normalizeArchivePost, normalizeNote, normalizePost,
+  normalizeProfile, pdsConfig, siblingCollection,
 } from './pds.mjs';
 import { servePrivate } from './private.mjs';
 import { plainName, postPage, renderArchivePost } from './render.mjs';
@@ -25,6 +26,30 @@ function buildGraph(posts) {
     for (const link of post.links ?? []) graph[link]?.branches.push(post.uri);
   }
   return graph;
+}
+
+async function readRecord(pds, collection, rkey, request) {
+  const url = new URL('/xrpc/com.atproto.repo.getRecord', pds.origin);
+  url.search = new URLSearchParams({ repo: pds.did, collection, rkey });
+  const response = await request(url, { redirect: 'manual', signal: AbortSignal.timeout(10_000) });
+  return response.ok ? (await response.json()).value ?? null : null;
+}
+
+// The site's own profile record, or the account's Bluesky profile when there is none.
+async function loadProfile(pds, request) {
+  for (const collection of [siblingCollection(pds.collection, 'profile'), BSKY_PROFILE]) {
+    const value = await readRecord(pds, collection, 'self', request);
+    if (!value) continue;
+    const links = [];
+    for (const ref of (Array.isArray(value.links) ? value.links : []).slice(0, 10)) {
+      // A profile link is a record in the same repository.
+      const [, did, type, rkey] = /^at:\/\/([^/]+)\/([^/]+)\/([^/]+)$/.exec(ref?.uri ?? '') ?? [];
+      if (did === pds.did && isRecordKey(rkey)) links.push(await readRecord(pds, type, rkey, request));
+    }
+    const profile = normalizeProfile(value, pds, links.filter(Boolean));
+    if (profile) return profile;
+  }
+  return null;
 }
 
 async function listNotes(env, pds, collection, normalize, maxPages, request) {
@@ -76,7 +101,9 @@ export async function refreshNotes(env, request = fetch, now = new Date()) {
     .sort((a, b) => a.createdAt.localeCompare(b.createdAt) || a.uri.localeCompare(b.uri));
   const graph = buildGraph(rendered);
   const latest = rendered.reverse().slice(0, 20).map(({ name, ...note }) => note);
-  const snapshot = { ...pds, refreshedAt: now.toISOString(), notes: latest, graph };
+  // A profile that cannot be read leaves the feed as it is.
+  const profile = await loadProfile(pds, request).catch(() => null);
+  const snapshot = { ...pds, refreshedAt: now.toISOString(), notes: latest, graph, ...(profile ? { profile } : {}) };
   await env.NOTES.put(SNAPSHOT_KEY, JSON.stringify(snapshot), { expirationTtl: MAX_AGE });
   return snapshot;
 }
@@ -135,7 +162,7 @@ export default {
       return servePrivate(request, env, url.pathname);
     }
     // The graph lives under /notes/ so an attached site needs no extra route.
-    const isFeed = ['/notes.json', '/notes/graph.json'].includes(url.pathname);
+    const isFeed = ['/notes.json', '/notes/graph.json', '/notes/profile.json'].includes(url.pathname);
     if (!isFeed && ((url.pathname === '/' && env.STANDALONE_SITE === 'true') || url.pathname.startsWith('/notes/'))) {
       url.pathname = url.pathname === '/' || url.pathname === '/notes/' ? '/index.html' : url.pathname.slice('/notes'.length);
       return env.ASSETS.fetch(new Request(url, request));
@@ -155,8 +182,8 @@ export default {
         !(age < MAX_AGE * 1000)) {
       return Response.json({ error: 'Notes are unavailable' }, { status: 503, headers });
     }
-    const { graph = {}, ...feed } = snapshot;
-    return Response.json(url.pathname === '/notes.json' ? feed : graph, {
+    const { graph = {}, profile = {}, ...feed } = snapshot;
+    return Response.json({ '/notes.json': feed, '/notes/graph.json': graph, '/notes/profile.json': profile }[url.pathname], {
       headers: { ...headers, 'Cache-Control': 'public, max-age=300' },
     });
   },

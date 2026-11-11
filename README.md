@@ -31,7 +31,7 @@ The posts page lists every post by name, with its platform, label, and date. A p
 | Platforms | One per platform. |
 | Visibility | `private` and `public`. Offered only to you, once you are signed in. |
 
-Each post has its own page with its text, date, platform, and label.
+Each post has its own page with its text, date, platform, and label. Your profile sits above the list.
 
 ## What is in this repository
 
@@ -42,6 +42,7 @@ Each post has its own page with its text, date, platform, and label.
 | [Post Lexicon template](lexicons/com/haeinjung/post.json) | Generate your own schema from the reference format, then adapt it to your content. |
 | [Forms](feed/forms.mjs) | The thirteen forms, how each is identified, and what each may hold. |
 | [Publish command](scripts/publish.mjs) | Previews and publishes a Markdown post with its attachments, publicly or privately. |
+| [Profile](scripts/profile.mjs) | Sets your name, description, pronouns, pictures, and links, in the same shape as a Bluesky profile. |
 | [X archive importer](importer/) | A Java CLI that previews an export and publishes selected posts and media to your PDS. |
 | [migrate-site skill](skills/migrate-site/SKILL.md) | Instructions for a coding agent to move a site and social posts in without loss, touching only the content side. |
 | [suggest-labels skill](skills/suggest-labels/SKILL.md) | Instructions for a coding agent to settle your site's labels with you. |
@@ -130,6 +131,20 @@ To say what a post came from, add `--connect` with the slug of an earlier post o
 
 Each post shows its platform. A post published this way is `website`. When bringing content from another site, pass `--date` for the original date, `--source-platform` (such as `substack`) and `--source-url` for where it appeared, and optionally `--source-id` for its original identifier.
 
+## Say who you are
+
+Your profile is a record too: your name, description, pronouns, a picture, a banner, and up to ten links. It has the same fields as a Bluesky profile, so the two can be copied either way unchanged.
+
+```sh
+npm run profile -- --name 'Your Name' --pronouns 'she/her' \
+  --description 'A line or two about you.' --avatar ./me.jpg \
+  --link 'Newsletter=https://example.substack.com' --link https://github.com/example --publish
+```
+
+Without `--publish` the command prints the record and changes nothing. Setting one field leaves the others as they are, and giving any `--link` replaces the list. `--from-bluesky` starts from the profile you already have on Bluesky. If you set no profile here, the site shows your Bluesky profile when the account has one.
+
+The posts page shows the profile above the list, and `/notes/profile.json` has it for your own pages. Generate the two schemas beside your post schema with `npm run --silent lexicon -- --kind profile` and `--kind profileLink`.
+
 ## Keep a post private
 
 Every record on a PDS is public, so a private post is not sent there. It is saved in your site's KV namespace and shown only after you sign in through Cloudflare Access.
@@ -182,10 +197,11 @@ The starter configuration reads archive posts. To also list native Bluesky posts
 
 ## Status
 
-`npm test` covers the feed, post pages, the posts graph, form identification and checks, taking in files and link previews from the web, and access to private posts.
+`npm test` covers the feed, post pages, the posts graph, the profile, form identification and checks, taking in files and link previews from the web, and access to private posts.
 
 - **Not yet run against Cloudflare.** Private posts are tested with a stand-in for Cloudflare Access and for KV. The step that writes a private post with Wrangler has only been previewed.
 - **X importer not rebuilt.** It now saves each post's form and a single label. That change has not been compiled or run.
+- **The profile command has only been previewed.** Saving a profile, its pictures, and its links to a PDS has not been run.
 - **No command to change a published post.** There is no way yet to change a post's label, move a private post to public, or delete a private post, other than by hand.
 - **Embeds do not play.** An embed keeps its page's title, description, and preview image and is shown as a card that links out, not as a player.
 - **Connections are stored, not shown.** `connect` and links between posts are in the record and in `/notes/graph.json`. There is no graph view.

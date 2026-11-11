@@ -3,6 +3,7 @@ import { cleanName, isForm } from './forms.mjs';
 export const COLLECTION = 'com.haeinjung.note';
 export const BSKY_POST = 'app.bsky.feed.post';
 export const ARCHIVE_POST = 'com.haeinjung.post';
+export const BSKY_PROFILE = 'app.bsky.actor.profile';
 const DID = /^(?:did:plc:[a-z2-7]{24}|did:web:[a-zA-Z0-9.-]+)$/;
 const RECORD_KEY = /^[a-zA-Z0-9._:~-]{1,512}$/;
 const NSID = /^[a-z](?:[a-z0-9-]{0,61}[a-z0-9])?(?:\.[a-z0-9](?:[a-z0-9-]{0,61}[a-z0-9])?)+\.[a-zA-Z][a-zA-Z0-9]{0,62}$/;
@@ -14,6 +15,11 @@ export function postCollection(value = ARCHIVE_POST) {
     throw new Error('Use a custom post NSID under your domain, such as com.example.post');
   }
   return value;
+}
+
+// A record type beside the post type: com.example.post -> com.example.profile.
+export function siblingCollection(collection, name) {
+  return `${collection.slice(0, collection.lastIndexOf('.'))}.${name}`;
 }
 
 export function isRecordKey(key) {
@@ -190,4 +196,24 @@ export function normalizeArchivePost(value, key, pds) {
     ...(connect.length ? { connect } : {}),
     media,
   };
+}
+
+// The author's profile as the site shows it. The record has the same fields as Bluesky's profile, so
+// either can be read here. `links` are the link records the profile points to, in display order.
+export function normalizeProfile(value, pds, links = []) {
+  if (!value || typeof value !== 'object') return null;
+  const text = (field, limit) => typeof field === 'string' ? field.trim().slice(0, limit) : '';
+  const picture = /^image\/(?:png|jpeg)$/;
+  const profile = {
+    name: text(value.displayName, 640),
+    description: text(value.description, 2560),
+    pronouns: text(value.pronouns, 200),
+    website: webUrl(value.website) ?? '',
+    avatar: blobUrl(value.avatar, picture, pds) ?? '',
+    banner: blobUrl(value.banner, picture, pds) ?? '',
+  };
+  const shown = links.slice(0, 10).map(link => ({ url: webUrl(link?.url), title: text(link?.title, 320) }))
+    .filter(link => link.url).map(({ url, title }) => ({ url, title: title || new URL(url).hostname.replace(/^www\./, '') }));
+  const filled = Object.fromEntries(Object.entries(profile).filter(([, field]) => field));
+  return Object.keys(filled).length || shown.length ? { ...filled, ...(shown.length ? { links: shown } : {}) } : null;
 }

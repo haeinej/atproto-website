@@ -357,3 +357,44 @@ test('a post that is a link to a file takes the file in and keeps its source', a
     await rm(folder, { recursive: true, force: true });
   }
 });
+
+test('the author\'s profile has Bluesky\'s fields and falls back to the Bluesky record', async () => {
+  // The fields of app.bsky.actor.profile and app.bsky.actor.link as published on 2026-11-12.
+  const read = async name => JSON.parse(await readFile(new URL(`../lexicons/com/haeinjung/${name}.json`, import.meta.url), 'utf8')).defs.main;
+  const profileSchema = await read('profile');
+  assert.equal(profileSchema.key, 'literal:self');
+  assert.deepEqual(Object.keys(profileSchema.record.properties).sort(), [
+    'avatar', 'banner', 'createdAt', 'description', 'displayName', 'joinedViaStarterPack', 'labels', 'links', 'pinnedPost',
+    'pronouns', 'website',
+  ]);
+  assert.deepEqual(Object.keys((await read('profileLink')).record.properties).sort(), ['createdAt', 'icon', 'labels', 'title', 'url']);
+
+  const picture = { $type: 'blob', mimeType: 'image/jpeg', size: 9, ref: example.media[0].original.ref };
+  const records = {
+    'com.haeinjung.profile/self': {
+      displayName: ' Haein Jung ', pronouns: 'she/her', description: 'i collect fragments.', avatar: picture,
+      links: [{ uri: `at://${did}/com.haeinjung.profileLink/3lx2zi2fp2c2u`, cid: 'bafy' }, { uri: 'at://did:web:other.test/x.y.z/1', cid: 'bafy' }],
+    },
+    'com.haeinjung.profileLink/3lx2zi2fp2c2u': { url: 'https://www.example.org/me', createdAt: '2026-01-01T00:00:00Z' },
+    'app.bsky.actor.profile/self': { displayName: 'From Bluesky', website: 'https://example.org/' },
+  };
+  const serve = available => async url => {
+    const key = `${url.searchParams.get('collection')}/${url.searchParams.get('rkey')}`;
+    if (!url.pathname.endsWith('getRecord')) return Response.json({ records: [] });
+    return available.includes(key) ? Response.json({ value: records[key] }) : Response.json({ error: 'RecordNotFound' }, { status: 400 });
+  };
+  const profileFor = async available => {
+    let stored;
+    const env = { ...config, NOTES: { put: async (_key, value) => { stored = JSON.parse(value); }, get: async () => stored } };
+    await refreshNotes(env, serve(available));
+    assert.equal('profile' in await (await worker.fetch(new Request('https://example.test/notes.json'), env)).json(), false);
+    return (await worker.fetch(new Request('https://example.test/notes/profile.json'), env)).json();
+  };
+  const own = await profileFor(Object.keys(records));
+  assert.deepEqual({ ...own, avatar: own.avatar.split('?')[0] }, {
+    name: 'Haein Jung', description: 'i collect fragments.', pronouns: 'she/her',
+    avatar: 'https://pds.example.test/xrpc/com.atproto.sync.getBlob', links: [{ url: 'https://www.example.org/me', title: 'example.org' }],
+  });
+  assert.deepEqual(await profileFor(['app.bsky.actor.profile/self']), { name: 'From Bluesky', website: 'https://example.org/' });
+  assert.deepEqual(await profileFor([]), {});
+});

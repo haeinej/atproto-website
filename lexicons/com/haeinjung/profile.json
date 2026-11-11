@@ -1,0 +1,56 @@
+{
+  "lexicon": 1,
+  "id": "com.haeinjung.profile",
+  "description": "Who the site's author is. Field for field the same as Bluesky's app.bsky.actor.profile, so a profile can be copied either way unchanged.",
+  "defs": {
+    "main": {
+      "type": "record",
+      "key": "literal:self",
+      "record": {
+        "type": "object",
+        "properties": {
+          "displayName": { "type": "string", "maxGraphemes": 64, "maxLength": 640 },
+          "description": {
+            "type": "string",
+            "maxGraphemes": 256,
+            "maxLength": 2560,
+            "description": "Free-form profile description text."
+          },
+          "pronouns": {
+            "type": "string",
+            "maxGraphemes": 20,
+            "maxLength": 200,
+            "description": "Free-form pronouns text."
+          },
+          "website": { "type": "string", "format": "uri", "description": "Deprecated: use links instead." },
+          "links": {
+            "type": "array",
+            "maxLength": 10,
+            "description": "Links shown on the profile, in display order. Each ref points to a profile link record in this repo.",
+            "items": { "type": "ref", "ref": "com.atproto.repo.strongRef" }
+          },
+          "avatar": {
+            "type": "blob",
+            "accept": ["image/png", "image/jpeg"],
+            "maxSize": 1000000,
+            "description": "Small image shown beside the author's name."
+          },
+          "banner": {
+            "type": "blob",
+            "accept": ["image/png", "image/jpeg"],
+            "maxSize": 1000000,
+            "description": "Larger horizontal image shown behind the profile."
+          },
+          "labels": {
+            "type": "union",
+            "refs": ["com.atproto.label.defs#selfLabels"],
+            "description": "Self-label values on the overall account."
+          },
+          "joinedViaStarterPack": { "type": "ref", "ref": "com.atproto.repo.strongRef" },
+          "pinnedPost": { "type": "ref", "ref": "com.atproto.repo.strongRef" },
+          "createdAt": { "type": "string", "format": "datetime" }
+        }
+      }
+    }
+  }
+}

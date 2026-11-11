@@ -8,6 +8,7 @@ import { cleanName, formProblems, identifyForm, isPlayer } from '../feed/forms.m
 import { connectUri, pdsConfig, webUrl } from '../feed/pds.mjs';
 import { PRIVATE_BLOB, PRIVATE_POST } from '../feed/private.mjs';
 import { bodyFacts } from '../feed/render.mjs';
+import { rpc, signIn } from './rpc.mjs';
 
 const SLUG = /^[a-z0-9]+(?:-[a-z0-9]+)*$/;
 const types = {
@@ -19,22 +20,6 @@ const types = {
 };
 // An attachment is an image, a video, audio, or otherwise a file.
 const kindOf = mime => ['image', 'video', 'audio'].find(kind => mime.startsWith(`${kind}/`)) ?? 'file';
-
-async function rpc(origin, endpoint, { query, body, token, mime = 'application/json' } = {}) {
-  const url = new URL(`/xrpc/${endpoint}`, origin);
-  if (query) url.search = new URLSearchParams(query);
-  const headers = {};
-  if (token) headers.Authorization = `Bearer ${token}`;
-  if (body) headers['Content-Type'] = mime;
-  const response = await fetch(url, {
-    method: body ? 'POST' : 'GET',
-    headers,
-    body: body instanceof Uint8Array ? body : body && JSON.stringify(body),
-    redirect: 'error',
-    signal: AbortSignal.timeout(60_000),
-  });
-  return { response, data: await response.json().catch(() => ({})) };
-}
 
 // The address a file's bytes have as an AT Protocol blob: CIDv1, raw codec, SHA-256.
 async function blobCid(bytes) {
@@ -251,8 +236,9 @@ async function publish(folder) {
     return;
   }
 
-  const password = process.env.ATPROTO_APP_PASSWORD;
-  if (!values.private && !password) throw new Error('Set ATPROTO_APP_PASSWORD for the account in your feed config');
+  if (!values.private && !process.env.ATPROTO_APP_PASSWORD) {
+    throw new Error('Set ATPROTO_APP_PASSWORD for the account in your feed config');
+  }
   const target = { repo: did, collection, rkey: values.slug };
   const existing = await rpc(origin, 'com.atproto.repo.getRecord', { query: target });
   if (existing.response.ok) throw new Error(`A public post already uses the slug ${values.slug}`);
@@ -281,11 +267,7 @@ async function publish(folder) {
     console.log(record.canonicalUrl);
     return;
   }
-  const session = await rpc(origin, 'com.atproto.server.createSession', { body: { identifier: did, password } });
-  const token = session.data.accessJwt;
-  if (!session.response.ok || session.data.did !== did || typeof token !== 'string' || !token) {
-    throw new Error(`Could not sign in to the configured account (HTTP ${session.response.status})`);
-  }
+  const token = await signIn(origin, did);
   if (attachments.size) {
     record.media = [];
     for (const [id, { path, mime, size, sourceUrl }] of attachments) {
