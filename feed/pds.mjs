@@ -210,6 +210,8 @@ export function normalizeArchivePost(value, key, pds) {
     ...(label ? { label } : {}),
     ...(sublabel ? { sublabel } : {}),
     ...(link ? { link } : {}),
+    // The site's own optional layer. It is handed on as it is and used only by the site's own pages.
+    ...(value.site && typeof value.site === 'object' && !Array.isArray(value.site) ? { site: value.site } : {}),
     ...(connect.length ? { connect } : {}),
     media,
   };

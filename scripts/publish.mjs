@@ -5,7 +5,7 @@ import { extname, join, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { parseArgs } from 'node:util';
 import { cleanName, formProblems, identifyForm, isPlayer, OTHER } from '../feed/forms.mjs';
-import { connectUri, pdsConfig, postPath, webUrl } from '../feed/pds.mjs';
+import { connectUri, pdsConfig, postPath, siblingCollection, webUrl } from '../feed/pds.mjs';
 import { PRIVATE_BLOB, PRIVATE_POST } from '../feed/private.mjs';
 import { bodyFacts } from '../feed/render.mjs';
 import { rpc, signIn } from './rpc.mjs';
@@ -121,6 +121,37 @@ async function readAttachments(specs, refs, folder, taken = new Map()) {
   return attachments;
 }
 
+// The post schema is fixed. Anything it has no field for goes in the site's own optional layer, and
+// only if the site's optional schema declares it. This is the one way to add to a post.
+const FIXED = ['title', 'subtitle', 'body', 'summary', 'publishedAt', 'updatedAt', 'canonicalUrl', 'form', 'label', 'sublabel',
+  'connect', 'link', 'source', 'media', 'site'];
+const fits = {
+  string: value => typeof value === 'string', integer: Number.isInteger, boolean: value => typeof value === 'boolean',
+  array: Array.isArray, object: value => value !== null && typeof value === 'object' && !Array.isArray(value), unknown: () => true,
+};
+
+async function siteLayer(specs, collection, schemaPath) {
+  if (!specs.length) return undefined;
+  const type = siblingCollection(collection, 'postSite');
+  const path = schemaPath ?? `lexicons/${type.replaceAll('.', '/')}.json`;
+  const schema = JSON.parse(await readFile(path, 'utf8').catch(() => {
+    throw new Error(`No optional schema at ${path}. Create it with: npm run --silent lexicon -- --kind postSite > ${path}`);
+  }));
+  const declared = schema.defs?.main?.properties ?? {};
+  const data = {};
+  for (const spec of specs) {
+    // Either one field as key=value, or a JSON file holding several.
+    const pair = /^([A-Za-z][A-Za-z0-9]*)=(.*)$/s.exec(spec);
+    Object.assign(data, pair ? { [pair[1]]: pair[2] } : JSON.parse(await readFile(spec, 'utf8')));
+  }
+  for (const [key, value] of Object.entries(data)) {
+    if (FIXED.includes(key) || key.startsWith('$')) throw new Error(`${key} is part of the fixed schema and cannot be set under --site`);
+    if (!Object.hasOwn(declared, key)) throw new Error(`Declare ${key} in ${path} before using it; the post schema itself is fixed`);
+    if (!(fits[declared[key].type] ?? fits.unknown)(value)) throw new Error(`${key} must be ${declared[key].type}, as ${path} declares`);
+  }
+  return { $type: type, ...data };
+}
+
 async function run() {
   const folder = await mkdtemp(join(tmpdir(), 'post-'));
   try {
@@ -140,6 +171,7 @@ async function publish(folder) {
       'source-platform': { type: 'string' }, 'source-url': { type: 'string' }, 'source-id': { type: 'string' },
       config: { type: 'string', default: 'feed/wrangler.site.jsonc' }, publish: { type: 'boolean' },
       private: { type: 'boolean' },
+      site: { type: 'string', multiple: true, default: [] }, 'site-schema': { type: 'string' },
     },
   });
   if (!values.file || !SLUG.test(values.slug ?? '') || values.slug.length > 120) {
@@ -198,6 +230,7 @@ async function publish(folder) {
   const subtitle = (values.subtitle ?? '').trim();
   if (subtitle && !values.title) throw new Error('A --subtitle sits under a --title; set both');
   if (subtitle.length > 300) throw new Error('--subtitle can be at most 300 characters');
+  const own = await siteLayer(values.site, collection, values['site-schema']);
   let source;
   if (['source-platform', 'source-url', 'source-id'].some(option => values[option] !== undefined)) {
     const platform = values['source-platform']?.trim();
@@ -221,6 +254,7 @@ async function publish(folder) {
     ...(sublabel ? { sublabel } : {}),
     ...(connect.length ? { connect } : {}),
     ...(source ? { source } : {}),
+    ...(own ? { site: own } : {}),
   };
   // A link or embed keeps what its page said about itself, and a copy of the page's preview image.
   let preview;

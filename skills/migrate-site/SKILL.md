@@ -22,6 +22,17 @@ Only the content side of the website changes.
 
 If a page mixes content and layout in one file, lift the content out and leave the markup around it exactly as it was. If you think something on the right-hand side has to change, stop and ask the owner. Do not tidy, modernise, or fix unrelated code, even when it is clearly wrong; mention it instead.
 
+## The schema is fixed
+
+Read [The fixed schema and your own fields](../../docs/schema-layers.md). The post schema is the same on every site, and you never add a field to it, rename one, or put something in a field that means something else.
+
+When the site has something the fixed schema has no place for, there are two choices, and the owner makes it:
+
+- **A fixed field that fits.** A place line can be a subtitle. Prefer this.
+- **The site's optional layer.** Declare the field in the site's optional schema, then set it with `--site`. It is saved under the post's `site` field, is unlisted, and is shown only by the site's own pages.
+
+Do not edit the post Lexicon, do not invent top-level fields, and do not leave site-specific data in the body to get around this. The publish command refuses undeclared fields.
+
 ## Ask the owner; do not decide for them
 
 Moving a site turns up things that have no obvious place: a subtitle, a note saying where an essay first appeared, two versions of the same image, text in a second language. Each of these is the owner's decision. When you meet one, stop and ask.
@@ -35,9 +46,10 @@ Moving a site turns up things that have no obvious place: a subtitle, a note say
 For example:
 
 > The essay "elsewheren" has a subtitle under its title, "einmal ist keinmal". Where should it go?
-> 1. A subtitle field on the post (recommended). It is saved with the post and shown under the title.
+> 1. The post's subtitle field (recommended). It is part of the fixed schema, saved with the post, and shown under the title.
 > 2. The first line of the body. No extra field, but it is no longer separate from the essay.
-> 3. Keep it on the website only. It is not part of the post.
+> 3. Your site's optional layer. It is saved with the post under `site`, and only your own pages show it.
+> 4. Keep it on the website only. It is not part of the post.
 
 Things to ask about, when the site has them: subtitles and summaries, where an item first appeared and whether that changes its platform, which copy of an image to keep, missing alt text, text in more than one language, duplicate pages, and anything that looks private.
 

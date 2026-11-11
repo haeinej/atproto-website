@@ -1,7 +1,7 @@
 {
   "lexicon": 1,
   "id": "com.haeinjung.post",
-  "description": "A platform-independent post with a Markdown body, optional media, and optional source information.",
+  "description": "A platform-independent post with a Markdown body, optional media, and optional source information. These fields are fixed and the same on every site; a site adds its own under `site`.",
   "defs": {
     "main": {
       "type": "record",
@@ -62,6 +62,10 @@
             "type": "ref",
             "ref": "#source",
             "description": "Where this post originally appeared, if it was imported or republished."
+          },
+          "site": {
+            "type": "unknown",
+            "description": "Optional data only this site uses. An object whose $type names the site's own optional schema, where each of its fields is declared. This is the only place for anything the fixed schema does not define."
           },
           "media": {
             "type": "array",

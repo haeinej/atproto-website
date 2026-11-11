@@ -2,7 +2,7 @@
 
 Keep what you publish in a content layer you own, and let your website decide how it looks. [Cirrus](https://github.com/ascorbic/cirrus) runs your AT Protocol Personal Data Server (PDS) on Cloudflare. This starter adds a post schema under your domain, tools to publish and import posts and media, and a Worker that serves a posts list, post pages, and JSON feeds.
 
-You can start from a website you already have, from an export of your posts on another platform, or from nothing. [Set up with your coding agent](docs/set-up-with-an-agent.md) · [Build a block](docs/build-a-block.md) · [Forms, labels, and sublabels](docs/labels.md) · [Group and connect blocks](docs/group-and-connect.md)
+You can start from a website you already have, from an export of your posts on another platform, or from nothing. [Set up with your coding agent](docs/set-up-with-an-agent.md) · [Build a block](docs/build-a-block.md) · [Forms, labels, and sublabels](docs/labels.md) · [The fixed schema and your own fields](docs/schema-layers.md) · [Group and connect blocks](docs/group-and-connect.md)
 
 ## How a post is described
 
@@ -17,6 +17,8 @@ Everything is one kind of record: a post with a Markdown body, a date, and a pub
 | Visibility | Who can see it | You, when publishing | `public`, `private` |
 
 Labels are where you start building: they are the names in your site's header, and each becomes a section. The form is the part that is the same on every site, so other software can tell an essay from a photo set whatever you call your sections. There are thirteen forms (writing, note, image, gallery, video, audio, file, media, link, embed, quote, list, code). You never type one, and it is not shown on your site. [Forms, labels, and sublabels](docs/labels.md)
+
+These fields are the fixed schema: the same on every site, so other software can read your posts. Anything only your site needs goes in your own optional layer, declared in a schema under your domain and saved under the post's `site` field. It is unlisted, so only your own pages show it. [The fixed schema and your own fields](docs/schema-layers.md)
 
 If you are not sure what your labels should be, a coding agent can help you work it out by asking you. It starts from `Writing`, `Photos`, and `Projects` and changes whatever you tell it to. [The suggest-labels skill](skills/suggest-labels/SKILL.md)
 
@@ -51,7 +53,8 @@ The address comes from the label and sublabel, so every post has a label; one pu
 | --- | --- |
 | [Cirrus](cirrus/) | A Cloudflare Worker that runs your PDS. A Durable Object holds the repository and R2 holds its media. |
 | [Website and feed](feed/) | A Worker that serves the [posts page](site/), post pages, private posts, and JSON feeds backed by Workers KV. |
-| [Post Lexicon template](lexicons/com/haeinjung/post.json) | Generate your own schema from the reference format, then adapt it to your content. |
+| [Post Lexicon template](lexicons/com/haeinjung/post.json) | The fixed post schema. Generate it under your domain and leave its fields as they are. |
+| [Optional schema template](lexicons/com/haeinjung/postSite.json) | Where your site declares its own fields. They are saved under a post's `site` field. |
 | [Forms](feed/forms.mjs) | The thirteen forms, how each is identified, and what each may hold. |
 | [Publish command](scripts/publish.mjs) | Previews and publishes a Markdown post with its attachments, publicly or privately. |
 | [Profile](scripts/profile.mjs) | Sets your name, description, pronouns, pictures, and links, in the same shape as a Bluesky profile. |
@@ -93,7 +96,7 @@ mkdir -p lexicons/com/example
 npm run --silent lexicon > lexicons/com/example/post.json
 ```
 
-Use the path that matches your collection. [Own the schema and its addresses](docs/set-up-with-an-agent.md#own-the-schema-and-its-addresses).
+Use the path that matches your collection. Do not edit the generated post schema; your own fields go in an optional schema beside it. [Own the schema and its addresses](docs/set-up-with-an-agent.md#own-the-schema-and-its-addresses).
 
 ### Preview and deploy
 

@@ -1,0 +1,12 @@
+{
+  "lexicon": 1,
+  "id": "com.haeinjung.postSite",
+  "description": "This site's own optional fields for a post. The shared post schema is fixed; anything it has no place for is declared here and saved under the post's `site` field. Other software ignores it, and the shared pages do not show it.",
+  "defs": {
+    "main": {
+      "type": "object",
+      "description": "Declare each field under properties before using it. Every field is optional.",
+      "properties": {}
+    }
+  }
+}

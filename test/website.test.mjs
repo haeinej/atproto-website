@@ -432,3 +432,50 @@ test('addresses follow labels in any script, and a folder address shows the list
   const bare = await worker.fetch(new Request('https://example.test/posts'), { ASSETS: assets });
   assert.equal(bare.headers.get('Location'), 'https://example.test/posts/');
 });
+
+test('the post schema is fixed, and a site adds its own fields only through its optional layer', async () => {
+  const schema = JSON.parse(await readFile(new URL('../lexicons/com/haeinjung/post.json', import.meta.url), 'utf8')).defs.main.record;
+  // Adding a field here is a change to the shared schema for every site. A field one site needs
+  // belongs in that site's optional schema instead.
+  assert.deepEqual(Object.keys(schema.properties), [
+    'title', 'subtitle', 'body', 'summary', 'publishedAt', 'updatedAt', 'canonicalUrl', 'form', 'label', 'sublabel', 'connect', 'link',
+    'source', 'site', 'media',
+  ]);
+  assert.equal(schema.properties.site.type, 'unknown');
+
+  // The site's layer reaches the site's own pages through the feed, and nothing else shows it.
+  const own = { $type: 'com.haeinjung.postSite', eyebrow: 'collisions — ep.01', episode: 1 };
+  let stored;
+  const env = { ...config, NOTES: { put: async (_key, value) => { stored = JSON.parse(value); }, get: async () => stored } };
+  await refreshNotes(env, async url => url.pathname.endsWith('listRecords')
+    ? Response.json({ records: [{ uri, value: { ...example, media: [], site: own } }] }) : Response.json({ error: 'RecordNotFound' }, { status: 400 }));
+  const get = async path => (await worker.fetch(new Request(`https://example.test${path}`), env)).text();
+  assert.deepEqual(JSON.parse(await get('/notes.json')).notes[0].site, own);
+  assert.doesNotMatch(await get('/notes/graph.json'), /eyebrow|ep\.01/);
+  const page = await servePost(new Request('https://example.test/posts/other/test-post'), config, 'test-post', async () =>
+    Response.json({ uri, value: { ...example, media: [], site: own } }));
+  assert.doesNotMatch(await page.text(), /eyebrow|ep\.01/);
+
+  const folder = await mkdtemp(join(tmpdir(), 'site-layer-'));
+  try {
+    await writeFile(join(folder, 'site.jsonc'), JSON.stringify({ vars: {
+      ATPROTO_DID: did, ATPROTO_PDS_ORIGIN: 'https://pds.example.test', SITE_ORIGIN: 'https://example.test',
+    } }));
+    await writeFile(join(folder, 'post.md'), 'Words.');
+    await writeFile(join(folder, 'postSite.json'), JSON.stringify({ defs: { main: { type: 'object', properties: {
+      eyebrow: { type: 'string' }, episode: { type: 'integer' },
+    } } } }));
+    await writeFile(join(folder, 'more.json'), JSON.stringify({ episode: 1 }));
+    const preview = (...options) => promisify(execFile)(process.execPath, [
+      new URL('../scripts/publish.mjs', import.meta.url).pathname, '--config', join(folder, 'site.jsonc'),
+      '--file', join(folder, 'post.md'), '--slug', 'a-post', '--site-schema', join(folder, 'postSite.json'), ...options,
+    ]).then(({ stdout }) => JSON.parse(stdout).record, error => error.stderr.trim());
+    assert.deepEqual((await preview('--site', 'eyebrow=collisions — ep.01', '--site', join(folder, 'more.json'))).site, own);
+    assert.equal((await preview()).site, undefined);
+    assert.match(await preview('--site', 'mood=calm'), /Declare mood in .* the post schema itself is fixed/);
+    assert.match(await preview('--site', 'title=Another'), /title is part of the fixed schema/);
+    assert.match(await preview('--site', 'episode=one'), /episode must be integer/);
+  } finally {
+    await rm(folder, { recursive: true, force: true });
+  }
+});

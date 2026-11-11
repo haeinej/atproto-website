@@ -7,6 +7,7 @@ Three rules shape the whole process, and the agent is given them in writing.
 - **Nothing is lost.** Every piece of text, date, image, and alt text is carried over and checked against what was there before.
 - **Nothing looks different.** Your pages keep their layout and their design, and every old address keeps working.
 - **Only the content side changes.** The agent touches where your site gets its content from. It leaves your templates, styles, navigation, scripts, and hosting alone.
+- **The post schema is fixed.** What your site needs beyond it goes in your own optional layer, which only your site shows.
 
 It works on a copy of your site the whole time. Your live site keeps running, and nothing is published to your live PDS, until you approve.
 
@@ -92,4 +93,4 @@ Follow [the setup instructions](../README.md#set-up-your-site) to generate the s
 
 Use the same collection in the generated schema, the site's feed configuration, and the X importer's `--collection` option. For a post named `hello`, the AT URI might be `at://did:web:pds.example.com/com.example.post/hello`. The DID comes from the account holding the record. The public URL comes from the site. [Record and link examples](group-and-connect.md)
 
-Keep the schema file with your site code. You can add optional fields, such as a project status, while keeping the starter fields that your tools rely on. Keep the collection name once posts are live, because changing it changes their AT URIs. If you want other software to discover the schema, follow the [AT Protocol guide to publishing Lexicons](https://atproto.com/guides/publishing-lexicons) to publish it as a record and set the corresponding DNS TXT record.
+Keep the schema file with your site code. The post schema is fixed: do not add fields to it, rename them, or change what one means, because that is what keeps your posts readable by other software. Anything your site needs beyond it, such as a project status, goes in your own optional schema and is saved under the post's `site` field. [The fixed schema and your own fields](schema-layers.md) Keep the collection name once posts are live, because changing it changes their AT URIs. If you want other software to discover the schema, follow the [AT Protocol guide to publishing Lexicons](https://atproto.com/guides/publishing-lexicons) to publish it as a record and set the corresponding DNS TXT record.
