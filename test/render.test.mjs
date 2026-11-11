@@ -296,9 +296,11 @@ test('every script parses', async () => {
   const { readdir } = await import('node:fs/promises');
   const { execFile } = await import('node:child_process');
   const { promisify } = await import('node:util');
+  const { fileURLToPath } = await import('node:url');
   for (const folder of ['../scripts/', '../bin/', '../feed/']) {
     for (const file of await readdir(new URL(folder, import.meta.url))) {
-      if (file.endsWith('.mjs')) await promisify(execFile)(process.execPath, ['--check', new URL(folder + file, import.meta.url).pathname]);
+      // The path is taken as a file path, so a name with a space in it is checked like any other.
+      if (file.endsWith('.mjs')) await promisify(execFile)(process.execPath, ['--check', fileURLToPath(new URL(folder + encodeURIComponent(file), import.meta.url))]);
     }
   }
 });
