@@ -1,14 +1,14 @@
 # The fixed schema and your own fields
 
-A post has two layers. One is the same on every site. The other is yours.
+A post and a profile each have two layers. One is the same on every site. The other is yours.
 
 | | The fixed schema | Your optional layer |
 | --- | --- | --- |
-| What it holds | Title, subtitle, body, dates, address, form, label, sublabel, connections, link, source, attachments | Anything only your site needs |
+| What it holds | A post's title, subtitle, body, dates, address, form, label, sublabel, connections, link, source, attachments. A profile's name, description, pronouns, links, pictures | Anything only your site needs |
 | Who defines it | This project | You, in a schema under your domain |
 | Who understands it | Any software that reads AT Protocol posts of this kind | Your own website |
-| Shown by the shared pages and lists | Yes | No |
-| Where it sits in the record | The post's own fields | Under the post's `site` field |
+| Where it appears | Your site, the shared pages, and other applications | Your own site only |
+| Where it sits in the record | The record's own fields | Under the record's `site` field |
 
 ## Why the fixed schema stays fixed
 
@@ -20,10 +20,11 @@ This is a rule of the project, and the tools enforce it. The publish command has
 
 Most sites have things the fixed schema has no place for: a small line above a title, an episode number, a translation, a project's status. These go in your optional layer.
 
-1. Create your optional schema once, beside your post schema.
+1. Create your optional schema once, beside your post schema. A profile has one too.
 
    ```sh
    npm run --silent lexicon -- --kind postSite > lexicons/com/example/postSite.json
+   npm run --silent lexicon -- --kind profileSite > lexicons/com/example/profileSite.json
    ```
 
 2. Declare each field in it before you use it. Every field is optional.
@@ -50,9 +51,38 @@ The command refuses a field your optional schema does not declare, a value of th
 
 ## Who sees it
 
-Your optional layer is unlisted. The shared posts list, the post pages this project serves, and `/notes/graph.json` do not show it or use it, and other software ignores it. It is passed through in `/notes.json`, so your own website's pages can read it and present it however you like.
+Your optional layer is unlisted. That means it is there for your own site and absent everywhere it does not apply. Your website can show it however you like: it is passed through in `/notes.json` and `/notes/profile.json`. Another application, such as Bluesky, has no use for an episode number or a "now" section, so it never receives them, and the shared pages this project serves leave them out too.
 
-This keeps the two jobs apart. The fixed schema describes the post to everyone. Your optional layer describes how your site wants to present it.
+Fixed fields are the opposite. They appear wherever they apply: on your site, on the shared pages, and in any application that reads AT Protocol records of that kind.
+
+## Match the shared language first
+
+Before anything goes in the optional layer, check whether it already has a fixed field. If it means the same thing, fill the fixed field, so every application can read it. Only what has no match is unlisted.
+
+A profile uses Bluesky's own fields, so the match is by name.
+
+| What your site has | Fixed field | Appears on Bluesky |
+| --- | --- | --- |
+| Name | `displayName` | Yes |
+| Bio, about, tagline | `description` | Yes |
+| Pronouns | `pronouns` | Yes |
+| Links to your other places | `links` | Yes |
+| Profile picture, cover image | `avatar`, `banner` | Yes |
+| A "now" section, a location, a résumé | none: your optional layer | No |
+
+A post's fixed fields line up with a Bluesky post like this.
+
+| What your site has | Fixed field here | Bluesky's field |
+| --- | --- | --- |
+| The text | `body` | `text` |
+| When it was published | `publishedAt` | `createdAt` |
+| Images and video, with alt text | `media` | `embed` images and video |
+| A link shown as a card | `link` | `embed` external |
+| What it replies to or quotes | `connect` | `reply`, `embed` record |
+| Section, category, series | `label`, `sublabel` | none |
+| An episode number, a small line above the title | none: your optional layer | none |
+
+The commands hold you to this. Asking for `--site bio=…` on a profile is refused with a pointer to `--description`, and `--site tags=…` on a post points to `--label`.
 
 ## Choosing between them
 

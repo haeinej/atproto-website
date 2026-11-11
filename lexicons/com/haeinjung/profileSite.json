@@ -1,0 +1,12 @@
+{
+  "lexicon": 1,
+  "id": "com.haeinjung.profileSite",
+  "description": "This site's own optional sections for the author's profile. The profile's fixed fields are Bluesky's; anything they have no place for is declared here and saved under the profile's `site` field. Applications it does not apply to, such as Bluesky, never see it.",
+  "defs": {
+    "main": {
+      "type": "object",
+      "description": "Declare each section under properties before using it. Every one is optional.",
+      "properties": {}
+    }
+  }
+}

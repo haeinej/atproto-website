@@ -26,7 +26,7 @@ a:focus-visible { outline: 2px solid currentColor; outline-offset: 3px; }
 .note-profile p { margin: 0 0 4px; white-space: pre-line; }
 .note-profile-name { font-weight: 600; }
 .note-profile-name span { margin-left: 8px; color: var(--muted); font-weight: 400; font-size: .875rem; }
-.note-profile-handle { color: var(--muted); font-size: .875rem; }
+.note-profile-links { display: flex; flex-wrap: wrap; gap: 4px 16px; color: var(--muted); font-size: .875rem; }
 .note-tree { list-style: none; margin: 0; padding: 0; }
 .note-tree .note-tree { margin-left: 7px; padding-left: 16px; border-left: 1px solid var(--rule); }
 .note-tree summary { list-style: none; cursor: pointer; }

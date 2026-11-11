@@ -2,6 +2,8 @@
 
 A coding agent can do most of this for you: bring in your website and your posts from other platforms, and change your site so it reads from records you own. Your job is to answer its questions, check its work, and say when to go live.
 
+The agent reads [AGENTS.md](../AGENTS.md) first, which tells it what this project is for: building your own PDS and your own schemas from your website, in a form other AT Protocol applications can read.
+
 Three rules shape the whole process, and the agent is given them in writing.
 
 - **Nothing is lost.** Every piece of text, date, image, and alt text is carried over and checked against what was there before.

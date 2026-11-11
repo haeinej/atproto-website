@@ -105,16 +105,19 @@ function render(posts, by) {
   return [...folders, ...rows(loose, by)];
 }
 
-// Who the author is, above the list. Only the identity is shown: picture, name, pronouns, and the
-// handle the account's DID vouches for. A description and links are optional sections of the profile
-// that a site shows on its own pages; this shared page leaves them unlisted.
+// Who the author is, above the list: picture, name, pronouns, verified handle, description, and
+// links. These are the profile's fixed fields, the ones Bluesky has too. Sections a site adds of its
+// own are for that site's pages and are not shown here.
 async function showProfile() {
   try {
     const read = path => fetch(path, { signal: AbortSignal.timeout(10_000) }).then(response => response.ok ? response.json() : {}, () => ({}));
     const [profile, identity] = await Promise.all([read('/notes/profile.json'), read('/notes/identity.json')]);
     const words = (source, field) => typeof source[field] === 'string' ? source[field] : '';
     const handle = words(identity, 'handle');
-    if (!words(profile, 'name') && !handle) return;
+    const links = (Array.isArray(profile.links) ? profile.links : [{ url: profile.website, title: '' }])
+      .map(link => ({ href: safeHref(link?.url), title: typeof link?.title === 'string' ? link.title : '' }))
+      .filter(link => link.href);
+    if (!words(profile, 'name') && !handle && !words(profile, 'description') && !links.length) return;
     const header = element('header', 'note-profile');
     const picture = safeHref(profile.avatar);
     if (picture) {
@@ -126,8 +129,19 @@ async function showProfile() {
     const about = element('div');
     const name = element('p', 'note-profile-name', words(profile, 'name') || handle);
     if (words(profile, 'pronouns')) name.append(element('span', '', words(profile, 'pronouns')));
-    about.append(name);
-    if (handle && words(profile, 'name')) about.append(element('p', 'note-profile-handle', `@${handle}`));
+    if (handle && words(profile, 'name')) name.append(element('span', '', `@${handle}`));
+    if (name.textContent) about.append(name);
+    if (words(profile, 'description')) about.append(element('p', '', words(profile, 'description')));
+    if (links.length) {
+      const list = element('p', 'note-profile-links');
+      list.append(...links.map(link => {
+        const anchor = element('a', '', link.title || new URL(link.href).hostname.replace(/^www\./, ''));
+        anchor.href = link.href;
+        anchor.rel = 'me';
+        return anchor;
+      }));
+      about.append(list);
+    }
     header.title = words(identity, 'did');
     header.append(about);
     notesStatus.closest('main').prepend(header);

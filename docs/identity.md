@@ -36,16 +36,15 @@ The website, its feeds, and its pages are views of that repository. If the site 
 
 ## What is fixed and what is optional
 
-The identity is the fixed part, and it is the only part the shared pages show.
+Your identity is the root, and it is fixed by AT Protocol. Your profile sits on top of it and has two layers, like a post.
 
-| | Fixed | Optional and unlisted |
+| | What | Where it appears |
 | --- | --- | --- |
-| What | Your DID, your verified handle, your repository's address | Your profile's sections: description, links, website, banner |
-| Defined by | AT Protocol | Your profile record, which has the same fields as a Bluesky profile |
-| On the shared posts page | Shown, with your name, picture, and pronouns | Not shown |
-| For your own pages | `/notes/identity.json` | `/notes/profile.json` |
+| Identity | Your DID, your verified handle, your repository's address | Everywhere. `/notes/identity.json` has it for your own pages. |
+| Profile, fixed fields | Name, description, pronouns, links, picture, banner. These are Bluesky's own fields, by the same names. | Your site, the shared posts page, and any application that reads profiles, including Bluesky. |
+| Profile, your own sections | Anything Bluesky has no field for, such as a "now" section | Your own site only. They are unlisted elsewhere. |
 
-So a description and a list of links are yours to add or leave out, and your own website decides whether and how to present them. Posts work the same way: a fixed schema, and an optional layer of your own. [The fixed schema and your own fields](schema-layers.md)
+A bio and a list of links are optional, but they are fixed fields: fill `description` and `links`, and they can appear wherever a profile is read. Add a section of your own only when no fixed field means the same. [The fixed schema and your own fields](schema-layers.md)
 
 ## See your identity
 

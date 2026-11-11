@@ -11,8 +11,8 @@ try {
   });
   const collection = values.collection ?? JSON.parse(await readFile(values.config, 'utf8')).vars.ATPROTO_POST_COLLECTION;
   if (!collection) throw new Error('Set ATPROTO_POST_COLLECTION in your site config or pass --collection');
-  if (!['post', 'postSite', 'profile', 'profileLink'].includes(values.kind)) {
-    throw new Error('--kind is post, postSite, profile, or profileLink');
+  if (!['post', 'postSite', 'profile', 'profileLink', 'profileSite'].includes(values.kind)) {
+    throw new Error('--kind is post, postSite, profile, profileLink, or profileSite');
   }
   const template = new URL(`../lexicons/com/haeinjung/${values.kind}.json`, import.meta.url);
   const schema = JSON.parse(await readFile(template, 'utf8'));

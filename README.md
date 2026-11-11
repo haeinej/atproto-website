@@ -1,6 +1,6 @@
 # AT Protocol Website
 
-Keep what you publish in a content layer you own, and let your website decide how it looks. [Cirrus](https://github.com/ascorbic/cirrus) runs your AT Protocol Personal Data Server (PDS) on Cloudflare. This starter adds a post schema under your domain, tools to publish and import posts and media, and a Worker that serves a posts list, post pages, and JSON feeds.
+Build your own home on AT Protocol from the website you already have: your own PDS, and your own schemas shaped from your site, readable by other AT Protocol applications. You keep what you publish in a content layer you own, and your website decides how it looks. [Cirrus](https://github.com/ascorbic/cirrus) runs your AT Protocol Personal Data Server (PDS) on Cloudflare. This starter adds a post schema under your domain, tools to publish and import posts and media, and a Worker that serves a posts list, post pages, and JSON feeds.
 
 You can start from a website you already have, from an export of your posts on another platform, or from nothing. [Set up with your coding agent](docs/set-up-with-an-agent.md) · [Build a block](docs/build-a-block.md) · [Forms, labels, and sublabels](docs/labels.md) · [Identity](docs/identity.md) · [The fixed schema and your own fields](docs/schema-layers.md) · [Group and connect blocks](docs/group-and-connect.md)
 
@@ -26,7 +26,7 @@ Everything is one kind of record: a post with a Markdown body, a date, and a pub
 
 Labels are where you start building: they are the names in your site's header, and each becomes a section. The form is the part that is the same on every site, so other software can tell an essay from a photo set whatever you call your sections. There are thirteen forms (writing, note, image, gallery, video, audio, file, media, link, embed, quote, list, code). You never type one, and it is not shown on your site. [Forms, labels, and sublabels](docs/labels.md)
 
-These fields are the fixed schema: the same on every site, so other software can read your posts. Anything only your site needs goes in your own optional layer, declared in a schema under your domain and saved under the post's `site` field. It is unlisted, so only your own pages show it. [The fixed schema and your own fields](docs/schema-layers.md)
+These fields are the fixed schema: the same on every site, so other software can read your posts. Anything only your site needs goes in your own optional layer, declared in a schema under your domain and saved under the post's `site` field. It is unlisted: your own site shows it, and applications it does not apply to, such as Bluesky, never see it. When something means the same as a fixed field, fill the fixed field. [The fixed schema and your own fields](docs/schema-layers.md)
 
 If you are not sure what your labels should be, a coding agent can help you work it out by asking you. It starts from `Writing`, `Photos`, and `Projects` and changes whatever you tell it to. [The suggest-labels skill](skills/suggest-labels/SKILL.md)
 
@@ -68,6 +68,7 @@ The address comes from the label and sublabel, so every post has a label; one pu
 | [Publish command](scripts/publish.mjs) | Previews and publishes a Markdown post with its attachments, publicly or privately. |
 | [Profile](scripts/profile.mjs) | Sets your name, description, pronouns, pictures, and links, in the same shape as a Bluesky profile. |
 | [X archive importer](importer/) | A Java CLI that previews an export and publishes selected posts and media to your PDS. |
+| [AGENTS.md](AGENTS.md) | What this project is for and the rules a coding agent follows in it. |
 | [migrate-site skill](skills/migrate-site/SKILL.md) | Instructions for a coding agent to move a site and social posts in without loss, touching only the content side. |
 | [suggest-labels skill](skills/suggest-labels/SKILL.md) | Instructions for a coding agent to settle your site's labels with you. |
 
@@ -169,7 +170,7 @@ npm run profile -- --name 'Your Name' --pronouns 'she/her' \
 
 Without `--publish` the command prints the record and changes nothing. Setting one field leaves the others as they are, and giving any `--link` replaces the list. `--from-bluesky` starts from the profile you already have on Bluesky. If you set no profile here, the site shows your Bluesky profile when the account has one.
 
-The shared posts page shows only your identity: picture, name, pronouns, and verified handle. Your description and links are optional sections that stay unlisted there; `/notes/profile.json` has them for your own pages. Generate the two schemas beside your post schema with `npm run --silent lexicon -- --kind profile` and `--kind profileLink`.
+The shared posts page shows your picture, name, pronouns, verified handle, description, and links, and `/notes/profile.json` has them for your own pages. A section Bluesky has no field for goes in your profile's optional layer with `--site`, and appears on your own site only. Generate the two schemas beside your post schema with `npm run --silent lexicon -- --kind profile` and `--kind profileLink`.
 
 ## Keep a post private
 

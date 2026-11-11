@@ -384,7 +384,7 @@ test('the author\'s profile has Bluesky\'s fields and falls back to the Bluesky 
   assert.equal(profileSchema.key, 'literal:self');
   assert.deepEqual(Object.keys(profileSchema.record.properties).sort(), [
     'avatar', 'banner', 'createdAt', 'description', 'displayName', 'joinedViaStarterPack', 'labels', 'links', 'pinnedPost',
-    'pronouns', 'website',
+    'pronouns', 'site', 'website',
   ]);
   assert.deepEqual(Object.keys((await read('profileLink')).record.properties).sort(), ['createdAt', 'icon', 'labels', 'title', 'url']);
 
@@ -473,7 +473,16 @@ test('the post schema is fixed, and a site adds its own fields only through its 
     assert.deepEqual((await preview('--site', 'eyebrow=collisions — ep.01', '--site', join(folder, 'more.json'))).site, own);
     assert.equal((await preview()).site, undefined);
     assert.match(await preview('--site', 'mood=calm'), /Declare mood in .* the post schema itself is fixed/);
-    assert.match(await preview('--site', 'title=Another'), /title is part of the fixed schema/);
+    const profile = (...options) => promisify(execFile)(process.execPath, [
+      new URL('../scripts/profile.mjs', import.meta.url).pathname, '--config', join(folder, 'site.jsonc'),
+      '--site-schema', join(folder, 'profileSite.json'), ...options,
+    ]).then(({ stdout }) => JSON.parse(stdout).record, error => error.stderr.trim());
+    await writeFile(join(folder, 'profileSite.json'), JSON.stringify({ defs: { main: { type: 'object', properties: { now: { type: 'string' } } } } }));
+    assert.match(await profile('--site', 'bio=i collect fragments'), /bio already has a fixed field in a profile; set it with --description/);
+    assert.deepEqual((await profile('--description', 'i collect fragments', '--site', 'now=in Seoul')).site, { $type: 'com.haeinjung.profileSite', now: 'in Seoul' });
+    assert.match(await preview('--site', 'title=Another'), /title is a fixed field of a post/);
+    // Something that means the same as a fixed field is filled there, where other applications read it.
+    assert.match(await preview('--site', 'tags=essays'), /tags already has a fixed field in a post; set it with --label/);
     assert.match(await preview('--site', 'episode=one'), /episode must be integer/);
   } finally {
     await rm(folder, { recursive: true, force: true });

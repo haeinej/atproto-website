@@ -26,10 +26,12 @@ If a page mixes content and layout in one file, lift the content out and leave t
 
 Read [The fixed schema and your own fields](../../docs/schema-layers.md). The post schema is the same on every site, and you never add a field to it, rename one, or put something in a field that means something else.
 
-When the site has something the fixed schema has no place for, there are two choices, and the owner makes it:
+For every piece of the site's content, work in this order:
 
-- **A fixed field that fits.** A place line can be a subtitle. Prefer this.
-- **The site's optional layer.** Declare the field in the site's optional schema, then set it with `--site`. It is saved under the post's `site` field, is unlisted, and is shown only by the site's own pages.
+1. **Match the shared language.** Look for the fixed field that means the same thing and fill it. A profile's fixed fields are Bluesky's own: a bio is `description`, a name is `displayName`, links to other places are `links`. A post's are listed in the guide: text is the body, a category is the label, what it answers is `connect`. A matched field appears wherever it applies, including other applications.
+2. **Otherwise, the optional layer.** If nothing means the same, declare the field in the site's optional schema and set it with `--site`. It is saved under the record's `site` field and is unlisted: the owner's site shows it, and applications it does not apply to never see it.
+
+A close fit is the owner's call: a place line could be a subtitle or a field of its own. Ask.
 
 Do not edit the post Lexicon, do not invent top-level fields, and do not leave site-specific data in the body to get around this. The publish command refuses undeclared fields.
 

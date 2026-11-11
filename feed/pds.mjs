@@ -234,5 +234,7 @@ export function normalizeProfile(value, pds, links = []) {
   const shown = links.slice(0, 10).map(link => ({ url: webUrl(link?.url), title: text(link?.title, 320) }))
     .filter(link => link.url).map(({ url, title }) => ({ url, title: title || new URL(url).hostname.replace(/^www\./, '') }));
   const filled = Object.fromEntries(Object.entries(profile).filter(([, field]) => field));
-  return Object.keys(filled).length || shown.length ? { ...filled, ...(shown.length ? { links: shown } : {}) } : null;
+  // The site's own sections are handed on as they are, for the site's own pages.
+  const own = value.site && typeof value.site === 'object' && !Array.isArray(value.site) ? { site: value.site } : {};
+  return Object.keys(filled).length || shown.length || own.site ? { ...filled, ...(shown.length ? { links: shown } : {}), ...own } : null;
 }

@@ -4,6 +4,7 @@ import { readFile, stat } from 'node:fs/promises';
 import { extname } from 'node:path';
 import { parseArgs } from 'node:util';
 import { pdsConfig, siblingCollection, webUrl } from '../feed/pds.mjs';
+import { PROFILE_FIELDS, PROFILE_MATCHES, siteLayer } from './layers.mjs';
 import { rpc, signIn } from './rpc.mjs';
 
 const pictures = { '.png': 'image/png', '.jpg': 'image/jpeg', '.jpeg': 'image/jpeg' };
@@ -30,6 +31,7 @@ try {
       name: { type: 'string' }, description: { type: 'string' }, pronouns: { type: 'string' },
       website: { type: 'string' }, avatar: { type: 'string' }, banner: { type: 'string' },
       link: { type: 'string', multiple: true }, 'from-bluesky': { type: 'boolean' },
+      site: { type: 'string', multiple: true, default: [] }, 'site-schema': { type: 'string' },
       config: { type: 'string', default: 'feed/wrangler.site.jsonc' }, publish: { type: 'boolean' },
     },
   });
@@ -37,7 +39,9 @@ try {
   const { did, origin, collection } = pdsConfig(vars);
   const profileType = siblingCollection(collection, 'profile');
   const linkType = siblingCollection(collection, 'profileLink');
-  const read = async type => (await rpc(origin, 'com.atproto.repo.getRecord', { query: { repo: did, collection: type, rkey: 'self' } })).data.value;
+  // A preview still works when the PDS cannot be reached; saving does not, since it would lose what is there.
+  const read = type => rpc(origin, 'com.atproto.repo.getRecord', { query: { repo: did, collection: type, rkey: 'self' } })
+    .then(result => result.data.value, problem => { if (values.publish) throw problem; });
 
   // Start from what is already saved, so setting one field leaves the others alone.
   // --from-bluesky starts from the account's Bluesky profile instead.
@@ -65,6 +69,11 @@ try {
   if (links.length > 10) throw new Error('A profile shows at most 10 links');
   // A Bluesky profile's links are Bluesky's own records, so they are not carried across.
   if (!values.link && savedLinks && !values['from-bluesky']) record.links = savedLinks;
+  // Sections Bluesky has no field for go in the site's own layer. Giving any replaces that layer.
+  const own = await siteLayer(values.site, siblingCollection(collection, 'profileSite'), values['site-schema'],
+    { fields: PROFILE_FIELDS, matches: PROFILE_MATCHES, kind: 'profile' });
+  if (own) record.site = own;
+  if (values['from-bluesky'] && !own) delete record.site;
   record.createdAt ??= new Date().toISOString();
 
   if (!values.publish) {
