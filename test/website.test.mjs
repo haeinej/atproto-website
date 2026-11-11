@@ -21,12 +21,13 @@ test('the scheduled feed displays an archive post without a Bluesky copy', async
   } };
   await refreshNotes(env, async url => {
     assert.equal(url.searchParams.get('collection'), ARCHIVE_POST);
-    return Response.json({ records: [{ uri, value: example }] });
+    return Response.json({ records: [{ uri, value: { ...example, tags: ['Photographs', '  Daily notes  ', 'Photographs'] } }] });
   });
   const response = await worker.fetch(new Request('https://example.test/notes.json'), env);
   const { notes } = await response.json();
   assert.equal(response.status, 200);
   assert.equal(notes[0].permalink, '/posts/test-post');
+  assert.deepEqual(notes[0].tags, ['Photographs', 'Daily notes']);
   assert.match(notes[0].bodyHtml, /<img.*The light changed.*<img.*<video/s);
   assert.match(notes[0].bodyHtml, /https:\/\/pds\.example\.test\/xrpc\/com\.atproto\.sync\.getBlob/);
 });
@@ -36,13 +37,14 @@ test('an individual post resolves its record and escapes untrusted content', asy
   const result = await servePost(request, config, 'test-post', async url => {
     assert.equal(url.searchParams.get('rkey'), 'test-post');
     return Response.json({ uri, value: {
-      ...example, title: '<script>alert(1)</script>', body: example.body + '\n\n' +
+      ...example, title: '<script>alert(1)</script>', tags: ['Projects', '<script>'], body: example.body + '\n\n' +
         '<img src=x onerror=alert(1)> [link](javascript:alert(1)) ![External](https://other.example/pixel.png)',
     } });
   });
   const html = await result.text();
   assert.equal(result.status, 200);
   assert.match(html, /&lt;script&gt;/);
+  assert.match(html, /Projects · &lt;script&gt;/);
   assert.doesNotMatch(html, /<script|<img src=x|href="javascript:|src="https:\/\/other\.example/);
   const missing = await servePost(request, config, 'test-post', async () =>
     Response.json({ error: 'RecordNotFound' }, { status: 400 }));

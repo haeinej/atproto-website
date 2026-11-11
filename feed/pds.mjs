@@ -14,6 +14,11 @@ export function webUrl(value) {
   if (['https:', 'http:'].includes(url.protocol) && !url.username && !url.password) return url.href;
 }
 
+export function normalizeTags(tags) {
+  if (!Array.isArray(tags)) return [];
+  return [...new Set(tags.filter(tag => typeof tag === 'string').map(tag => tag.trim()).filter(Boolean))];
+}
+
 export function pdsConfig(env) {
   const did = env.ATPROTO_DID;
   const origin = URL.canParse(env.ATPROTO_PDS_ORIGIN) && new URL(env.ATPROTO_PDS_ORIGIN);
@@ -84,6 +89,7 @@ export function normalizeArchivePost(value, key, pds) {
   const time = Date.parse(value.publishedAt);
   const canonicalUrl = webUrl(value.canonicalUrl);
   if (!Number.isFinite(time) || !canonicalUrl) return null;
+  const tags = normalizeTags(value.tags);
   const media = new Map();
   if (Array.isArray(value.media)) {
     for (const attachment of value.media) {
@@ -109,6 +115,7 @@ export function normalizeArchivePost(value, key, pds) {
     canonicalUrl,
     permalink: `/posts/${encodeURIComponent(key)}`,
     sourceUrl: webUrl(value.source?.uri),
+    ...(tags.length ? { tags } : {}),
     media,
   };
 }

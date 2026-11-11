@@ -30,6 +30,7 @@
           },
           "tags": {
             "type": "array",
+            "description": "Optional labels chosen by the author. Each label is a free-form string.",
             "items": { "type": "string" }
           },
           "source": {

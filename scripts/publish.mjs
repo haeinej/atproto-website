@@ -1,7 +1,7 @@
 import { readFile, stat } from 'node:fs/promises';
 import { extname } from 'node:path';
 import { parseArgs } from 'node:util';
-import { ARCHIVE_POST, pdsConfig, webUrl } from '../feed/pds.mjs';
+import { ARCHIVE_POST, normalizeTags, pdsConfig, webUrl } from '../feed/pds.mjs';
 import { mediaReferences } from '../feed/render.mjs';
 
 const types = {
@@ -53,6 +53,7 @@ async function run() {
     options: {
       file: { type: 'string' }, slug: { type: 'string' }, title: { type: 'string' },
       date: { type: 'string' }, media: { type: 'string', multiple: true, default: [] },
+      label: { type: 'string', multiple: true, default: [] },
       config: { type: 'string', default: 'feed/wrangler.site.jsonc' }, publish: { type: 'boolean' },
     },
   });
@@ -67,6 +68,8 @@ async function run() {
   if (!body || Buffer.byteLength(body) > 262_144) throw new Error('Use a nonempty Markdown body of at most 256 KiB');
   const publishedAt = values.date ? new Date(values.date) : new Date();
   if (!Number.isFinite(publishedAt.valueOf())) throw new Error('--date must be a valid date');
+  if (values.label.some(label => !label.trim())) throw new Error('--label needs a nonempty name');
+  const tags = normalizeTags(values.label);
   const attachments = await readAttachments(values.media, body);
   const record = {
     $type: ARCHIVE_POST,
@@ -74,6 +77,7 @@ async function run() {
     publishedAt: publishedAt.toISOString(),
     canonicalUrl: new URL(`/posts/${values.slug}`, site).href,
     ...(values.title ? { title: values.title } : {}),
+    ...(tags.length ? { tags } : {}),
   };
   if (!values.publish) {
     console.log(JSON.stringify({ record, attachments: [...attachments.keys()] }, null, 2));

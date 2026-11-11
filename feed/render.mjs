@@ -48,6 +48,7 @@ export function postPage(post) {
   const date = escape(new Intl.DateTimeFormat('en', { dateStyle: 'long', timeZone: 'UTC' })
     .format(new Date(post.createdAt)));
   const source = post.sourceUrl ? `<a href="${escape(post.sourceUrl)}">Original post</a>` : '';
+  const labels = post.tags?.length ? `<span>${escape(post.tags.join(' · '))}</span>` : '';
   const summary = post.summary ? `<meta name="description" content="${escape(post.summary)}">` : '';
   return `<!doctype html>
 <html lang="en">
@@ -66,6 +67,7 @@ export function postPage(post) {
       <h1>${title}</h1>
       <div class="note-meta">
         <time datetime="${escape(post.createdAt)}">${date}</time>
+        ${labels}
         ${source}
       </div>
       <div class="post-body">${post.bodyHtml}</div>

@@ -51,6 +51,11 @@ async function loadNotes() {
       } else {
         meta.append(time);
       }
+      if (Array.isArray(note.tags) && note.tags.length) {
+        const labels = document.createElement('span');
+        labels.textContent = note.tags.join(' · ');
+        meta.append(labels);
+      }
       const original = sourceLink(note.sourceUrl, 'Original post');
       if (original) meta.append(original);
 

@@ -15,7 +15,7 @@ public final class Importer {
     private static final String USAGE = """
             Usage: java -jar x-archive-importer.jar --archive PATH [--id X_POST_ID ...]
                    [--site HTTPS_ORIGIN] [--publish --pds HTTPS_ORIGIN --handle HANDLE --did DID]
-                   [--also-bluesky]
+                   [--label NAME ...] [--also-bluesky]
             Preview is offline. Publishing reads ATPROTO_APP_PASSWORD or prompts for an app password.
             Site defaults to the handle's HTTPS origin, or https://example.com for preview.
             """;
@@ -41,6 +41,7 @@ public final class Importer {
     private static void run(String[] args) throws IOException, InterruptedException {
         var options = new HashMap<String, String>();
         var selected = new LinkedHashSet<String>();
+        var labels = new LinkedHashSet<String>();
         boolean publish = false;
         boolean alsoBluesky = false;
         for (int i = 0; i < args.length; i++) {
@@ -53,7 +54,7 @@ public final class Importer {
                 alsoBluesky = true;
                 continue;
             }
-            if (!Set.of("--archive", "--id", "--pds", "--handle", "--did", "--site").contains(option)
+            if (!Set.of("--archive", "--id", "--pds", "--handle", "--did", "--site", "--label").contains(option)
                     || i + 1 >= args.length || args[i + 1].startsWith("--")) {
                 throw new IllegalArgumentException("Unknown option or missing value: " + option);
             }
@@ -61,11 +62,16 @@ public final class Importer {
             if (option.equals("--id")) {
                 if (!value.matches("[1-9][0-9]{0,18}")) throw new IllegalArgumentException("Invalid X post ID");
                 selected.add(value);
+            } else if (option.equals("--label")) {
+                String label = value.strip();
+                if (label.isEmpty()) throw new IllegalArgumentException("--label needs a nonempty name");
+                labels.add(label);
             } else if (options.putIfAbsent(option, value) != null) {
                 throw new IllegalArgumentException("Repeated option: " + option);
             }
         }
         var selection = Archive.read(Path.of(require(options, "--archive")), selected);
+        var tags = List.copyOf(labels);
         URI site = origin(options.getOrDefault("--site", "https://" + options.getOrDefault("--handle", "example.com")), false);
         if (alsoBluesky) {
             var keys = new HashMap<String, String>();
@@ -76,12 +82,12 @@ public final class Importer {
             }
         }
         if (!publish) {
-            printPreview(selection, site);
+            printPreview(selection, site, tags);
             return;
         }
 
         if ((!selected.isEmpty() && !selection.skipped().isEmpty()) || selection.posts().isEmpty()) {
-            printPreview(selection, site);
+            printPreview(selection, site, tags);
             throw new IOException("No complete selection to publish");
         }
         String did = require(options, "--did");
@@ -97,7 +103,7 @@ public final class Importer {
             for (Post post : selection.posts()) {
                 String key = post.recordKey();
                 String postUri = "at://" + did + "/" + Post.COLLECTION + "/" + key;
-                boolean added = client.createIfAbsent(Post.COLLECTION, key, post.archiveRecord(site), post.media());
+                boolean added = client.createIfAbsent(Post.COLLECTION, key, post.archiveRecord(site, tags), post.media());
                 if (added) created++;
                 else present++;
                 System.out.printf("%s %s  %s%n", added ? "Imported" : "Already present", post.id(), postUri);
@@ -117,13 +123,13 @@ public final class Importer {
                 blueskyCreated, blueskySkipped);
     }
 
-    private static void printPreview(Archive.Selection selection, URI site) throws IOException {
+    private static void printPreview(Archive.Selection selection, URI site, List<String> tags) throws IOException {
         var preview = JSON.createObjectNode();
         var candidates = preview.putArray("candidates");
         for (Post post : selection.posts()) {
             var entry = candidates.addObject().put("recordKey", post.recordKey())
                     .put("fitsBluesky", post.fitsBluesky());
-            entry.set("record", post.archiveRecord(site));
+            entry.set("record", post.archiveRecord(site, tags));
         }
         var skipped = preview.putObject("skipped");
         selection.skipped().forEach(skipped::put);

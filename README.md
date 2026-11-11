@@ -2,6 +2,8 @@
 
 Host your posts and media on your own domain with Cloudflare and AT Protocol. Attach a posts page to an existing Cloudflare site, or run this project's starter site on a new hostname. Write posts in Markdown or bring over your X archive. The website reads public records from your Personal Data Server (PDS), and the files stay with those records.
 
+[Build a block](docs/build-a-block.md) with text, links, media, and labels you choose.
+
 | Component | Purpose |
 | --- | --- |
 | [Cirrus](cirrus/) | A Cloudflare Worker that runs your PDS. A Durable Object holds the repository and R2 holds its media. |
@@ -73,10 +75,10 @@ The Worker has a budget of 48 listing requests per refresh. Very large repositor
 Create an app password for your PDS account and expose it to the command as `ATPROTO_APP_PASSWORD`. The CLI uses the account and website from the generated feed config. Omitting `--publish` previews the draft offline. [Cirrus app passwords](https://cirrus.earth/guides/create-app-password/)
 
 ```sh
-npm run publish:post -- --file ./hello.md --slug hello --title 'Hello' --publish
+npm run publish:post -- --file ./hello.md --slug hello --title 'Hello' --label 'Thoughts' --publish
 ```
 
-Your post is available at `https://example.com/posts/hello` once published. To include a file in a specific part of the post, use an attachment reference such as `![A short clip](media:clip)` in the Markdown and add `--media clip=./clip.mp4` to the command. Repeat `--media` for additional files. The post can mix images, video, audio, links, and text. [Mixed-media example](examples/image-text-image-video.json)
+Your post is available at `https://example.com/posts/hello` once published. Repeat `--label` to add more labels. To include a file in a specific part of the post, use an attachment reference such as `![A short clip](media:clip)` in the Markdown and add `--media clip=./clip.mp4` to the command. Repeat `--media` for additional files. The post can mix images, video, audio, links, and text. [Block guide](docs/build-a-block.md) · [Mixed-media example](examples/image-text-image-video.json)
 
 ## Import an X archive
 
@@ -102,12 +104,12 @@ java -jar importer/target/x-archive-importer.jar \
   --site https://example.com
 ```
 
-Repeat `--id` to select multiple posts or omit it to import all eligible posts. Publishing writes public records and preserves the original date and URL. A rerun skips records with matching content. The preview reports replies, reposts, quote posts, and entries with missing or unsupported media.
+Repeat `--id` to select multiple posts or omit it to import all eligible posts. Add `--label 'Tweets'` or any other labels you choose for the selection. Publishing writes public records and preserves the original date and URL. A rerun skips records with matching content. The preview reports replies, reposts, quote posts, and entries with missing or unsupported media.
 
 Add `--also-bluesky` to publish compatible text and images on Bluesky too. The preview's `fitsBluesky` field shows which posts qualify. To sign in with a Cirrus account in the Bluesky app, choose a custom hosting provider and enter the PDS hostname. [Cirrus sign-in guide](https://cirrus.earth/guides/sign-in-to-bluesky/)
 
 ## Post format and compatibility
 
-Every archive post uses the shared `com.haeinjung.post` collection in the author's own repository. Each record has a Markdown body, a publication date, and a canonical URL. It can include a title, summary, tags, attachments, and the original publishing platform and URL. Attachment order follows the references in the body. [Lexicon](lexicons/com/haeinjung/post.json) · [AT Protocol blob spec](https://atproto.com/specs/blob)
+Every archive post uses the shared `com.haeinjung.post` collection in the author's own repository. Each record has a Markdown body, a publication date, and a canonical URL. It can include a title, summary, author labels in `tags`, attachments, and the original publishing platform and URL. Attachment order follows the references in the body. [Lexicon](lexicons/com/haeinjung/post.json) · [AT Protocol blob spec](https://atproto.com/specs/blob)
 
 The starter configuration reads archive posts. To also list native Bluesky posts from the same account, set `INCLUDE_BLUESKY_POSTS=true` in the Worker config. The combined feed can show both records when you publish a Bluesky copy. Set `INCLUDE_LEGACY_NOTES=true` to include older `com.haeinjung.note` entries. The [haeinjung.com example](examples/haeinjung.com/notes-index.html) shows how the page can inherit an existing site's navigation.
