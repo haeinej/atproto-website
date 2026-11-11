@@ -39,7 +39,9 @@ Do not edit the post Lexicon, do not invent top-level fields, and do not leave s
 
 ## Ask the owner; do not decide for them
 
-Moving a site turns up things that have no obvious place: a subtitle, a note saying where an essay first appeared, two versions of the same image, text in a second language. Each of these is the owner's decision. When you meet one, stop and ask.
+First, what not to ask. You have the site's source, and it is the specification for how the site is built. Never ask the owner how a page should be built, where something on it should go, or whether to change it. Rebuild the site identically and swap only where its content is read from. When a page has something a post does not hold, leave it on the page as it is.
+
+What is left to ask is what neither the source nor the content can tell you: which accounts and exports to bring in, whether something that looks private should be published, and when to go live. For those, stop and ask.
 
 - **One decision per question.** Say what you found and where, in a sentence, then give two to four options.
 - **Say what each option leads to.** "The subtitle becomes a field on the post" tells the owner more than "use a field".
@@ -55,7 +57,7 @@ For example:
 > 3. Your site's optional layer. It is saved with the post under `site`, and only your own pages show it.
 > 4. Keep it on the website only. It is not part of the post.
 
-Things to ask about, when the site has them: subtitles and summaries, where an item first appeared and whether that changes its platform, which copy of an image to keep, missing alt text, text in more than one language, duplicate pages, and anything that looks private.
+Do not ask about things the site already settles: a subtitle goes in the post's subtitle field, the page's own image stays the page's own, missing alt text stays missing, and text in a second language stays with the site.
 
 ## Work on a copy
 

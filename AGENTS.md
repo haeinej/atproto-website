@@ -21,7 +21,7 @@ These are enforced by the commands and tests. Do not work around them.
 5. **Every post has a label, and the address comes from it.** `/posts/<label>/<sublabel>/<slug>`. A post that fits no section goes under `other`, as a last resort. [docs/labels.md](docs/labels.md)
 6. **Labels are the owner's words.** Offer the plain default and ask. [skills/suggest-labels/SKILL.md](skills/suggest-labels/SKILL.md)
 7. **Never set or mention a post's form.** The publish command identifies it.
-8. **Ask the owner; do not decide for them.** One decision per question, a few options with what each leads to, your recommendation first.
+8. **The site's source is the specification.** Do not ask the owner how to build their site. Rebuild it identically and swap only where the content is read from. Ask only what neither the source nor the content can tell you, one decision per question.
 9. **Nothing lost, nothing looks different, only the content side changes.** Work on a copy, take a baseline, and check against it. [skills/migrate-site/SKILL.md](skills/migrate-site/SKILL.md)
 10. **Publish nothing without the owner's approval.** A record on a PDS is public the moment it is written. Preview first.
 

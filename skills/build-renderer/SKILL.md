@@ -7,6 +7,15 @@ description: Make a website's own pages build from the owner's post records whil
 
 The owner's content now lives in records. Their website must show it without looking any different. You replace the content layer and nothing else.
 
+## The site's source is the specification
+
+You have the source of the site. It already says how every page is built, what each page shows, and where every file is. Do not ask the owner how their site should be built. Build the identical site, and change one thing only: where the content is read from.
+
+- **Identical is the only target.** Every page comes out the same bytes as before.
+- **What a post does not hold stays where it is.** A line written for a card, a second language, a page's description, a smaller copy of an image: leave each in the template as the page has it. Do not ask whether to move it into the post.
+- **Do not offer improvements.** Changing where images load from, filling extra fields, or tidying markup are not part of this job. If one seems worth doing, mention it once in the final report.
+- **Ask only what the source cannot answer,** and that is rare here. How to build is never one of those questions.
+
 The project's files are in `${CLAUDE_PLUGIN_ROOT}`; in a clone of the repository, that is the repository root. Read the `start` skill and the `migrate-site` skill first. Work in the copy of the site, against a test PDS, never the live one.
 
 ## The three parts
@@ -101,7 +110,7 @@ Each of these is here because skipping it produced a wrong result or a false ala
 ### Reporting
 
 19. **List what is not done.** Name each page the renderer could not handle and why.
-20. **Put the owner's decisions to them.** Where images on their pages load from (the page's current address, the image's source, or their repository) changes the HTML and is theirs to choose. So is what happens to content in the `<head>` that the record does not hold.
+20. **Do not turn the build into questions.** Keep `--images page` and leave site text in the template. Report what stayed the site's own; do not ask the owner to decide it.
 
 ## Settings for images
 
@@ -113,4 +122,4 @@ Each of these is here because skipping it produced a wrong result or a false ala
 | `source` | The address the image first came from | Same as `page` when the two agree |
 | `repository` | The owner's copy on their PDS | The page depends only on their repository; image addresses change |
 
-Use `page` to prove a rebuild is identical. Change it only on the owner's decision.
+Use `page`. It is the setting that leaves the site identical. The others exist for an owner who asks, unprompted, for their pages to load images from elsewhere.

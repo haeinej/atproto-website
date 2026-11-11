@@ -42,6 +42,8 @@ npx github:haeinej/atproto-website publish --file ./post.md --slug hello --title
 
 `npx github:haeinej/atproto-website` with no command lists them all. Inside a clone of the repository, the same commands are `npm run identity`, `npm run posts`, `npm run publish:post`, and so on.
 
+The owner's existing site is the specification for how it is built: reproduce it identically and change only where content is read from, without asking how.
+
 Every command previews by default and changes nothing until it is given `--publish`. A record on a PDS is public the moment it is written, so preview, show the owner, and publish only when they say so.
 
 Deploying the site Worker and running the PDS still need a clone of the repository; `README.md` has the steps.
