@@ -338,3 +338,34 @@ test('a gallery item: a video or image in a wrapper, with the page\'s own smalle
   const moved = adopt(gallery, item(2025, 'Porto'), itemRules, { images: 'page', prefix: 'a', vars: { file: 'a\\.jpg' } }, context);
   assert.deepEqual(moved.findings.map(found => found.where), ['the place']);
 });
+
+test('a card on an index page takes a post\'s title and facts, and not its body', () => {
+  const index = `<main><a class="card" href="/writing/a.html?v=2"><h3>A walk</h3><p class="about">once is never</p><span class="date">june 2026</span></a>
+<a class="card" href="/writing/b.html"><h3>Another</h3><p class="about">A line written for this card.</p><span class="date">2026</span></a></main>`;
+  const cardRules = { card: true, slots: [
+    { name: 'title', pattern: '(<a class="card" href="{href}(?:\\?[^"]*)?">.*?<h3>)(.*?)(</h3>)' },
+    { name: 'about', from: 'subtitle', whenSame: true, pattern: '(<p class="about">)(.*?)(</p>)' },
+    { name: 'date', from: 'publishedAt', whenSame: true, pattern: '(<span class="date">)(.*?)(</span>)', date: { options: { month: 'long', year: 'numeric' }, lowercase: true } },
+  ] };
+  const first = adopt(index, record, cardRules, { images: 'page', prefix: 'a', vars: { href: '/writing/a\\.html' } }, context);
+  assert.deepEqual([first.findings, first.kept], [[], []]);
+  // The second card has a line of its own and a looser date. Both stay the page's, and are reported.
+  const other = { ...record, title: 'Another', subtitle: 'a place', publishedAt: '2026-05-01T00:00:00Z' };
+  const second = adopt(first.template, other, cardRules, { images: 'page', prefix: 'b', vars: { href: '/writing/b\\.html' } }, context);
+  assert.deepEqual(second.findings, []);
+  assert.deepEqual(second.kept, [{ where: 'the about', page: 'A line written for this card.' }, { where: 'the date', page: '2026' }]);
+  assert.match(second.template, /<h3>\{\{a:title\}\}<\/h3><p class="about">\{\{a:about\}\}<\/p><span class="date">\{\{a:date\}\}<\/span>/);
+  assert.match(second.template, /<h3>\{\{b:title\}\}<\/h3><p class="about">A line written for this card\.<\/p><span class="date">2026<\/span>/);
+  let built = build(second.template, record, cardRules, { images: 'page', prefix: 'a' }, context, first.blocks);
+  built = build(built, other, cardRules, { images: 'page', prefix: 'b' }, context, second.blocks);
+  assert.equal(built, index);
+  // A card may quote a line of the post's body as its own description. That is the page's text.
+  const quoting = index.replace('A line written for this card.', 'The street went <em>quiet</em> after the rain.');
+  const quoted = adopt(quoting, { ...other, body: record.body }, cardRules, { images: 'page', prefix: 'b', vars: { href: '/writing/b\\.html' } }, context);
+  assert.deepEqual([quoted.findings, quoted.repeated], [[], []]);
+  // Without the card setting, a page that leaves out the post's body is a mismatch.
+  const { card, ...strict } = cardRules;
+  assert.match(adopt(index, record, strict, { images: 'page', prefix: 'a', vars: { href: '/writing/a\\.html' } }, context).findings[0].problem, /more block/);
+  // A title that differs is still refused: only the slots marked as repeats are relaxed.
+  assert.equal(adopt(index, { ...record, title: 'A stroll' }, cardRules, { images: 'page', prefix: 'a', vars: { href: '/writing/a\\.html' } }, context).findings.length, 1);
+});

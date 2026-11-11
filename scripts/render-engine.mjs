@@ -404,14 +404,16 @@ export function adopt(page, record, rules, options, context) {
     at += after.length;
   }
   template += page.slice(at);
-  if (position.next < blocks.length) {
+  // A card shows a post's title and a few facts, not its body, so the body is not looked for.
+  if (!rules.card && position.next < blocks.length) {
     findings.push({ where: `block ${position.next + 1}`, problem: `The post's body has ${blocks.length - position.next} more block(s) than the page` });
   }
 
   // Content that also sits somewhere the slots do not cover would go stale when the post changes.
   const repeated = [];
   const text = block => block.html?.replace(/<[^>]+>/g, '') ?? '';
-  for (const [index, block] of blocks.entries()) {
+  // A card does not take the body at all, so there is nothing of it to have been left behind.
+  for (const [index, block] of rules.card ? [] : blocks.entries()) {
     if (text(block).length >= 30 && template.includes(block.html)) repeated.push(`block ${index + 1} of the body is still in the template`);
   }
   const title = record.title ? escapeText(record.title, rules) : '';

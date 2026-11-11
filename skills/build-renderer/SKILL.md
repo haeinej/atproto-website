@@ -56,7 +56,8 @@ A rules file names each kind of page and lists its slots in the order they appea
 - A page can hold the body in more than one place, such as a file link in the header and the text below: give it two `body` slots, and each takes the blocks its part of the page has.
 - A page that holds several posts, such as a list of projects, is adopted and built once for each post: pass `--prefix` with the post's key, feed each run's result into the next (`--page` when adopting, `--into` when building), and use `--set name=value` to fill `{name}` in a pattern so it finds that post's place on the page.
 - `siteText` is a pattern for elements that are the site's own and must be left alone, such as `lang=\"ko\"` for a second language written beside the first.
-- `optional` lets a kind cover pages that lack a piece. `whenSame` is for a second edition that repeats the post's words on some pages and has its own on others, such as a translated title: it is cut only where it is the same, and otherwise left as site text.
+- `optional` lets a kind cover pages that lack a piece. `whenSame` is for a place that repeats the post's words on some pages and has its own on others, such as a second edition's translated title or a card's own one-line description: it is cut only where it is the same, and otherwise left as site text.
+- `"card": true` marks a kind that shows a post's title and a few facts but not its body, such as a card on an index page.
 - Inside the body nothing is configured. The page's own markup for each paragraph, image, and list is kept as it is, so each image keeps its own class and attributes. A row of links on the page matches a list in the post whose items are each one link.
 
 Under `inline`, a site or a kind of page can say how it writes things: `ownLinksRelative` when links to the site itself leave the domain off, `externalLink` for how an outside link is opened, `footnoteRef` for a footnote's mark, and `escapeQuotes` when a page writes quotation marks as character references. `posts` maps a post's key to its address on the site, so a link to a post is written as that address.
@@ -79,7 +80,7 @@ Each of these is here because skipping it produced a wrong result or a false ala
 5. **Two pages of the same kind can still differ.** One paper here wrote apostrophes as `&#x27;` and the other did not. Give the odd one its own kind; do not bend the shared rules.
 6. **Look for the content everywhere it appears.** The same title or date often sits in a second language edition, in the page's `<head>`, in structured data, in next and previous links, and on index pages. Content left in a template goes stale the first time the post changes. `adopt` reports body text still in the template and counts the lines that repeat the title; read both.
 7. **Check where each slot landed.** A pattern can match a later look-alike, such as the other edition's heading. The report lists the slots it cut, in order; confirm the list is the one you meant.
-8. **Do not relax a check to make it pass.** `whenSame` is only for a repeat in another edition, and the report lists what it kept as site text. Never use it on the first edition, and never loosen a pattern to hide a mismatch.
+8. **Do not relax a check to make it pass.** `whenSame` is only for a repeat of the post's words somewhere other than the post's own page or first edition, and the report lists what it kept as site text. Never use it on a post's own title or body, and never loosen a pattern to hide a mismatch.
 
 ### Rendering
 
