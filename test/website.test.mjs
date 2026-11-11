@@ -479,3 +479,38 @@ test('the post schema is fixed, and a site adds its own fields only through its 
     await rm(folder, { recursive: true, force: true });
   }
 });
+
+test('identity starts from the DID, and the site only reads the repository that DID owns', async () => {
+  const { didDocumentUrl, resolveIdentity } = await import('../feed/identity.mjs');
+  assert.equal(didDocumentUrl('did:web:pds.example.test'), 'https://pds.example.test/.well-known/did.json');
+  assert.equal(didDocumentUrl('did:plc:z72i7hdynmk6r22z27h6tvur'), 'https://plc.directory/did:plc:z72i7hdynmk6r22z27h6tvur');
+  const document = (hosted = 'https://pds.example.test') => ({
+    id: did, alsoKnownAs: ['at://Example.test'],
+    verificationMethod: [{ id: `${did}#atproto`, type: 'Multikey', publicKeyMultibase: 'zQ3shKey' }],
+    service: [{ id: '#atproto_pds', type: 'AtprotoPersonalDataServer', serviceEndpoint: hosted }],
+  });
+  // A small internet: the DID document, and the handle's two ways of pointing at a DID.
+  const net = ({ hosted, wellKnown = did, dns } = {}) => async url => {
+    const address = String(url);
+    if (address === 'https://pds.example.test/.well-known/did.json') return Response.json(document(hosted));
+    if (address === 'https://example.test/.well-known/atproto-did') return wellKnown ? new Response(wellKnown) : new Response('', { status: 404 });
+    if (address.startsWith('https://cloudflare-dns.com/')) return Response.json({ Answer: dns ? [{ data: `"did=${dns}"` }] : [] });
+    return address.includes('listRecords') ? Response.json({ records: [] }) : Response.json({ error: 'RecordNotFound' }, { status: 400 });
+  };
+  const whole = { did, handle: 'example.test', pds: 'https://pds.example.test', signingKey: 'zQ3shKey', handleVerified: true };
+  assert.deepEqual(await resolveIdentity(did, net()), whole);
+  assert.deepEqual(await resolveIdentity('example.test', net()), whole);
+  assert.deepEqual(await resolveIdentity('example.test', net({ wellKnown: '', dns: did })), whole);
+  // A handle is only trusted when it points back at the DID that claims it.
+  assert.equal((await resolveIdentity(did, net({ wellKnown: 'did:web:someone-else.test' }))).handleVerified, false);
+  await assert.rejects(resolveIdentity('example.test', net({ wellKnown: '' })), /does not resolve to a DID/);
+
+  let stored;
+  const env = { ...config, NOTES: { put: async (_key, value) => { stored = JSON.parse(value); }, get: async () => stored } };
+  await refreshNotes(env, net());
+  const get = path => worker.fetch(new Request(`https://example.test${path}`), env);
+  assert.deepEqual(await (await get('/notes/identity.json')).json(), { did, handle: 'example.test', repository: `at://${did}` });
+  assert.equal(await (await get('/.well-known/atproto-did')).text(), did);
+  // A configuration pointing at a server the DID does not name is refused.
+  await assert.rejects(refreshNotes(env, net({ hosted: 'https://other-pds.test' })), /is hosted at https:\/\/other-pds\.test, not the configured/);
+});

@@ -9,6 +9,7 @@
     "configure": "node scripts/configure.mjs",
     "lexicon": "node scripts/lexicon.mjs",
     "publish:post": "node scripts/publish.mjs",
+    "identity": "node scripts/identity.mjs",
     "posts": "node scripts/posts.mjs",
     "profile": "node scripts/profile.mjs",
     "snapshot": "node scripts/snapshot.mjs",

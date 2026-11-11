@@ -1,11 +1,12 @@
 import { readFile } from 'node:fs/promises';
 import { parseArgs } from 'node:util';
+import { resolveIdentity } from '../feed/identity.mjs';
 import { pdsConfig, postCollection, webUrl } from '../feed/pds.mjs';
 
 try {
   const { values } = parseArgs({
     options: {
-      site: { type: 'string' }, pds: { type: 'string' }, did: { type: 'string' },
+      site: { type: 'string' }, pds: { type: 'string' }, did: { type: 'string' }, handle: { type: 'string' },
       zone: { type: 'string' }, mode: { type: 'string', default: 'attach' },
       name: { type: 'string' }, kv: { type: 'string' }, collection: { type: 'string' },
       'access-team': { type: 'string' }, 'access-aud': { type: 'string' },
@@ -16,7 +17,20 @@ try {
   if (!site || site.protocol !== 'https:' || site.href !== `${site.origin}/` || site.port) {
     throw new Error('Set --site to your website’s HTTPS origin');
   }
-  const pds = pdsConfig({ ATPROTO_DID: values.did, ATPROTO_PDS_ORIGIN: values.pds });
+  // The identity is the root. Given a DID or a handle, the PDS is read from the DID's own document,
+  // so the site cannot be pointed at a repository the identity does not own. Passing both --did and
+  // --pds skips the lookup, for a PDS that is not reachable yet.
+  let account = { did: values.did, pds: values.pds };
+  if (!values.did || !values.pds) {
+    if (!values.did && !values.handle) throw new Error('Set --did to your account DID, or --handle to your handle');
+    const identity = await resolveIdentity(values.did ?? values.handle);
+    if (!identity.pds) throw new Error(`${identity.did} does not name a PDS in its DID document`);
+    if (values.pds && new URL(values.pds).origin !== identity.pds) {
+      throw new Error(`${identity.did} is hosted at ${identity.pds}, not ${values.pds}`);
+    }
+    account = identity;
+  }
+  const pds = pdsConfig({ ATPROTO_DID: account.did, ATPROTO_PDS_ORIGIN: account.pds });
   const standalone = values.mode === 'standalone';
   if (!standalone && values.mode !== 'attach') throw new Error('--mode must be attach or standalone');
   const zone = values.zone ?? site.hostname;

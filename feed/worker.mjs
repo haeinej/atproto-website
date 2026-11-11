@@ -3,6 +3,7 @@ import {
   normalizeProfile, pdsConfig, siblingCollection,
 } from './pds.mjs';
 import { OTHER } from './forms.mjs';
+import { isDid, resolveIdentity } from './identity.mjs';
 import { servePrivate } from './private.mjs';
 import { plainName, postPage, renderArchivePost } from './render.mjs';
 
@@ -102,9 +103,20 @@ export async function refreshNotes(env, request = fetch, now = new Date()) {
     .sort((a, b) => a.createdAt.localeCompare(b.createdAt) || a.uri.localeCompare(b.uri));
   const graph = buildGraph(rendered);
   const latest = rendered.reverse().slice(0, 20).map(({ name, ...note }) => note);
+  // Check the identity the site is built on. The DID's own document says which PDS hosts it; if that
+  // is some other server, this configuration is reading a repository the identity does not own.
+  const resolved = await resolveIdentity(pds.did, request).catch(() => null);
+  if (resolved?.pds && resolved.pds !== pds.origin && new URL(pds.origin).protocol === 'https:') {
+    throw new Error(`${pds.did} is hosted at ${resolved.pds}, not the configured ${pds.origin}`);
+  }
+  const identity = {
+    did: pds.did,
+    ...(resolved?.handleVerified ? { handle: resolved.handle } : {}),
+    repository: `at://${pds.did}`,
+  };
   // A profile that cannot be read leaves the feed as it is.
   const profile = await loadProfile(pds, request).catch(() => null);
-  const snapshot = { ...pds, refreshedAt: now.toISOString(), notes: latest, graph, ...(profile ? { profile } : {}) };
+  const snapshot = { ...pds, refreshedAt: now.toISOString(), notes: latest, graph, identity, ...(profile ? { profile } : {}) };
   await env.NOTES.put(SNAPSHOT_KEY, JSON.stringify(snapshot), { expirationTtl: MAX_AGE });
   return snapshot;
 }
@@ -172,7 +184,11 @@ export default {
       return servePrivate(request, env, url.pathname);
     }
     // The graph lives under /notes/ so an attached site needs no extra route.
-    const isFeed = ['/notes.json', '/notes/graph.json', '/notes/profile.json'].includes(url.pathname);
+    // Handle resolution: a site whose domain is the account's handle answers with its DID here.
+    if (url.pathname === '/.well-known/atproto-did' && isDid(env.ATPROTO_DID)) {
+      return new Response(env.ATPROTO_DID, { headers: { 'Content-Type': 'text/plain', 'Cache-Control': 'public, max-age=300' } });
+    }
+    const isFeed = ['/notes.json', '/notes/graph.json', '/notes/profile.json', '/notes/identity.json'].includes(url.pathname);
     if (!isFeed && ((url.pathname === '/' && env.STANDALONE_SITE === 'true') || url.pathname.startsWith('/notes/') || folder)) {
       url.pathname = url.pathname === '/' || url.pathname === '/notes/' || folder ? '/index.html' : url.pathname.slice('/notes'.length);
       return env.ASSETS.fetch(new Request(url, request));
@@ -192,8 +208,9 @@ export default {
         !(age < MAX_AGE * 1000)) {
       return Response.json({ error: 'Notes are unavailable' }, { status: 503, headers });
     }
-    const { graph = {}, profile = {}, ...feed } = snapshot;
-    return Response.json({ '/notes.json': feed, '/notes/graph.json': graph, '/notes/profile.json': profile }[url.pathname], {
+    const { graph = {}, profile = {}, identity = { did: snapshot.did, repository: `at://${snapshot.did}` }, ...feed } = snapshot;
+    const body = { '/notes.json': feed, '/notes/graph.json': graph, '/notes/profile.json': profile, '/notes/identity.json': identity };
+    return Response.json(body[url.pathname], {
       headers: { ...headers, 'Cache-Control': 'public, max-age=300' },
     });
   },

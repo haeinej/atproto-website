@@ -13,7 +13,7 @@ It works on a copy of your site the whole time. Your live site keeps running, an
 
 ## Before you start
 
-- **Set up the tools.** Follow [Set up your site](../README.md#set-up-your-site) to install them and create your PDS. You can ask the agent to walk you through it.
+- **Set up the tools.** Follow [Set up your site](../README.md#set-up-your-site) to install them and create your PDS. You can ask the agent to walk you through it. Your DID is the root of everything that follows. [Identity](identity.md)
 - **Get your exports.** Download your archive from each platform you want to bring in. X has [an importer](../README.md#import-an-x-archive). For other platforms the agent converts the export itself.
 - **Open your website's source with the agent,** and give it this repository as well.
 

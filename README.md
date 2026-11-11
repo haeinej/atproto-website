@@ -2,7 +2,15 @@
 
 Keep what you publish in a content layer you own, and let your website decide how it looks. [Cirrus](https://github.com/ascorbic/cirrus) runs your AT Protocol Personal Data Server (PDS) on Cloudflare. This starter adds a post schema under your domain, tools to publish and import posts and media, and a Worker that serves a posts list, post pages, and JSON feeds.
 
-You can start from a website you already have, from an export of your posts on another platform, or from nothing. [Set up with your coding agent](docs/set-up-with-an-agent.md) · [Build a block](docs/build-a-block.md) · [Forms, labels, and sublabels](docs/labels.md) · [The fixed schema and your own fields](docs/schema-layers.md) · [Group and connect blocks](docs/group-and-connect.md)
+You can start from a website you already have, from an export of your posts on another platform, or from nothing. [Set up with your coding agent](docs/set-up-with-an-agent.md) · [Build a block](docs/build-a-block.md) · [Forms, labels, and sublabels](docs/labels.md) · [Identity](docs/identity.md) · [The fixed schema and your own fields](docs/schema-layers.md) · [Group and connect blocks](docs/group-and-connect.md)
+
+## Identity comes first
+
+Everything hangs off your DID, your permanent identifier on AT Protocol. Your DID's document names your handle and the PDS that hosts your repository, and the repository is the container for every post and for your profile. This is the same identity Bluesky uses, so any AT Protocol software can resolve it and read what you publish. The site is a view of that repository. [Identity](docs/identity.md)
+
+```sh
+npm run --silent identity -- example.com
+```
 
 ## How a post is described
 
@@ -33,7 +41,7 @@ The posts page lists every post by name, with its platform, label, and date. A p
 | Platforms | One per platform. |
 | Visibility | `private` and `public`. Offered only to you, once you are signed in. |
 
-Each post has its own page with its text, date, platform, and label. Your profile sits above the list.
+Each post has its own page with its text, date, platform, and label. Your identity sits above the list.
 
 Addresses follow the same folders, and every post also has an AT URI.
 
@@ -56,6 +64,7 @@ The address comes from the label and sublabel, so every post has a label; one pu
 | [Post Lexicon template](lexicons/com/haeinjung/post.json) | The fixed post schema. Generate it under your domain and leave its fields as they are. |
 | [Optional schema template](lexicons/com/haeinjung/postSite.json) | Where your site declares its own fields. They are saved under a post's `site` field. |
 | [Forms](feed/forms.mjs) | The thirteen forms, how each is identified, and what each may hold. |
+| [Identity](feed/identity.mjs) | Resolves a handle or DID the AT Protocol way, and checks the site reads the repository that DID owns. |
 | [Publish command](scripts/publish.mjs) | Previews and publishes a Markdown post with its attachments, publicly or privately. |
 | [Profile](scripts/profile.mjs) | Sets your name, description, pronouns, pictures, and links, in the same shape as a Bluesky profile. |
 | [X archive importer](importer/) | A Java CLI that previews an export and publishes selected posts and media to your PDS. |
@@ -74,7 +83,7 @@ pnpm --dir cirrus exec wrangler login
 
 If you already have a PDS, use its HTTPS origin and your account DID. To start a new one, run `pnpm --dir cirrus pds init` and set up a hostname such as `pds.example.com`. Follow the Cirrus instructions to back up your signing key, verify your handle, and deploy the Worker. [Cirrus quick start](https://cirrus.earth/start/quick-start/)
 
-Generate the website configuration from the repository root. Replace the example URLs and DID with yours.
+Generate the website configuration from the repository root. Replace the example URLs and DID with yours. You can pass `--handle example.com` in place of `--pds` and `--did`: the PDS is then read from your DID's document.
 
 ```sh
 npm run --silent configure -- \
@@ -160,7 +169,7 @@ npm run profile -- --name 'Your Name' --pronouns 'she/her' \
 
 Without `--publish` the command prints the record and changes nothing. Setting one field leaves the others as they are, and giving any `--link` replaces the list. `--from-bluesky` starts from the profile you already have on Bluesky. If you set no profile here, the site shows your Bluesky profile when the account has one.
 
-The posts page shows the profile above the list, and `/notes/profile.json` has it for your own pages. Generate the two schemas beside your post schema with `npm run --silent lexicon -- --kind profile` and `--kind profileLink`.
+The shared posts page shows only your identity: picture, name, pronouns, and verified handle. Your description and links are optional sections that stay unlisted there; `/notes/profile.json` has them for your own pages. Generate the two schemas beside your post schema with `npm run --silent lexicon -- --kind profile` and `--kind profileLink`.
 
 ## Keep a post private
 
@@ -214,7 +223,7 @@ The starter configuration reads archive posts. To also list native Bluesky posts
 
 ## Status
 
-`npm test` covers the feed, post pages, the posts graph, the profile, form identification and checks, taking in files and link previews from the web, and access to private posts.
+`npm test` covers identity resolution, the feed, post pages, the posts graph, the profile, the fixed schema, form identification and checks, taking in files and link previews from the web, and access to private posts.
 
 - **Not yet run against Cloudflare.** Private posts are tested with a stand-in for Cloudflare Access and for KV. The step that writes a private post with Wrangler has only been previewed.
 - **X importer not rebuilt.** It now saves each post's form and a single label. That change has not been compiled or run.

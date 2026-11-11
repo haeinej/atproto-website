@@ -105,16 +105,16 @@ function render(posts, by) {
   return [...folders, ...rows(loose, by)];
 }
 
-// Who the author is, above the list: picture, name, pronouns, description, and links.
+// Who the author is, above the list. Only the identity is shown: picture, name, pronouns, and the
+// handle the account's DID vouches for. A description and links are optional sections of the profile
+// that a site shows on its own pages; this shared page leaves them unlisted.
 async function showProfile() {
   try {
-    const response = await fetch('/notes/profile.json', { signal: AbortSignal.timeout(10_000) });
-    const profile = response.ok ? await response.json() : {};
-    const words = field => typeof profile[field] === 'string' ? profile[field] : '';
-    const links = (Array.isArray(profile.links) ? profile.links : [{ url: profile.website, title: '' }])
-      .map(link => ({ href: safeHref(link?.url), title: typeof link?.title === 'string' ? link.title : '' }))
-      .filter(link => link.href);
-    if (!words('name') && !words('description') && !links.length) return;
+    const read = path => fetch(path, { signal: AbortSignal.timeout(10_000) }).then(response => response.ok ? response.json() : {}, () => ({}));
+    const [profile, identity] = await Promise.all([read('/notes/profile.json'), read('/notes/identity.json')]);
+    const words = (source, field) => typeof source[field] === 'string' ? source[field] : '';
+    const handle = words(identity, 'handle');
+    if (!words(profile, 'name') && !handle) return;
     const header = element('header', 'note-profile');
     const picture = safeHref(profile.avatar);
     if (picture) {
@@ -124,20 +124,11 @@ async function showProfile() {
       header.append(avatar);
     }
     const about = element('div');
-    const name = element('p', 'note-profile-name', words('name'));
-    if (words('pronouns')) name.append(element('span', '', words('pronouns')));
-    if (words('name')) about.append(name);
-    if (words('description')) about.append(element('p', '', words('description')));
-    if (links.length) {
-      const list = element('p', 'note-profile-links');
-      list.append(...links.map(link => {
-        const anchor = element('a', '', link.title || new URL(link.href).hostname.replace(/^www\./, ''));
-        anchor.href = link.href;
-        anchor.rel = 'me';
-        return anchor;
-      }));
-      about.append(list);
-    }
+    const name = element('p', 'note-profile-name', words(profile, 'name') || handle);
+    if (words(profile, 'pronouns')) name.append(element('span', '', words(profile, 'pronouns')));
+    about.append(name);
+    if (handle && words(profile, 'name')) about.append(element('p', 'note-profile-handle', `@${handle}`));
+    header.title = words(identity, 'did');
     header.append(about);
     notesStatus.closest('main').prepend(header);
   } catch {}
