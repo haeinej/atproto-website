@@ -77,6 +77,41 @@ test('a standalone site serves its root while an attached site uses the posts ro
   assert.equal(await response.text(), '/index.html');
 });
 
+test('a site-owned collection drives the feed, individual pages, and AT links', async () => {
+  const collection = 'net.example.journalEntry';
+  const recordUri = `at://${did}/${collection}/test-post`;
+  const linkedUri = `at://${did}/${collection}/earlier`;
+  const value = {
+    ...example,
+    $type: collection,
+    body: example.body + `\n\n[Earlier](${linkedUri})`,
+    media: example.media.map(item => ({ ...item, $type: item.$type.replace(ARCHIVE_POST, collection) })),
+  };
+  let snapshot;
+  const env = { ...config, ATPROTO_POST_COLLECTION: collection, NOTES: {
+    put: async (_key, body) => { snapshot = JSON.parse(body); },
+    get: async () => snapshot,
+  } };
+  const feedRequest = new Request('https://example.test/notes.json');
+  await refreshNotes(env, async url => {
+    assert.equal(url.searchParams.get('collection'), collection);
+    return Response.json({ records: [{ uri: recordUri, value }] });
+  });
+  const result = await worker.fetch(feedRequest, env);
+  assert.equal(result.status, 200);
+  const [post] = (await result.json()).notes;
+  assert.deepEqual(post.links, [linkedUri]);
+  assert.match(post.bodyHtml, /<img.*href="\/posts\/earlier"/s);
+  assert.equal((await worker.fetch(feedRequest, { ...env, ATPROTO_POST_COLLECTION: ARCHIVE_POST })).status, 503);
+
+  const page = await servePost(new Request('https://example.test/posts/test-post'), env, 'test-post', async url => {
+    assert.equal(url.searchParams.get('collection'), collection);
+    return Response.json({ uri: recordUri, value });
+  });
+  assert.equal(page.status, 200);
+  assert.match(await page.text(), /<img.*href="\/posts\/earlier"/s);
+});
+
 test('existing deployments can include native Bluesky posts', async () => {
   const snapshot = await refreshNotes({ ...config, INCLUDE_BLUESKY_POSTS: 'true', NOTES: { put: async () => {} } },
     async url => Response.json({

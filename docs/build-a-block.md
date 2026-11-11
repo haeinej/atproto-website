@@ -1,6 +1,6 @@
 # Build a block
 
-A block is one thing you want to publish. It can be a sentence, a photograph, an essay, a project update, or a post you brought over from another site. Each block becomes one `com.haeinjung.post` record and has its own URL. A photograph and a paragraph can share one block when they belong together.
+A block is one thing you want to publish. It can be a sentence, a photograph, an essay, a project update, or a post you brought over from another site. Each block becomes one record in your site's post collection and has its own URL. A photograph and a paragraph can share one block when they belong together.
 
 ## Give it a body
 
@@ -48,11 +48,11 @@ This prints a local preview. When ready, set `ATPROTO_APP_PASSWORD` and rerun th
 
 ## What the record needs
 
-The smallest complete record has a type, a body, a publication date, and a canonical URL. This example adds two author labels.
+The smallest complete record has a type, a body, a publication date, and a canonical URL. This example adds two author labels. Replace `com.example.post` with your site's collection.
 
 ```json
 {
-  "$type": "com.haeinjung.post",
+  "$type": "com.example.post",
   "body": "I want to remember how the city smelled after the rain.",
   "publishedAt": "2026-01-14T09:00:00Z",
   "canonicalUrl": "https://example.com/posts/after-the-rain",
@@ -60,6 +60,6 @@ The smallest complete record has a type, a body, a publication date, and a canon
 }
 ```
 
-The same record can become a full page, a short feed entry, or a gallery card. Your site decides which fields to show and how to lay them out. [Post Lexicon](../lexicons/com/haeinjung/post.json)
+The same record can become a full page, a short feed entry, or a gallery card. Your site decides which fields to show and how to lay them out. [Generate your site's Lexicon](set-up-with-an-agent.md)
 
 Use [Group and connect blocks](group-and-connect.md) to build a series, connect related posts, or quote a passage.

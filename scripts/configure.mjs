@@ -1,13 +1,13 @@
 import { readFile } from 'node:fs/promises';
 import { parseArgs } from 'node:util';
-import { pdsConfig, webUrl } from '../feed/pds.mjs';
+import { pdsConfig, postCollection, webUrl } from '../feed/pds.mjs';
 
 try {
   const { values } = parseArgs({
     options: {
       site: { type: 'string' }, pds: { type: 'string' }, did: { type: 'string' },
       zone: { type: 'string' }, mode: { type: 'string', default: 'attach' },
-      name: { type: 'string' }, kv: { type: 'string' },
+      name: { type: 'string' }, kv: { type: 'string' }, collection: { type: 'string' },
     },
   });
   const siteUrl = webUrl(values.site);
@@ -31,6 +31,7 @@ try {
   config.vars.SITE_ORIGIN = site.origin;
   config.vars.ATPROTO_DID = pds.did;
   config.vars.ATPROTO_PDS_ORIGIN = pds.origin;
+  config.vars.ATPROTO_POST_COLLECTION = postCollection(values.collection ?? zone.split('.').reverse().join('.') + '.post');
   if (standalone) {
     config.routes = [{ pattern: site.hostname, custom_domain: true }];
     config.vars.STANDALONE_SITE = 'true';

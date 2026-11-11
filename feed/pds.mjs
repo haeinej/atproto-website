@@ -3,18 +3,28 @@ export const BSKY_POST = 'app.bsky.feed.post';
 export const ARCHIVE_POST = 'com.haeinjung.post';
 const DID = /^(?:did:plc:[a-z2-7]{24}|did:web:[a-zA-Z0-9.-]+)$/;
 const RECORD_KEY = /^[a-zA-Z0-9._:~-]{1,512}$/;
+const NSID = /^[a-z](?:[a-z0-9-]{0,61}[a-z0-9])?(?:\.[a-z0-9](?:[a-z0-9-]{0,61}[a-z0-9])?)+\.[a-zA-Z][a-zA-Z0-9]{0,62}$/;
+
+export function postCollection(value = ARCHIVE_POST) {
+  const authority = typeof value === 'string' ? value.slice(0, value.lastIndexOf('.')) : '';
+  if (!authority || authority.length > 253 || value.trim() !== value || !NSID.test(value) ||
+      value.startsWith('com.atproto.') || value.startsWith('app.bsky.') || value === COLLECTION) {
+    throw new Error('Use a custom post NSID under your domain, such as com.example.post');
+  }
+  return value;
+}
 
 export function isRecordKey(key) {
   return typeof key === 'string' && RECORD_KEY.test(key) && key !== '.' && key !== '..';
 }
 
-export function postLink(uri, ownerDid) {
+export function postLink(uri, ownerDid, archiveCollection = ARCHIVE_POST) {
   if (typeof uri !== 'string') return null;
   const match = /^at:\/\/([^/]+)\/([^/]+)\/([^/]+)$/.exec(uri);
   if (!match) return null;
   const [, did, collection, key] = match;
   if (!DID.test(did) || !isRecordKey(key)) return null;
-  if (collection === ARCHIVE_POST && did === ownerDid) return `/posts/${encodeURIComponent(key)}`;
+  if (collection === archiveCollection && did === ownerDid) return `/posts/${encodeURIComponent(key)}`;
   if (collection === BSKY_POST) return `https://bsky.app/profile/${did}/post/${encodeURIComponent(key)}`;
   return null;
 }
@@ -38,7 +48,7 @@ export function pdsConfig(env) {
   if (!origin || (origin.protocol !== 'https:' && !loopback) || origin.href !== `${origin.origin}/`) {
     throw new Error('Set the PDS origin to an HTTPS URL or a loopback HTTP URL for local development');
   }
-  return { did, origin: origin.origin };
+  return { did, origin: origin.origin, collection: postCollection(env.ATPROTO_POST_COLLECTION) };
 }
 
 export function normalizeNote(value) {
@@ -95,7 +105,8 @@ const MEDIA_TYPES = {
 };
 
 export function normalizeArchivePost(value, key, pds) {
-  if (value?.$type !== ARCHIVE_POST || typeof value.body !== 'string' ||
+  const collection = pds.collection ?? ARCHIVE_POST;
+  if (value?.$type !== collection || typeof value.body !== 'string' ||
       typeof value.publishedAt !== 'string' || new TextEncoder().encode(value.body).length > 262_144) return null;
   const time = Date.parse(value.publishedAt);
   const canonicalUrl = webUrl(value.canonicalUrl);
@@ -104,8 +115,8 @@ export function normalizeArchivePost(value, key, pds) {
   const media = new Map();
   if (Array.isArray(value.media)) {
     for (const attachment of value.media) {
-      const kind = typeof attachment?.$type === 'string' && attachment.$type.startsWith(ARCHIVE_POST + '#')
-        ? attachment.$type.slice(ARCHIVE_POST.length + 1) : '';
+      const kind = typeof attachment?.$type === 'string' && attachment.$type.startsWith(collection + '#')
+        ? attachment.$type.slice(collection.length + 1) : '';
       if (!Object.hasOwn(MEDIA_TYPES, kind) || typeof attachment.id !== 'string' || media.has(attachment.id)) continue;
       const url = blobUrl(attachment.original, MEDIA_TYPES[kind], pds);
       if (!url) continue;

@@ -15,7 +15,7 @@ public final class Importer {
     private static final String USAGE = """
             Usage: java -jar x-archive-importer.jar --archive PATH [--id X_POST_ID ...]
                    [--site HTTPS_ORIGIN] [--publish --pds HTTPS_ORIGIN --handle HANDLE --did DID]
-                   [--label NAME ...] [--also-bluesky]
+                   [--collection NSID] [--label NAME ...] [--also-bluesky]
             Preview is offline. Publishing reads ATPROTO_APP_PASSWORD or prompts for an app password.
             Site defaults to the handle's HTTPS origin, or https://example.com for preview.
             """;
@@ -54,7 +54,7 @@ public final class Importer {
                 alsoBluesky = true;
                 continue;
             }
-            if (!Set.of("--archive", "--id", "--pds", "--handle", "--did", "--site", "--label").contains(option)
+            if (!Set.of("--archive", "--id", "--pds", "--handle", "--did", "--site", "--label", "--collection").contains(option)
                     || i + 1 >= args.length || args[i + 1].startsWith("--")) {
                 throw new IllegalArgumentException("Unknown option or missing value: " + option);
             }
@@ -72,6 +72,7 @@ public final class Importer {
         }
         var selection = Archive.read(Path.of(require(options, "--archive")), selected);
         var tags = List.copyOf(labels);
+        String collection = postCollection(options.getOrDefault("--collection", Post.COLLECTION));
         URI site = origin(options.getOrDefault("--site", "https://" + options.getOrDefault("--handle", "example.com")), false);
         if (alsoBluesky) {
             var keys = new HashMap<String, String>();
@@ -82,12 +83,12 @@ public final class Importer {
             }
         }
         if (!publish) {
-            printPreview(selection, site, tags);
+            printPreview(selection, site, collection, tags);
             return;
         }
 
         if ((!selected.isEmpty() && !selection.skipped().isEmpty()) || selection.posts().isEmpty()) {
-            printPreview(selection, site, tags);
+            printPreview(selection, site, collection, tags);
             throw new IOException("No complete selection to publish");
         }
         String did = require(options, "--did");
@@ -102,8 +103,8 @@ public final class Importer {
         try (var client = new PdsClient(pds, handle, did, appPassword())) {
             for (Post post : selection.posts()) {
                 String key = post.recordKey();
-                String postUri = "at://" + did + "/" + Post.COLLECTION + "/" + key;
-                boolean added = client.createIfAbsent(Post.COLLECTION, key, post.archiveRecord(site, tags), post.media());
+                String postUri = "at://" + did + "/" + collection + "/" + key;
+                boolean added = client.createIfAbsent(collection, key, post.archiveRecord(site, collection, tags), post.media());
                 if (added) created++;
                 else present++;
                 System.out.printf("%s %s  %s%n", added ? "Imported" : "Already present", post.id(), postUri);
@@ -123,17 +124,26 @@ public final class Importer {
                 blueskyCreated, blueskySkipped);
     }
 
-    private static void printPreview(Archive.Selection selection, URI site, List<String> tags) throws IOException {
+    private static void printPreview(Archive.Selection selection, URI site, String collection, List<String> tags) throws IOException {
         var preview = JSON.createObjectNode();
         var candidates = preview.putArray("candidates");
         for (Post post : selection.posts()) {
             var entry = candidates.addObject().put("recordKey", post.recordKey())
                     .put("fitsBluesky", post.fitsBluesky());
-            entry.set("record", post.archiveRecord(site, tags));
+            entry.set("record", post.archiveRecord(site, collection, tags));
         }
         var skipped = preview.putObject("skipped");
         selection.skipped().forEach(skipped::put);
         System.out.println(JSON.writerWithDefaultPrettyPrinter().writeValueAsString(preview));
+    }
+
+    private static String postCollection(String value) {
+        if (value.lastIndexOf('.') > 253 ||
+                !value.matches("[a-z](?:[a-z0-9-]{0,61}[a-z0-9])?(?:\\.[a-z0-9](?:[a-z0-9-]{0,61}[a-z0-9])?)+\\.[a-zA-Z][a-zA-Z0-9]{0,62}") ||
+                value.startsWith("com.atproto.") || value.startsWith("app.bsky.") || value.equals("com.haeinjung.note")) {
+            throw new IllegalArgumentException("Use a custom post NSID under your domain, such as com.example.post");
+        }
+        return value;
     }
 
     private static String require(Map<String, String> options, String name) {

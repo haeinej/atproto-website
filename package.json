@@ -5,6 +5,7 @@
   "engines": { "node": ">=22" },
   "scripts": {
     "configure": "node scripts/configure.mjs",
+    "lexicon": "node scripts/lexicon.mjs",
     "publish:post": "node scripts/publish.mjs",
     "snapshot": "node scripts/snapshot.mjs",
     "test": "node --test"

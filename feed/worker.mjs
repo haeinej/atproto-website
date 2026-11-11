@@ -38,7 +38,7 @@ async function listNotes(env, pds, collection, normalize, maxPages, request) {
 
 export async function refreshNotes(env, request = fetch, now = new Date()) {
   const pds = pdsConfig(env);
-  const collections = [[ARCHIVE_POST, normalizeArchivePost]];
+  const collections = [[pds.collection, normalizeArchivePost]];
   if (env.INCLUDE_BLUESKY_POSTS !== 'false') collections.push([BSKY_POST, normalizePost]);
   if (env.INCLUDE_LEGACY_NOTES === 'true') collections.push([COLLECTION, normalizeNote]);
   const notes = [];
@@ -66,7 +66,7 @@ export async function servePost(request, env, key, get = fetch) {
   try {
     const pds = pdsConfig(env);
     const url = new URL('/xrpc/com.atproto.repo.getRecord', pds.origin);
-    url.search = new URLSearchParams({ repo: pds.did, collection: ARCHIVE_POST, rkey: key });
+    url.search = new URLSearchParams({ repo: pds.did, collection: pds.collection, rkey: key });
     const response = await get(url, { redirect: 'manual', signal: AbortSignal.timeout(10_000) });
     if (response.status === 404) return new Response('Post not found', { status: 404 });
     const data = await response.json();
@@ -74,7 +74,7 @@ export async function servePost(request, env, key, get = fetch) {
       return new Response('Post not found', { status: 404 });
     }
     if (!response.ok) throw new Error(`PDS returned HTTP ${response.status}`);
-    const post = data.uri === `at://${pds.did}/${ARCHIVE_POST}/${key}` &&
+    const post = data.uri === `at://${pds.did}/${pds.collection}/${key}` &&
       normalizeArchivePost(data.value, key, pds);
     if (!post) return new Response('Post not found', { status: 404 });
     return new Response(request.method === 'HEAD' ? null : postPage(renderArchivePost(post, pds)), {
@@ -122,7 +122,9 @@ export default {
     const snapshot = await env.NOTES.get(SNAPSHOT_KEY, 'json');
     const age = Date.now() - Date.parse(snapshot?.refreshedAt);
     const origin = URL.canParse(env.ATPROTO_PDS_ORIGIN) && new URL(env.ATPROTO_PDS_ORIGIN).origin;
-    if (!snapshot || snapshot.did !== env.ATPROTO_DID || snapshot.origin !== origin || !(age < MAX_AGE * 1000)) {
+    if (!snapshot || snapshot.did !== env.ATPROTO_DID || snapshot.origin !== origin ||
+        (snapshot.collection ?? ARCHIVE_POST) !== (env.ATPROTO_POST_COLLECTION ?? ARCHIVE_POST) ||
+        !(age < MAX_AGE * 1000)) {
       return Response.json({ error: 'Notes are unavailable' }, { status: 503, headers });
     }
     return Response.json(snapshot, { headers: { ...headers, 'Cache-Control': 'public, max-age=300' } });

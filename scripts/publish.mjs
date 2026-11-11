@@ -1,7 +1,7 @@
 import { readFile, stat } from 'node:fs/promises';
 import { extname } from 'node:path';
 import { parseArgs } from 'node:util';
-import { ARCHIVE_POST, normalizeTags, pdsConfig, webUrl } from '../feed/pds.mjs';
+import { normalizeTags, pdsConfig, webUrl } from '../feed/pds.mjs';
 import { mediaReferences } from '../feed/render.mjs';
 
 const types = {
@@ -54,6 +54,7 @@ async function run() {
       file: { type: 'string' }, slug: { type: 'string' }, title: { type: 'string' },
       date: { type: 'string' }, media: { type: 'string', multiple: true, default: [] },
       label: { type: 'string', multiple: true, default: [] },
+      'source-platform': { type: 'string' }, 'source-url': { type: 'string' }, 'source-id': { type: 'string' },
       config: { type: 'string', default: 'feed/wrangler.site.jsonc' }, publish: { type: 'boolean' },
     },
   });
@@ -61,7 +62,7 @@ async function run() {
     throw new Error('Set --file to a Markdown file and --slug to its lowercase permalink slug');
   }
   const { vars } = JSON.parse(await readFile(values.config, 'utf8'));
-  const { did, origin } = pdsConfig(vars);
+  const { did, origin, collection } = pdsConfig(vars);
   const site = webUrl(vars.SITE_ORIGIN);
   if (!site) throw new Error('Set SITE_ORIGIN in the feed config');
   const body = (await readFile(values.file, 'utf8')).trim();
@@ -71,13 +72,24 @@ async function run() {
   if (values.label.some(label => !label.trim())) throw new Error('--label needs a nonempty name');
   const tags = normalizeTags(values.label);
   const attachments = await readAttachments(values.media, body);
+  let source;
+  if (['source-platform', 'source-url', 'source-id'].some(option => values[option] !== undefined)) {
+    const platform = values['source-platform']?.trim();
+    const uri = webUrl(values['source-url']);
+    const id = values['source-id']?.trim();
+    if (!platform || !uri || id === '') {
+      throw new Error('Provide --source-platform and an HTTP(S) --source-url; --source-id is optional');
+    }
+    source = { platform, uri, ...(id ? { id } : {}) };
+  }
   const record = {
-    $type: ARCHIVE_POST,
+    $type: collection,
     body,
     publishedAt: publishedAt.toISOString(),
     canonicalUrl: new URL(`/posts/${values.slug}`, site).href,
     ...(values.title ? { title: values.title } : {}),
     ...(tags.length ? { tags } : {}),
+    ...(source ? { source } : {}),
   };
   if (!values.publish) {
     console.log(JSON.stringify({ record, attachments: [...attachments.keys()] }, null, 2));
@@ -86,7 +98,7 @@ async function run() {
 
   const password = process.env.ATPROTO_APP_PASSWORD;
   if (!password) throw new Error('Set ATPROTO_APP_PASSWORD for the account in your feed config');
-  const target = { repo: did, collection: ARCHIVE_POST, rkey: values.slug };
+  const target = { repo: did, collection, rkey: values.slug };
   const existing = await rpc(origin, 'com.atproto.repo.getRecord', { query: target });
   if (existing.response.ok) throw new Error(`A post already exists at ${record.canonicalUrl}`);
   if (existing.data.error !== 'RecordNotFound') throw new Error(`Checking the slug failed (HTTP ${existing.response.status})`);
@@ -106,11 +118,11 @@ async function run() {
           typeof blob.ref?.$link !== 'string') {
         throw new Error(`Upload failed for ${id} (HTTP ${uploaded.response.status})`);
       }
-      record.media.push({ $type: `${ARCHIVE_POST}#${mime.split('/')[0]}`, id, original: blob });
+      record.media.push({ $type: `${collection}#${mime.split('/')[0]}`, id, original: blob });
     }
   }
   const created = await rpc(origin, 'com.atproto.repo.createRecord', { body: { ...target, record }, token });
-  if (!created.response.ok || created.data.uri !== `at://${did}/${ARCHIVE_POST}/${values.slug}`) {
+  if (!created.response.ok || created.data.uri !== `at://${did}/${collection}/${values.slug}`) {
     throw new Error(`Publishing failed (HTTP ${created.response.status}). Check the permalink before retrying.`);
   }
   console.log(record.canonicalUrl);

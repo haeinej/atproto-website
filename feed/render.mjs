@@ -7,7 +7,7 @@ const escape = markdown.utils.escapeHtml;
 markdown.renderer.rules.link_open = (tokens, index, options, env, renderer) => {
   const token = tokens[index];
   const uri = token.attrGet('href');
-  const href = postLink(uri, env.did);
+  const href = postLink(uri, env.did, env.collection);
   if (href) {
     env.links.add(uri);
     token.attrSet('href', href);
@@ -35,9 +35,9 @@ markdown.renderer.rules.image = (tokens, index, _options, env) => {
   return caption ? `${content}<span class="attachment-caption">${escape(caption)}</span>` : content;
 };
 
-export function renderArchivePost({ body, media, ...post }, { did } = {}) {
+export function renderArchivePost({ body, media, ...post }, { did, collection } = {}) {
   const links = new Set();
-  const bodyHtml = markdown.render(body, { media, did, links });
+  const bodyHtml = markdown.render(body, { media, did, collection, links });
   return { ...post, text: body, bodyHtml, ...(links.size ? { links: [...links] } : {}) };
 }
 
