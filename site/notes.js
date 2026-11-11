@@ -6,7 +6,7 @@ const dateLabel = new Intl.DateTimeFormat('en', {
 });
 
 async function loadNotes() {
-  notesStatus.textContent = 'Loading notes…';
+  notesStatus.textContent = 'Loading posts…';
   try {
     const response = await fetch('/notes.json', { signal: AbortSignal.timeout(10_000) });
     if (!response.ok) throw new Error('Feed unavailable');
@@ -71,9 +71,9 @@ async function loadNotes() {
       items.append(item);
     }
     notesList.replaceChildren(items);
-    notesStatus.textContent = notesList.childElementCount ? '' : 'No notes yet.';
+    notesStatus.textContent = notesList.childElementCount ? '' : 'No posts yet.';
   } catch {
-    notesStatus.textContent = 'Notes are temporarily unavailable.';
+    notesStatus.textContent = 'Posts are temporarily unavailable.';
   }
 }
 

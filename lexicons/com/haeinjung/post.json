@@ -1,6 +1,7 @@
 {
   "lexicon": 1,
   "id": "com.haeinjung.post",
+  "description": "A platform-independent post with a Markdown body, optional media, and optional source information.",
   "defs": {
     "main": {
       "type": "record",
@@ -17,22 +18,28 @@
           "body": {
             "type": "string",
             "maxLength": 262144,
-            "description": "CommonMark with optional media:ID attachment references."
+            "description": "CommonMark. Use media:ID as an image destination to place an attachment at that point in the body. The ID refers to an entry in this post's media array."
           },
           "summary": { "type": "string" },
           "publishedAt": { "type": "string", "format": "datetime" },
           "updatedAt": { "type": "string", "format": "datetime" },
-          "canonicalUrl": { "type": "string", "format": "uri" },
+          "canonicalUrl": {
+            "type": "string",
+            "format": "uri",
+            "description": "The primary public URL for this post."
+          },
           "tags": {
             "type": "array",
             "items": { "type": "string" }
           },
           "source": {
             "type": "ref",
-            "ref": "#source"
+            "ref": "#source",
+            "description": "Where this post originally appeared, if it was imported or republished."
           },
           "media": {
             "type": "array",
+            "description": "Attachments keyed by IDs unique within this post. References in the body determine their placement.",
             "items": {
               "type": "union",
               "refs": [
@@ -54,12 +61,7 @@
       "properties": {
         "platform": {
           "type": "string",
-          "knownValues": [
-            "x",
-            "instagram",
-            "substack",
-            "bluesky"
-          ]
+          "description": "The identifier of the original publishing platform."
         },
         "uri": { "type": "string", "format": "uri" },
         "id": { "type": "string" },

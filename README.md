@@ -1,32 +1,37 @@
-# AT Protocol Website
+# Post Lexicon
 
-A personal archive for what you share across social platforms. Save posts as notes on your own AT Protocol server, with the original source and date alongside the content.
+`com.haeinjung.post` defines a platform-independent post on AT Protocol. A post can contain text, links, images, video, and audio. The same format works for posts you write directly and posts you import from elsewhere. [Lexicon](lexicons/com/haeinjung/post.json) · [Example post](examples/image-text-image-video.json)
 
-Think Apple Notes for things you've published online. A note can start with a photo, continue with a paragraph and another photo, then end with a video. The archive stores that order in the note's body and keeps the media files on Cirrus. A separate Cloudflare Worker serves a Notes page and JSON feed for your website. [Mixed-media note example](examples/image-text-image-video.json) · [AT Protocol blob spec](https://atproto.com/specs/blob)
+## Post grammar
+
+| Field | Meaning |
+| --- | --- |
+| `body` | Required CommonMark. Use `![Description](media:media-1)` to place an attachment between paragraphs. |
+| `publishedAt` | Required publication date. The importer uses the original date. |
+| `canonicalUrl` | Required primary public URL for the post. |
+| `media` | Optional image, video, and audio attachments stored as blobs. Each attachment ID is unique within the post. Its position in the body determines where it appears. |
+| `source` | Optional provenance for a post published elsewhere. It includes the platform and original URL, with room for the original ID, author, and date. |
+| `title`, `summary`, `tags`, `updatedAt` | Optional metadata for the post. |
+
+The example shows a photo, a paragraph, another photo, then a video. Cirrus stores the media files and the post references them by content ID. [AT Protocol blob spec](https://atproto.com/specs/blob)
 
 | Path | What it does |
 | --- | --- |
 | [`importer/`](importer/) | Java CLI for previewing and importing an archive |
-| [`lexicons/com/haeinjung/post.json`](lexicons/com/haeinjung/post.json) | Schema for the `com.haeinjung.post` archive record |
+| [`lexicons/com/haeinjung/post.json`](lexicons/com/haeinjung/post.json) | AT Protocol schema for a post |
 | [`cirrus/`](cirrus/) | Cloudflare Worker project for the Cirrus PDS |
-| [`feed/`](feed/) and [`site/`](site/) | Scheduled Notes feed and the static page that reads it |
-| [`examples/`](examples/) | A mixed-media archive record and the Notes template for haeinjung.com |
-
-## How a note is stored
-
-- `body` contains CommonMark. A reference such as `![Street after the rain](media:media-1)` places an attachment where it belongs in the note.
-- `media` holds images, video, or audio. Each attachment has an ID and an `original` blob reference, plus details such as alt text or a source URL when available.
-- `publishedAt` preserves the original date. `source` can identify the platform, post ID, and original URL. `canonicalUrl` records the intended website permalink.
+| [`feed/`](feed/) and [`site/`](site/) | Scheduled post feed and the static page that reads it |
+| [`examples/`](examples/) | A post with text and media, and the website template for haeinjung.com |
 
 ## Bluesky quick guide
 
 1. In the Bluesky app or on [bsky.app](https://bsky.app/), choose **Sign in → Hosting provider → Custom**. Enter your Cirrus hostname, then sign in with the handle and password for that account. [Cirrus sign-in guide](https://cirrus.earth/guides/sign-in-to-bluesky/)
-2. To share an imported note on Bluesky, add `--also-bluesky` to the publish command below. The importer saves the archive note and creates a separate Bluesky post for compatible text and images. The preview's `fitsBluesky` field shows which entries qualify. Notes with video or longer text can still be saved to the archive.
-3. Check your Bluesky profile for the copy. The website's Notes feed can also display it after its next refresh if the feed reads the same account.
+2. To share an imported post on Bluesky, add `--also-bluesky` to the [publish command](#publish-to-cirrus). The importer creates a Bluesky copy for compatible text and images. The preview's `fitsBluesky` field shows which posts qualify.
+3. Check your Bluesky profile for the copy. The website feed can also display it after its next refresh if it reads the same account.
 
 ## Import an X archive
 
-The current CLI reads X exports. The note schema can store posts from any platform that supplies the same content and source fields.
+The Java CLI currently reads X exports and converts eligible entries into `com.haeinjung.post` records.
 
 Use JDK 21 and Maven. Download your X data export, extract it, and keep `data/tweets.js`, any `tweets-partN.js` files, and `data/tweets_media/` together. [X archive instructions](https://help.x.com/en/managing-your-account/how-to-download-your-x-archive)
 
@@ -65,22 +70,22 @@ pnpm --dir cirrus install --frozen-lockfile
 pnpm --dir cirrus exec wrangler dev --config ../feed/wrangler.jsonc --test-scheduled
 ```
 
-With Wrangler running, trigger a local refresh and open the Notes page. Use the port printed by Wrangler if it differs from `8787`. [Cloudflare cron testing](https://developers.cloudflare.com/workers/configuration/cron-triggers/#test-cron-triggers-locally)
+With Wrangler running, trigger a local refresh and open the posts page. Use the port printed by Wrangler if it differs from `8787`. [Cloudflare cron testing](https://developers.cloudflare.com/workers/configuration/cron-triggers/#test-cron-triggers-locally)
 
 ```sh
 curl -fsS http://localhost:8787/cdn-cgi/local/scheduled
 curl -fsS http://localhost:8787/notes.json
 ```
 
-Open [the local Notes page](http://localhost:8787/notes/). In production, the Worker refreshes the latest 20 entries every six hours and caches the result in Workers KV. It reads standard Bluesky posts and can include legacy `com.haeinjung.note` records with `INCLUDE_LEGACY_NOTES=true`.
+Open [the local posts page](http://localhost:8787/notes/). In production, the Worker refreshes the latest 20 entries every six hours and caches the result in Workers KV. It reads standard Bluesky posts and can include legacy `com.haeinjung.note` records with `INCLUDE_LEGACY_NOTES=true`.
 
-**Current website scope.** Direct rendering of `com.haeinjung.post` and its ordered media is pending. An import becomes visible on Notes today if it also creates a compatible Bluesky post in the account the feed reads. The archive record itself is available from Cirrus.
+Direct rendering of `com.haeinjung.post` and its ordered media is pending. The website currently displays the optional Bluesky copies. Cirrus holds the original imported posts.
 
 ## Deploy on Cloudflare
 
 For a new PDS, initialize the project in `cirrus/` with `pnpm pds init` after installing dependencies, then follow the Cirrus deployment guide for your hostname, handle, and signing key. Run `pnpm --dir cirrus run deploy` from the repository root once configured. If you already have a Cirrus account, use its existing origin and DID for the importer and feed. [Cirrus deployment guide](https://cirrus.earth/start/quick-start/#deploy)
 
-For the feed Worker, create a KV namespace and put its ID into the `NOTES` binding. Set `SITE_ORIGIN` and replace the example routes in `feed/wrangler.jsonc` with your domain. Those routes mount Notes on an existing website. [Cloudflare Workers KV setup](https://developers.cloudflare.com/kv/get-started/)
+For the feed Worker, create a KV namespace and put its ID into the `NOTES` binding. Set `SITE_ORIGIN` and replace the example routes in `feed/wrangler.jsonc` with your domain. Those routes mount the posts page and feed on an existing website. [Cloudflare Workers KV setup](https://developers.cloudflare.com/kv/get-started/)
 
 ```sh
 pnpm --dir cirrus exec wrangler deploy --config ../feed/wrangler.jsonc
