@@ -202,7 +202,7 @@ npm run render -- build --slug essay --rules render-rules.json --kind essay \
   --template templates/essay.html --out built/writing/essay.html --against writing/essay.html
 ```
 
-`adopt` cuts the template out of the page you already have, and refuses unless every piece it cuts is exactly what the record would put back. `build` fills the template from the record, and with `--against` fails unless the result is identical to the page. It runs when your site is built, so the site stays plain HTML. It handles paragraphs, emphasis, links, rules, images, headings, and lists, and stops on anything else instead of dropping it. [The build-renderer skill](skills/build-renderer/SKILL.md) has the method and what to check.
+`adopt` cuts the template out of the page you already have, and refuses unless every piece it cuts is exactly what the record would put back. `build` fills the template from the record, and with `--against` fails unless the result is identical to the page. It runs when your site is built, so the site stays plain HTML. It handles paragraphs, emphasis, links, rules, images, attached files, headings, lists, and footnotes, and stops on anything else instead of dropping it. [The build-renderer skill](skills/build-renderer/SKILL.md) has the method and what to check.
 
 ## Say who you are
 
@@ -275,7 +275,7 @@ The starter configuration reads archive posts. To also list native Bluesky posts
 - **Not yet run against Cloudflare.** Private posts are tested with a stand-in for Cloudflare Access and for KV. The step that writes a private post with Wrangler has only been previewed.
 - **X importer not rebuilt.** It now saves each post's form and a single label. That change has not been compiled or run.
 - **The profile command has only been previewed.** Saving a profile, its pictures, and its links to a PDS has not been run.
-- **The site renderer does not handle footnotes, quotations, or code yet.** It stops on them, so a page that uses one is reported as not done.
+- **The site renderer does not handle quotations, code, or captions yet.** It stops on them, so a page that uses one is reported as not done.
 - **No command to change a published post.** There is no way yet to change a post's label, move a private post to public, or delete a private post, other than by hand.
 - **Embeds do not play.** An embed keeps its page's title, description, and preview image and is shown as a card that links out, not as a player.
 - **Connections are stored, not shown.** `connect` and links between posts are in the record and in `/notes/graph.json`. There is no graph view.

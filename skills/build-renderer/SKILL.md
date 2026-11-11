@@ -53,8 +53,11 @@ A rules file names each kind of page and lists its slots in the order they appea
 
 - A pattern has three groups: what comes before the content, the content, what comes after. Only the middle is cut.
 - Slots are looked for in order, each after the last. `from` says which field of the record fills it: `title`, `subtitle`, `publishedAt`, `body`, `label`, `sublabel`, or `site.<field>` for the site's optional layer.
+- A page can hold the body in more than one place, such as a file link in the header and the text below: give it two `body` slots, and each takes the blocks its part of the page has.
 - `optional` lets a kind cover pages that lack a piece. `whenSame` is for a second edition that repeats the post's words on some pages and has its own on others, such as a translated title: it is cut only where it is the same, and otherwise left as site text.
 - Inside the body nothing is configured. The page's own markup for each paragraph, image, and list is kept as it is, so each image keeps its own class and attributes.
+
+Under `inline`, a site or a kind of page can say how it writes things: `ownLinksRelative` when links to the site itself leave the domain off, `externalLink` for how an outside link is opened, `footnoteRef` for a footnote's mark, and `escapeQuotes` when a page writes quotation marks as character references. `posts` maps a post's key to its address on the site, so a link to a post is written as that address.
 
 Write the rules from the page's markup, then let `adopt` tell you what you got wrong. Do not guess a site's conventions: read them off the mismatch report.
 
@@ -71,29 +74,30 @@ Each of these is here because skipping it produced a wrong result or a false ala
 ### Cutting the template
 
 4. **Never retype a template.** Cut it from the real page with `adopt`. A retyped template differs from the page in ways you will not see.
-5. **Look for the content everywhere it appears.** The same title or date often sits in a second language edition, in the page's `<head>`, in structured data, in next and previous links, and on index pages. Content left in a template goes stale the first time the post changes. `adopt` reports body text still in the template and counts the lines that repeat the title; read both.
-6. **Check where each slot landed.** A pattern can match a later look-alike, such as the other edition's heading. The report lists the slots it cut, in order; confirm the list is the one you meant.
-7. **Do not relax a check to make it pass.** `whenSame` is only for a repeat in another edition, and the report lists what it kept as site text. Never use it on the first edition, and never loosen a pattern to hide a mismatch.
+5. **Two pages of the same kind can still differ.** One paper here wrote apostrophes as `&#x27;` and the other did not. Give the odd one its own kind; do not bend the shared rules.
+6. **Look for the content everywhere it appears.** The same title or date often sits in a second language edition, in the page's `<head>`, in structured data, in next and previous links, and on index pages. Content left in a template goes stale the first time the post changes. `adopt` reports body text still in the template and counts the lines that repeat the title; read both.
+7. **Check where each slot landed.** A pattern can match a later look-alike, such as the other edition's heading. The report lists the slots it cut, in order; confirm the list is the one you meant.
+8. **Do not relax a check to make it pass.** `whenSame` is only for a repeat in another edition, and the report lists what it kept as site text. Never use it on the first edition, and never loosen a pattern to hide a mismatch.
 
 ### Rendering
 
-8. **Stop on anything unknown.** The renderer stops on markup it does not handle. Leave it that way. A page that is not done is a fact to report; a page with a silently missing block is a loss.
-9. **Site conventions go in the rules, found by evidence.** If the site writes links to itself without its domain, or opens outside links in a new tab, the mismatch report will show it. Add the rule then.
-10. **A post that has changed shape needs adopting again.** `build` refuses when the body no longer has the blocks the template was cut for. Do not edit the template by hand to get past it.
+9. **Stop on anything unknown.** The renderer stops on markup it does not handle. Leave it that way. A page that is not done is a fact to report; a page with a silently missing block is a loss.
+10. **Site conventions go in the rules, found by evidence.** If the site writes links to itself without its domain, or opens outside links in a new tab, the mismatch report will show it. Add the rule then.
+11. **A post that has changed shape needs adopting again.** `build` refuses when the body no longer has the blocks the template was cut for. Do not edit the template by hand to get past it.
 
 ### Comparing
 
-11. **Byte for byte is the pass.** Say "identical" only when the files are the same. For anything else, say exactly what differs: `build --against` gives the line and the verdict (`whitespace only`, `image addresses only`, or `different`).
-12. **A difference is your mistake until you have found its place.** Locate the line before you explain it. Explanations written first are usually wrong.
-13. **Whitespace differences mean the cut is wrong.** The template keeps the page's own spacing, so a clean adoption has none. Do not call them harmless and move on.
-14. **Compare screenshots only when the HTML differs, and only at the page's own address.** A page served from another folder can look different for reasons that are not yours: navigation that marks the current section, relative addresses. Use the same window size, in the same run, and first confirm that today's screenshot of the original equals the baseline's.
-15. **Confirm that every check ran.** A script that fails halfway can leave no output and look like a clean result. Count the pages tried against the pages expected, and treat a missing report as a failure.
-16. **Leave the site as you found it.** Build into a separate folder. If you must put a built page at its real address to screenshot it, restore the original and confirm no tracked file has changed.
+12. **Byte for byte is the pass.** Say "identical" only when the files are the same. For anything else, say exactly what differs: `build --against` gives the line and the verdict (`whitespace only`, `image addresses only`, or `different`).
+13. **A difference is your mistake until you have found its place.** Locate the line before you explain it. Explanations written first are usually wrong.
+14. **Whitespace differences mean the cut is wrong.** The template keeps the page's own spacing, so a clean adoption has none. Do not call them harmless and move on.
+15. **Compare screenshots only when the HTML differs, and only at the page's own address.** A page served from another folder can look different for reasons that are not yours: navigation that marks the current section, relative addresses. Use the same window size, in the same run, and first confirm that today's screenshot of the original equals the baseline's.
+16. **Confirm that every check ran.** A script that fails halfway can leave no output and look like a clean result. Count the pages tried against the pages expected, and treat a missing report as a failure.
+17. **Leave the site as you found it.** Build into a separate folder. If you must put a built page at its real address to screenshot it, restore the original and confirm no tracked file has changed.
 
 ### Reporting
 
-17. **List what is not done.** Name each page the renderer could not handle and why.
-18. **Put the owner's decisions to them.** Where images on their pages load from (the page's current address, the image's source, or their repository) changes the HTML and is theirs to choose. So is what happens to content in the `<head>` that the record does not hold.
+18. **List what is not done.** Name each page the renderer could not handle and why.
+19. **Put the owner's decisions to them.** Where images on their pages load from (the page's current address, the image's source, or their repository) changes the HTML and is theirs to choose. So is what happens to content in the `<head>` that the record does not hold.
 
 ## Settings for images
 

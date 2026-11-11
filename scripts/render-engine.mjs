@@ -9,8 +9,9 @@
 // each one matches exactly. `build` fills a template from a record. A page that has been adopted
 // therefore builds back byte for byte, and any difference is found at the piece that caused it.
 import MarkdownIt from 'markdown-it';
+import footnotes from 'markdown-it-footnote';
 
-const markdown = new MarkdownIt('commonmark', { html: false });
+const markdown = new MarkdownIt('commonmark', { html: false }).use(footnotes);
 const VOID = new Set(['img', 'br', 'hr', 'input', 'source', 'meta', 'link']);
 const TEXT_BLOCKS = new Set(['p', 'h1', 'h2', 'h3', 'h4', 'h5', 'h6']);
 const WRAPPERS = new Set(['section', 'div', 'article']);
@@ -18,7 +19,11 @@ const WRAPPERS = new Set(['section', 'div', 'article']);
 export class RenderProblem extends Error {}
 const stop = message => { throw new RenderProblem(message); };
 
-const escapeText = text => text.replaceAll('&', '&amp;').replaceAll('<', '&lt;').replaceAll('>', '&gt;');
+const escapeText = (text, rules) => {
+  const escaped = text.replaceAll('&', '&amp;').replaceAll('<', '&lt;').replaceAll('>', '&gt;');
+  // Some pages also write quotation marks and apostrophes as character references.
+  return rules?.inline?.escapeQuotes ? escaped.replaceAll('"', '&quot;').replaceAll("'", '&#x27;') : escaped;
+};
 const escapeAttribute = text => text.replaceAll('&', '&amp;').replaceAll('"', '&quot;');
 
 // ---------------------------------------------------------------------------------------------
@@ -26,22 +31,31 @@ const escapeAttribute = text => text.replaceAll('&', '&amp;').replaceAll('"', '&
 // ---------------------------------------------------------------------------------------------
 // How the site writes an address. A site that leaves its own domain off links to itself gets them
 // back that way: https://example.com/a.html is written /a.html.
-function written(href, rules, site) {
+function written(href, rules, context) {
+  const { site = '', did, collection } = context ?? {};
+  // A link to one of the owner's posts is written as that post's address on this site.
+  const post = /^at:\/\/([^/]+)\/([^/]+)\/([^/]+)$/.exec(href);
+  if (post && post[1] === did && post[2] === collection) {
+    return rules.posts?.[post[3]] ?? stop(`The rules give no address on this site for the post "${post[3]}"`);
+  }
   return rules.inline?.ownLinksRelative && site && href.startsWith(`${site}/`) ? href.slice(site.length) : href;
 }
 
 const INLINE = {
   em: ['<em>', '</em>'], strong: ['<strong>', '</strong>'], break: '<br>',
   link: '<a href="{href}">', externalLink: '<a href="{href}" target="_blank" rel="noopener noreferrer">',
+  footnoteRef: '<sup><a href="#fn{n}">{n}</a></sup>',
 };
 
-function renderInline(children, rules, site) {
+function renderInline(children, rules, context) {
   const inline = { ...INLINE, ...rules.inline };
   let out = '';
   for (const token of children) {
     if (token.type === 'text') {
-      if (/\[\^[^\]]+\]/.test(token.content)) stop('Footnotes are not handled by the site renderer yet');
-      out += escapeText(token.content);
+      if (/\[\^[^\]]+\]/.test(token.content)) stop(`A footnote mark with no note to go with it: ${token.content.slice(0, 40)}`);
+      out += escapeText(token.content, rules);
+    } else if (token.type === 'footnote_ref') {
+      out += inline.footnoteRef.replaceAll('{n}', escapeAttribute(String(token.meta.label ?? token.meta.id + 1)));
     } else if (token.type === 'em_open') out += inline.em[0];
     else if (token.type === 'em_close') out += inline.em[1];
     else if (token.type === 'strong_open') out += inline.strong[0];
@@ -49,17 +63,17 @@ function renderInline(children, rules, site) {
     else if (token.type === 'hardbreak') out += inline.break;
     else if (token.type === 'softbreak') out += '\n';
     else if (token.type === 'link_open') {
-      const href = token.attrGet('href');
+      const href = written(token.attrGet('href'), rules, context);
       // A link that leaves the site is written the way the site writes outside links.
-      const outside = /^[a-z][a-z0-9+.-]*:/i.test(href) && !(site && href.startsWith(site));
-      out += (outside ? inline.externalLink : inline.link).replace('{href}', escapeAttribute(written(href, rules, site)));
+      const outside = /^[a-z][a-z0-9+.-]*:/i.test(href) && !(context?.site && href.startsWith(context.site));
+      out += (outside ? inline.externalLink : inline.link).replace('{href}', escapeAttribute(href));
     } else if (token.type === 'link_close') out += '</a>';
     else stop(`The site renderer does not handle "${token.type}" inside a line; nothing is dropped silently`);
   }
   return out;
 }
 
-export function recordBlocks(body, rules = {}, site = '') {
+export function recordBlocks(body, rules = {}, context = {}) {
   const tokens = markdown.parse(body, {});
   const blocks = [];
   for (let index = 0; index < tokens.length; index++) {
@@ -74,14 +88,14 @@ export function recordBlocks(body, rules = {}, site = '') {
         if (!src.startsWith('media:')) stop(`An image that is not one of the post's attachments: ${src}`);
         blocks.push({
           type: 'image', id: src.slice('media:'.length), alt: image.content,
-          ...(linked ? { href: written(meaningful[0].attrGet('href'), rules, site) } : {}),
+          ...(linked ? { href: written(meaningful[0].attrGet('href'), rules, context) } : {}),
         });
       } else if (image) {
         stop('An image inside a line of text is not handled; nothing is dropped silently');
       } else {
         blocks.push({
           type: token.type === 'heading_open' ? token.tag : 'p',
-          html: renderInline(children, rules, site),
+          html: renderInline(children, rules, context),
         });
       }
       index += 2;
@@ -91,10 +105,21 @@ export function recordBlocks(body, rules = {}, site = '') {
       const items = [];
       const close = token.type.replace('open', 'close');
       for (index++; tokens[index].type !== close; index++) {
-        if (tokens[index].type === 'inline') items.push(renderInline(tokens[index].children, rules, site));
+        if (tokens[index].type === 'inline') items.push(renderInline(tokens[index].children, rules, context));
         else if (/^(bullet|ordered)_list_open$/.test(tokens[index].type)) stop('A list inside a list is not handled');
       }
       blocks.push({ type: token.type.startsWith('bullet') ? 'ul' : 'ol', items });
+    } else if (token.type === 'footnote_block_open') {
+      // The notes are a numbered list on the page, one item for each note, in the order they are marked.
+      const items = [];
+      for (index++; tokens[index].type !== 'footnote_block_close'; index++) {
+        if (tokens[index].type === 'footnote_open') items.push(null);
+        else if (tokens[index].type === 'inline') {
+          if (items.at(-1) !== null) stop('A note with more than one paragraph is not handled');
+          items[items.length - 1] = renderInline(tokens[index].children.filter(child => child.type !== 'footnote_anchor'), rules, context);
+        }
+      }
+      blocks.push({ type: 'ol', items });
     } else {
       stop(`The site renderer does not handle "${token.type}"; nothing is dropped silently`);
     }
@@ -105,7 +130,7 @@ export function recordBlocks(body, rules = {}, site = '') {
 // ---------------------------------------------------------------------------------------------
 // Values a record supplies to a page's named slots.
 // ---------------------------------------------------------------------------------------------
-function slotValue(slot, record) {
+function slotValue(slot, record, rules) {
   const source = slot.from ?? slot.name;
   if (source === 'publishedAt') {
     const { locale = 'en-US', options = { dateStyle: 'long' }, lowercase } = slot.date ?? {};
@@ -113,7 +138,7 @@ function slotValue(slot, record) {
     return lowercase ? text.toLowerCase() : text;
   }
   const value = source.startsWith('site.') ? record.site?.[source.slice(5)] : record[source];
-  return escapeText(value === undefined || value === null ? '' : String(value));
+  return escapeText(value === undefined || value === null ? '' : String(value), rules);
 }
 
 // Where an image on the page points: the address the page already uses, the place the image first
@@ -171,8 +196,8 @@ const setAttribute = (tag, name, value) => tag.replace(new RegExp(`(\\b${name}="
 // ---------------------------------------------------------------------------------------------
 // adopt: cut a template out of a page, checking every cut against the record.
 // ---------------------------------------------------------------------------------------------
-function adoptBody(html, blocks, record, rules, options, context, findings) {
-  let next = 0;
+function adoptBody(html, blocks, record, rules, options, context, findings, position) {
+  let next = position.next;
   const media = new Map((record.media ?? []).map(item => [item.id, item]));
   const expect = (found, where) => {
     const block = blocks[next];
@@ -203,6 +228,21 @@ function adoptBody(html, blocks, record, rules, options, context, findings) {
       } else if (TEXT_BLOCKS.has(part.tag)) {
         const block = expect(part.tag, where);
         const [, lead, content, trail] = /^(\s*)(.*?)(\s*)$/s.exec(part.inner);
+        const attached = block?.type === 'image' && media.get(block.id);
+        const link = attached && /^(<a\b[^>]*>)(.*)(<\/a>)$/s.exec(content);
+        if (link && attached.$type?.endsWith('#file')) {
+          // An attached file is a line holding one link, whose words are the file's description.
+          if (link[2] !== escapeText(block.alt, rules)) differ(`${where}, link text`, link[2], block.alt);
+          let open = link[1];
+          if (options.images !== 'page') {
+            const address = escapeAttribute(imageAddress(attached, options.images, context));
+            if (attribute(open, 'href')?.[1] !== address) differ(`${where}, file address`, attribute(open, 'href')?.[1] ?? 'none', address);
+            open = setAttribute(open, 'href', `{{b.${next}.src}}`);
+          }
+          out += `${part.open}${lead}${open}{{b.${next}.label}}${link[3]}${trail}${part.close}`;
+          next++;
+          continue;
+        }
         if (block && (block.type !== part.tag || block.html !== content)) {
           differ(`${where} (<${part.tag}>)`, content, block.type === part.tag ? block.html : `a ${block.type}`);
         }
@@ -265,14 +305,15 @@ function adoptBody(html, blocks, record, rules, options, context, findings) {
     return out;
   }
   const skeleton = walk(html);
-  if (next < blocks.length) findings.push({ where: `block ${next + 1}`, problem: `The post's body has ${blocks.length - next} more block(s) than the page` });
+  position.next = next;
   return skeleton;
 }
 
 export function adopt(page, record, rules, options, context) {
   if (page.includes('{{')) stop('The page already contains "{{", which the template uses for its slots');
   const findings = [];
-  const blocks = recordBlocks(record.body, rules, context.site);
+  const blocks = recordBlocks(record.body, rules, context);
+  const position = { next: 0 };
   let template = '';
   let at = 0;
   const slots = [];
@@ -290,9 +331,9 @@ export function adopt(page, record, rules, options, context) {
     const from = match.index + before.length;
     template += page.slice(at, from);
     if ((slot.from ?? slot.name) === 'body') {
-      template += adoptBody(content, blocks, record, rules, options, context, findings);
+      template += adoptBody(content, blocks, record, rules, options, context, findings, position);
     } else {
-      const value = slotValue(slot, record);
+      const value = slotValue(slot, record, rules);
       if (value !== content && slot.whenSame) {
         // Another edition may repeat the post's words or have its own, such as a translated title.
         // Its own words are the site's, so they stay in the template. This is reported, not hidden.
@@ -312,6 +353,9 @@ export function adopt(page, record, rules, options, context) {
     at += after.length;
   }
   template += page.slice(at);
+  if (position.next < blocks.length) {
+    findings.push({ where: `block ${position.next + 1}`, problem: `The post's body has ${blocks.length - position.next} more block(s) than the page` });
+  }
 
   // Content that also sits somewhere the slots do not cover would go stale when the post changes.
   const repeated = [];
@@ -319,7 +363,7 @@ export function adopt(page, record, rules, options, context) {
   for (const [index, block] of blocks.entries()) {
     if (text(block).length >= 30 && template.includes(block.html)) repeated.push(`block ${index + 1} of the body is still in the template`);
   }
-  const title = record.title ? escapeText(record.title) : '';
+  const title = record.title ? escapeText(record.title, rules) : '';
   const titleLines = title ? template.split('\n').filter(line => line.includes(title)).length : 0;
   return { template, slots, blocks: blocks.map(block => block.type), findings, repeated, kept, titleLines };
 }
@@ -328,18 +372,19 @@ export function adopt(page, record, rules, options, context) {
 // build: fill a template from a record.
 // ---------------------------------------------------------------------------------------------
 export function build(template, record, rules, options, context, expected) {
-  const blocks = recordBlocks(record.body, rules, context.site);
+  const blocks = recordBlocks(record.body, rules, context);
   if (expected && JSON.stringify(expected) !== JSON.stringify(blocks.map(block => block.type))) {
     stop('The post\'s body no longer has the shape this template was cut for. Adopt the page again.');
   }
   const media = new Map((record.media ?? []).map(item => [item.id, item]));
-  const values = new Map(rules.slots.filter(slot => (slot.from ?? slot.name) !== 'body').map(slot => [slot.name, slotValue(slot, record)]));
+  const values = new Map(rules.slots.filter(slot => (slot.from ?? slot.name) !== 'body').map(slot => [slot.name, slotValue(slot, record, rules)]));
   for (const [index, block] of blocks.entries()) {
     if (block.html !== undefined) values.set(`b.${index}`, block.html);
     block.items?.forEach((item, position) => values.set(`b.${index}.i.${position}`, item));
     if (block.type === 'image') {
       const item = media.get(block.id) ?? stop(`The post has no attachment ${block.id}`);
       values.set(`b.${index}.alt`, escapeAttribute(block.alt));
+      values.set(`b.${index}.label`, escapeText(block.alt, rules));
       values.set(`b.${index}.width`, String(item.width ?? ''));
       values.set(`b.${index}.height`, String(item.height ?? ''));
       if (block.href) values.set(`b.${index}.href`, escapeAttribute(block.href));

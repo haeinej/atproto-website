@@ -96,7 +96,7 @@ test('content left in the template, or anything unknown, is reported and never d
   stops({ page: page.replace('<hr>', '<table><tr><td>x</td></tr></table>') }, /has a <table>, which the site renderer does not handle/);
   stops({ page: page.replace('<hr>', 'loose words<hr>') }, /Words outside any block/);
   stops({ record: { body: record.body + '\n\n> A quotation.' } }, /does not handle "blockquote_open"/);
-  stops({ record: { body: record.body.replace('**End.**', 'End.[^1]') } }, /Footnotes are not handled/);
+  stops({ record: { body: record.body.replace('**End.**', 'End.[^1]') } }, /A footnote mark with no note to go with it/);
   // With the first title gone, the title slot lands on the other edition's, and the next slot is then missing.
   stops({ page: page.replace('<h1>A walk</h1><p class="subtitle">', '<h2>A walk</h2><p class="subtitle">') }, /Could not find where the subtitle sits/);
   stops({ page: page.replace('Essay', '{{Essay}}') }, /already contains "\{\{"/);
@@ -181,4 +181,53 @@ test('headings and lists inside section wrappers are cut and built back', () => 
   // A list item that differs is named by its position.
   const changed = adopt(paper, { ...post, body: post.body.replace('Is it right?', 'Is it wrong?') }, paperRules, { images: 'page' }, context);
   assert.match(changed.findings[0].where, /block 3, item 2/);
+});
+
+test('a paper: an attached file in the header, footnotes, quotes written as references, and links to posts', () => {
+  const paper = `<article><header><h1>A paper</h1>
+<div class="details"><span>Author</span></div>
+<p><a href="/media/paper.pdf" target="_blank" rel="noopener">Read the original PDF ↗</a></p>
+</header>
+<div class="body"><section>
+<p>Discovery<sup><a href="#note-1" aria-label="Footnote 1">1</a></sup> isn&#x27;t &quot;disclosure&quot;<sup><a href="#note-2" aria-label="Footnote 2">2</a></sup>. See <a href="/writing/earlier.html">the earlier piece</a>.</p>
+</section>
+<section>
+<h2 id="notes">Notes</h2>
+<ol>
+<li id="note-1" value="1">Testing whether alignment exists.</li>
+<li id="note-2" value="2">Revealing private context.</li>
+</ol>
+</section></div>
+</article>`;
+  const post = {
+    title: 'A paper', publishedAt: '2026-01-01T00:00:00Z',
+    body: [
+      '![Read the original PDF ↗](media:original)',
+      'Discovery[^1] isn\'t "disclosure"[^2]. See [the earlier piece](<at://did:web:pds.example.com/com.example.post/earlier>).',
+      '## Notes',
+      '[^1]: Testing whether alignment exists.\n[^2]: Revealing private context.',
+    ].join('\n\n'),
+    media: [{ $type: 'com.example.post#file', id: 'original', original: { ref: { $link: 'bafkpaper' } } }],
+  };
+  const paperRules = {
+    posts: { earlier: '/writing/earlier.html' },
+    inline: { escapeQuotes: true, footnoteRef: '<sup><a href="#note-{n}" aria-label="Footnote {n}">{n}</a></sup>' },
+    slots: [
+      { name: 'title', pattern: '(<h1>)(.*?)(</h1>)' },
+      // The post's body sits in two places on this page: the file link in the header, then the rest.
+      { name: 'body', optional: true, pattern: '(</div>\\n)(<p><a href="[^"]*\\.pdf"[^>]*>[^<]*</a></p>)(\\n</header>)' },
+      { name: 'body', pattern: '(<div class="body">)(.*?)(\\s*</div>\\n</article>)' },
+    ],
+  };
+  const where = { ...context, did: 'did:web:pds.example.com', collection: 'com.example.post' };
+  const adopted = adopt(paper, post, paperRules, { images: 'page' }, where);
+  assert.deepEqual(adopted.findings, []);
+  assert.deepEqual(adopted.blocks, ['image', 'p', 'h2', 'ol']);
+  assert.match(adopted.template, /<p><a href="\/media\/paper\.pdf" target="_blank" rel="noopener">\{\{b\.0\.label\}\}<\/a><\/p>/);
+  assert.match(adopted.template, /<li id="note-2" value="2">\{\{b\.3\.i\.1\}\}<\/li>/);
+  assert.equal(build(adopted.template, post, paperRules, { images: 'page' }, where, adopted.blocks), paper);
+  // A link to a post the rules give no address for stops, and a missing note is a mismatch.
+  assert.throws(() => adopt(paper, post, { ...paperRules, posts: {} }, { images: 'page' }, where), /no address on this site for the post "earlier"/);
+  const oneNote = adopt(paper, { ...post, body: post.body.replace('\n[^2]: Revealing private context.', '').replace('"disclosure"[^2]', '"disclosure"') }, paperRules, { images: 'page' }, where);
+  assert.ok(oneNote.findings.length >= 2);
 });

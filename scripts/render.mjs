@@ -42,7 +42,9 @@ try {
   const vars = await siteVars(values.config);
   const pds = pdsConfig(vars);
   const allRules = JSON.parse(await readFile(values.rules, 'utf8'));
-  const rules = { inline: allRules.inline, ...allRules.kinds?.[values.kind] };
+  // A kind of page can write things its own way; what it does not say comes from the site's rules.
+  const kind = allRules.kinds?.[values.kind] ?? {};
+  const rules = { posts: allRules.posts, ...kind, inline: { ...allRules.inline, ...kind.inline } };
   if (!Array.isArray(rules.slots)) throw new Error(`The rules have no kind of page called "${values.kind}"`);
   const record = await loadRecord(values, pds);
   const blobUrl = media => {
@@ -57,7 +59,7 @@ try {
     const size = response.ok ? imageSize(new Uint8Array(await response.arrayBuffer())) : null;
     if (size) Object.assign(media, size);
   }
-  const context = { blobUrl, site: webUrl(vars.SITE_ORIGIN)?.replace(/\/$/, '') ?? '' };
+  const context = { blobUrl, site: webUrl(vars.SITE_ORIGIN)?.replace(/\/$/, '') ?? '', did: pds.did, collection: pds.collection };
   const sidecar = `${values.template}.json`;
 
   if (command === 'adopt') {
