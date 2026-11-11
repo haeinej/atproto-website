@@ -1,6 +1,6 @@
 ---
 name: start
-description: What the atproto-website project is for and the rules for working in it. Use first, before any other atproto-website skill, whenever someone wants to put their website or posts on AT Protocol, set up their own PDS or Lexicon, publish a post or profile with these tools, or asks how this project works.
+description: What the ohm-content-layer project is for and the rules for working in it. Use first, before any other ohm-content-layer skill, whenever someone wants to put their website or posts on AT Protocol, set up their own PDS or Lexicon, publish a post or profile with these tools, or asks how this project works.
 ---
 
 # Start here
@@ -34,13 +34,13 @@ Read `AGENTS.md` there before doing anything. It holds the ten rules, which the 
 Run them from the owner's own site folder. Nothing needs to be cloned.
 
 ```sh
-npx github:haeinej/atproto-website identity example.com
-npx github:haeinej/atproto-website configure --site https://example.com --handle example.com > atproto-website.jsonc
-npx github:haeinej/atproto-website posts
-npx github:haeinej/atproto-website publish --file ./post.md --slug hello --title 'Hello' --label Writing
+npx github:haeinej/ohm-content-layer identity example.com
+npx github:haeinej/ohm-content-layer configure --site https://example.com --handle example.com > ohm-content-layer.jsonc
+npx github:haeinej/ohm-content-layer posts
+npx github:haeinej/ohm-content-layer publish --file ./post.md --slug hello --title 'Hello' --label Writing
 ```
 
-`npx github:haeinej/atproto-website` with no command lists them all. Inside a clone of the repository, the same commands are `npm run identity`, `npm run posts`, `npm run publish:post`, and so on.
+`npx github:haeinej/ohm-content-layer` with no command lists them all. Inside a clone of the repository, the same commands are `npm run identity`, `npm run posts`, `npm run publish:post`, and so on.
 
 The owner's existing site is the specification for how it is built: reproduce it identically and change only where content is read from, without asking how.
 

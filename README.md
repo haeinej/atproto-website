@@ -1,4 +1,4 @@
-# AT Protocol Website
+# ohm content layer
 
 Build your own home on AT Protocol from the website you already have: your own PDS, and your own schemas shaped from your site, readable by other AT Protocol applications. You keep what you publish in a content layer you own, and your website decides how it looks. [Cirrus](https://github.com/ascorbic/cirrus) runs your AT Protocol Personal Data Server (PDS) on Cloudflare. This starter adds a post schema under your domain, tools to publish and import posts and media, and a Worker that serves a posts list, post pages, and JSON feeds.
 
@@ -9,28 +9,28 @@ You can start from a website you already have, from an export of your posts on a
 The commands run from any folder with `npx`, so you can work inside your own website's folder.
 
 ```sh
-npx github:haeinej/atproto-website
+npx github:haeinej/ohm-content-layer
 ```
 
 That lists the commands. Each one previews by default and changes nothing until you pass `--publish`.
 
 ```sh
-npx github:haeinej/atproto-website identity example.com
-npx github:haeinej/atproto-website configure --site https://example.com --handle example.com > atproto-website.jsonc
-npx github:haeinej/atproto-website publish --file ./hello.md --slug hello --title 'Hello' --label Writing
+npx github:haeinej/ohm-content-layer identity example.com
+npx github:haeinej/ohm-content-layer configure --site https://example.com --handle example.com > ohm-content-layer.jsonc
+npx github:haeinej/ohm-content-layer publish --file ./hello.md --slug hello --title 'Hello' --label Writing
 ```
 
-The commands look for a site configuration named `atproto-website.jsonc` in the folder you run them from, or take one with `--config`. Running your PDS and deploying the site Worker still need a clone of this repository, as described under [Set up your site](#set-up-your-site). The rest of this page writes the commands as `npm run …`, which is how they are run inside a clone; `npm run publish:post` is `publish` here.
+The commands look for a site configuration named `ohm-content-layer.jsonc` in the folder you run them from, or take one with `--config`. Running your PDS and deploying the site Worker still need a clone of this repository, as described under [Set up your site](#set-up-your-site). The rest of this page writes the commands as `npm run …`, which is how they are run inside a clone; `npm run publish:post` is `publish` here.
 
 ## Use it with your coding agent
 
 This repository is also a Claude Code plugin. Installing it gives your agent four skills: `start`, which tells it what this project is for and its rules; `suggest-labels`, for deciding your site's sections with you; `migrate-site`, for moving a website and social posts in without loss; and `build-renderer`, for making your site's own pages build from records.
 
 ```
-/plugin install atproto-website --marketplace haeinej/atproto-website
+/plugin install ohm-content-layer --marketplace haeinej/ohm-content-layer
 ```
 
-On Claude Code older than 2.1.275, add the marketplace first with `/plugin marketplace add haeinej/atproto-website`, then run `/plugin install atproto-website@atproto-website`. Other coding agents can read [AGENTS.md](AGENTS.md) and the files under [skills/](skills/) directly. [Set up with your coding agent](docs/set-up-with-an-agent.md)
+On Claude Code older than 2.1.275, add the marketplace first with `/plugin marketplace add haeinej/ohm-content-layer`, then run `/plugin install ohm-content-layer@ohm-content-layer`. Other coding agents can read [AGENTS.md](AGENTS.md) and the files under [skills/](skills/) directly. [Set up with your coding agent](docs/set-up-with-an-agent.md)
 
 ## Identity comes first
 
@@ -98,7 +98,7 @@ The address comes from the label and sublabel, so every post has a label; one pu
 | [X archive importer](importer/) | A Java CLI that previews an export and publishes selected posts and media to your PDS. |
 | [AGENTS.md](AGENTS.md) | What this project is for and the rules a coding agent follows in it. |
 | [Plugin manifest](.claude-plugin/plugin.json) | Makes this repository installable as a Claude Code plugin that carries the skills. |
-| [Command entry point](bin/atproto-website.mjs) | Runs every command through `npx`, from any folder. |
+| [Command entry point](bin/ohm-content-layer.mjs) | Runs every command through `npx`, from any folder. |
 | [start skill](skills/start/SKILL.md) | What an agent reads first: the purpose, the rules, and how to run the commands. |
 | [Renderer](scripts/render-engine.mjs) | Rebuilds your site's own pages from records, keeping each page's design byte for byte. |
 | [build-renderer skill](skills/build-renderer/SKILL.md) | How an agent replaces a site's content layer, and what it must check. |

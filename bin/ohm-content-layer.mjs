@@ -1,6 +1,6 @@
 #!/usr/bin/env node
 // One entry point for every command, so they can be run from any folder:
-//   npx github:haeinej/atproto-website <command> [options]
+//   npx github:haeinej/ohm-content-layer <command> [options]
 const commands = {
   identity: ['identity.mjs', 'Show an identity and the repository it owns. Takes a handle or DID.'],
   configure: ['configure.mjs', 'Print a site configuration for --site and --handle or --did.'],
@@ -13,7 +13,7 @@ const commands = {
 };
 const [name] = process.argv.splice(2, 1);
 if (!Object.hasOwn(commands, name ?? '')) {
-  console.log('Usage: atproto-website <command> [options]\n');
+  console.log('Usage: ohm-content-layer <command> [options]\n');
   for (const [command, [, summary]] of Object.entries(commands)) console.log(`  ${command.padEnd(10)} ${summary}`);
   console.log('\nCommands preview by default and change nothing until you pass --publish.');
   process.exitCode = name && !['help', '--help', '-h'].includes(name) ? 1 : 0;
