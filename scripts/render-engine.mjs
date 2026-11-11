@@ -309,10 +309,10 @@ function adoptBody(html, blocks, record, rules, options, context, findings, posi
         if (block && (block.type !== part.tag || block.items.length !== item)) differ(where, `a <${part.tag}> of ${item}`, `${block.type} of ${block.items?.length ?? 0}`);
         out += part.open + inner + part.close;
         next++;
-      } else if (part.tag === 'figure' || (part.tag === 'a' && /<img\b/.test(part.inner))) {
-        // An image, in a figure or in a link of its own.
+      } else if (part.tag === 'figure' || (['a', 'span'].includes(part.tag) && /<(?:img|video)\b/.test(part.inner))) {
+        // An image or a video, in a figure or in a wrapper of its own.
         const block = expect('figure', where);
-        const images = part.outer.match(/<img\b[^>]*>/g) ?? [];
+        const images = part.outer.match(/<(?:img|video)\b[^>]*>/g) ?? [];
         if (images.length !== 1) stop(`${where}: a figure with ${images.length} images is not handled`);
         if (/<figcaption\b[^>]*>\s*\S/.test(part.outer)) stop(`${where}: a figure with a caption is not handled`);
         let image = images[0];
@@ -329,11 +329,12 @@ function adoptBody(html, blocks, record, rules, options, context, findings, posi
           image = slotted;
         };
         cut('alt', block?.alt);
-        if (item) {
+        // While the page keeps its own address for the file, the file and its size are the page's:
+        // a gallery may show a smaller copy. They come from the record only when the owner asks.
+        if (item && options.images !== 'page') {
           cut('width', item.width);
           cut('height', item.height);
-          // The address is cut out only when the owner wants it to come from the record.
-          if (options.images !== 'page') cut('src', imageAddress(item, options.images, context));
+          cut('src', imageAddress(item, options.images, context));
         }
         const link = /<a\b[^>]*>/.exec(figure);
         if (link || block?.href) {

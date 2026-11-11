@@ -57,7 +57,7 @@ test('an adopted page builds back byte for byte, quirks included', () => {
   // The design stays in the template: a stray space before </p>, the line break between two
   // blocks, each image's own class and attributes, and a link's target.
   assert.match(adopted.template, /<p>\{\{b\.0\}\} <\/p><p>\{\{b\.1\}\}<\/p>\n<figure class="wide">/);
-  assert.match(adopted.template, /<img src="https:\/\/cdn\.example\.org\/small\.jpg" alt="\{\{b\.2\.alt\}\}" loading="lazy" width="\{\{b\.2\.width\}\}" height="\{\{b\.2\.height\}\}">/);
+  assert.match(adopted.template, /<img src="https:\/\/cdn\.example\.org\/small\.jpg" alt="\{\{b\.2\.alt\}\}" loading="lazy" width="1456" height="1941">/);
   assert.match(adopted.template, /<figure class="logo"><img src="\/media\/logo\.png" alt="\{\{b\.4\.alt\}\}" decoding="async">/);
   // Nothing of the content is left behind, and the other edition's own text is untouched.
   assert.doesNotMatch(adopted.template, /quiet|once is never|June 1/);
@@ -78,7 +78,9 @@ test('adopting refuses when the page and the post differ, and names the place', 
   assert.match(adoptPage({ record: { publishedAt: '2026-06-02T00:00:00Z' } }).findings.map(found => found.where).join(), /the date,the date_ko/);
   assert.equal(adoptPage({ record: { title: 'Another' } }).findings.length, 2);
   assert.match(adoptPage({ record: { body: record.body.replace('A wet street', 'A dry street') } }).findings[0].where, /block 3, image alt/);
-  assert.match(adoptPage({ record: { media: [{ ...record.media[0], width: 100 }, record.media[1]] } }).findings[0].where, /block 3, image width/);
+  // An image's size is the page's own while the page keeps its own file, and the record's once it does not.
+  assert.deepEqual(adoptPage({ record: { media: [{ ...record.media[0], width: 100 }, record.media[1]] } }).findings, []);
+  assert.match(adoptPage({ record: { media: [{ ...record.media[0], width: 100 }, record.media[1]] } }, { images: 'repository' }).findings.map(found => found.where).join(), /block 3, image width/);
   assert.match(adoptPage({ record: { body: record.body.replace('full.jpg', 'other.jpg') } }).findings[0].where, /block 3, image link/);
   // A block missing from the post, and one missing from the page.
   assert.match(adoptPage({ record: { body: record.body.replace('\n\n**End.**', '') } }).findings[0].problem, /the post's body has ended/);
@@ -299,4 +301,40 @@ test('every script parses', async () => {
       if (file.endsWith('.mjs')) await promisify(execFile)(process.execPath, ['--check', new URL(folder + file, import.meta.url).pathname]);
     }
   }
+});
+
+test('a gallery item: a video or image in a wrapper, with the page\'s own smaller copy and caption', () => {
+  const gallery = `<main>
+  <figure data-year="2025" data-loc="Lisboa" class="item"><span class="frame"><img src="thumb/a.jpg?v=1" width="901" height="1200" alt="" loading="lazy"></span><figcaption>069</figcaption></figure>
+  <figure data-year="2026" data-loc="서울" class="item"><span class="frame"><video src="small/b.mp4" width="1080" height="1440" muted loop></video></span><figcaption></figcaption></figure>
+</main>`;
+  const itemRules = { slots: [
+    { name: 'year', from: 'publishedAt', date: { options: { year: 'numeric' } },
+      pattern: '(<figure data-year=")([^"]*)("(?= data-loc="[^"]*" class="[^"]*"><span class="frame"><(?:img|video) src="[a-z]+/{file}[?"]))' },
+    { name: 'place', from: 'sublabel', pattern: '( data-loc=")([^"]*)(")' },
+    { name: 'body', pattern: '(class="[^"]*">)(<span class="frame">.*?</span>)(<figcaption>)' },
+  ] };
+  const item = (year, place) => ({
+    publishedAt: `${year}-01-01T00:00:00Z`, label: 'photographs', sublabel: place, body: '![](media:item)',
+    media: [{ id: 'item', width: 1803, height: 2400, original: { ref: { $link: 'bafk' } } }],
+  });
+  const posts = { a: [item(2025, 'Lisboa'), 'a\\.jpg'], b: [item(2026, '서울'), 'b\\.mp4'] };
+  let template = gallery;
+  const shapes = {};
+  // The second item is adopted first: a pattern finds its own figure, not the first on the page.
+  for (const key of ['b', 'a']) {
+    const adopted = adopt(template, posts[key][0], itemRules, { images: 'page', prefix: key, vars: { file: posts[key][1] } }, context);
+    assert.deepEqual(adopted.findings, [], key);
+    ({ template } = adopted);
+    shapes[key] = adopted.blocks;
+  }
+  // The year and place come from the post. The smaller copy, its size, and the caption are the page's.
+  assert.match(template, /<figure data-year="\{\{a:year\}\}" data-loc="\{\{a:place\}\}" class="item"><span class="frame"><img src="thumb\/a\.jpg\?v=1" width="901" height="1200" alt="\{\{a:b\.0\.alt\}\}" loading="lazy"><\/span><figcaption>069<\/figcaption>/);
+  assert.match(template, /data-loc="\{\{b:place\}\}" class="item"><span class="frame"><video src="small\/b\.mp4"/);
+  let built = template;
+  for (const key of ['a', 'b']) built = build(built, posts[key][0], itemRules, { images: 'page', prefix: key }, context, shapes[key]);
+  assert.equal(built, gallery);
+  // A post filed under another place does not match its figure.
+  const moved = adopt(gallery, item(2025, 'Porto'), itemRules, { images: 'page', prefix: 'a', vars: { file: 'a\\.jpg' } }, context);
+  assert.deepEqual(moved.findings.map(found => found.where), ['the place']);
 });

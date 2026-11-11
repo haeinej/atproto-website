@@ -57,8 +57,11 @@ try {
     url.search = new URLSearchParams({ did: pds.did, cid: media.original.ref.$link });
     return url.href;
   };
-  // An image's size belongs to the image. Older records do not carry it, so it is read from the file.
-  for (const media of record.media ?? []) {
+  const sidecar = values.prefix ? `${values.template}.${values.prefix}.json` : `${values.template}.json`;
+  const imagesFrom = values.images ?? (command === 'build' ? JSON.parse(await readFile(sidecar, 'utf8')).images : 'page');
+  // An image's size is needed only when the page takes the image from the record. Older records do
+  // not carry it, so it is read from the file.
+  for (const media of imagesFrom === 'page' ? [] : record.media ?? []) {
     if (!media.$type?.endsWith('#image') || (media.width && media.height)) continue;
     const response = await fetch(blobUrl(media), { signal: AbortSignal.timeout(60_000) });
     const size = response.ok ? imageSize(new Uint8Array(await response.arrayBuffer())) : null;
@@ -66,12 +69,11 @@ try {
   }
   const context = { blobUrl, site: webUrl(vars.SITE_ORIGIN)?.replace(/\/$/, '') ?? '', did: pds.did, collection: pds.collection };
   // A page holding several posts is adopted and built once for each, with --prefix naming the post.
-  const sidecar = values.prefix ? `${values.template}.${values.prefix}.json` : `${values.template}.json`;
   const given = Object.fromEntries(values.set.map(pair => pair.split(/=(.*)/s).slice(0, 2)));
 
   if (command === 'adopt') {
     if (!values.page) throw new Error('adopt needs --page, the existing page to cut the template from');
-    const images = values.images ?? 'page';
+    const images = imagesFrom;
     if (!['page', 'source', 'repository'].includes(images)) throw new Error('--images is page, source, or repository');
     const page = await readFile(values.page, 'utf8');
     const result = adopt(page, record, rules, { images, prefix: values.prefix, vars: given }, context);

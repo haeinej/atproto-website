@@ -108,7 +108,7 @@ Each of these is here because skipping it produced a wrong result or a false ala
 
 | Setting | The page's `<img>` points to | Result |
 | --- | --- | --- |
-| `page` (default) | Wherever it already does | Nothing changes |
+| `page` (default) | Wherever it already does | Nothing changes. The file and its size stay the page's own, so a gallery can keep showing its smaller copies |
 | `source` | The address the image first came from | Same as `page` when the two agree |
 | `repository` | The owner's copy on their PDS | The page depends only on their repository; image addresses change |
 
