@@ -1,7 +1,27 @@
 {
   "name": "atproto-website",
+  "version": "0.1.0",
+  "description": "Build your own home on AT Protocol from the website you already have: your own PDS, and your own schemas, readable by other AT Protocol applications.",
   "private": true,
   "type": "module",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/haeinej/atproto-website.git"
+  },
+  "bin": {
+    "atproto-website": "bin/atproto-website.mjs"
+  },
+  "files": [
+    "bin",
+    "scripts",
+    "feed",
+    "lexicons",
+    "site",
+    "skills",
+    "docs",
+    ".claude-plugin",
+    "AGENTS.md"
+  ],
   "engines": {
     "node": ">=22"
   },

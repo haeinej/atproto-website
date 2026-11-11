@@ -9,6 +9,8 @@ You are moving what the owner has published into records they own, and changing 
 
 Read the [README](../../README.md) and [Forms, labels, and sublabels](../../docs/labels.md) first.
 
+The project's files are in `${CLAUDE_PLUGIN_ROOT}`; in a clone of the repository, that is the repository root. The `start` skill says what the project is for and how to run its commands from any folder.
+
 ## The boundary
 
 Only the content side of the website changes.

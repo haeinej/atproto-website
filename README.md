@@ -4,6 +4,34 @@ Build your own home on AT Protocol from the website you already have: your own P
 
 You can start from a website you already have, from an export of your posts on another platform, or from nothing. [Set up with your coding agent](docs/set-up-with-an-agent.md) · [Build a block](docs/build-a-block.md) · [Forms, labels, and sublabels](docs/labels.md) · [Identity](docs/identity.md) · [The fixed schema and your own fields](docs/schema-layers.md) · [Group and connect blocks](docs/group-and-connect.md)
 
+## Use it without cloning
+
+The commands run from any folder with `npx`, so you can work inside your own website's folder.
+
+```sh
+npx github:haeinej/atproto-website
+```
+
+That lists the commands. Each one previews by default and changes nothing until you pass `--publish`.
+
+```sh
+npx github:haeinej/atproto-website identity example.com
+npx github:haeinej/atproto-website configure --site https://example.com --handle example.com > atproto-website.jsonc
+npx github:haeinej/atproto-website publish --file ./hello.md --slug hello --title 'Hello' --label Writing
+```
+
+The commands look for a site configuration named `atproto-website.jsonc` in the folder you run them from, or take one with `--config`. Running your PDS and deploying the site Worker still need a clone of this repository, as described under [Set up your site](#set-up-your-site). The rest of this page writes the commands as `npm run …`, which is how they are run inside a clone; `npm run publish:post` is `publish` here.
+
+## Use it with your coding agent
+
+This repository is also a Claude Code plugin. Installing it gives your agent three skills: `start`, which tells it what this project is for and its rules; `suggest-labels`, for deciding your site's sections with you; and `migrate-site`, for moving a website and social posts in without loss.
+
+```
+/plugin install atproto-website --marketplace haeinej/atproto-website
+```
+
+On Claude Code older than 2.1.275, add the marketplace first with `/plugin marketplace add haeinej/atproto-website`, then run `/plugin install atproto-website@atproto-website`. Other coding agents can read [AGENTS.md](AGENTS.md) and the files under [skills/](skills/) directly. [Set up with your coding agent](docs/set-up-with-an-agent.md)
+
 ## Identity comes first
 
 Everything hangs off your DID, your permanent identifier on AT Protocol. Your DID's document names your handle and the PDS that hosts your repository, and the repository is the container for every post and for your profile. This is the same identity Bluesky uses, so any AT Protocol software can resolve it and read what you publish. The site is a view of that repository. [Identity](docs/identity.md)
@@ -69,6 +97,9 @@ The address comes from the label and sublabel, so every post has a label; one pu
 | [Profile](scripts/profile.mjs) | Sets your name, description, pronouns, pictures, and links, in the same shape as a Bluesky profile. |
 | [X archive importer](importer/) | A Java CLI that previews an export and publishes selected posts and media to your PDS. |
 | [AGENTS.md](AGENTS.md) | What this project is for and the rules a coding agent follows in it. |
+| [Plugin manifest](.claude-plugin/plugin.json) | Makes this repository installable as a Claude Code plugin that carries the skills. |
+| [Command entry point](bin/atproto-website.mjs) | Runs every command through `npx`, from any folder. |
+| [start skill](skills/start/SKILL.md) | What an agent reads first: the purpose, the rules, and how to run the commands. |
 | [migrate-site skill](skills/migrate-site/SKILL.md) | Instructions for a coding agent to move a site and social posts in without loss, touching only the content side. |
 | [suggest-labels skill](skills/suggest-labels/SKILL.md) | Instructions for a coding agent to settle your site's labels with you. |
 

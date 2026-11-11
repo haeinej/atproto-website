@@ -1,0 +1,9 @@
+{
+  "name": "atproto-website",
+  "version": "0.1.0",
+  "description": "Build your own home on AT Protocol from the website you already have: your own PDS and your own schemas, readable by other AT Protocol applications. Skills for setting up, deciding your site's sections, and moving a site in without loss.",
+  "author": { "name": "haeinej", "url": "https://github.com/haeinej" },
+  "homepage": "https://github.com/haeinej/atproto-website",
+  "repository": "https://github.com/haeinej/atproto-website",
+  "keywords": ["atproto", "bluesky", "pds", "lexicon", "website", "cloudflare"]
+}

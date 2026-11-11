@@ -1,11 +1,11 @@
 // List every public post with what an agent needs to suggest labels: its identified form, its
 // current label and sublabel, and how it opens. Reads the PDS; changes nothing.
-import { readFile } from 'node:fs/promises';
 import { normalizeArchivePost, pdsConfig } from '../feed/pds.mjs';
 import { renderArchivePost } from '../feed/render.mjs';
+import { siteVars } from './config.mjs';
 
 try {
-  const { vars } = JSON.parse(await readFile(process.argv[2] ?? 'feed/wrangler.site.jsonc', 'utf8'));
+  const vars = await siteVars(process.argv[2]);
   const pds = pdsConfig(vars);
   const url = new URL('/xrpc/com.atproto.repo.listRecords', pds.origin);
   url.search = new URLSearchParams({ repo: pds.did, collection: pds.collection, limit: '100' });

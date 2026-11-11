@@ -1,4 +1,5 @@
 import { spawnSync } from 'node:child_process';
+import { existsSync } from 'node:fs';
 import { mkdtemp, readFile, rm, stat, writeFile } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 import { extname, join, resolve } from 'node:path';
@@ -8,6 +9,7 @@ import { cleanName, formProblems, identifyForm, isPlayer, OTHER } from '../feed/
 import { connectUri, pdsConfig, postPath, siblingCollection, webUrl } from '../feed/pds.mjs';
 import { PRIVATE_BLOB, PRIVATE_POST } from '../feed/private.mjs';
 import { bodyFacts } from '../feed/render.mjs';
+import { configPath } from './config.mjs';
 import { POST_FIELDS, POST_MATCHES, siteLayer } from './layers.mjs';
 import { rpc, signIn } from './rpc.mjs';
 
@@ -30,12 +32,16 @@ async function blobCid(bytes) {
 }
 
 // Private posts are written straight to the site's KV namespace with your own Wrangler login.
+// Wrangler comes from this repository's Cirrus install when it is there, otherwise from the project
+// the command is run in.
 function kvPut(config, key, path) {
-  const result = spawnSync('pnpm', [
-    '--dir', fileURLToPath(new URL('../cirrus', import.meta.url)), 'exec', 'wrangler', 'kv', 'key', 'put', key,
-    '--config', resolve(config), '--binding', 'NOTES', '--remote', '--path', resolve(path),
+  const cirrus = fileURLToPath(new URL('../cirrus', import.meta.url));
+  const [command, wrangler] = existsSync(join(cirrus, 'node_modules'))
+    ? ['pnpm', ['--dir', cirrus, 'exec', 'wrangler']] : ['npx', ['--no-install', 'wrangler']];
+  const result = spawnSync(command, [
+    ...wrangler, 'kv', 'key', 'put', key, '--config', resolve(config), '--binding', 'NOTES', '--remote', '--path', resolve(path),
   ], { stdio: ['ignore', 'ignore', 'inherit'] });
-  if (result.status !== 0) throw new Error(`Saving ${key} failed. Check that Wrangler is signed in.`);
+  if (result.status !== 0) throw new Error(`Saving ${key} failed. Check that Wrangler is installed and signed in.`);
 }
 
 const fileType = url => types[extname(new URL(url).pathname).toLowerCase()];
@@ -139,7 +145,7 @@ async function publish(folder) {
       form: { type: 'string' }, label: { type: 'string' }, sublabel: { type: 'string' },
       connect: { type: 'string', multiple: true, default: [] },
       'source-platform': { type: 'string' }, 'source-url': { type: 'string' }, 'source-id': { type: 'string' },
-      config: { type: 'string', default: 'feed/wrangler.site.jsonc' }, publish: { type: 'boolean' },
+      config: { type: 'string' }, publish: { type: 'boolean' },
       private: { type: 'boolean' },
       site: { type: 'string', multiple: true, default: [] }, 'site-schema': { type: 'string' },
     },
@@ -147,7 +153,8 @@ async function publish(folder) {
   if (!values.file || !SLUG.test(values.slug ?? '') || values.slug.length > 120) {
     throw new Error('Set --file to a Markdown file and --slug to its lowercase permalink slug');
   }
-  const { vars } = JSON.parse(await readFile(values.config, 'utf8'));
+  const configFile = configPath(values.config);
+  const { vars } = JSON.parse(await readFile(configFile, 'utf8'));
   const { did, origin, collection } = pdsConfig(vars);
   const site = webUrl(vars.SITE_ORIGIN);
   if (!site) throw new Error('Set SITE_ORIGIN in the feed config');
@@ -261,7 +268,7 @@ async function publish(folder) {
     for (const [id, { path, mime, size, sourceUrl }] of attachments) {
       if (size > 25_000_000) throw new Error(`Private attachment ${id} must be no larger than 25 MB`);
       const cid = await blobCid(await readFile(path));
-      kvPut(values.config, PRIVATE_BLOB + cid, path);
+      kvPut(configFile, PRIVATE_BLOB + cid, path);
       record.media.push({
         $type: `${collection}#${kindOf(mime)}`, id,
         original: { $type: 'blob', mimeType: mime, size, ref: { $link: cid } },
@@ -270,12 +277,12 @@ async function publish(folder) {
     }
     if (preview) {
       const cid = await blobCid(await readFile(preview.path));
-      kvPut(values.config, PRIVATE_BLOB + cid, preview.path);
+      kvPut(configFile, PRIVATE_BLOB + cid, preview.path);
       record.link.image = { $type: 'blob', mimeType: preview.mime, size: preview.size, ref: { $link: cid } };
     }
     const file = join(folder, 'record.json');
     await writeFile(file, JSON.stringify(record));
-    kvPut(values.config, PRIVATE_POST + values.slug, file);
+    kvPut(configFile, PRIVATE_POST + values.slug, file);
     console.log(record.canonicalUrl);
     return;
   }

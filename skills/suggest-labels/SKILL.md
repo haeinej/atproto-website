@@ -9,7 +9,9 @@ A label is the name of a section on the owner's website: "Writing", "Photos", "P
 
 Your part is small. You offer one plain, standard starting point, and then you ask. The structure that works is the one the owner arrives at, so most of this skill is questions. Do not design a clever structure from the content, and do not argue for your own names.
 
-Read [docs/labels.md](../../docs/labels.md) first. It explains forms, labels, and sublabels with examples.
+Read [docs/labels.md](../../docs/labels.md) first.
+
+The project's files are in `${CLAUDE_PLUGIN_ROOT}`; in a clone of the repository, that is the repository root. The `start` skill says what the project is for and how to run its commands from any folder. It explains forms, labels, and sublabels with examples.
 
 ## The rule
 
@@ -32,11 +34,13 @@ Find out which of these the owner has. Ask if you cannot tell.
 | Content but no website | Published posts, a social archive, a newsletter export, folders of photos or Markdown. |
 | Nothing yet | Nothing. Go straight to the questions. |
 
-List published posts from the repository root:
+List published posts. From the owner's site folder:
 
 ```sh
-npm run --silent posts
+npx github:haeinej/atproto-website posts
 ```
+
+Inside a clone of the repository, `npm run --silent posts` does the same.
 
 Each entry has `slug`, `date`, `form`, `label`, `sublabel`, `platform`, `name`, `opening`, `characters`, and `attachments`. Private posts are not listed.
 
@@ -121,8 +125,8 @@ Check that no post is without a label, and list separately everything you filed 
 New posts take their label when published:
 
 ```sh
-npm run publish:post -- --file ./essay.md --slug trap-of-independency --title 'trap of independency' \
-  --label Writing --sublabel Collisions
+npx github:haeinej/atproto-website publish --file ./essay.md --slug trap-of-independency \
+  --title 'trap of independency' --label Writing --sublabel Collisions
 ```
 
 A post published with no `--label` is filed under `other` automatically. This project has no command yet for changing the label of a post that is already published. Say so if the proposal changes any, and list them for the owner.

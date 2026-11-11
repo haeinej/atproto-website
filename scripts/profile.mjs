@@ -4,6 +4,7 @@ import { readFile, stat } from 'node:fs/promises';
 import { extname } from 'node:path';
 import { parseArgs } from 'node:util';
 import { pdsConfig, siblingCollection, webUrl } from '../feed/pds.mjs';
+import { siteVars } from './config.mjs';
 import { PROFILE_FIELDS, PROFILE_MATCHES, siteLayer } from './layers.mjs';
 import { rpc, signIn } from './rpc.mjs';
 
@@ -32,10 +33,10 @@ try {
       website: { type: 'string' }, avatar: { type: 'string' }, banner: { type: 'string' },
       link: { type: 'string', multiple: true }, 'from-bluesky': { type: 'boolean' },
       site: { type: 'string', multiple: true, default: [] }, 'site-schema': { type: 'string' },
-      config: { type: 'string', default: 'feed/wrangler.site.jsonc' }, publish: { type: 'boolean' },
+      config: { type: 'string' }, publish: { type: 'boolean' },
     },
   });
-  const { vars } = JSON.parse(await readFile(values.config, 'utf8'));
+  const vars = await siteVars(values.config);
   const { did, origin, collection } = pdsConfig(vars);
   const profileType = siblingCollection(collection, 'profile');
   const linkType = siblingCollection(collection, 'profileLink');
