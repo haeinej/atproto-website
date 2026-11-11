@@ -53,8 +53,7 @@ a.note-name:hover { text-decoration: underline; }
 .post-body img, .post-body video { display: block; max-width: 100%; height: auto; }
 .post-body audio { width: 100%; }
 .post-body pre { overflow-x: auto; }
-.post-body .footnotes-sep { margin: 32px 0 16px; border: 0; border-top: 1px solid var(--rule); }
-.post-body .footnotes { color: var(--muted); font-size: .9375rem; }
+.post-body .footnotes { margin-top: 24px; color: var(--muted); font-size: .9375rem; }
 .post-body blockquote { margin-inline: 0; padding-inline-start: 1rem; border-inline-start: 2px solid var(--rule); }
 .link-card { display: flex; margin-top: 16px; border: 1px solid var(--rule); border-radius: 8px; overflow: hidden; text-decoration: none; }
 .link-card img { flex: 0 0 34%; width: 34%; aspect-ratio: 4 / 3; align-self: flex-start; object-fit: cover; }

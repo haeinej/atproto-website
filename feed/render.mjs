@@ -8,6 +8,7 @@ const markdown = new MarkdownIt('commonmark', { html: false }).use(footnotes);
 // jumps to its note, without brackets or a return arrow, the way a printed page has it.
 markdown.renderer.rules.footnote_caption = (tokens, index) => String(tokens[index].meta.id + 1);
 markdown.renderer.rules.footnote_anchor = () => '';
+markdown.renderer.rules.footnote_block_open = () => '<section class="footnotes">\n<ol class="footnotes-list">\n';
 const escape = markdown.utils.escapeHtml;
 
 markdown.renderer.rules.link_open = (tokens, index, options, env, renderer) => {
