@@ -133,7 +133,7 @@ async function run() {
 async function publish(folder) {
   const { values } = parseArgs({
     options: {
-      file: { type: 'string' }, slug: { type: 'string' }, title: { type: 'string' },
+      file: { type: 'string' }, slug: { type: 'string' }, title: { type: 'string' }, subtitle: { type: 'string' },
       date: { type: 'string' }, media: { type: 'string', multiple: true, default: [] },
       form: { type: 'string' }, label: { type: 'string' }, sublabel: { type: 'string' },
       connect: { type: 'string', multiple: true, default: [] },
@@ -193,6 +193,9 @@ async function publish(folder) {
   const label = cleanName(values.label);
   const sublabel = cleanName(values.sublabel);
   if (sublabel && !label) throw new Error('A --sublabel sits inside a --label; set both');
+  const subtitle = (values.subtitle ?? '').trim();
+  if (subtitle && !values.title) throw new Error('A --subtitle sits under a --title; set both');
+  if (subtitle.length > 300) throw new Error('--subtitle can be at most 300 characters');
   let source;
   if (['source-platform', 'source-url', 'source-id'].some(option => values[option] !== undefined)) {
     const platform = values['source-platform']?.trim();
@@ -210,6 +213,7 @@ async function publish(folder) {
     // A public post's address follows its label and sublabel.
     canonicalUrl: new URL(values.private ? `/notes/private/posts/${values.slug}` : postPath({ label, sublabel }, values.slug), site).href,
     ...(values.title ? { title: values.title } : {}),
+    ...(subtitle ? { subtitle } : {}),
     form,
     ...(label ? { label } : {}),
     ...(sublabel ? { sublabel } : {}),

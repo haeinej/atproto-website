@@ -195,7 +195,9 @@ export function normalizeArchivePost(value, key, pds) {
   };
   return {
     body: value.body,
-    title: typeof value.title === 'string' ? value.title.trim().slice(0, 300) : '',
+    title: text(value.title, 300),
+    // A subtitle belongs to a title, so one without the other is ignored.
+    subtitle: text(value.title, 300) ? text(value.subtitle, 300) : '',
     summary: typeof value.summary === 'string' ? value.summary.trim().slice(0, 300) : '',
     createdAt: new Date(time).toISOString(),
     canonicalUrl,

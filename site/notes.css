@@ -43,6 +43,7 @@ a.note-name:hover { text-decoration: underline; }
 .note-views a { text-decoration: none; }
 .note-views a[aria-current] { color: var(--ink); text-decoration: underline; }
 .post-page { margin-top: 32px; }
+.post-subtitle { margin: -12px 0 20px; color: var(--muted); font-size: 1.125rem; }
 /* Each form has one look. A writing reads as an article; image, video, audio and media posts are their attachments. */
 .post-page[data-form="writing"] .post-body { max-width: 38rem; font-size: 1.0625rem; line-height: 1.75; }
 .post-page:is([data-form="image"], [data-form="video"], [data-form="audio"], [data-form="media"], [data-form="file"]) .post-body p { margin: 0 0 12px; }

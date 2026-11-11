@@ -15,6 +15,11 @@
         ],
         "properties": {
           "title": { "type": "string" },
+          "subtitle": {
+            "type": "string",
+            "maxLength": 300,
+            "description": "An optional line shown under the title."
+          },
           "body": {
             "type": "string",
             "maxLength": 262144,

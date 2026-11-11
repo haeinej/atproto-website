@@ -46,7 +46,8 @@ test('an individual post resolves its record and escapes untrusted content', asy
   const result = await servePost(filed, config, 'test-post', async url => {
     assert.equal(url.searchParams.get('rkey'), 'test-post');
     return Response.json({ uri, value: {
-      ...example, title: '<script>alert(1)</script>', form: 'writing', label: 'Things I make', sublabel: '<script>', body: example.body + '\n\n' +
+      ...example, title: '<script>alert(1)</script>', subtitle: 'einmal ist <keinmal>', form: 'writing', label: 'Things I make',
+      sublabel: '<script>', body: example.body + '\n\n' +
         '<img src=x onerror=alert(1)> [link](javascript:alert(1)) ![External](https://other.example/pixel.png)',
     } });
   });
@@ -55,6 +56,7 @@ test('an individual post resolves its record and escapes untrusted content', asy
   assert.match(html, /&lt;script&gt;/);
   assert.match(html, /Things I make · &lt;script&gt;/);
   assert.match(html, /data-form="writing"/);
+  assert.match(html, /<\/h1><p class="post-subtitle">einmal ist &lt;keinmal&gt;<\/p>/);
   assert.match(html, /<link rel="alternate" href="at:\/\/did:web:pds\.example\.test\/com\.haeinjung\.post\/test-post">/);
   assert.doesNotMatch(html, /<script|<img src=x|href="javascript:|src="https:\/\/other\.example/);
   const linked = await servePost(request, config, 'test-post', async () => Response.json({ uri, value: {

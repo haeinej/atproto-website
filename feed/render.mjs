@@ -126,7 +126,8 @@ function tokenFacts(tokens) {
 }
 
 export function postPage(post) {
-  const heading = post.title ? `<h1>${escape(post.title)}</h1>` : '';
+  const heading = post.title
+    ? `<h1>${escape(post.title)}</h1>${post.subtitle ? `<p class="post-subtitle">${escape(post.subtitle)}</p>` : ''}` : '';
   const date = escape(dateLabel(post.createdAt));
   const platform = post.sourceUrl
     ? `<a class="note-platform" href="${escape(post.sourceUrl)}">${escape(post.platform)}</a>`
