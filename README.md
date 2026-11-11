@@ -43,7 +43,7 @@ Addresses follow the same folders, and every post also has an AT URI.
 | `/posts/writings/collisions/trap-of-independency` | A post |
 | `at://did:web:pds.example.com/com.example.post/trap-of-independency` | The same post's record |
 
-A post's address always ends in its own key. If you file a post under a different label later, its old address and the short `/posts/trap-of-independency` both redirect to the new one.
+The address comes from the label and sublabel, so every post has a label; one published without a label is filed under `other`. A post's address always ends in its own key. If you file a post under a different label later, its old address and the short `/posts/trap-of-independency` both redirect to the new one.
 
 ## What is in this repository
 
@@ -135,7 +135,7 @@ Create an app password for your PDS account and expose it to the command as `ATP
 npm run publish:post -- --file ./hello.md --slug hello --title 'Hello' --label 'Writings' --publish
 ```
 
-Your post is available at `https://example.com/posts/writings/hello` once published. A post's address follows its label and sublabel, and `https://example.com/posts/hello` leads to the same place. `--label` is the section of your site the post belongs to and `--sublabel` is a group inside it; both are optional and in your own words. `--subtitle` adds a line under the title. The form is identified from the content and saved in the record: this post has a title, so it is a writing. The command refuses a post that does not fit its form, such as a writing with no title. [Forms, labels, and sublabels](docs/labels.md)
+Your post is available at `https://example.com/posts/writings/hello` once published. A post's address follows its label and sublabel, and `https://example.com/posts/hello` leads to the same place. `--label` is the section of your site the post belongs to and `--sublabel` is a group inside it, both in your own words. A post with no `--label` is filed under `other`. `--subtitle` adds a line under the title. The form is identified from the content and saved in the record: this post has a title, so it is a writing. The command refuses a post that does not fit its form, such as a writing with no title. [Forms, labels, and sublabels](docs/labels.md)
 
 To include a file in a specific part of the post, use an attachment reference such as `![A short clip](media:clip)` in the Markdown and add `--media clip=./clip.mp4` to the command. Repeat `--media` for additional files. An attachment can be an image, video, audio, or a file such as a PDF, and `--media clip=https://example.org/clip.mp4` takes one in from the web and keeps the address as its source. A post that is nothing but a link to such a file is taken in the same way, so a link to an image becomes an image. A post that links to a page keeps the page's title, description, and preview image. A writing or a note can mix attachments with links and text. [Block guide](docs/build-a-block.md) · [Mixed-media example](examples/image-text-image-video.json)
 

@@ -4,7 +4,7 @@ import { tmpdir } from 'node:os';
 import { extname, join, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { parseArgs } from 'node:util';
-import { cleanName, formProblems, identifyForm, isPlayer } from '../feed/forms.mjs';
+import { cleanName, formProblems, identifyForm, isPlayer, OTHER } from '../feed/forms.mjs';
 import { connectUri, pdsConfig, postPath, webUrl } from '../feed/pds.mjs';
 import { PRIVATE_BLOB, PRIVATE_POST } from '../feed/private.mjs';
 import { bodyFacts } from '../feed/render.mjs';
@@ -190,9 +190,11 @@ async function publish(folder) {
   const form = values.form ?? identifyForm(content);
   const problems = formProblems(form, content);
   if (problems.length) throw new Error(problems.join('\n'));
-  const label = cleanName(values.label);
+  // Every post is filed under a label, because its address is built from it. One published without
+  // a label goes under `other`.
   const sublabel = cleanName(values.sublabel);
-  if (sublabel && !label) throw new Error('A --sublabel sits inside a --label; set both');
+  if (sublabel && !cleanName(values.label)) throw new Error('A --sublabel sits inside a --label; set both');
+  const label = cleanName(values.label) || OTHER;
   const subtitle = (values.subtitle ?? '').trim();
   if (subtitle && !values.title) throw new Error('A --subtitle sits under a --title; set both');
   if (subtitle.length > 300) throw new Error('--subtitle can be at most 300 characters');
@@ -215,7 +217,7 @@ async function publish(folder) {
     ...(values.title ? { title: values.title } : {}),
     ...(subtitle ? { subtitle } : {}),
     form,
-    ...(label ? { label } : {}),
+    label,
     ...(sublabel ? { sublabel } : {}),
     ...(connect.length ? { connect } : {}),
     ...(source ? { source } : {}),

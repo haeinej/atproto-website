@@ -20,7 +20,9 @@ haeinjung.com has three sections in its navigation, so it has three labels.
 | photographs | `photographs` |
 | things i make | `things i make` |
 
-A label can be any words, in any language, with any capitalisation. Another site might have `Blog`, `Journal`, and `Field recordings`. Nothing checks the name. A post has one label.
+A label can be any words, in any language, with any capitalisation. Another site might have `Blog`, `Journal`, and `Field recordings`. Nothing checks the name.
+
+Every post has exactly one label, because a post's address is built from it. A post that fits none of your sections goes under `other`, and the publish command files a post there when you give no label.
 
 ## Sublabels are groups inside a label
 
@@ -35,7 +37,7 @@ Use a sublabel when several posts are parts of one thing. It is also your own wo
 
 In the posts list, a sublabel is a folder inside its label's folder, and its posts read in the order they were written. Most posts have no sublabel.
 
-A post's address follows the same folders, so the web address shows where the post is filed.
+A post's address follows the same folders, so the web address shows where the post is filed. This is a rule of the project: the address comes from the label and sublabel and from nothing else.
 
 | Label | Sublabel | Address |
 | --- | --- | --- |
@@ -43,6 +45,7 @@ A post's address follows the same folders, so the web address shows where the po
 | `Writings` | | `/posts/writings/elsewheren` |
 | `photographs` | `서울` | `/posts/photographs/서울/…` |
 | `things i make` | | `/posts/things-i-make/why-i-started-ohm` |
+| none given | | `/posts/other/a-stray-note` |
 
 Each folder has an address too: `/posts/writings/` lists that label and `/posts/writings/collisions/` that sublabel. Names are lowercased and their spaces become hyphens; letters of any script are kept.
 

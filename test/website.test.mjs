@@ -41,7 +41,7 @@ test('the scheduled feed displays an archive post without a Bluesky copy', async
 });
 
 test('an individual post resolves its record and escapes untrusted content', async () => {
-  const request = new Request('https://example.test/posts/test-post');
+  const request = new Request('https://example.test/posts/other/test-post');
   const filed = new Request('https://example.test/posts/things-i-make/script/test-post');
   const result = await servePost(filed, config, 'test-post', async url => {
     assert.equal(url.searchParams.get('rkey'), 'test-post');
@@ -125,7 +125,7 @@ test('a site-owned collection drives the feed, individual pages, and AT links', 
   assert.match(post.bodyHtml, /<img.*href="\/posts\/earlier"/s);
   assert.equal((await worker.fetch(feedRequest, { ...env, ATPROTO_POST_COLLECTION: ARCHIVE_POST })).status, 503);
 
-  const page = await servePost(new Request('https://example.test/posts/test-post'), env, 'test-post', async url => {
+  const page = await servePost(new Request('https://example.test/posts/other/test-post'), env, 'test-post', async url => {
     assert.equal(url.searchParams.get('collection'), collection);
     return Response.json({ uri: recordUri, value });
   });
@@ -166,7 +166,9 @@ test('connections stay off the pages and shape the tree view', async () => {
   assert.deepEqual(notes[0].connect, [earlier, 'https://www.example.org/article/']);
   assert.deepEqual(notes[0].links, notes[0].connect);
   assert.deepEqual(notes.map(note => note.platform), ['website', 'x']);
-  assert.equal('name' in notes[0] || 'label' in notes[0], false);
+  assert.equal('name' in notes[0], false);
+  // A post nobody labelled is filed under `other`, so its address still shows a folder.
+  assert.deepEqual([notes[0].label, notes[0].permalink], ['other', '/posts/other/later']);
 
   const graph = await (await worker.fetch(new Request('https://example.test/notes/graph.json'), env)).json();
   assert.deepEqual(graph, {
@@ -175,8 +177,8 @@ test('connections stay off the pages and shape the tree view', async () => {
       platform: 'x', form: 'note', label: 'Field notes', branches: [later],
     },
     [later]: {
-      href: '/posts/later', name: 'Later', createdAt: '2025-02-01T00:00:00.000Z', platform: 'website', form: 'writing',
-      branches: [],
+      href: '/posts/other/later', name: 'Later', createdAt: '2025-02-01T00:00:00.000Z', platform: 'website', form: 'writing',
+      label: 'other', branches: [],
     },
   });
 
@@ -193,7 +195,7 @@ test('connections stay off the pages and shape the tree view', async () => {
   assert.match(untitled, /<title>The street went quiet\.<\/title>/);
   assert.match(untitled, /<a class="note-platform" href="https:\/\/x\.com\/i\/web\/status\/1">x<\/a>/);
   assert.doesNotMatch(untitled, /<h1>|\/posts\/later/);
-  assert.doesNotMatch(await page('/posts/later'), /\/posts\/earlier|example\.org/);
+  assert.doesNotMatch(await page('/posts/other/later'), /\/posts\/earlier|example\.org/);
 });
 
 test('private posts stay off the PDS and are served only to a signed-in owner', async () => {

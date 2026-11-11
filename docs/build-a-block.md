@@ -20,7 +20,7 @@ The street went quiet after the rain.
 
 ## Give it a label
 
-A label is the section of your site the block belongs to, in your own words: `Writings`, `photographs`, `Field notes`. Add a sublabel when the block is part of a group inside that section, such as an essay series. Both are optional, and a block has one of each at most.
+A label is the section of your site the block belongs to, in your own words: `Writings`, `photographs`, `Field notes`. Add a sublabel when the block is part of a group inside that section, such as an essay series. A block has exactly one label; if you give none, it is filed under `other`. The sublabel is optional. The block's address comes from them: `/posts/field-notes/after-the-rain`.
 
 You do not say what kind of thing the block is. The publish command identifies its form from the content and saves it: `rain.md` has words and a photo and no title, so it is a note. With a title it would be a writing, and with only the photo it would be an image. There are thirteen forms in all, covering galleries, video, audio, files, links, embeds, quotes, lists, and code. [Forms, labels, and sublabels](labels.md)
 

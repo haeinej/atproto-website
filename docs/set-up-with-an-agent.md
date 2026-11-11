@@ -69,6 +69,8 @@ You get the totals before and after, every difference found, the items left out,
 | Whether a link is really an image, video, or file, and should be saved as one | Whether an item is public, private, or left out |
 | How to prove nothing was lost | When to go live |
 
+When the agent meets something with no obvious place, such as a subtitle or a note saying an essay first appeared elsewhere, it asks you. Each question covers one decision and gives a few options with what each leads to, the one it recommends first. Your answer is applied to every item of that kind.
+
 ## What to keep in the record
 
 | Content you have | How to carry it over |

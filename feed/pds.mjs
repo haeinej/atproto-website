@@ -1,4 +1,4 @@
-import { cleanName, isForm } from './forms.mjs';
+import { cleanName, isForm, OTHER } from './forms.mjs';
 
 export const COLLECTION = 'com.haeinjung.note';
 export const BSKY_POST = 'app.bsky.feed.post';
@@ -68,11 +68,12 @@ export function connectUri(value) {
 }
 
 // What a post is and where it is filed. A record written before labels existed has free-form
-// `tags` instead: the first is read as its label and the second as its sublabel.
+// `tags` instead: the first is read as its label and the second as its sublabel. A post with no
+// label at all is filed under `other`, so every post has a folder and an address that shows it.
 export function filing(value) {
   const tags = Array.isArray(value.tags) ? value.tags.map(cleanName).filter(Boolean) : [];
-  const label = cleanName(value.label) || tags[0] || '';
-  const sublabel = label && (cleanName(value.sublabel) || (value.label ? '' : tags[1] ?? ''));
+  const label = cleanName(value.label) || tags[0] || OTHER;
+  const sublabel = cleanName(value.sublabel) || (cleanName(value.label) ? '' : tags[1] ?? '');
   return { form: isForm(value.form) ? value.form : undefined, label, sublabel };
 }
 

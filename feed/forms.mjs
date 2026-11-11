@@ -39,6 +39,10 @@ export function isPlayer(href) {
 
 export const isForm = value => typeof value === 'string' && Object.hasOwn(FORMS, value);
 
+// Every post is filed under a label, because its address is built from it. A post nobody has
+// labelled is filed under this one.
+export const OTHER = 'other';
+
 // A label or sublabel as the author wrote it, trimmed.
 export function cleanName(value) {
   return typeof value === 'string' ? value.trim().slice(0, 100) : '';

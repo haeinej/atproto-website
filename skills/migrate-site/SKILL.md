@@ -22,6 +22,25 @@ Only the content side of the website changes.
 
 If a page mixes content and layout in one file, lift the content out and leave the markup around it exactly as it was. If you think something on the right-hand side has to change, stop and ask the owner. Do not tidy, modernise, or fix unrelated code, even when it is clearly wrong; mention it instead.
 
+## Ask the owner; do not decide for them
+
+Moving a site turns up things that have no obvious place: a subtitle, a note saying where an essay first appeared, two versions of the same image, text in a second language. Each of these is the owner's decision. When you meet one, stop and ask.
+
+- **One decision per question.** Say what you found and where, in a sentence, then give two to four options.
+- **Say what each option leads to.** "The subtitle becomes a field on the post" tells the owner more than "use a field".
+- **Put the option you would choose first and mark it as recommended.** Offer a way to answer something else.
+- **Ask once per kind of thing, not once per item.** If twelve essays have a subtitle, ask about subtitles.
+- **Apply the answer everywhere it fits, and write it down** in the copy, so a later session does not ask again.
+
+For example:
+
+> The essay "elsewheren" has a subtitle under its title, "einmal ist keinmal". Where should it go?
+> 1. A subtitle field on the post (recommended). It is saved with the post and shown under the title.
+> 2. The first line of the body. No extra field, but it is no longer separate from the essay.
+> 3. Keep it on the website only. It is not part of the post.
+
+Things to ask about, when the site has them: subtitles and summaries, where an item first appeared and whether that changes its platform, which copy of an image to keep, missing alt text, text in more than one language, duplicate pages, and anything that looks private.
+
 ## Work on a copy
 
 - Make a branch or a separate checkout of the website. Never edit the default branch or the deployed site.
@@ -41,7 +60,7 @@ Tell the owner the totals: pages, items by kind, media files, and posts per plat
 
 ## 2. Settle the labels
 
-Follow [the suggest-labels skill](../suggest-labels/SKILL.md). The site's existing section names are the labels. Do this before converting anything, because every post is filed under one.
+Follow [the suggest-labels skill](../suggest-labels/SKILL.md). The site's existing section names are the labels. Do this before converting anything: every post must have a label, because its address is built from it. A post that fits no section goes under `other` as a last resort.
 
 ## 3. Show the mapping and convert one item
 
@@ -73,6 +92,7 @@ Compare the copy against the baseline and report every difference, including the
 | Check | Passes when |
 | --- | --- |
 | Counts | Items per kind, media files, and posts per platform match the baseline, less the listed exceptions |
+| Labels | Every post has a label, and you have listed the ones filed under `other` |
 | Text | Each item's text is the same, ignoring only whitespace |
 | Media | Every file is present with the same hash and the same alt text |
 | Dates and order | Each item has its original date and sits in the same position on its page |

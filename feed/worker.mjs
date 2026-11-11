@@ -2,6 +2,7 @@ import {
   ARCHIVE_POST, BSKY_POST, BSKY_PROFILE, COLLECTION, isRecordKey, normalizeArchivePost, normalizeNote, normalizePost,
   normalizeProfile, pdsConfig, siblingCollection,
 } from './pds.mjs';
+import { OTHER } from './forms.mjs';
 import { servePrivate } from './private.mjs';
 import { plainName, postPage, renderArchivePost } from './render.mjs';
 
@@ -18,7 +19,7 @@ function buildGraph(posts) {
       createdAt: post.createdAt,
       platform: post.platform,
       ...(post.form ? { form: post.form } : {}),
-      ...(post.label ? { label: post.label } : {}),
+      label: post.label ?? OTHER,
       ...(post.sublabel ? { sublabel: post.sublabel } : {}),
       branches: [],
     };
