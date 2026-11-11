@@ -1,0 +1,22 @@
+{
+  "name": "website-mirror",
+  "main": "worker.mjs",
+  "compatibility_date": "2025-12-02",
+  "workers_dev": false,
+  "preview_urls": false,
+  "routes": [
+    { "pattern": "example.com/mirror", "zone_name": "example.com" },
+    { "pattern": "example.com/mirror/*", "zone_name": "example.com" }
+  ],
+  "vars": {
+    "SITE_ORIGIN": "https://example.com",
+    "ATPROTO_DID": "did:web:pds.example.com",
+    "ATPROTO_PDS_ORIGIN": "https://pds.example.com",
+    "ATPROTO_POST_COLLECTION": "com.example.post",
+    "ACCESS_TEAM_DOMAIN": "your-team.cloudflareaccess.com",
+    "ACCESS_AUD": "",
+    "MIRROR_SOURCES": "[{\"platform\":\"website\",\"feed\":\"https://example.com/feed.xml\",\"label\":\"Writing\"}]"
+  },
+  "kv_namespaces": [{ "binding": "MIRROR" }],
+  "triggers": { "crons": ["41 * * * *"] }
+}

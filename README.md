@@ -131,6 +131,10 @@ The post is then at `https://example.com/posts/writings/hello`.
 
 [Build a block](docs/build-a-block.md) · [Group and connect blocks](docs/group-and-connect.md)
 
+## Mirror your platforms
+
+If you would rather keep publishing where you already do, the mirror copies it into your repository: your website, a newsletter, or anything else with a feed, and X through its API. It runs on a schedule and from one **Mirror now** button, writes only what changed, and never writes back to a platform. [Mirror](docs/mirror.md)
+
 ## Say who you are
 
 Your profile is a record with the same fields as a Bluesky profile: name, description, pronouns, a picture, a banner, and up to ten links.
