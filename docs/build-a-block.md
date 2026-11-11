@@ -26,7 +26,7 @@ You do not say what kind of thing the block is. The publish command identifies i
 
 ## Preview and publish
 
-After [setting up your site](../README.md#set-up-your-site), run this command from the repository root.
+After [setting up your site](../README.md#run-your-own-pds-and-site), run this command from the repository root.
 
 ```sh
 npm run publish:post -- \

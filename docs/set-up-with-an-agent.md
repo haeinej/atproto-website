@@ -15,7 +15,7 @@ It works on a copy of your site the whole time. Your live site keeps running, an
 
 ## Before you start
 
-- **Set up the tools.** Follow [Set up your site](../README.md#set-up-your-site) to install them and create your PDS. You can ask the agent to walk you through it. Your DID is the root of everything that follows. [Identity](identity.md)
+- **Set up the tools.** Follow [Set up your site](../README.md#run-your-own-pds-and-site) to install them and create your PDS. You can ask the agent to walk you through it. Your DID is the root of everything that follows. [Identity](identity.md)
 - **Get your exports.** Download your archive from each platform you want to bring in. X has [an importer](../README.md#import-an-x-archive). For other platforms the agent converts the export itself.
 - **Give your agent the skills.** In Claude Code, run `/plugin install ohm-content-layer --marketplace haeinej/ohm-content-layer`. With another agent, point it at this repository's `AGENTS.md` and `skills/` folder.
 - **Open your website's source with the agent.** The commands run there with `npx github:haeinej/ohm-content-layer`, so nothing has to be cloned to convert and preview.
@@ -92,7 +92,7 @@ The [Java importer](../README.md#import-an-x-archive) handles X exports. The [pu
 
 ## Own the schema and its addresses
 
-Follow [the setup instructions](../README.md#set-up-your-site) to generate the site configuration and a Lexicon file. A site on `example.com` can start with `com.example.post`. The reversed domain is the namespace, and the last part names the record type. [AT Protocol NSID specification](https://atproto.com/specs/nsid)
+Follow [the setup instructions](../README.md#run-your-own-pds-and-site) to generate the site configuration and a Lexicon file. A site on `example.com` can start with `com.example.post`. The reversed domain is the namespace, and the last part names the record type. [AT Protocol NSID specification](https://atproto.com/specs/nsid)
 
 Use the same collection in the generated schema, the site's feed configuration, and the X importer's `--collection` option. For a post named `hello`, the AT URI might be `at://did:web:pds.example.com/com.example.post/hello`. The DID comes from the account holding the record. The public URL comes from the site. [Record and link examples](group-and-connect.md)
 
