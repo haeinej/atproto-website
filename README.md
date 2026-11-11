@@ -2,7 +2,7 @@
 
 Host your posts and media on your own domain with Cloudflare and AT Protocol. Attach a posts page to an existing Cloudflare site, or run this project's starter site on a new hostname. Write posts in Markdown or bring over your X archive. The website reads public records from your Personal Data Server (PDS), and the files stay with those records.
 
-[Build a block](docs/build-a-block.md) with text, links, media, and labels you choose.
+[Build a block](docs/build-a-block.md) with text, links, media, and labels you choose. [Group and connect blocks](docs/group-and-connect.md) into series or link them from other posts.
 
 | Component | Purpose |
 | --- | --- |

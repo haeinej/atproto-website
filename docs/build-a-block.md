@@ -61,3 +61,5 @@ The smallest complete record has a type, a body, a publication date, and a canon
 ```
 
 The same record can become a full page, a short feed entry, or a gallery card. Your site decides which fields to show and how to lay them out. [Post Lexicon](../lexicons/com/haeinjung/post.json)
+
+Use [Group and connect blocks](group-and-connect.md) to build a series, connect related posts, or quote a passage.

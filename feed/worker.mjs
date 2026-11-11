@@ -52,7 +52,7 @@ export async function refreshNotes(env, request = fetch, now = new Date()) {
   const latest = notes
     .sort((a, b) => b.createdAt.localeCompare(a.createdAt) || b.uri.localeCompare(a.uri))
     .slice(0, 20)
-    .map(note => typeof note.body === 'string' ? renderArchivePost(note) : note);
+    .map(note => typeof note.body === 'string' ? renderArchivePost(note, pds) : note);
   const snapshot = { ...pds, refreshedAt: now.toISOString(), notes: latest };
   await env.NOTES.put(SNAPSHOT_KEY, JSON.stringify(snapshot), { expirationTtl: MAX_AGE });
   return snapshot;
@@ -77,7 +77,7 @@ export async function servePost(request, env, key, get = fetch) {
     const post = data.uri === `at://${pds.did}/${ARCHIVE_POST}/${key}` &&
       normalizeArchivePost(data.value, key, pds);
     if (!post) return new Response('Post not found', { status: 404 });
-    return new Response(request.method === 'HEAD' ? null : postPage(renderArchivePost(post)), {
+    return new Response(request.method === 'HEAD' ? null : postPage(renderArchivePost(post, pds)), {
       headers: {
         'Content-Type': 'text/html; charset=utf-8',
         'Cache-Control': 'public, max-age=300',

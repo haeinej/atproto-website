@@ -51,6 +51,24 @@ test('an individual post resolves its record and escapes untrusted content', asy
   assert.equal(missing.status, 404);
 });
 
+test('quoted passages and ordered groups link to the same record addresses', async () => {
+  const first = `at://${did}/${ARCHIVE_POST}/trap-of-independency`;
+  const second = `at://${did}/${ARCHIVE_POST}/just-buy-that-jacket`;
+  const bluesky = `at://${did}/${BSKY_POST}/3lx2zi2fp2c2u`;
+  const body = `1. [First](${first})
+2. [Second](${second})
+
+> A short quotation.
+
+[Source](${first}) · [Bluesky](${bluesky})`;
+  const snapshot = await refreshNotes({ ...config, NOTES: { put: async () => {} } },
+    async () => Response.json({ records: [{ uri, value: { ...example, body } }] }));
+  const [post] = snapshot.notes;
+  assert.deepEqual(post.links, [first, second, bluesky]);
+  assert.match(post.bodyHtml, /<ol>.*href="\/posts\/trap-of-independency".*href="\/posts\/just-buy-that-jacket".*<blockquote>/s);
+  assert.match(post.bodyHtml, /href="https:\/\/bsky\.app\/profile\/did:web:pds\.example\.test\/post\/3lx2zi2fp2c2u"/);
+});
+
 test('a standalone site serves its root while an attached site uses the posts routes', async () => {
   const assets = { fetch: async request => new Response(new URL(request.url).pathname) };
   const request = new Request('https://example.test/');

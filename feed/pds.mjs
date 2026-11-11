@@ -8,6 +8,17 @@ export function isRecordKey(key) {
   return typeof key === 'string' && RECORD_KEY.test(key) && key !== '.' && key !== '..';
 }
 
+export function postLink(uri, ownerDid) {
+  if (typeof uri !== 'string') return null;
+  const match = /^at:\/\/([^/]+)\/([^/]+)\/([^/]+)$/.exec(uri);
+  if (!match) return null;
+  const [, did, collection, key] = match;
+  if (!DID.test(did) || !isRecordKey(key)) return null;
+  if (collection === ARCHIVE_POST && did === ownerDid) return `/posts/${encodeURIComponent(key)}`;
+  if (collection === BSKY_POST) return `https://bsky.app/profile/${did}/post/${encodeURIComponent(key)}`;
+  return null;
+}
+
 export function webUrl(value) {
   if (typeof value !== 'string' || !URL.canParse(value)) return undefined;
   const url = new URL(value);
