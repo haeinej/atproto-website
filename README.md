@@ -115,7 +115,7 @@ The Worker has a budget of 48 listing requests per refresh. Very large repositor
 
 ## Publish a post
 
-Create an app password for your PDS account and expose it to the command as `ATPROTO_APP_PASSWORD`. The CLI uses the account and website from the generated feed config. Omitting `--publish` previews the draft offline. [Cirrus app passwords](https://cirrus.earth/guides/create-app-password/)
+Create an app password for your PDS account and expose it to the command as `ATPROTO_APP_PASSWORD`. The CLI uses the account and website from the generated feed config. Omitting `--publish` previews the draft without publishing anything. [Cirrus app passwords](https://cirrus.earth/guides/create-app-password/)
 
 ```sh
 npm run publish:post -- --file ./hello.md --slug hello --title 'Hello' --label 'Writings' --publish
@@ -123,7 +123,7 @@ npm run publish:post -- --file ./hello.md --slug hello --title 'Hello' --label '
 
 Your post is available at `https://example.com/posts/hello` once published. `--label` is the section of your site the post belongs to and `--sublabel` is a group inside it; both are optional and in your own words. The form is identified from the content and saved in the record: this post has a title, so it is a writing. The command refuses a post that does not fit its form, such as a writing with no title. [Forms, labels, and sublabels](docs/labels.md)
 
-To include a file in a specific part of the post, use an attachment reference such as `![A short clip](media:clip)` in the Markdown and add `--media clip=./clip.mp4` to the command. Repeat `--media` for additional files. An attachment can be an image, video, audio, or a file such as a PDF. A writing or a note can mix them with links and text. [Block guide](docs/build-a-block.md) · [Mixed-media example](examples/image-text-image-video.json)
+To include a file in a specific part of the post, use an attachment reference such as `![A short clip](media:clip)` in the Markdown and add `--media clip=./clip.mp4` to the command. Repeat `--media` for additional files. An attachment can be an image, video, audio, or a file such as a PDF, and `--media clip=https://example.org/clip.mp4` takes one in from the web and keeps the address as its source. A post that is nothing but a link to such a file is taken in the same way, so a link to an image becomes an image. A writing or a note can mix attachments with links and text. [Block guide](docs/build-a-block.md) · [Mixed-media example](examples/image-text-image-video.json)
 
 To say what a post came from, add `--connect` with the slug of an earlier post or a web URL. The connection is kept in the record and in `/notes/graph.json`. Nothing on the site draws it yet. [Connect a block](docs/group-and-connect.md#connect-a-block)
 
@@ -181,10 +181,11 @@ The starter configuration reads archive posts. To also list native Bluesky posts
 
 ## Status
 
-`npm test` covers the feed, post pages, the posts graph, form identification and checks, and access to private posts.
+`npm test` covers the feed, post pages, the posts graph, form identification and checks, taking in files from the web, and access to private posts.
 
 - **Not yet run against Cloudflare.** Private posts are tested with a stand-in for Cloudflare Access and for KV. The step that writes a private post with Wrangler has only been previewed.
 - **X importer not rebuilt.** It now saves each post's form and a single label. That change has not been compiled or run.
 - **No command to change a published post.** There is no way yet to change a post's label, move a private post to public, or delete a private post, other than by hand.
+- **Links and embeds are kept as written.** A link post does not store the page's title or a preview image, and an embed is shown as a link, not a player.
 - **Connections are stored, not shown.** `connect` and links between posts are in the record and in `/notes/graph.json`. There is no graph view.
 - **One look per form is a start.** A writing has an article column and a gallery has a grid. The other forms use the default page.

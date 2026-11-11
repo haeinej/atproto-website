@@ -1,5 +1,10 @@
 import assert from 'node:assert/strict';
-import { readFile } from 'node:fs/promises';
+import { execFile } from 'node:child_process';
+import { mkdtemp, readFile, rm, writeFile } from 'node:fs/promises';
+import { createServer } from 'node:http';
+import { tmpdir } from 'node:os';
+import { join } from 'node:path';
+import { promisify } from 'node:util';
 import { test } from 'node:test';
 import { FORMS, formProblems, identifyForm } from '../feed/forms.mjs';
 import { ARCHIVE_POST, BSKY_POST } from '../feed/pds.mjs';
@@ -278,4 +283,47 @@ test('the form is fixed and checked, while labels are the author\'s own', async 
   assert.match(check('code', 'Words.\n\n```\ncode\n```').join(), /no words of its own/);
   assert.match(check('essays', 'Words.', [], 'A title')[0], /Set the form to one of/);
   assert.match(check(undefined, 'Words.')[0], /Set the form to one of/);
+});
+
+test('a post that is a link to a file takes the file in and keeps its source', async () => {
+  const png = Buffer.from('iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR4nGNgYGD4DwABBAEAfbLI3wAAAABJRU5ErkJggg==', 'base64');
+  const server = createServer((request, response) => {
+    if (request.url === '/street.png') response.writeHead(200, { 'Content-Type': 'image/png' }).end(png);
+    else if (request.url === '/page.png') response.writeHead(200, { 'Content-Type': 'text/html' }).end('<p>A page</p>');
+    else response.writeHead(404).end();
+  });
+  await new Promise(resolve => server.listen(0, '127.0.0.1', resolve));
+  const web = `http://127.0.0.1:${server.address().port}`;
+  const folder = await mkdtemp(join(tmpdir(), 'publish-test-'));
+  try {
+    await writeFile(join(folder, 'site.jsonc'), JSON.stringify({ vars: {
+      ATPROTO_DID: did, ATPROTO_PDS_ORIGIN: 'https://pds.example.test', SITE_ORIGIN: 'https://example.test',
+    } }));
+    const preview = async (body, ...options) => {
+      await writeFile(join(folder, 'post.md'), body);
+      const { stdout, stderr } = await promisify(execFile)(process.execPath, [
+        new URL('../scripts/publish.mjs', import.meta.url).pathname, '--config', join(folder, 'site.jsonc'),
+        '--file', join(folder, 'post.md'), '--slug', 'a-post', ...options,
+      ]);
+      return { ...JSON.parse(stdout), stderr };
+    };
+    const image = await preview(`[A wet street](${web}/street.png)`);
+    assert.equal(image.record.form, 'image');
+    assert.equal(image.record.body, '![A wet street](media:web)');
+    assert.deepEqual(image.fromWeb, { web: `${web}/street.png` });
+
+    // A comment beside it, a page that only looks like a file, or --form link: each stays a link.
+    assert.equal((await preview(`Look at this.\n\n<${web}/street.png>`)).record.form, 'link');
+    const page = await preview(`<${web}/page.png>`);
+    assert.equal(page.record.form, 'link');
+    assert.match(page.stderr, /Kept .* as a link: .* text\/html/);
+    assert.equal((await preview(`<${web}/street.png>`, '--form', 'link')).fromWeb, undefined);
+
+    const placed = await preview('Words first.\n\n![A wet street](media:street)', '--media', `street=${web}/street.png`);
+    assert.equal(placed.record.form, 'note');
+    assert.deepEqual(placed.fromWeb, { street: `${web}/street.png` });
+  } finally {
+    server.close();
+    await rm(folder, { recursive: true, force: true });
+  }
 });

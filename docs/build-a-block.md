@@ -16,7 +16,7 @@ The street went quiet after the rain.
 [The walk it came from](https://example.com/walks/after-the-rain)
 ```
 
-`media:street` places the attachment exactly where it appears in the body. Match it to a file with `--media street=./street.jpg`. Leave out the media option for a text or link block.
+`media:street` places the attachment exactly where it appears in the body. Match it to a file with `--media street=./street.jpg`, or to an image on the web with `--media street=https://example.org/street.jpg`. Leave out the media option for a text or link block.
 
 ## Give it a label
 

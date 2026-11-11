@@ -76,6 +76,22 @@ Some examples, using the labels above.
 
 Two things follow from this. Posts with different labels can share a form: an essay and a project write-up are both a writing. And one label can hold different forms: `Writings` holds writings and a list.
 
+### A link to an image is an image
+
+How a thing arrives does not change what it is. A photograph is an image whether you upload the file or point at it on the web. So when a post is nothing but a link to an image, video, audio file, or document, the publish command takes the file in, stores it with your other attachments, and remembers the link as its source. The post is then that object, and it stays intact if the other site goes away.
+
+| The whole post is | What is saved | Form |
+| --- | --- | --- |
+| `<https://example.org/photos/street.jpg>` | The image, with the link as its source | image |
+| `[The paper](https://example.org/paper.pdf)` | The PDF, with the link as its source and "The paper" as its description | file |
+| `<https://www.youtube.com/watch?v=abc>` | The link. It plays something, so nothing is copied | embed |
+| `<https://example.org/an-article>` | The link | link |
+| A sentence, then `<https://example.org/photos/street.jpg>` | The sentence and the link | link |
+
+The last row stays a link because you wrote about it instead of posting the file itself. To place a web image inside a longer post, attach it by address: write `![A wet street](media:street)` in the body and pass `--media street=https://example.org/photos/street.jpg`. To keep a lone file link as a link, pass `--form link`.
+
+A link counts as a file when its address ends in a known file type and the other site confirms it. A page that only looks like a file stays a link.
+
 ### What each form may hold
 
 The form also sets limits, and the publish command refuses a post that breaks them.

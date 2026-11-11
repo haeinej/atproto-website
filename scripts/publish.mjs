@@ -52,20 +52,44 @@ function kvPut(config, key, path) {
   if (result.status !== 0) throw new Error(`Saving ${key} failed. Check that Wrangler is signed in.`);
 }
 
-async function readAttachments(specs, refs) {
+const fileType = url => types[extname(new URL(url).pathname).toLowerCase()];
+const aliases = {
+  'image/jpg': 'image/jpeg', 'audio/mp3': 'audio/mpeg', 'audio/x-m4a': 'audio/mp4', 'audio/x-wav': 'audio/wav', 'audio/wave': 'audio/wav',
+};
+
+// Take a file in from the web, so the post holds the thing itself and not a pointer to it. The
+// address it came from is kept as its source.
+async function download(url, folder, id) {
+  const response = await fetch(url, { signal: AbortSignal.timeout(60_000) });
+  if (!response.ok) throw new Error(`${url} answered HTTP ${response.status}`);
+  const declared = response.headers.get('content-type')?.split(';')[0].trim().toLowerCase() ?? '';
+  const generic = ['', 'application/octet-stream', 'binary/octet-stream'].includes(declared);
+  const mime = generic ? fileType(url) : aliases[declared] ?? declared;
+  if (!Object.values(types).includes(mime)) throw new Error(`${url} is ${declared || 'an unknown type'}, which cannot be attached`);
+  if (Number(response.headers.get('content-length')) > 60_000_000) throw new Error(`${url} is larger than 60 MB`);
+  const bytes = new Uint8Array(await response.arrayBuffer());
+  const path = join(folder, id);
+  await writeFile(path, bytes);
+  return { path, mime, sourceUrl: url };
+}
+
+async function readAttachments(specs, refs, folder) {
   const attachments = new Map();
   for (const spec of specs) {
     const match = /^([A-Za-z0-9_-]{1,64})=(.+)$/.exec(spec);
-    if (!match) throw new Error('Use --media ID=PATH');
-    const [, id, path] = match;
-    const mime = types[extname(path).toLowerCase()];
-    if (!mime) throw new Error(`Unsupported media format for ${id}`);
+    if (!match) throw new Error('Use --media ID=PATH or --media ID=URL');
+    const [, id, location] = match;
     if (attachments.has(id) || !refs.has(id)) throw new Error(`Duplicate or unreferenced attachment ${id}`);
+    const fromWeb = /^https?:\/\//i.test(location) && webUrl(location);
+    const { path, mime, sourceUrl } = fromWeb
+      ? await download(fromWeb, folder, id)
+      : { path: location, mime: types[extname(location).toLowerCase()] };
+    if (!mime) throw new Error(`Unsupported media format for ${id}`);
     const info = await stat(path);
     if (!info.isFile() || info.size === 0 || info.size > 60_000_000) {
       throw new Error(`Attachment ${id} must be a nonempty file no larger than 60 MB`);
     }
-    attachments.set(id, { path, mime, size: info.size });
+    attachments.set(id, { path, mime, size: info.size, ...(sourceUrl ? { sourceUrl } : {}) });
   }
   for (const ref of refs) {
     if (!attachments.has(ref)) throw new Error(`Missing --media ${ref}=PATH`);
@@ -74,6 +98,15 @@ async function readAttachments(specs, refs) {
 }
 
 async function run() {
+  const folder = await mkdtemp(join(tmpdir(), 'post-'));
+  try {
+    await publish(folder);
+  } finally {
+    await rm(folder, { recursive: true, force: true });
+  }
+}
+
+async function publish(folder) {
   const { values } = parseArgs({
     options: {
       file: { type: 'string' }, slug: { type: 'string' }, title: { type: 'string' },
@@ -92,7 +125,7 @@ async function run() {
   const { did, origin, collection } = pdsConfig(vars);
   const site = webUrl(vars.SITE_ORIGIN);
   if (!site) throw new Error('Set SITE_ORIGIN in the feed config');
-  const body = (await readFile(values.file, 'utf8')).trim();
+  let body = (await readFile(values.file, 'utf8')).trim();
   if (!body || Buffer.byteLength(body) > 262_144) throw new Error('Use a nonempty Markdown body of at most 256 KiB');
   const publishedAt = values.date ? new Date(values.date) : new Date();
   if (!Number.isFinite(publishedAt.valueOf())) throw new Error('--date must be a valid date');
@@ -104,8 +137,21 @@ async function run() {
     }
     return uri;
   }))];
-  const facts = bodyFacts(body);
-  const attachments = await readAttachments(values.media, facts.media);
+  let facts = bodyFacts(body);
+  let attachments;
+  // A post that is nothing but a link to an image, video, audio, or file is that object, not a link.
+  // Take the file in and keep the link as its source. --form link leaves it as a link.
+  if (facts.soleLink && webUrl(facts.bareLink) && fileType(facts.bareLink) && !['link', 'embed'].includes(values.form)) {
+    const described = `![${/^\[([^\]]*)\]\(/.exec(body)?.[1] ?? ''}](media:web)`;
+    try {
+      attachments = await readAttachments([...values.media, `web=${facts.bareLink}`], bodyFacts(described).media, folder);
+      body = described;
+      facts = bodyFacts(body);
+    } catch (error) {
+      console.error(`Kept ${facts.bareLink} as a link: ${error.message}`);
+    }
+  }
+  attachments ??= await readAttachments(values.media, facts.media, folder);
   // The form is identified from the content and checked. --form overrides it when the author means
   // something else. The label and sublabel are the author's own names.
   const content = { title: values.title, facts, kinds: [...attachments.values()].map(({ mime }) => kindOf(mime)) };
@@ -138,8 +184,10 @@ async function run() {
     ...(source ? { source } : {}),
   };
   if (!values.publish) {
+    const fromWeb = Object.fromEntries([...attachments].filter(([, { sourceUrl }]) => sourceUrl).map(([id, { sourceUrl }]) => [id, sourceUrl]));
     console.log(JSON.stringify({
       ...(values.private ? { visibility: 'private' } : {}), record, attachments: [...attachments.keys()],
+      ...(Object.keys(fromWeb).length ? { fromWeb } : {}),
     }, null, 2));
     return;
   }
@@ -152,24 +200,20 @@ async function run() {
   if (existing.data.error !== 'RecordNotFound') throw new Error(`Checking the slug failed (HTTP ${existing.response.status})`);
   if (values.private) {
     // Nothing is sent to the PDS. Publishing the same slug again replaces the private post.
-    const folder = await mkdtemp(join(tmpdir(), 'private-post-'));
-    try {
-      if (attachments.size) record.media = [];
-      for (const [id, { path, mime, size }] of attachments) {
-        if (size > 25_000_000) throw new Error(`Private attachment ${id} must be no larger than 25 MB`);
-        const cid = await blobCid(await readFile(path));
-        kvPut(values.config, PRIVATE_BLOB + cid, path);
-        record.media.push({
-          $type: `${collection}#${kindOf(mime)}`, id,
-          original: { $type: 'blob', mimeType: mime, size, ref: { $link: cid } },
-        });
-      }
-      const file = join(folder, 'record.json');
-      await writeFile(file, JSON.stringify(record));
-      kvPut(values.config, PRIVATE_POST + values.slug, file);
-    } finally {
-      await rm(folder, { recursive: true, force: true });
+    if (attachments.size) record.media = [];
+    for (const [id, { path, mime, size, sourceUrl }] of attachments) {
+      if (size > 25_000_000) throw new Error(`Private attachment ${id} must be no larger than 25 MB`);
+      const cid = await blobCid(await readFile(path));
+      kvPut(values.config, PRIVATE_BLOB + cid, path);
+      record.media.push({
+        $type: `${collection}#${kindOf(mime)}`, id,
+        original: { $type: 'blob', mimeType: mime, size, ref: { $link: cid } },
+        ...(sourceUrl ? { sourceUrl } : {}),
+      });
     }
+    const file = join(folder, 'record.json');
+    await writeFile(file, JSON.stringify(record));
+    kvPut(values.config, PRIVATE_POST + values.slug, file);
     console.log(record.canonicalUrl);
     return;
   }
@@ -180,7 +224,7 @@ async function run() {
   }
   if (attachments.size) {
     record.media = [];
-    for (const [id, { path, mime, size }] of attachments) {
+    for (const [id, { path, mime, size, sourceUrl }] of attachments) {
       const body = await readFile(path);
       if (body.length !== size) throw new Error(`Attachment ${id} changed while preparing the post`);
       const uploaded = await rpc(origin, 'com.atproto.repo.uploadBlob', { body, mime, token });
@@ -189,7 +233,7 @@ async function run() {
           typeof blob.ref?.$link !== 'string') {
         throw new Error(`Upload failed for ${id} (HTTP ${uploaded.response.status})`);
       }
-      record.media.push({ $type: `${collection}#${kindOf(mime)}`, id, original: blob });
+      record.media.push({ $type: `${collection}#${kindOf(mime)}`, id, original: blob, ...(sourceUrl ? { sourceUrl } : {}) });
     }
   }
   const created = await rpc(origin, 'com.atproto.repo.createRecord', { body: { ...target, record }, token });

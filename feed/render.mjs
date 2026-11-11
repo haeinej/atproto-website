@@ -91,6 +91,8 @@ function tokenFacts(tokens) {
   const facts = {
     media: new Set(), text: false, code: false, links: [], quote: false, bareLink: '',
     onlyList: blocks.length > 0 && blocks.every(token => lists.includes(token.type)),
+    // The whole body is a single paragraph; whether that paragraph is one link is settled below.
+    soleLink: tokens.length === 3 && tokens[0].type === 'paragraph_open',
   };
   function visit(tokens) {
     for (const token of tokens) {
@@ -118,6 +120,7 @@ function tokenFacts(tokens) {
     }
   }
   visit(tokens);
+  facts.soleLink &&= Boolean(facts.bareLink);
   return facts;
 }
 
