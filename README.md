@@ -202,7 +202,7 @@ npm run render -- build --slug essay --rules render-rules.json --kind essay \
   --template templates/essay.html --out built/writing/essay.html --against writing/essay.html
 ```
 
-`adopt` cuts the template out of the page you already have, and refuses unless every piece it cuts is exactly what the record would put back. `build` fills the template from the record, and with `--against` fails unless the result is identical to the page. It runs when your site is built, so the site stays plain HTML. It handles paragraphs, emphasis, links, rules, images, attached files, headings, lists, and footnotes, and stops on anything else instead of dropping it. [The build-renderer skill](skills/build-renderer/SKILL.md) has the method and what to check.
+`adopt` cuts the template out of the page you already have, and refuses unless every piece it cuts is exactly what the record would put back. `build` fills the template from the record, and with `--against` fails unless the result is identical to the page. It runs when your site is built, so the site stays plain HTML. It handles paragraphs, emphasis, links, rules, images, attached files, headings, lists, rows of links, and footnotes, on pages that hold one post or several, and stops on anything else instead of dropping it. [The build-renderer skill](skills/build-renderer/SKILL.md) has the method and what to check.
 
 ## Say who you are
 

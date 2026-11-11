@@ -38,7 +38,10 @@ function written(href, rules, context) {
   if (post && post[1] === did && post[2] === collection) {
     return rules.posts?.[post[3]] ?? stop(`The rules give no address on this site for the post "${post[3]}"`);
   }
-  return rules.inline?.ownLinksRelative && site && href.startsWith(`${site}/`) ? href.slice(site.length) : href;
+  const local = rules.inline?.ownLinksRelative && site && href.startsWith(`${site}/`) ? href.slice(site.length) : href;
+  // A page may write addresses in its own folder without the folder: /work/media/a.png as media/a.png.
+  const folder = rules.inline?.linksRelativeTo;
+  return folder && local.startsWith(folder) ? local.slice(folder.length) : local;
 }
 
 const INLINE = {
@@ -103,12 +106,21 @@ export function recordBlocks(body, rules = {}, context = {}) {
       blocks.push({ type: 'hr' });
     } else if (token.type === 'bullet_list_open' || token.type === 'ordered_list_open') {
       const items = [];
+      const links = [];
       const close = token.type.replace('open', 'close');
       for (index++; tokens[index].type !== close; index++) {
-        if (tokens[index].type === 'inline') items.push(renderInline(tokens[index].children, rules, context));
-        else if (/^(bullet|ordered)_list_open$/.test(tokens[index].type)) stop('A list inside a list is not handled');
+        if (/^(bullet|ordered)_list_open$/.test(tokens[index].type)) stop('A list inside a list is not handled');
+        if (tokens[index].type !== 'inline') continue;
+        const { children } = tokens[index];
+        const file = children.length === 1 && children[0].type === 'image' && (children[0].attrGet('src') ?? '').startsWith('media:');
+        // A site may show a list of links as a row of links, so each link is also kept in parts.
+        if (file) links.push({ media: children[0].attrGet('src').slice('media:'.length), label: escapeText(children[0].content, rules) });
+        else if (children[0]?.type === 'link_open' && children.at(-1).type === 'link_close' && children.filter(child => child.type === 'link_open').length === 1) {
+          links.push({ href: written(children[0].attrGet('href'), rules, context), label: renderInline(children.slice(1, -1), rules, context) });
+        }
+        items.push(file ? null : renderInline(children, rules, context));
       }
-      blocks.push({ type: token.type.startsWith('bullet') ? 'ul' : 'ol', items });
+      blocks.push({ type: token.type.startsWith('bullet') ? 'ul' : 'ol', items, ...(links.length === items.length ? { links } : {}) });
     } else if (token.type === 'footnote_block_open') {
       // The notes are a numbered list on the page, one item for each note, in the order they are marked.
       const items = [];
@@ -198,6 +210,9 @@ const setAttribute = (tag, name, value) => tag.replace(new RegExp(`(\\b${name}="
 // ---------------------------------------------------------------------------------------------
 function adoptBody(html, blocks, record, rules, options, context, findings, position) {
   let next = position.next;
+  const mark = name => `{{${options.prefix ? `${options.prefix}:` : ''}${name}}}`;
+  // Elements the rules call the site's own, such as another language's paragraphs, are left alone.
+  const own = rules.siteText ? new RegExp(rules.siteText) : null;
   const media = new Map((record.media ?? []).map(item => [item.id, item]));
   const expect = (found, where) => {
     const block = blocks[next];
@@ -218,7 +233,36 @@ function adoptBody(html, blocks, record, rules, options, context, findings, posi
         continue;
       }
       const where = `block ${next + 1}`;
-      if (WRAPPERS.has(part.tag)) {
+      const anchors = WRAPPERS.has(part.tag) ? topLevelParts(part.inner).filter(child => 'tag' in child) : [];
+      if (own?.test(part.open)) {
+        out += part.outer;
+      } else if (anchors.length && anchors.every(child => child.tag === 'a' && !/<img\b/.test(child.inner))) {
+        // A row of links. The post holds it as a list in which every item is one link.
+        const block = expect(part.tag, where);
+        if (block && !block.links) differ(where, `a row of ${anchors.length} links`, `a ${block.type}`);
+        let row = part.inner;
+        anchors.forEach((anchor, item) => {
+          const link = block?.links?.[item];
+          const inside = topLevelParts(anchor.inner).filter(child => 'tag' in child && !own?.test(child.open));
+          const label = inside.length === 1 ? inside[0].inner : anchor.inner;
+          if (block?.links && (!link || link.label !== label)) differ(`${where}, link ${item + 1}`, label, link?.label ?? 'nothing');
+          let open = anchor.open;
+          if (link?.href !== undefined) {
+            const onPage = attribute(open, 'href')?.[1] ?? '';
+            // The same place written another way, such as ../writing/a.html for /writing/a.html, is
+            // the same address. The page's own spelling is kept.
+            const place = address => { try { return new URL(address.replaceAll('&amp;', '&'), `${context.site}${rules.inline?.linksRelativeTo ?? '/'}`).href; } catch { return address; } };
+            if (onPage === escapeAttribute(link.href)) open = setAttribute(open, 'href', mark(`b.${next}.h.${item}`));
+            else if (place(onPage) !== place(link.href)) differ(`${where}, link ${item + 1} address`, onPage || 'none', link.href);
+          }
+          const slotted = inside.length === 1
+            ? anchor.inner.replace(inside[0].outer, `${inside[0].open}${mark(`b.${next}.i.${item}`)}${inside[0].close}`) : mark(`b.${next}.i.${item}`);
+          row = row.replace(anchor.outer, `${open}${slotted}${anchor.close}`);
+        });
+        if (block?.links && block.links.length !== anchors.length) differ(where, `${anchors.length} links`, `${block.links.length} links`);
+        out += part.open + row + part.close;
+        next++;
+      } else if (WRAPPERS.has(part.tag)) {
         out += part.open + walk(part.inner) + part.close;
       } else if (part.tag === 'hr') {
         const block = expect('hr', where);
@@ -237,16 +281,16 @@ function adoptBody(html, blocks, record, rules, options, context, findings, posi
           if (options.images !== 'page') {
             const address = escapeAttribute(imageAddress(attached, options.images, context));
             if (attribute(open, 'href')?.[1] !== address) differ(`${where}, file address`, attribute(open, 'href')?.[1] ?? 'none', address);
-            open = setAttribute(open, 'href', `{{b.${next}.src}}`);
+            open = setAttribute(open, 'href', mark(`b.${next}.src`));
           }
-          out += `${part.open}${lead}${open}{{b.${next}.label}}${link[3]}${trail}${part.close}`;
+          out += `${part.open}${lead}${open}${mark(`b.${next}.label`)}${link[3]}${trail}${part.close}`;
           next++;
           continue;
         }
         if (block && (block.type !== part.tag || block.html !== content)) {
           differ(`${where} (<${part.tag}>)`, content, block.type === part.tag ? block.html : `a ${block.type}`);
         }
-        out += `${part.open}${lead}{{b.${next}}}${trail}${part.close}`;
+        out += `${part.open}${lead}${mark(`b.${next}`)}${trail}${part.close}`;
         next++;
       } else if (part.tag === 'ul' || part.tag === 'ol') {
         const block = expect(part.tag, where);
@@ -258,14 +302,15 @@ function adoptBody(html, blocks, record, rules, options, context, findings, posi
           else {
             const [, lead, content, trail] = /^(\s*)(.*?)(\s*)$/s.exec(child.inner);
             if (block && block.items?.[item] !== content) differ(`${where}, item ${item + 1}`, content, block.items?.[item] ?? 'nothing');
-            inner += `${child.open}${lead}{{b.${next}.i.${item}}}${trail}${child.close}`;
+            inner += `${child.open}${lead}${mark(`b.${next}.i.${item}`)}${trail}${child.close}`;
             item++;
           }
         }
         if (block && (block.type !== part.tag || block.items.length !== item)) differ(where, `a <${part.tag}> of ${item}`, `${block.type} of ${block.items?.length ?? 0}`);
         out += part.open + inner + part.close;
         next++;
-      } else if (part.tag === 'figure') {
+      } else if (part.tag === 'figure' || (part.tag === 'a' && /<img\b/.test(part.inner))) {
+        // An image, in a figure or in a link of its own.
         const block = expect('figure', where);
         const images = part.outer.match(/<img\b[^>]*>/g) ?? [];
         if (images.length !== 1) stop(`${where}: a figure with ${images.length} images is not handled`);
@@ -279,7 +324,7 @@ function adoptBody(html, blocks, record, rules, options, context, findings, posi
           const found = attribute(image, name);
           if (!found) return;
           if (item && found[1] !== escapeAttribute(String(value ?? ''))) differ(`${where}, image ${name}`, found[1], String(value ?? ''));
-          const slotted = setAttribute(image, name, `{{b.${next}.${name}}}`);
+          const slotted = setAttribute(image, name, mark(`b.${next}.${name}`));
           figure = figure.replace(image, slotted);
           image = slotted;
         };
@@ -294,7 +339,7 @@ function adoptBody(html, blocks, record, rules, options, context, findings, posi
         if (link || block?.href) {
           const found = link && attribute(link[0], 'href');
           if (!found || found[1] !== escapeAttribute(block?.href ?? '')) differ(`${where}, image link`, found?.[1] ?? 'no link', block?.href ?? 'no link');
-          if (found) figure = figure.replace(link[0], setAttribute(link[0], 'href', `{{b.${next}.href}}`));
+          if (found) figure = figure.replace(link[0], setAttribute(link[0], 'href', mark(`b.${next}.href`)));
         }
         out += figure;
         next++;
@@ -310,7 +355,11 @@ function adoptBody(html, blocks, record, rules, options, context, findings, posi
 }
 
 export function adopt(page, record, rules, options, context) {
-  if (page.includes('{{')) stop('The page already contains "{{", which the template uses for its slots');
+  // A page that holds several posts is adopted once for each, with a prefix that keeps their slots apart.
+  const prefix = options.prefix ? `${options.prefix}:` : '';
+  if (page.includes(`{{${prefix}`) && (prefix || !options.prefix)) {
+    stop(prefix ? `The page already has slots for "${options.prefix}"` : 'The page already contains "{{", which the template uses for its slots');
+  }
   const findings = [];
   const blocks = recordBlocks(record.body, rules, context);
   const position = { next: 0 };
@@ -319,7 +368,8 @@ export function adopt(page, record, rules, options, context) {
   const slots = [];
   const kept = [];
   for (const slot of rules.slots) {
-    const pattern = new RegExp(slot.pattern, 'gs');
+    // A pattern can name a value given when adopting, such as the place of this post on the page.
+    const pattern = new RegExp(slot.pattern.replace(/\{(\w+)\}/g, (whole, name) => options.vars?.[name] ?? whole), 'gs');
     pattern.lastIndex = at;
     const match = pattern.exec(page);
     if (!match) {
@@ -345,7 +395,7 @@ export function adopt(page, record, rules, options, context) {
         continue;
       }
       if (value !== content) findings.push({ where: `the ${slot.name}`, page: content, post: value });
-      template += `{{${slot.name}}}`;
+      template += `{{${prefix}${slot.name}}}`;
     }
     slots.push(slot.name);
     at = from + content.length;
@@ -380,7 +430,8 @@ export function build(template, record, rules, options, context, expected) {
   const values = new Map(rules.slots.filter(slot => (slot.from ?? slot.name) !== 'body').map(slot => [slot.name, slotValue(slot, record, rules)]));
   for (const [index, block] of blocks.entries()) {
     if (block.html !== undefined) values.set(`b.${index}`, block.html);
-    block.items?.forEach((item, position) => values.set(`b.${index}.i.${position}`, item));
+    block.items?.forEach((item, position) => values.set(`b.${index}.i.${position}`, block.links?.[position]?.label ?? item));
+    block.links?.forEach((link, position) => { if (link.href !== undefined) values.set(`b.${index}.h.${position}`, escapeAttribute(link.href)); });
     if (block.type === 'image') {
       const item = media.get(block.id) ?? stop(`The post has no attachment ${block.id}`);
       values.set(`b.${index}.alt`, escapeAttribute(block.alt));
@@ -391,7 +442,9 @@ export function build(template, record, rules, options, context, expected) {
       if (options.images !== 'page') values.set(`b.${index}.src`, escapeAttribute(imageAddress(item, options.images, context)));
     }
   }
-  return template.replace(/\{\{([\w.]+)\}\}/g, (whole, name) => values.has(name) ? values.get(name) : stop(`The template has a slot the post cannot fill: ${name}`));
+  // With a prefix, only this post's slots are filled; the page's other posts are left for their turn.
+  const slot = options.prefix ? new RegExp(`\\{\\{${options.prefix}:([\\w.]+)\\}\\}`, 'g') : /\{\{([\w.]+)\}\}/g;
+  return template.replace(slot, (whole, name) => values.has(name) ? values.get(name) : stop(`The template has a slot the post cannot fill: ${name}`));
 }
 
 // ---------------------------------------------------------------------------------------------

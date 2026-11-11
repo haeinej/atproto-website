@@ -4,6 +4,10 @@
 //       Cut a template out of an existing page. Refuses unless every piece it cuts out is exactly
 //       what the post's record would put back, and says which piece is not.
 //   render build --slug SLUG --template TEMPLATE --rules RULES --kind KIND --out OUT [--against PAGE]
+//
+// For a page that holds several posts, run each command once per post with --prefix SLUG, feeding
+// the result of one run into the next (--page when adopting, --into when building). --set name=value
+// fills {name} in a rule's pattern, to say where on the page this post sits.
 //       Fill a template from the record. With --against, compare the result with a page and fail
 //       on any difference, naming the line.
 import { createHash } from 'node:crypto';
@@ -34,6 +38,7 @@ try {
       page: { type: 'string' }, slug: { type: 'string' }, rules: { type: 'string' }, kind: { type: 'string' },
       template: { type: 'string' }, out: { type: 'string' }, against: { type: 'string' }, images: { type: 'string' },
       record: { type: 'string' }, config: { type: 'string' },
+      prefix: { type: 'string' }, set: { type: 'string', multiple: true, default: [] }, into: { type: 'string' },
     },
   });
   if (!['adopt', 'build'].includes(command) || !values.slug || !values.rules || !values.kind || !values.template) {
@@ -60,14 +65,16 @@ try {
     if (size) Object.assign(media, size);
   }
   const context = { blobUrl, site: webUrl(vars.SITE_ORIGIN)?.replace(/\/$/, '') ?? '', did: pds.did, collection: pds.collection };
-  const sidecar = `${values.template}.json`;
+  // A page holding several posts is adopted and built once for each, with --prefix naming the post.
+  const sidecar = values.prefix ? `${values.template}.${values.prefix}.json` : `${values.template}.json`;
+  const given = Object.fromEntries(values.set.map(pair => pair.split(/=(.*)/s).slice(0, 2)));
 
   if (command === 'adopt') {
     if (!values.page) throw new Error('adopt needs --page, the existing page to cut the template from');
     const images = values.images ?? 'page';
     if (!['page', 'source', 'repository'].includes(images)) throw new Error('--images is page, source, or repository');
     const page = await readFile(values.page, 'utf8');
-    const result = adopt(page, record, rules, { images }, context);
+    const result = adopt(page, record, rules, { images, prefix: values.prefix, vars: given }, context);
     const report = {
       page: values.page, slug: values.slug, slots: result.slots, blocks: result.blocks.length,
       contentCut: page.length - result.template.replace(/\{\{[\w.]+\}\}/g, '').length,
@@ -88,7 +95,8 @@ try {
   } else {
     if (!values.out) throw new Error('build needs --out, where to write the page');
     const about = JSON.parse(await readFile(sidecar, 'utf8'));
-    const built = build(await readFile(values.template, 'utf8'), record, rules, { images: values.images ?? about.images }, context, about.blocks);
+    // --into is the page being filled, when earlier posts on it have been filled already.
+    const built = build(await readFile(values.into ?? values.template, 'utf8'), record, rules, { images: values.images ?? about.images, prefix: values.prefix }, context, about.blocks);
     await mkdir(dirname(values.out), { recursive: true });
     await writeFile(values.out, built);
     if (values.against) {

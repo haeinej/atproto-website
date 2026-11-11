@@ -54,8 +54,10 @@ A rules file names each kind of page and lists its slots in the order they appea
 - A pattern has three groups: what comes before the content, the content, what comes after. Only the middle is cut.
 - Slots are looked for in order, each after the last. `from` says which field of the record fills it: `title`, `subtitle`, `publishedAt`, `body`, `label`, `sublabel`, or `site.<field>` for the site's optional layer.
 - A page can hold the body in more than one place, such as a file link in the header and the text below: give it two `body` slots, and each takes the blocks its part of the page has.
+- A page that holds several posts, such as a list of projects, is adopted and built once for each post: pass `--prefix` with the post's key, feed each run's result into the next (`--page` when adopting, `--into` when building), and use `--set name=value` to fill `{name}` in a pattern so it finds that post's place on the page.
+- `siteText` is a pattern for elements that are the site's own and must be left alone, such as `lang=\"ko\"` for a second language written beside the first.
 - `optional` lets a kind cover pages that lack a piece. `whenSame` is for a second edition that repeats the post's words on some pages and has its own on others, such as a translated title: it is cut only where it is the same, and otherwise left as site text.
-- Inside the body nothing is configured. The page's own markup for each paragraph, image, and list is kept as it is, so each image keeps its own class and attributes.
+- Inside the body nothing is configured. The page's own markup for each paragraph, image, and list is kept as it is, so each image keeps its own class and attributes. A row of links on the page matches a list in the post whose items are each one link.
 
 Under `inline`, a site or a kind of page can say how it writes things: `ownLinksRelative` when links to the site itself leave the domain off, `externalLink` for how an outside link is opened, `footnoteRef` for a footnote's mark, and `escapeQuotes` when a page writes quotation marks as character references. `posts` maps a post's key to its address on the site, so a link to a post is written as that address.
 
@@ -82,22 +84,23 @@ Each of these is here because skipping it produced a wrong result or a false ala
 ### Rendering
 
 9. **Stop on anything unknown.** The renderer stops on markup it does not handle. Leave it that way. A page that is not done is a fact to report; a page with a silently missing block is a loss.
-10. **Site conventions go in the rules, found by evidence.** If the site writes links to itself without its domain, or opens outside links in a new tab, the mismatch report will show it. Add the rule then.
-11. **A post that has changed shape needs adopting again.** `build` refuses when the body no longer has the blocks the template was cut for. Do not edit the template by hand to get past it.
+10. **Add to the renderer only what a real page needs.** When a page does not adopt, first ask whether the post was converted wrongly, then whether a rule describes it. Change the renderer last, by the smallest amount, and leave a page as not done before building something general for one case.
+11. **Site conventions go in the rules, found by evidence.** If the site writes links to itself without its domain, or opens outside links in a new tab, the mismatch report will show it. Add the rule then.
+12. **A post that has changed shape needs adopting again.** `build` refuses when the body no longer has the blocks the template was cut for. Do not edit the template by hand to get past it.
 
 ### Comparing
 
-12. **Byte for byte is the pass.** Say "identical" only when the files are the same. For anything else, say exactly what differs: `build --against` gives the line and the verdict (`whitespace only`, `image addresses only`, or `different`).
-13. **A difference is your mistake until you have found its place.** Locate the line before you explain it. Explanations written first are usually wrong.
-14. **Whitespace differences mean the cut is wrong.** The template keeps the page's own spacing, so a clean adoption has none. Do not call them harmless and move on.
-15. **Compare screenshots only when the HTML differs, and only at the page's own address.** A page served from another folder can look different for reasons that are not yours: navigation that marks the current section, relative addresses. Use the same window size, in the same run, and first confirm that today's screenshot of the original equals the baseline's.
-16. **Confirm that every check ran.** A script that fails halfway can leave no output and look like a clean result. Count the pages tried against the pages expected, and treat a missing report as a failure.
-17. **Leave the site as you found it.** Build into a separate folder. If you must put a built page at its real address to screenshot it, restore the original and confirm no tracked file has changed.
+13. **Byte for byte is the pass.** Say "identical" only when the files are the same. For anything else, say exactly what differs: `build --against` gives the line and the verdict (`whitespace only`, `image addresses only`, or `different`).
+14. **A difference is your mistake until you have found its place.** Locate the line before you explain it. Explanations written first are usually wrong.
+15. **Whitespace differences mean the cut is wrong.** The template keeps the page's own spacing, so a clean adoption has none. Do not call them harmless and move on.
+16. **Compare screenshots only when the HTML differs, and only at the page's own address.** A page served from another folder can look different for reasons that are not yours: navigation that marks the current section, relative addresses. Use the same window size, in the same run, and first confirm that today's screenshot of the original equals the baseline's.
+17. **Confirm that every check ran.** A script that fails halfway can leave no output and look like a clean result. Count the pages tried against the pages expected, and treat a missing report as a failure.
+18. **Leave the site as you found it.** Build into a separate folder. If you must put a built page at its real address to screenshot it, restore the original and confirm no tracked file has changed.
 
 ### Reporting
 
-18. **List what is not done.** Name each page the renderer could not handle and why.
-19. **Put the owner's decisions to them.** Where images on their pages load from (the page's current address, the image's source, or their repository) changes the HTML and is theirs to choose. So is what happens to content in the `<head>` that the record does not hold.
+19. **List what is not done.** Name each page the renderer could not handle and why.
+20. **Put the owner's decisions to them.** Where images on their pages load from (the page's current address, the image's source, or their repository) changes the HTML and is theirs to choose. So is what happens to content in the `<head>` that the record does not hold.
 
 ## Settings for images
 

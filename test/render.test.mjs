@@ -231,3 +231,72 @@ test('a paper: an attached file in the header, footnotes, quotes written as refe
   const oneNote = adopt(paper, { ...post, body: post.body.replace('\n[^2]: Revealing private context.', '').replace('"disclosure"[^2]', '"disclosure"') }, paperRules, { images: 'page' }, where);
   assert.ok(oneNote.findings.length >= 2);
 });
+
+test('several posts on one page, with the site\'s own language and a row of links', () => {
+  const entry = (id, title, rest, body) => `<details id="${id}"><summary><span lang="en">${title} — ${rest}</span><span lang="ko">한국어 제목</span></summary>
+<div class="entry"><p lang="en">${body}</p><p lang="ko">한국어 문단.</p>
+<div class="links"><a href="https://example.org/${id}" target="_blank" rel="noopener"><span lang="en">Visit ↗</span><span lang="ko">방문 ↗</span></a><a href="media/${id}.pdf"><span lang="en">Read the paper</span><span lang="ko">논문</span></a></div>
+</div>
+</details>`;
+  const shared = '<main>\n' + entry('one', 'First', 'made a thing', 'It <strong>worked</strong>.') + '\n' + entry('two', 'Second', 'made another', 'It also worked.') + '\n</main>';
+  const post = (id, title, subtitle, body) => ({
+    title, subtitle, publishedAt: '2026-01-01T00:00:00Z',
+    body: `${body}\n\n- [Visit ↗](<https://example.org/${id}>)\n- ![Read the paper](media:paper)`,
+    media: [{ $type: 'com.example.post#file', id: 'paper', original: { ref: { $link: 'bafk' } } }],
+  });
+  const posts = { one: post('one', 'First', 'made a thing', 'It **worked**.'), two: post('two', 'Second', 'made another', 'It also worked.') };
+  const projectRules = {
+    siteText: 'lang="ko"',
+    inline: { externalLink: '<a href="{href}" target="_blank" rel="noopener">' },
+    slots: [
+      { name: 'title', pattern: '(<details id="{place}">.*?<span lang="en">)(.*?)( — )' },
+      { name: 'subtitle', pattern: '()(.*?)(</span>)' },
+      { name: 'body', pattern: '(<div class="entry">)(.*?)(\\s*</div>\\s*</details>)' },
+    ],
+  };
+  let template = shared;
+  const shapes = {};
+  for (const id of ['one', 'two']) {
+    const adopted = adopt(template, posts[id], projectRules, { images: 'page', prefix: id, vars: { place: id } }, context);
+    assert.deepEqual(adopted.findings, [], id);
+    ({ template } = adopted);
+    shapes[id] = adopted.blocks;
+  }
+  // Each post's slots carry its name, the Korean stays, and an attached file keeps the page's address.
+  assert.match(template, /<span lang="en">\{\{one:title\}\} — \{\{one:subtitle\}\}<\/span><span lang="ko">한국어 제목<\/span>/);
+  assert.match(template, /<p lang="en">\{\{two:b\.0\}\}<\/p><p lang="ko">한국어 문단\.<\/p>/);
+  assert.match(template, /<a href="\{\{one:b\.1\.h\.0\}\}" target="_blank" rel="noopener"><span lang="en">\{\{one:b\.1\.i\.0\}\}<\/span><span lang="ko">방문 ↗<\/span><\/a><a href="media\/one\.pdf"><span lang="en">\{\{one:b\.1\.i\.1\}\}<\/span>/);
+  let built = template;
+  for (const id of ['one', 'two']) built = build(built, posts[id], projectRules, { images: 'page', prefix: id }, context, shapes[id]);
+  assert.equal(built, shared);
+  // A link whose words or address differ is named by its place in the row.
+  const other = adopt(shared, { ...posts.one, body: posts.one.body.replace('Visit ↗', 'Go ↗').replace('example.org/one', 'example.org/elsewhere') }, projectRules,
+    { images: 'page', prefix: 'one', vars: { place: 'one' } }, context);
+  assert.deepEqual(other.findings.map(found => found.where), ['block 2, link 1', 'block 2, link 1 address']);
+  // The same place spelled another way matches, and the page keeps its own spelling.
+  const spelled = shared.replace('href="https://example.org/one"', 'href="../x/../one-page.html"');
+  const sameplace = { ...posts.one, body: posts.one.body.replace('<https://example.org/one>', '<https://example.com/one-page.html>') };
+  const kept = adopt(spelled, sameplace, { ...projectRules, inline: { ...projectRules.inline, ownLinksRelative: true, linksRelativeTo: '/work/' } },
+    { images: 'page', prefix: 'one', vars: { place: 'one' } }, context);
+  assert.deepEqual(kept.findings, []);
+  assert.match(kept.template, /<a href="\.\.\/x\/\.\.\/one-page\.html" target="_blank" rel="noopener"><span lang="en">\{\{one:b\.1\.i\.0\}\}/);
+  // A link that holds an image is an image, not a row of links.
+  const gallery = '<main><h1>T</h1><div class="b"><div class="set"><a class="photo" href="/media/full.png"><img src="/media/a.png" alt="A wall"></a></div></div></article></main>';
+  const pictured = adopt(gallery, { title: 'T', publishedAt: '2026-01-01T00:00:00Z', body: '[![A wall](media:a)](</media/full.png>)', media: [{ id: 'a', original: { ref: { $link: 'b' } } }] },
+    { slots: [{ name: 'title', pattern: '(<h1>)(.*?)(</h1>)' }, { name: 'body', pattern: '(<div class="b">)(.*?)(</div></article>)' }] }, { images: 'page' }, context);
+  assert.deepEqual([pictured.findings, pictured.blocks], [[], ['image']]);
+  // Addresses in the page's own folder can be written without the folder.
+  assert.equal(recordBlocks('[a](<https://example.com/work/media/a.png>)', { inline: { ownLinksRelative: true, linksRelativeTo: '/work/' } }, context)[0].html, '<a href="media/a.png">a</a>');
+});
+
+test('every script parses', async () => {
+  // The commands are not imported by these tests, so a slip in one would otherwise go unseen.
+  const { readdir } = await import('node:fs/promises');
+  const { execFile } = await import('node:child_process');
+  const { promisify } = await import('node:util');
+  for (const folder of ['../scripts/', '../bin/', '../feed/']) {
+    for (const file of await readdir(new URL(folder, import.meta.url))) {
+      if (file.endsWith('.mjs')) await promisify(execFile)(process.execPath, ['--check', new URL(folder + file, import.meta.url).pathname]);
+    }
+  }
+});
