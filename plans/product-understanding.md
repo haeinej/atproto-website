@@ -2,6 +2,12 @@
 
 Written 12 November 2026. This is a reading of the product from the planning conversation behind [the architecture plan](network-architecture.md). The jobs and the value are interpretations, not findings: nobody outside the project has been interviewed or has used it. The last two sections say what would have to be true and how to find out.
 
+## What has changed since this was written
+
+One thing this reading leans on has changed. It gives, as the reason for the vault's design, that people keep their real thinking only where they own it and control who sees it, and it assumes private notes stay in the person's own store. ohm now keeps a working copy of the whole vault, private posts included, so the editor and an agent can work in it. What a member is promised is that their posts live in their own repository and their own folder, and that losing ohm's copy loses nothing. That promise is only true once a folder is connected, which is not yet asked for when someone joins. [The build plan](build-plan.md) has the detail.
+
+Whether people will write their real thinking into a copy that ohm can read is now the first thing to find out, ahead of the questions in the last two sections.
+
 ## The product in one sentence
 
 A network of personal websites where your own agent, knowing what you are really thinking, gets you to the right person when you need one, and tells you when you are the right person for someone else.

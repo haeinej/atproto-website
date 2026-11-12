@@ -2,6 +2,19 @@
 
 A plan for turning the content layer into a social network of personal websites, where each person's own coding agent does most of the social work. Written 12 November 2026 from a planning conversation. Nothing here is built unless the "Built today" column says so.
 
+## What has changed since this was written
+
+This plan was written first and has not been rewritten. [The build plan](build-plan.md) is the newer account of phase one, and where the two differ it is the one to follow. Four things in this document are no longer so:
+
+| This plan says | What is so now |
+| --- | --- |
+| Private notes are in the person's own store, and our service cannot read them | ohm keeps a working copy of the whole vault, private posts included, so the editor and an agent can work in it. The promise is that nothing depends on ohm keeping them, not that ohm cannot read them |
+| The part of an agent that reads private notes is the member's own, and the service never sees them | The agent's tools work in ohm's working copy, as the member |
+| We do not create an account for anyone | There are ohm accounts, made with Google, Microsoft or Bluesky. A vault is still one AT Protocol account's |
+| We do not host a PDS | Still true today. A PDS that ohm hosts is planned, for someone with neither a PDS nor a Bluesky account |
+
+What is built is in the build plan's "Where we are", and every request the vault service answers is in [its reference](../service/CAPABILITIES.md). The network itself, which is most of this document, is still not built.
+
 ## The idea in one paragraph
 
 Each person keeps a vault of notes in one fixed schema. Every note has a visibility. Public notes are records on the person's own PDS, and their website is a view of them. People follow each other, and mutual follows are friends. A person's own coding agent, connected through this plugin, reads their whole vault, and when they need another human (advice, feedback, an introduction, a collaborator) it finds the best person on the network and makes first contact easy. People can also scroll a feed of what friends are thinking and looking for, and get notified when something concerns them.

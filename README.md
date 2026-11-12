@@ -171,6 +171,26 @@ Publish with `--friends` for a post meant for the people you follow who follow y
 
 A post is public, for friends, or private, and that is decided by where it is stored. Its record is the same in all three places, so changing who can see it moves it without rewriting it. A slug is used once across all three: publishing a slug that is already in use at another visibility is refused. The rules for this are in [vault/](vault/), and the commands, and later the editor and the agent's tools, all write through them.
 
+## Work in your vault
+
+ohm keeps a working copy of your vault: every post you have, at all three visibilities, in one structure of labels, sublabels and posts. It is where the editor and your agent's tools work. Your published posts stay records in your own repository; the working copy is a second copy to work in, and nothing in it is published by being saved.
+
+**The editor** is at [app.ohmmmm.com/vault](https://app.ohmmmm.com/vault/).
+
+1. **Sign in or sign up** with Google, Microsoft or Bluesky.
+2. **Say where your posts live**, once: the handle of your AT Protocol account, which is a PDS of your own or Bluesky, and an app password. The password goes from the page to your own PDS and nowhere else. A passkey works at your PDS's own screen instead. Signing in with Bluesky answers this already.
+3. **Your published posts are brought in on their own** the first time. Nothing has to be named: the service finds your website from your handle and reads the shared post type and any type of your own whose records read as posts.
+
+The side panel is your repository, as folders that open and close. Pills choose what the folders are: your labels, the platforms posts first appeared on, or who can see them, and a filter leaves out what you do not want. The main screen is one post.
+
+What the service can do, request by request, is in [service/CAPABILITIES.md](service/CAPABILITIES.md), and how it is built and deployed in [service/README.md](service/README.md).
+
+Three things to know:
+
+- **Saving never publishes.** A post marked for everyone is in the vault, meant for everyone. Publishing from the vault is not built yet: `publish:post` is still how a post reaches your PDS.
+- **This is not the private area on your own site.** "Keep a post private", above, stores a post in your own site's storage. The vault is ohm's working copy. Nothing moves between the two yet.
+- **The vault at ohmmmm.com is not open to everyone yet.** An account that has not been let in is told so when it connects.
+
 ## Give your agent the vault
 
 The plugin starts a small server on your own machine, `ohm-vault`, that gives your coding agent tools for your posts. The tools work in ohm's working copy of your vault, the same one the editor shows, so a post your agent saves is there when you open it. Each request carries a token your own PDS issues for it.
@@ -182,9 +202,10 @@ The plugin starts a small server on your own machine, `ohm-vault`, that gives yo
 | `vault_search` | Search your posts at every visibility |
 | `vault_save` | Create a post, always private, or change one that was read |
 | `vault_set_visibility` | Mark a post as public, for friends, or private |
+| `vault_mirror` | Bring what you have already published on your PDS into the vault. It looks first and says what it found |
 | `vault_delete` | Remove a post |
 
-Reading is free. Changing a post that is not private, changing who a post is for, and removing one each take two calls: the first answers with exactly what would happen, and only a second call carrying the value it returned does it. So your agent shows you which post and who it is for before anything changes. Saving never publishes: publishing is a step of its own.
+Reading is free. Changing a post that is not private, changing who a post is for, bringing posts in, and removing one each take two calls: the first answers with exactly what would happen, and only a second call carrying the value it returned does it. So your agent shows you which post and who it is for before anything changes. Saving never publishes: publishing is a step of its own.
 
 A tool adds no ability of its own. Each is made of requests to the vault service and nothing else, and [service/CAPABILITIES.md](service/CAPABILITIES.md) lists which.
 
@@ -342,8 +363,10 @@ Set `INCLUDE_BLUESKY_POSTS=true` in the Worker's configuration to list native Bl
 | --- | --- |
 | [cirrus/](cirrus/) | The PDS: a Cloudflare Worker with a Durable Object for the repository and R2 for its media |
 | [feed/](feed/) | The site Worker: identity, forms, the feeds, post pages, and private posts |
-| [vault/](vault/) | The rules every note follows at any visibility, and the stores it is kept in: the PDS, and your own storage |
-| [mcp/](mcp/) | The vault's tools for a coding agent, and the server that offers them |
+| [vault/](vault/) | The rules every post follows at any visibility; a post as a file; bringing published posts in; syncing a folder; and the stores a site of your own keeps posts in |
+| [service/](service/) | The vault service: ohm's working copy of a vault, one capability to a file, the editor's page, and [the reference](service/CAPABILITIES.md) for every request |
+| [mcp/](mcp/) | The vault's tools for a coding agent, each made of requests to the vault service, and the server that offers them |
+| [plans/](plans/) | What is being built and why: [the build plan](plans/build-plan.md), and the design behind it |
 | [site/](site/) | The posts page and its stylesheet |
 | [scripts/](scripts/) and [bin/](bin/) | The commands |
 | [lexicons/](lexicons/) | The shared post schema, [com/ohmmmm/post.json](lexicons/com/ohmmmm/post.json), and under [com/haeinjung/](lexicons/com/haeinjung/) the templates for a site's own schemas: the profile and the optional ones |
@@ -354,15 +377,21 @@ Set `INCLUDE_BLUESKY_POSTS=true` in the Worker's configuration to list native Bl
 
 ## Status
 
-`npm test` covers identity resolution, the site renderer, the feed, post pages, the posts graph, the profile, the fixed schema, form identification, taking in files and link previews from the web, and access to private posts.
+`npm test` covers identity resolution, the site renderer, the feed, post pages, the posts graph, the profile, the fixed schema, form identification, taking in files and link previews from the web, and access to private posts. It also covers the vault service and each of its capabilities, who may ask what, bringing published posts in, a post as a file, syncing a folder, the agent's tools against the service itself, and that [the reference](service/CAPABILITIES.md) says what the code does.
 
 Tried for real:
 
 - **Publishing** has been run against a local Cirrus PDS, with 484 posts including images, video, and PDFs.
 - **The renderer** has rebuilt a real site's 13 pages from those 484 posts, each page the same bytes as the original.
+- **The vault service** is deployed, and one account has signed in, connected its own PDS and opened the editor.
+- **Bringing published posts in** has been run, reading only, against a real PDS: 2 records became 2 posts, each identical to what is published.
 
 Not yet:
 
+- **Nothing is published from the vault.** Marking a post for everyone there changes only the working copy.
+- **The agent's tools have not been run with a real sign-in.** They are tested against the service's own code, and start and ask for an app password against a real site's settings.
+- **The vault holds no files.** A picture or file is placed in a post by its address.
+- **Syncing a folder has not been run against the deployed service.**
 - **Private posts and the profile command have not been run against Cloudflare.** Private posts are tested with stand-ins for Cloudflare Access and its storage.
 - **The X importer has changes that are not compiled.** It now saves each post's form and a single label, and writes `com.ohmmmm.post` records.
 - **The migrate command has only been previewed.** It has read a live repository and its converted records pass the schema, but it has not written to a PDS.
