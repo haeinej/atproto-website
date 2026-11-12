@@ -119,6 +119,7 @@ a.button.primary { color: var(--ohm-on-accent); }
 .wide { width: 100%; gap: var(--ohm-space-2); font-size: var(--ohm-input-size); }
 .wide .icon { width: 20px; height: 20px; }
 .switch { margin: var(--ohm-space-6) 0 0; color: var(--ohm-muted); }
+.ways { display: grid; justify-items: center; gap: var(--ohm-space-2); margin: var(--ohm-space-4) 0 0; }
 .link { padding: 0; border: 0; background: none; color: var(--ohm-ink); font: inherit; letter-spacing: inherit; text-decoration: underline; text-underline-offset: 3px; cursor: pointer; }
 .link:focus-visible { outline: 2px solid var(--ohm-focus); outline-offset: 4px; }
 

@@ -1,9 +1,10 @@
 // The vault page. Onboarding is one panel in the middle of the page, in two steps:
 //
 // 1. Who you are: an ohm account, made with Google, Microsoft or Bluesky.
-// 2. Where your posts live, asked once: a PDS of your own, one you set up now with Cirrus, or your
-//    Bluesky account. Their own PDS says the account is theirs. Someone who signed in with Bluesky
-//    has answered already.
+// 2. Where your posts live, asked once, on one screen: the handle of their AT Protocol account (a
+//    PDS of their own, or Bluesky) and an app password. Their own PDS says the account is theirs.
+//    Someone with no PDS yet is shown how to set one up; someone who signed in with Bluesky has
+//    answered already.
 //
 // After that the ohm session alone opens their vault, in the app's screen: a rail, a side panel,
 // the post.
@@ -11,7 +12,7 @@
 import { askPds, begin, beginWithPassword, finish, leave, restore } from './signin.js';
 
 const $ = id => document.getElementById(id);
-const state = { mode: 'ohm', me: null, audience: '', did: '', tree: null, current: null, page: 'vault', signup: false, busy: false, step: 'own' };
+const state = { mode: 'ohm', me: null, audience: '', did: '', tree: null, current: null, page: 'vault', signup: false, busy: false, step: 'where' };
 const PAGES = { vault: 'Vault', move: 'Import and export' };
 function icon(name) {
   const svg = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
@@ -150,20 +151,22 @@ for (const name of Object.keys(PROVIDERS)) $(name).addEventListener('click', () 
 const STEPS = {
   bluesky: {
     title: 'Bluesky', label: 'Your Bluesky handle', placeholder: 'name.bsky.social',
-    text: 'Sign in here with your handle and an app password from Bluesky.',
-    help: 'https://bsky.app/settings/app-passwords', there: 'Approve at Bluesky instead',
+    text: 'Sign in here with your handle and an app password from Bluesky.', there: 'Approve at Bluesky instead',
   },
-  own: {
-    title: 'Your own PDS', label: 'Your handle', placeholder: 'example.com',
-    text: 'Your handle is your own domain. Sign in here with it and an app password from your PDS, Cirrus or any other.',
-    help: 'https://cirrus.earth/guides/create-app-password/', there: 'Use a passkey at your PDS instead',
+  // Step two, on one screen: the account is named by its handle, whichever kind it is.
+  where: {
+    title: 'Where do your posts live?', label: 'Your handle', placeholder: 'example.com or name.bsky.social',
+    text: 'In an AT Protocol account that stays yours. Type its handle: your own domain, on a PDS of your own, or your Bluesky handle.',
+    there: 'Use a passkey at your PDS instead',
   },
 };
 function handleStep(step) {
   state.step = step;
-  const { title, label, placeholder, text, help, there } = STEPS[step];
-  $('password-help').href = help;
+  const { title, label, placeholder, text, there } = STEPS[step];
   $('approve-there').textContent = there;
+  // Step two has no step to go back to: its ways out are setting up a PDS, and signing out.
+  for (const id of ['no-pds', 'signed-in']) $(id).hidden = step !== 'where';
+  $('handle-back').hidden = step === 'where';
   $('password').value = '';
   $('handle-title').textContent = title;
   $('handle-text').textContent = text;
@@ -173,14 +176,13 @@ function handleStep(step) {
   screen('connect');
   $('handle').focus();
 }
-// Step one's Bluesky signs in. Step two's choices say where a signed-in member's posts live.
+// Step one's Bluesky signs in. Someone with a website and no PDS is shown how to set one up, and
+// comes back to step two.
 $('bluesky').addEventListener('click', () => handleStep('bluesky'));
-$('have-bluesky').addEventListener('click', () => handleStep('bluesky'));
-$('have-pds').addEventListener('click', () => handleStep('own'));
-$('have-site').addEventListener('click', () => screen('cirrus'));
-$('cirrus-done').addEventListener('click', () => handleStep('own'));
+$('no-pds').addEventListener('click', () => screen('cirrus'));
+$('cirrus-done').addEventListener('click', () => handleStep('where'));
 // The arrow in the panel's corner goes back to the step this one was reached from.
-for (const back of document.querySelectorAll('[data-back]')) back.addEventListener('click', () => screen(state.me ? 'where' : 'sign-in'));
+for (const back of document.querySelectorAll('[data-back]')) back.addEventListener('click', () => (state.me ? handleStep('where') : screen('sign-in')));
 
 // Coming back from Google or Microsoft with a problem, the address says which.
 function returnedProblem() {
@@ -262,7 +264,7 @@ $('disconnect').addEventListener('click', async () => {
 function screen(name) {
   $('site').hidden = name === 'vault';
   $('app').hidden = name !== 'vault';
-  for (const step of ['sign-in', 'where', 'cirrus', 'connect']) $(step).hidden = name !== step;
+  for (const step of ['sign-in', 'cirrus', 'connect']) $(step).hidden = name !== step;
 }
 
 // One token from the member's PDS, issued for one request and nothing else.
@@ -319,7 +321,7 @@ async function open() {
       state.me = me;
       if (me.did) return await enter({ name: me.user.name || 'You', did: me.did });
       $('signed-in-as').textContent = me.user.name ? `Signed in as ${me.user.name}.` : 'Signed in.';
-      return screen('where');
+      return handleStep('where');
     }
     // ohm's sign-in does not take AT Protocol accounts yet: the account itself is the sign-in,
     // kept in this browser, and its PDS vouches for each request.
@@ -335,7 +337,7 @@ async function open() {
     if (me && !me.did) {
       state.me = me;
       $('signed-in-as').textContent = me.user.name ? `Signed in as ${me.user.name}.` : 'Signed in.';
-      return screen('where');
+      return handleStep('where');
     }
   }
   returnedProblem();

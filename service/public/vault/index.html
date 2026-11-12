@@ -60,28 +60,6 @@
             <p class="switch"><span id="switch-text">Don’t have an account?</span> <button class="link" id="switch-mode" type="button">Sign up</button></p>
           </div>
 
-          <!-- Step two, once: where your posts live. Skipped by someone who signed in with Bluesky,
-               whose posts live there already. -->
-          <div id="where" hidden>
-            <h1>Where do your posts live?</h1>
-            <p>Your posts stay yours: they are kept in an AT Protocol account that you can move or take away. Choose the one ohm should work in.</p>
-            <div class="stack">
-              <button class="button primary lg wide" id="have-pds" type="button">
-                <svg class="icon" aria-hidden="true"><use href="#icon-at"/></svg>
-                <span>I have my own PDS</span>
-              </button>
-              <button class="button secondary lg wide" id="have-site" type="button">
-                <svg class="icon" aria-hidden="true"><use href="#icon-public"/></svg>
-                <span>I have a website, but no PDS</span>
-              </button>
-              <button class="button secondary lg wide" id="have-bluesky" type="button">
-                <svg width="20" height="20" viewBox="0 0 24 24" aria-hidden="true"><path fill="#0085FF" d="M12 10.8c-1.087-2.114-4.046-6.053-6.798-7.995C2.566.944 1.561 1.266.902 1.565.139 1.908 0 3.08 0 3.768c0 .69.378 5.65.624 6.479.815 2.736 3.713 3.66 6.383 3.364.136-.02.275-.039.415-.056-.138.022-.276.04-.415.056-3.912.58-7.387 2.005-2.83 7.078 5.013 5.19 6.87-1.113 7.823-4.308.953 3.195 2.05 9.271 7.733 4.308 4.267-4.308 1.172-6.498-2.74-7.078a8.741 8.741 0 0 1-.415-.056c.14.017.279.036.415.056 2.67.297 5.568-.628 6.383-3.364.246-.828.624-5.79.624-6.478 0-.69-.139-1.861-.902-2.206-.659-.298-1.664-.62-4.3 1.24C16.046 4.748 13.087 8.687 12 10.8Z"/></svg>
-                <span>Use my Bluesky account</span>
-              </button>
-            </div>
-            <p class="switch"><span id="signed-in-as"></span> <button class="link" id="leave" type="button">Sign out</button></p>
-          </div>
-
           <!-- A website and no PDS: Cirrus runs one beside the website, on the same Cloudflare account. -->
           <div id="cirrus" hidden>
             <button class="icon-button card-back" data-back type="button" aria-label="Back" title="Back"><svg class="icon" aria-hidden="true"><use href="#icon-back"/></svg></button>
@@ -94,10 +72,12 @@
             <p class="small">The quick start opens in a new tab. Come back here when your handle is set.</p>
           </div>
 
-          <!-- The handle, asked for by Bluesky and by a PDS of your own. -->
+          <!-- The handle and an app password, on one screen. Bluesky asks for them to sign in, at
+               step one. Step two, once, is this same screen: where your posts live. Someone who
+               signed in with Bluesky has answered it already. -->
           <div id="connect" hidden>
-            <button class="icon-button card-back" data-back type="button" aria-label="Back" title="Back"><svg class="icon" aria-hidden="true"><use href="#icon-back"/></svg></button>
-            <h1 id="handle-title">Your own PDS</h1>
+            <button class="icon-button card-back" id="handle-back" data-back type="button" aria-label="Back" title="Back"><svg class="icon" aria-hidden="true"><use href="#icon-back"/></svg></button>
+            <h1 id="handle-title">Where do your posts live?</h1>
             <p id="handle-text"></p>
             <form id="handle-form" class="stack">
               <label class="field-label"><span id="handle-label">Your handle</span>
@@ -108,8 +88,12 @@
               </label>
               <button class="button primary lg wide" type="submit">Continue</button>
             </form>
-            <p class="small">An app password is one you make for apps and can remove at any time. It goes from this page to your own PDS and nowhere else. <a id="password-help" href="https://cirrus.earth/guides/create-app-password/" target="_blank" rel="noopener">How to make one</a></p>
-            <p class="switch"><button class="link" id="approve-there" type="button">Approve at your PDS instead</button></p>
+            <p class="small">An app password is one you make for apps and can remove at any time. It goes from this page to your own PDS and nowhere else. How to make one: <a href="https://cirrus.earth/guides/create-app-password/" target="_blank" rel="noopener">on Cirrus</a>, <a href="https://bsky.app/settings/app-passwords" target="_blank" rel="noopener">on Bluesky</a>.</p>
+            <p class="ways">
+              <button class="link" id="approve-there" type="button">Use a passkey at your PDS instead</button>
+              <button class="link" id="no-pds" type="button">No PDS yet? Set one up</button>
+            </p>
+            <p class="switch" id="signed-in"><span id="signed-in-as"></span> <button class="link" id="leave" type="button">Sign out</button></p>
           </div>
         </section>
       </main>
