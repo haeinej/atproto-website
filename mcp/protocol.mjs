@@ -3,12 +3,12 @@
 const VERSIONS = ['2025-06-18', '2025-03-26', '2024-11-05'];
 
 export const INSTRUCTIONS = [
-  "These tools work in one person's vault: everything they have written and made, in one structure.",
-  'Every note is public (on their website), for friends, or private. Private notes are theirs alone:',
+  "These tools work in one person's vault: everything they have written and made, as posts in one structure.",
+  'Every post is marked public (for everyone), for friends, or private. Private posts are theirs alone:',
   'use what they say to help the person, and never put any of it into something other people can see.',
-  'New notes are saved private. A tool that would change what other people can see, or remove a note,',
-  'first answers with what would happen and a confirm value: show that to the person and call again',
-  'only when they agree.',
+  'New posts are saved private. A tool that would change a post that is not private, change who a post',
+  'is for, or remove one, first answers with what would happen and a confirm value: show that to the',
+  'person and call again only when they agree. Saving never publishes: publishing is a step of its own.',
 ].join(' ');
 
 // `tools` is ready-made, or a function that makes them the first time a tool is used, so that

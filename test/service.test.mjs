@@ -4,6 +4,7 @@ import { secp256k1 } from '../service/node_modules/@noble/curves/secp256k1.js';
 import { createIdentity, documentAddress } from '../service/src/identity.mjs';
 import { postStore } from '../service/src/store.mjs';
 import { createService } from '../service/src/worker.mjs';
+import { CAPABILITIES, REQUESTS } from '../service/src/capabilities/index.mjs';
 import { newPostId, postFile, filePost } from '../vault/file.mjs';
 import { testDatabase } from './d1.mjs';
 
@@ -274,6 +275,43 @@ test('a post that first appeared somewhere else says where, and the tree carries
   for (const each of [skeet, own]) assert.equal((await ask(haein, 'putPost', { body: { post: each } })).status, 200);
   const rows = (await (await ask(haein, 'getTree')).json()).labels.find(folder => folder.label === 'Notes').posts;
   assert.deepEqual(rows.map(row => [row.slug, row.platform]).sort(), [['a-skeet', 'bluesky'], ['written-here', undefined]]);
+});
+
+test('posts are found by the words in them, a member\'s own and nobody else\'s', async () => {
+  const { haein, jun, ask } = await running();
+  const rain = post('after-the-rain', { title: 'After the rain', label: 'Field notes', body: 'The street went quiet.', date: '2026-01-01' });
+  const loose = post('loose-thought', { label: 'Notes', body: 'Rain makes a city honest, and the street too.', visibility: 'friends', date: '2026-02-01' });
+  delete loose.title;
+  for (const each of [rain, loose]) assert.equal((await ask(haein, 'putPost', { body: { post: each } })).status, 200);
+  assert.equal((await ask(jun, 'putPost', { body: { post: post('juns-rain', { body: 'Rain in another vault.' }) } })).status, 200);
+
+  const search = async query => (await ask(haein, 'searchPosts', { query })).json();
+  // Every word has to be there; a title counts for more than the body.
+  const both = await search({ q: 'RAIN street' });
+  assert.deepEqual([both.found, both.posts.map(each => [each.slug, each.visibility])], [2, [['after-the-rain', 'private'], ['loose-thought', 'friends']]]);
+  assert.match(both.posts[1].passage, /Rain makes a city honest/);
+  assert.deepEqual((await search({ q: 'honest' })).posts.map(each => each.slug), ['loose-thought']);
+  assert.equal((await search({ q: 'rain', visibility: 'public' })).found, 0);
+  assert.equal((await search({ q: 'rain', limit: '1' })).posts.length, 1);
+  assert.equal((await search({ q: 'another' })).found, 0);
+  for (const query of [{}, { q: '  ' }, { q: 'rain', visibility: 'everyone' }, { q: 'rain', limit: '0' }, { q: 'rain', limit: '51' }]) {
+    assert.equal((await ask(haein, 'searchPosts', { query })).status, 400, JSON.stringify(query));
+  }
+  assert.equal((await ask(haein, 'searchPosts', { query: { q: 'rain' }, token: null })).status, 401);
+});
+
+test('every request belongs to one capability, and says what it is, who may ask, and whether it changes anything', () => {
+  assert.deepEqual(CAPABILITIES.map(capability => capability.name), ['Posts', 'Structure', 'Search', 'Mirror', 'Export', 'Account', 'Identity']);
+  const names = CAPABILITIES.flatMap(capability => Object.keys(capability.requests));
+  assert.equal(new Set(names).size, names.length, 'a request has one home');
+  assert.deepEqual(Object.keys(REQUESTS).sort(), [...names].sort());
+  for (const [name, request] of Object.entries(REQUESTS)) {
+    assert.match(name, /^com\.ohmmmm\.(vault|account|identity)\.[a-z][A-Za-z]+$/);
+    assert.ok(['GET', 'POST'].includes(request.verb) && ['nobody', 'token', 'member', 'ohm'].includes(request.asks), name);
+    assert.ok(typeof request.about === 'string' && request.about.length > 20 && typeof request.gives === 'string' && typeof request.takes === 'object', name);
+    // Whatever changes something is a POST, and whatever is a GET changes nothing.
+    assert.equal(request.changes, request.verb === 'POST', name);
+  }
 });
 
 test('a post goes out to a folder and comes back the same post, through the service', async () => {

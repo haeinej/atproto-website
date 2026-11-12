@@ -34,6 +34,7 @@
     "lexicon": "node scripts/lexicon.mjs",
     "import": "node scripts/import.mjs",
     "sync": "node scripts/sync.mjs",
+    "capabilities": "node scripts/capabilities.mjs --write",
     "migrate": "node scripts/migrate.mjs",
     "publish:post": "node scripts/publish.mjs",
     "identity": "node scripts/identity.mjs",

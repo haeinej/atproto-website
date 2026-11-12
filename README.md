@@ -173,20 +173,22 @@ A post is public, for friends, or private, and that is decided by where it is st
 
 ## Give your agent the vault
 
-The plugin starts a small server on your own machine, `ohm-vault`, that gives your coding agent tools for your notes. It reads and writes your PDS and your own storage with your own credentials; nothing passes through anyone else's service.
+The plugin starts a small server on your own machine, `ohm-vault`, that gives your coding agent tools for your posts. The tools work in ohm's working copy of your vault, the same one the editor shows, so a post your agent saves is there when you open it. Each request carries a token your own PDS issues for it.
 
 | Tool | Does |
 | --- | --- |
-| `vault_tree` | The structure: labels, sublabels, and each note with who can see it |
-| `vault_list`, `vault_read` | List notes, and read one in full |
-| `vault_search` | Search your notes at every visibility |
-| `vault_save` | Create a note, always private, or change one that was read |
-| `vault_set_visibility` | Move a note between public, friends, and private |
-| `vault_delete` | Remove a note |
+| `vault_tree` | The structure: labels, sublabels, and each post with who can see it |
+| `vault_list`, `vault_read` | List posts, and read one in full |
+| `vault_search` | Search your posts at every visibility |
+| `vault_save` | Create a post, always private, or change one that was read |
+| `vault_set_visibility` | Mark a post as public, for friends, or private |
+| `vault_delete` | Remove a post |
 
-Reading is free. Anything that changes what other people can see, or removes a note, takes two calls: the first answers with exactly what would happen, and only a second call carrying the value it returned does it. So your agent shows you which note, who will be able to read it, and its address before anything changes.
+Reading is free. Changing a post that is not private, changing who a post is for, and removing one each take two calls: the first answers with exactly what would happen, and only a second call carrying the value it returned does it. So your agent shows you which post and who it is for before anything changes. Saving never publishes: publishing is a step of its own.
 
-The server uses the same site configuration as the commands, found in the folder your agent is working in. Making a note public needs `ATPROTO_APP_PASSWORD`; private and friends-only notes need your site's own storage set up as above. An agent that does not load the plugin can start the server itself:
+A tool adds no ability of its own. Each is made of requests to the vault service and nothing else, and [service/CAPABILITIES.md](service/CAPABILITIES.md) lists which.
+
+The server uses the same site configuration as the commands, found in the folder your agent is working in, and needs `ATPROTO_APP_PASSWORD` to sign in to your PDS. The vault is ohm's unless the configuration names another with `OHM_VAULT_URL` and `OHM_VAULT_DID`. An agent that does not load the plugin can start the server itself:
 
 ```sh
 npx github:haeinej/ohm-content-layer mcp

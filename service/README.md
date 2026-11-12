@@ -17,18 +17,9 @@ A member's vault: their posts, reached with a handful of requests. Every request
 | `body` | Markdown, as the author wrote it |
 | `properties` | Anything else the author gave it. Kept, and never published |
 
-## The requests
+## What it can do
 
-| Request | Does |
-| --- | --- |
-| `GET /xrpc/com.ohmmmm.vault.listPosts` | Every post with the version it is at. With `?since=` a point an earlier list returned, only what changed, removals included |
-| `GET /xrpc/com.ohmmmm.vault.getPost?id=` | One post and its version |
-| `POST /xrpc/com.ohmmmm.vault.putPost` | Saves one post. The body is `{ "post": …, "replaces": version }`, with `replaces` left out for a new post. Answers 409 with the current version when the post has changed, and 409 when another post has its slug |
-| `POST /xrpc/com.ohmmmm.vault.deletePost` | Removes one post: `{ "id": …, "replaces": version }` |
-| `GET /xrpc/com.ohmmmm.vault.getTree` | The vault's structure: labels, sublabels, and each post with who may see it, what kind of thing it is, the platform it first appeared on if that was somewhere else, and why it cannot be published, if it cannot |
-
-| `POST /xrpc/com.ohmmmm.vault.importPublished` | Mirrors what the member has already published, read from the PDS their own DID document names: `{ "apply": true }`. Nothing has to be told: the website is the one their handle names, and the types of post are the shared one and any of their own whose records read as posts (a body and a date). `site` and `from` say either outright. Without `apply` it only reports. It never changes a post the member has since changed in the vault |
-| `GET /xrpc/com.ohmmmm.vault.exportFiles` | The whole vault as files: each post's path in a folder, and its text |
+The service does seven things, each kept apart in a file of its own under [src/capabilities/](src/capabilities/): posts, structure, search, mirror, export, account and identity. **[CAPABILITIES.md](CAPABILITIES.md) is the reference**: every request, what it takes and gives, who may ask it, every way the service says no, and which requests each of an agent's tools is made of. That page is written from the same tables the service runs on (`npm run capabilities`), and a test fails if the two differ.
 
 A request sent twice ends the same as sent once. Saving a post, whatever it says about who may see it, changes only this copy.
 
@@ -84,7 +75,9 @@ Either way, `MEMBERS` lists the DIDs let in and is checked before any document i
 | [src/store.mjs](src/store.mjs) | The posts: list, read, write, remove, and the tree. The database makes the version check in the statement that makes the change |
 | [src/identity.mjs](src/identity.mjs) | Reading and checking a token |
 | [src/ohm.mjs](src/ohm.mjs) | Asking ohm's sign-in who a session belongs to, and the table of which AT Protocol account each ohm account connected |
-| [src/worker.mjs](src/worker.mjs) | The requests |
+| [src/capabilities/](src/capabilities/) | What the service can do, one capability to a file. Each request says what it is called, whether it reads or changes, who may ask, and how it is answered |
+| [src/worker.mjs](src/worker.mjs) | The router: settles who is asking, in the way the request says, and hands over to it |
+| [CAPABILITIES.md](CAPABILITIES.md) | The reference, written from those tables |
 | [schema.sql](schema.sql) | The database's tables |
 
 Tests are in [../test/service.test.mjs](../test/service.test.mjs), [../test/identity.test.mjs](../test/identity.test.mjs) and, for the page's app-password sign-in, [../test/signin.test.mjs](../test/signin.test.mjs), and run against the SQLite built into Node, which is what Cloudflare D1 is.

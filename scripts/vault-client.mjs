@@ -2,12 +2,19 @@
 // token the member's own PDS issues for that one request.
 import { rpc } from './rpc.mjs';
 
-export function vaultClient({ pds, session, vault, audience, get = fetch }) {
+// `session` is the member's sign-in at their PDS. `renew`, when given, signs in again: something
+// that runs for hours, as an agent's tools do, outlives one sign-in.
+export function vaultClient({ pds, session, renew, vault, audience, get = fetch }) {
+  const token = method => rpc(pds.origin, 'com.atproto.server.getServiceAuth', {
+    query: { aud: audience, lxm: method, exp: String(Math.floor(Date.now() / 1000) + 60) }, token: session,
+  });
   async function ask(name, { query, body } = {}) {
     const method = `com.ohmmmm.vault.${name}`;
-    const issued = await rpc(pds.origin, 'com.atproto.server.getServiceAuth', {
-      query: { aud: audience, lxm: method, exp: String(Math.floor(Date.now() / 1000) + 60) }, token: session,
-    });
+    let issued = await token(method);
+    if (!issued.response.ok && renew && [400, 401].includes(issued.response.status)) {
+      session = await renew();
+      issued = await token(method);
+    }
     if (!issued.response.ok || typeof issued.data.token !== 'string') throw new Error(`Your PDS would not issue a token for the vault (HTTP ${issued.response.status})`);
     const url = new URL(`/xrpc/${method}`, vault);
     if (query) url.search = new URLSearchParams(query);
@@ -32,6 +39,9 @@ export function vaultClient({ pds, session, vault, audience, get = fetch }) {
       }
       throw new Error('The vault has more posts than this command reads');
     },
+    // The vault's structure, and the posts that mention some words.
+    tree: () => ask('getTree'),
+    search: query => ask('searchPosts', { query }),
     get: id => ask('getPost', { query: { id } }),
     put: (post, replaces) => ask('putPost', { body: { post, ...(replaces ? { replaces } : {}) } }),
     remove: (id, replaces) => ask('deletePost', { body: { id, replaces } }),
