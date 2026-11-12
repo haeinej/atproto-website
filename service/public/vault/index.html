@@ -1,0 +1,224 @@
+<!doctype html>
+<html lang="en" data-theme="light">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+    <meta name="theme-color" content="#fafaf9">
+    <meta name="robots" content="noindex">
+    <link rel="icon" href="./assets/ohm-dot.svg" type="image/svg+xml">
+    <link rel="preload" href="./assets/fonts/coconat-regular.woff2" as="font" type="font/woff2" crossorigin>
+    <link rel="stylesheet" href="./assets/tokens.css">
+    <link rel="stylesheet" href="./vault.css">
+    <script src="./vault.js" type="module"></script>
+    <title>Vault · ohm</title>
+  </head>
+  <body>
+    <!-- The icons, drawn once and used by name. They are Lucide's (assets/LUCIDE-LICENSE.txt), the set the app uses. -->
+    <svg class="sprite" aria-hidden="true" focusable="false">
+      <symbol id="icon-vault" viewBox="0 0 24 24"><path d="m16 6 4 14"/><path d="M12 6v14"/><path d="M8 8v12"/><path d="M4 4v16"/></symbol>
+      <symbol id="icon-move" viewBox="0 0 24 24"><path d="m3 16 4 4 4-4"/><path d="M7 20V4"/><path d="m21 8-4-4-4 4"/><path d="M17 4v16"/></symbol>
+      <symbol id="icon-new" viewBox="0 0 24 24"><path d="M12 3H5a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.375 2.625a1 1 0 0 1 3 3l-9.013 9.014a2 2 0 0 1-.853.505l-2.873.84a.5.5 0 0 1-.62-.62l.84-2.873a2 2 0 0 1 .506-.852z"/></symbol>
+      <symbol id="icon-refresh" viewBox="0 0 24 24"><path d="M3 12a9 9 0 0 1 9-9 9.75 9.75 0 0 1 6.74 2.74L21 8"/><path d="M21 3v5h-5"/><path d="M21 12a9 9 0 0 1-9 9 9.75 9.75 0 0 1-6.74-2.74L3 16"/><path d="M8 16H3v5"/></symbol>
+      <symbol id="icon-out" viewBox="0 0 24 24"><path d="m16 17 5-5-5-5"/><path d="M21 12H9"/><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/></symbol>
+      <symbol id="icon-unlink" viewBox="0 0 24 24"><path d="m18.84 12.25 1.72-1.71h-.02a5.004 5.004 0 0 0-.12-7.07 5.006 5.006 0 0 0-6.95 0l-1.72 1.71"/><path d="m5.17 11.75-1.71 1.71a5.004 5.004 0 0 0 .12 7.07 5.006 5.006 0 0 0 6.95 0l1.71-1.71"/><line x1="8" x2="8" y1="2" y2="5"/><line x1="2" x2="5" y1="8" y2="8"/><line x1="16" x2="16" y1="19" y2="22"/><line x1="19" x2="22" y1="16" y2="16"/></symbol>
+      <symbol id="icon-public" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><path d="M12 2a14.5 14.5 0 0 0 0 20 14.5 14.5 0 0 0 0-20"/><path d="M2 12h20"/></symbol>
+      <symbol id="icon-friends" viewBox="0 0 24 24"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><path d="M16 3.128a4 4 0 0 1 0 7.744"/><path d="M22 21v-2a4 4 0 0 0-3-3.87"/><circle cx="9" cy="7" r="4"/></symbol>
+      <symbol id="icon-private" viewBox="0 0 24 24"><rect width="18" height="11" x="3" y="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></symbol>
+      <symbol id="icon-back" viewBox="0 0 24 24"><path d="m12 19-7-7 7-7"/><path d="M19 12H5"/></symbol>
+      <symbol id="icon-trash" viewBox="0 0 24 24"><path d="M10 11v6"/><path d="M14 11v6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6"/><path d="M3 6h18"/><path d="M8 6V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/></symbol>
+      <symbol id="icon-key" viewBox="0 0 24 24"><path d="M2.586 17.414A2 2 0 0 0 2 18.828V21a1 1 0 0 0 1 1h3a1 1 0 0 0 1-1v-1a1 1 0 0 1 1-1h1a1 1 0 0 0 1-1v-1a1 1 0 0 1 1-1h.172a2 2 0 0 0 1.414-.586l.814-.814a6.5 6.5 0 1 0-4-4z"/><circle cx="16.5" cy="7.5" r=".5" fill="currentColor"/></symbol>
+    </svg>
+
+    <!-- Before the vault opens: the website's shell (the dot at the top of the rail, the company
+         directory at its foot) around one panel in the middle, for signing in or signing up and
+         then, once, for saying which AT Protocol account is yours. -->
+    <div id="site" class="site" hidden>
+      <header class="site-header">
+        <a class="site-mark" href="https://ohmmmm.com/"><img src="./assets/ohm-dot.svg" alt="ohm" width="20" height="20"></a>
+      </header>
+
+      <main class="onboarding">
+        <section class="card" aria-labelledby="onboarding-title">
+          <p class="wordmark" aria-hidden="true">ohm</p>
+
+          <div id="sign-in" hidden>
+            <h1 id="onboarding-title">Sign in to ohm</h1>
+            <div class="stack">
+              <button class="button secondary lg wide" id="google" type="button" hidden>
+                <svg width="20" height="20" viewBox="0 0 24 24" aria-hidden="true"><path fill="#4285F4" d="M21.6 12.23c0-.71-.06-1.39-.18-2.05H12v3.88h5.38a4.6 4.6 0 0 1-2 3.02v2.52h3.24c1.9-1.75 2.98-4.33 2.98-7.37Z"/><path fill="#34A853" d="M12 22c2.7 0 4.96-.9 6.62-2.4l-3.24-2.52c-.9.6-2.06.96-3.38.96-2.6 0-4.8-1.76-5.59-4.12H3.06v2.6A10 10 0 0 0 12 22Z"/><path fill="#FBBC05" d="M6.41 13.92a6 6 0 0 1 0-3.84v-2.6H3.06a10 10 0 0 0 0 9.04l3.35-2.6Z"/><path fill="#EA4335" d="M12 5.96c1.47 0 2.79.5 3.83 1.5l2.87-2.87A9.6 9.6 0 0 0 12 2a10 10 0 0 0-8.94 5.48l3.35 2.6A5.99 5.99 0 0 1 12 5.96Z"/></svg>
+                <span>Continue with Google</span>
+              </button>
+              <button class="button secondary lg wide" id="microsoft" type="button" hidden>
+                <svg width="20" height="20" viewBox="0 0 24 24" aria-hidden="true"><path fill="#F25022" d="M2 2h9.5v9.5H2z"/><path fill="#7FBA00" d="M12.5 2H22v9.5h-9.5z"/><path fill="#00A4EF" d="M2 12.5h9.5V22H2z"/><path fill="#FFB900" d="M12.5 12.5H22V22h-9.5z"/></svg>
+                <span>Continue with Microsoft</span>
+              </button>
+              <button class="button secondary lg wide" id="passkey" type="button" hidden>
+                <svg class="icon" aria-hidden="true"><use href="#icon-key"/></svg>
+                <span>Sign in with a passkey</span>
+              </button>
+            </div>
+            <p class="switch"><span id="switch-text">Don’t have an account?</span> <button class="link" id="switch-mode" type="button">Sign up</button></p>
+          </div>
+
+          <div id="connect" hidden>
+            <h1>Connect your account</h1>
+            <p>Your posts belong to your AT Protocol account. Say which one is yours, and its own PDS will ask you to confirm. You do this once.</p>
+            <form id="handle-form" class="stack">
+              <label class="field-label">Your handle
+                <input class="field" id="handle" type="text" placeholder="example.com" required autocapitalize="none" autocomplete="username" spellcheck="false">
+              </label>
+              <button class="button primary lg wide" type="submit">Continue</button>
+            </form>
+            <p class="switch"><span id="signed-in-as"></span> <button class="link" id="leave" type="button">Sign out</button></p>
+          </div>
+        </section>
+      </main>
+
+      <footer class="site-footer">
+        <nav aria-label="Company">
+          <ul>
+            <li><a href="mailto:support@collisions.co">Contact</a></li>
+            <li><a href="https://ohmmmm.com/support">Support</a></li>
+            <li><a href="https://ohmmmm.com/terms">Terms</a></li>
+            <li><a href="https://ohmmmm.com/privacy">Privacy</a></li>
+          </ul>
+        </nav>
+      </footer>
+    </div>
+
+    <!-- The vault: the app's screen. A rail of icons, a side panel that lists, and the main screen. -->
+    <div id="app" class="workspace-shell" data-page="vault" hidden>
+      <a class="skip" href="#content">Skip to content</a>
+
+      <nav class="workspace-rail" aria-label="ohm">
+        <div class="rail-brand"><a class="rail-dot" href="https://ohmmmm.com/"><img src="./assets/ohm-dot.svg" alt="ohm" width="24" height="24"></a></div>
+        <div class="rail-main">
+          <button class="icon-button" type="button" data-go="vault" aria-label="Vault" title="Vault" aria-pressed="true"><svg class="icon" aria-hidden="true"><use href="#icon-vault"/></svg></button>
+          <button class="icon-button" type="button" data-go="move" aria-label="Import and export" title="Import and export" aria-pressed="false"><svg class="icon" aria-hidden="true"><use href="#icon-move"/></svg></button>
+        </div>
+        <div class="rail-bottom">
+          <button class="icon-button" type="button" popovertarget="account-menu" aria-label="You" title="You"><span class="rail-avatar" data-avatar></span></button>
+        </div>
+      </nav>
+
+      <!-- Side panel: the vault's own structure, or what can be brought in and written out. -->
+      <aside class="directory-panel" id="panel" aria-labelledby="panel-title">
+        <div class="directory-toolbar">
+          <header class="directory-heading">
+            <div class="directory-title"><h1 id="panel-title">Vault</h1></div>
+            <div class="directory-actions" data-page="vault">
+              <button class="icon-button" id="refresh" type="button" aria-label="Read the vault again" title="Read the vault again"><svg class="icon" aria-hidden="true"><use href="#icon-refresh"/></svg></button>
+              <button class="icon-button" id="new-post" type="button" aria-label="New post" title="New post"><svg class="icon" aria-hidden="true"><use href="#icon-new"/></svg></button>
+            </div>
+          </header>
+        </div>
+
+        <div class="directory-scroll" data-page="vault">
+          <p id="counts" class="small"></p>
+          <div id="tree"></div>
+        </div>
+
+        <div class="directory-scroll" data-page="move" hidden>
+          <section class="group">
+            <h2>Bring in what you have published</h2>
+            <label class="field-label">Your website <input class="field" id="site-address" type="text" placeholder="example.com" autocapitalize="none" spellcheck="false"></label>
+            <label class="field-label">Older post type, if any <input class="field" id="older" type="text" placeholder="com.example.post" autocapitalize="none" spellcheck="false"></label>
+            <div class="row">
+              <button class="button secondary sm" id="import-look" type="button">Look first</button>
+              <button class="button secondary sm" id="import-apply" type="button">Bring them in</button>
+            </div>
+          </section>
+          <section class="group">
+            <h2>Write your vault out</h2>
+            <p class="small">Every post as a Markdown file, in folders by label. The same files open in Obsidian.</p>
+            <div class="row">
+              <button class="button secondary sm" id="export-folder" type="button">Into a folder</button>
+              <button class="button secondary sm" id="export-file" type="button">As one file</button>
+            </div>
+          </section>
+          <section class="group">
+            <h2>Not here yet</h2>
+            <p class="small">Publish, attachments, and syncing a folder from this page. Sync works from the command line: <code>ohm-content-layer sync</code>.</p>
+          </section>
+        </div>
+      </aside>
+
+      <main class="workspace-center" id="content">
+        <!-- The vault's main screen: one post. -->
+        <div class="screen" data-page="vault">
+          <div class="empty" id="post-empty">
+            <p>Choose a post, or make a new one.</p>
+            <button class="button primary" id="new-post-here" type="button">New post</button>
+          </div>
+
+          <form id="post-form" hidden>
+            <header class="screen-header">
+              <button class="icon-button mobile-only" id="back" type="button" aria-label="Back to the vault" title="Back to the vault"><svg class="icon" aria-hidden="true"><use href="#icon-back"/></svg></button>
+              <p class="screen-title" id="post-title"></p>
+              <div class="screen-actions">
+                <label class="pill-select"><span class="visually-hidden">Who can see it</span>
+                  <select id="visibility">
+                    <option value="private">Only me</option>
+                    <option value="friends">Friends</option>
+                    <option value="public">Everyone</option>
+                  </select>
+                </label>
+                <button class="icon-button" id="delete" type="button" aria-label="Delete this post" title="Delete this post"><svg class="icon" aria-hidden="true"><use href="#icon-trash"/></svg></button>
+                <button class="button primary sm" id="save" type="submit">Save</button>
+              </div>
+            </header>
+
+            <div class="screen-scroll">
+              <div class="measure">
+                <label class="visually-hidden" for="post-name">Title</label>
+                <input class="title-input" id="post-name" type="text" maxlength="300" placeholder="Untitled">
+                <div class="properties">
+                  <label class="field-label">Label <input class="field" id="label" type="text" maxlength="100" placeholder="Writings"></label>
+                  <label class="field-label">Sublabel <input class="field" id="sublabel" type="text" maxlength="100"></label>
+                  <label class="field-label">Slug <input class="field" id="slug" type="text" maxlength="120" required pattern="[a-z0-9]+(-[a-z0-9]+)*" autocapitalize="none" spellcheck="false"></label>
+                  <label class="field-label">Date <input class="field" id="date" type="text" placeholder="2026-11-12"></label>
+                </div>
+                <label class="visually-hidden" for="body">Body</label>
+                <textarea class="body-input" id="body" rows="16" required spellcheck="true" placeholder="Write in Markdown."></textarea>
+                <ul id="post-problems" class="small"></ul>
+                <p id="post-facts" class="small"></p>
+                <p class="small">Saving changes only ohm's working copy. Nothing on this page publishes: a post marked "Everyone" is not public until Publish exists and you press it.</p>
+              </div>
+            </div>
+          </form>
+        </div>
+
+        <!-- Import and export's main screen: what each request did. -->
+        <div class="screen" data-page="move" hidden>
+          <header class="screen-header"><p class="screen-title">What happened</p></header>
+          <div class="screen-scroll">
+            <div class="measure">
+              <p class="small" id="log-empty">Nothing yet. Each thing you do here is listed with what the vault answered.</p>
+              <ol id="log" class="small" reversed></ol>
+            </div>
+          </div>
+        </div>
+      </main>
+
+      <!-- On a phone the rail is this bar, shown while the side panel is the screen. -->
+      <nav class="mobile-bottom-nav" aria-label="ohm">
+        <div class="mobile-nav-capsule">
+          <button class="icon-button" type="button" data-go="vault" aria-label="Vault" aria-pressed="true"><svg class="icon" aria-hidden="true"><use href="#icon-vault"/></svg></button>
+          <button class="icon-button" type="button" data-go="move" aria-label="Import and export" aria-pressed="false"><svg class="icon" aria-hidden="true"><use href="#icon-move"/></svg></button>
+          <button class="icon-button" type="button" popovertarget="account-menu" aria-label="You"><span class="rail-avatar" data-avatar></span></button>
+        </div>
+      </nav>
+
+      <!-- You: who is signed in, and the two ways out. -->
+      <div id="account-menu" class="menu" popover>
+        <p class="menu-name" id="who"></p>
+        <p class="menu-detail small" id="who-did"></p>
+        <button class="menu-item" id="disconnect" type="button"><svg class="icon" aria-hidden="true"><use href="#icon-unlink"/></svg><span>Disconnect this account</span></button>
+        <button class="menu-item" id="sign-out" type="button"><svg class="icon" aria-hidden="true"><use href="#icon-out"/></svg><span>Sign out</span></button>
+      </div>
+    </div>
+
+    <!-- Every message the page raises is a notice: a pill that floats at the top and leaves on its own. -->
+    <div id="notices" role="status" aria-live="polite"></div>
+  </body>
+</html>

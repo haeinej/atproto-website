@@ -23,3 +23,11 @@ CREATE TABLE IF NOT EXISTS posts (
 CREATE INDEX IF NOT EXISTS posts_changes ON posts (did, seq);
 -- A slug is the end of a post's address, so it is used once in a vault. The database refuses a second.
 CREATE UNIQUE INDEX IF NOT EXISTS posts_slug ON posts (did, slug) WHERE version IS NOT NULL;
+
+-- Which AT Protocol account an ohm account works in. Made once, when the person connects their
+-- PDS and proves the account is theirs. One ohm account, one AT Protocol account, each way.
+CREATE TABLE IF NOT EXISTS links (
+  user_id TEXT PRIMARY KEY,
+  did TEXT NOT NULL UNIQUE,
+  linked_at TEXT NOT NULL
+);

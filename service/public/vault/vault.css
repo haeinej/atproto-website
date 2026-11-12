@@ -1,0 +1,320 @@
+/* The vault page.
+
+   It has two screens, and each keeps the rules of where it comes from:
+
+   - Before the vault opens, the website's shell (ohm/website/public/styles.css): the dot at the top
+     of a left rail, the company directory at its foot, on editorial paper in forest ink, around one
+     panel in the middle for signing in, signing up and connecting. Its sizes are the website's own
+     and are gathered in the block just below.
+   - Once it is open, the app's screen (ohm/app/src/workspace.css, which is Fatale's): a rail of
+     icons, a side panel that lists, and the main screen. Its measures are the app's and are
+     gathered in the block after that.
+
+   Everything inside either one is the design system's (ohm/DESIGN.md): every colour, size, radius
+   and duration comes from assets/tokens.css. Nothing here sets a colour or a type size of its own,
+   and nothing has a border: surfaces are told apart by space, then tone, then shadow. */
+
+:root {
+  color-scheme: light;
+
+  /* ---- the website's shell ---- */
+  --site-size: 16px;
+  --site-leading: 1.65;
+  --site-tracking: -0.015em;
+  --site-frame: 40px;
+  --site-mark: 20px;
+  --site-rail: 160px;
+  --site-rail-gap: clamp(40px, 6vw, 96px);
+
+  /* ---- the app's screen ---- */
+  --workspace-rail-width: 68px;
+  --workspace-panel-width: 344px;
+  --workspace-frame: 12px;
+  --workspace-header-height: 64px;
+  --workspace-measure: 720px;
+  --rail-gap: 48px;
+  --directory-row-height: var(--ohm-height-md);
+  --directory-row-radius: var(--ohm-radius-row);
+  --icon-size: 18px;
+
+  font-family: var(--ohm-font-sans);
+  font-synthesis: none;
+  -webkit-font-smoothing: antialiased;
+}
+@media (min-width: 1440px) { :root { --workspace-rail-width: 76px; --workspace-panel-width: 360px; } }
+@media (max-width: 1170px) { :root { --workspace-panel-width: 300px; } }
+
+* { box-sizing: border-box; }
+[hidden] { display: none !important; }
+::selection { background: var(--ohm-selection); }
+body { margin: 0; min-height: 100dvh; background: var(--ohm-paper); color: var(--ohm-ink); }
+
+.sprite { position: absolute; width: 0; height: 0; overflow: hidden; }
+.icon { width: var(--icon-size); height: var(--icon-size); flex: none; fill: none; stroke: currentColor; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; }
+.visually-hidden { position: absolute; width: 1px; height: 1px; overflow: hidden; clip-path: inset(50%); white-space: nowrap; }
+.skip { position: absolute; left: var(--ohm-space-4); top: var(--ohm-space-2); z-index: 60; transform: translateY(-300%); color: inherit; }
+.skip:focus { transform: none; }
+
+p { margin: 0 0 var(--ohm-space-3); }
+.small, .small li { font: 400 var(--ohm-type-small-size) / var(--ohm-type-small-leading) var(--ohm-font-sans); letter-spacing: var(--ohm-type-small-tracking); color: var(--ohm-muted); }
+code { font-family: var(--ohm-font-mono); }
+
+/* ---------- Before the vault opens: the website's shell ---------- */
+
+.site {
+  min-height: 100dvh;
+  padding: var(--site-frame);
+  display: grid;
+  grid-template-columns: var(--site-rail) minmax(0, 1fr);
+  grid-template-rows: 1fr auto;
+  column-gap: var(--site-rail-gap);
+  background: var(--ohm-paper-editorial);
+  color: var(--ohm-forest);
+  font: 400 var(--site-size) / var(--site-leading) var(--ohm-font-sans);
+  letter-spacing: var(--site-tracking);
+}
+.site-header { grid-column: 1; grid-row: 1; align-self: start; position: relative; z-index: 1; }
+.site-footer { grid-column: 1; grid-row: 2; align-self: end; position: relative; z-index: 1; }
+.site-mark {
+  display: block;
+  width: var(--site-mark);
+  height: var(--site-mark);
+  /* centred on the first line of text, as on the website */
+  margin-top: calc((var(--site-size) * var(--site-leading) - var(--site-mark)) / 2);
+  border-radius: 50%;
+}
+.site-mark img { display: block; width: 100%; height: 100%; }
+.site-footer ul { list-style: none; margin: 0; padding: 0; }
+.site-footer a { color: inherit; text-decoration: none; }
+.site-footer a:hover { text-decoration: underline; }
+.site a:focus-visible { outline: 2px solid currentColor; outline-offset: 4px; border-radius: 2px; }
+
+/* Onboarding: one panel in the middle of the whole page, laid out as the app's own sign-in
+   screen is. The rail stays where it is around it. */
+.onboarding { grid-column: 1 / -1; grid-row: 1 / 3; display: grid; place-items: center; min-width: 0; }
+.card {
+  width: min(400px, 100%);
+  padding: var(--ohm-space-12) var(--ohm-space-8) var(--ohm-space-8);
+  border-radius: var(--ohm-radius-panel);
+  background: var(--ohm-panel);
+  color: var(--ohm-ink);
+  box-shadow: var(--ohm-panel-shadow);
+  text-align: center;
+  font: 400 var(--ohm-type-body-size) / var(--ohm-type-body-leading) var(--ohm-font-sans);
+  letter-spacing: var(--ohm-type-body-tracking);
+}
+.card .wordmark { margin: 0 0 var(--ohm-space-8); font: 400 var(--ohm-type-wordmark-size) / 1 var(--ohm-font-serif); letter-spacing: var(--ohm-type-wordmark-tracking); color: var(--ohm-forest); }
+.card h1 { margin: 0 0 var(--ohm-space-6); font: var(--ohm-type-title-weight) var(--ohm-type-h2-size) / var(--ohm-type-h2-leading) var(--ohm-font-sans); letter-spacing: var(--ohm-type-h2-tracking); }
+.card p { text-wrap: pretty; }
+.card .field-label { text-align: left; }
+.stack { display: grid; gap: var(--ohm-space-3); margin-bottom: var(--ohm-space-3); }
+.wide { width: 100%; gap: var(--ohm-space-2); font-size: var(--ohm-input-size); }
+.wide .icon { width: 20px; height: 20px; }
+.switch { margin: var(--ohm-space-6) 0 0; color: var(--ohm-muted); }
+.link { padding: 0; border: 0; background: none; color: var(--ohm-ink); font: inherit; letter-spacing: inherit; text-decoration: underline; text-underline-offset: 3px; cursor: pointer; }
+.link:focus-visible { outline: 2px solid var(--ohm-focus); outline-offset: 4px; }
+
+@media (max-width: 760px) {
+  .site { display: flex; flex-direction: column; padding: 28px var(--ohm-space-6) var(--ohm-space-8); }
+  .onboarding { flex: 1; padding: var(--site-frame) 0; }
+  .site-footer ul { display: flex; flex-wrap: wrap; gap: 0 var(--ohm-space-6); }
+  .site-footer a { display: inline-block; padding-block: var(--ohm-space-3); }
+}
+
+/* ---------- The vault: the app's screen ---------- */
+
+.workspace-shell {
+  display: grid;
+  grid-template-columns: var(--workspace-rail-width) var(--workspace-panel-width) minmax(0, 1fr);
+  grid-template-rows: minmax(0, 1fr);
+  height: 100dvh;
+  padding: var(--workspace-frame) var(--workspace-frame) var(--workspace-frame) 0;
+  background: var(--ohm-paper);
+  color: var(--ohm-ink);
+  font: 400 var(--ohm-type-body-size) / var(--ohm-type-body-leading) var(--ohm-font-sans);
+  letter-spacing: var(--ohm-type-body-tracking);
+}
+
+/* Rail: the dot, then the places, then you at the foot. Icons are muted until theirs is the page. */
+.workspace-rail { display: flex; flex-direction: column; align-items: center; gap: var(--rail-gap); min-height: 0; padding: 14px 0 10px; }
+.rail-main, .rail-bottom { display: flex; flex-direction: column; align-items: center; gap: 10px; }
+.rail-bottom { margin-top: auto; }
+.rail-dot { display: grid; place-items: center; width: var(--ohm-height-md); height: var(--ohm-height-md); border-radius: 50%; }
+.rail-dot img { display: block; }
+.rail-dot:focus-visible { outline: 2px solid var(--ohm-focus); outline-offset: 2px; }
+.rail-avatar {
+  display: grid; place-items: center; width: var(--ohm-height-sm); height: var(--ohm-height-sm); border-radius: 50%;
+  background: var(--ohm-accent); color: var(--ohm-on-accent); font-size: var(--ohm-type-small-size); overflow: hidden;
+}
+
+.icon-button {
+  display: inline-grid; place-items: center; flex: none; width: var(--ohm-height-md); height: var(--ohm-height-md);
+  padding: 0; border: 0; border-radius: 50%; background: transparent; color: var(--ohm-muted); cursor: pointer;
+  transition: background-color var(--ohm-duration-state) var(--ohm-ease-out), transform var(--ohm-duration-press) var(--ohm-ease-out);
+}
+.icon-button:active { transform: scale(var(--ohm-press-scale)); }
+.icon-button:focus-visible { outline: 2px solid var(--ohm-focus); outline-offset: 2px; }
+.icon-button[aria-pressed="true"] { background: var(--ohm-wash); color: var(--ohm-ink); }
+@media (hover: hover) and (pointer: fine) { .icon-button:hover { background: var(--ohm-wash); color: var(--ohm-ink); } }
+
+/* Side panel: the app's white surface, lifted off the paper by its shadow. A heading with its
+   controls, and under it a list that scrolls. */
+.directory-panel {
+  display: flex; flex-direction: column; min-height: 0; margin-right: var(--workspace-frame); padding: 11px var(--ohm-space-4) var(--ohm-space-3);
+  border-radius: var(--ohm-radius-card); background: var(--ohm-panel); box-shadow: var(--ohm-panel-shadow); overflow: hidden;
+}
+.directory-heading { display: flex; align-items: center; justify-content: space-between; gap: var(--ohm-space-2); min-height: 42px; padding: 0 0 20px; }
+.directory-heading h1 { margin: 0; font: var(--ohm-type-title-weight) var(--ohm-type-title-size) / var(--ohm-type-title-leading) var(--ohm-font-sans); letter-spacing: var(--ohm-type-title-tracking); }
+.directory-actions { display: flex; align-items: center; gap: 2px; margin-left: auto; }
+.directory-actions .icon-button { width: var(--ohm-height-sm); height: var(--ohm-height-sm); }
+.directory-scroll { flex: 1; min-height: 0; overflow: auto; overscroll-behavior: contain; padding: var(--ohm-space-1) 0 var(--ohm-space-4); scrollbar-width: thin; scrollbar-color: var(--ohm-line) transparent; }
+
+/* The tree: a label heads a group, a sublabel a smaller one, and every post is a row. */
+#counts { margin: 0 var(--ohm-space-2) var(--ohm-space-3); }
+#tree .label, #tree .sublabel { margin: 0; padding: 0 var(--ohm-space-2); display: flex; align-items: center; min-height: var(--ohm-height-sm); color: var(--ohm-muted); }
+#tree .label { margin-top: var(--ohm-space-3); font: var(--ohm-type-h3-weight) var(--ohm-type-small-size) / var(--ohm-type-small-leading) var(--ohm-font-sans); letter-spacing: var(--ohm-type-small-tracking); }
+#tree .label:first-child { margin-top: 0; }
+#tree .sublabel { padding-left: var(--ohm-space-4); font: 400 var(--ohm-type-small-size) / var(--ohm-type-small-leading) var(--ohm-font-sans); }
+#tree ul { list-style: none; margin: 0; padding: 0; }
+#tree .sublabel + ul button { padding-left: var(--ohm-space-6); }
+#tree li button {
+  display: flex; align-items: center; gap: var(--ohm-space-2); width: 100%; min-height: var(--directory-row-height);
+  padding: 0 var(--ohm-space-2) 0 var(--ohm-space-3); border: 0; border-radius: var(--directory-row-radius);
+  background: transparent; color: inherit; font: inherit; letter-spacing: inherit; text-align: left; cursor: pointer;
+  transition: background-color var(--ohm-duration-state) var(--ohm-ease-out);
+}
+#tree li button[aria-current="true"] { background: var(--ohm-wash); }
+@media (hover: hover) and (pointer: fine) { #tree li button:hover { background: var(--ohm-wash); } }
+#tree li button:focus-visible { outline: 2px solid var(--ohm-focus); outline-offset: -2px; }
+#tree .name { flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+#tree .icon { --icon-size: 14px; color: var(--ohm-muted); }
+#tree [data-visibility="public"] { color: var(--ohm-leaf); }
+
+/* Import and export, in the side panel: each thing you can do is a group. */
+.group { padding: 0 var(--ohm-space-2) var(--ohm-space-6); }
+.group h2 { margin: 0 0 var(--ohm-space-3); font: var(--ohm-type-h3-weight) var(--ohm-type-h3-size) / var(--ohm-type-h3-leading) var(--ohm-font-sans); letter-spacing: var(--ohm-type-h3-tracking); }
+.row { display: flex; flex-wrap: wrap; align-items: flex-end; gap: var(--ohm-space-2); }
+
+/* Main screen: a header of controls over what scrolls, held to one measure. */
+.workspace-center { display: flex; flex-direction: column; min-width: 0; min-height: 0; }
+.screen, #post-form { flex: 1; display: flex; flex-direction: column; min-height: 0; }
+.screen-header { flex: none; display: flex; align-items: center; gap: var(--ohm-space-2); height: var(--workspace-header-height); padding: 0 var(--ohm-space-3) 0 var(--ohm-space-6); }
+.screen-title { flex: 1; min-width: 0; margin: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font: var(--ohm-type-title-weight) var(--ohm-type-title-size) / var(--ohm-type-title-leading) var(--ohm-font-sans); letter-spacing: var(--ohm-type-title-tracking); }
+.screen-actions { display: flex; align-items: center; gap: var(--ohm-space-2); margin-left: auto; }
+.screen-actions .icon-button { width: var(--ohm-height-sm); height: var(--ohm-height-sm); }
+.screen-scroll { flex: 1; min-height: 0; overflow: auto; padding: var(--ohm-space-4) var(--ohm-space-6) var(--ohm-space-16); scrollbar-width: thin; scrollbar-color: var(--ohm-line) transparent; }
+.measure { max-width: var(--workspace-measure); margin: 0 auto; container-type: inline-size; }
+.empty { flex: 1; display: grid; place-content: center; justify-items: center; gap: var(--ohm-space-3); color: var(--ohm-muted); }
+.empty p { margin: 0; }
+.mobile-only { display: none; }
+
+/* One post. The title and the body are the page itself; what files the post is a row of fields. */
+.title-input, .body-input { display: block; width: 100%; padding: 0; border: 0; background: transparent; color: var(--ohm-ink); outline: none; }
+.title-input { margin-bottom: var(--ohm-space-6); font: 400 var(--ohm-type-h1-size) / var(--ohm-type-h1-leading) var(--ohm-font-serif); letter-spacing: var(--ohm-type-h1-tracking); }
+.body-input { margin: var(--ohm-space-6) 0; min-height: 40dvh; resize: vertical; font: 400 var(--ohm-input-size) / 1.65 var(--ohm-font-sans); letter-spacing: var(--ohm-type-body-tracking); }
+.title-input::placeholder, .body-input::placeholder { color: var(--ohm-muted); }
+.properties { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: var(--ohm-space-3); }
+.properties .field-label { margin: 0; }
+@media (max-width: 1170px) { .properties { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
+#post-problems { margin: 0 0 var(--ohm-space-3); padding-left: var(--ohm-space-4); }
+#post-problems li { color: var(--ohm-danger); }
+#post-problems:empty { display: none; }
+
+/* Who can see a post: a pill in the header, beside Save. */
+.pill-select select {
+  height: var(--ohm-height-sm); padding: 0 var(--ohm-space-3); border: 0; border-radius: var(--ohm-radius-pill); background: var(--ohm-wash); color: var(--ohm-ink);
+  font: var(--ohm-type-control-weight) var(--ohm-type-body-size) / var(--ohm-type-body-leading) var(--ohm-font-sans); letter-spacing: var(--ohm-type-body-tracking); cursor: pointer;
+}
+.pill-select select:focus-visible { outline: 2px solid var(--ohm-focus); outline-offset: 2px; }
+
+/* What happened reads from under its heading, not from the middle of the screen. */
+.screen[data-page="move"] .measure { margin: 0; }
+#log { margin: 0; padding-left: var(--ohm-space-4); }
+#log li { margin-bottom: var(--ohm-space-3); }
+#log li[data-kind="problem"] { color: var(--ohm-danger); }
+#log pre { margin: var(--ohm-space-1) 0 0; white-space: pre-wrap; word-break: break-word; font-family: var(--ohm-font-mono); }
+.measure:has(#log:not(:empty)) #log-empty { display: none; }
+
+/* You: a menu that opens beside the foot of the rail. */
+.menu {
+  position: fixed; inset: auto auto var(--workspace-frame) calc(var(--workspace-rail-width) + var(--ohm-space-1)); margin: 0; width: 280px; padding: var(--ohm-space-2);
+  border: 0; border-radius: var(--ohm-radius-card); background: var(--ohm-panel); color: var(--ohm-ink); box-shadow: var(--ohm-popup-shadow);
+  font: 400 var(--ohm-type-body-size) / var(--ohm-type-body-leading) var(--ohm-font-sans); letter-spacing: var(--ohm-type-body-tracking);
+}
+.menu-name { margin: var(--ohm-space-2) var(--ohm-space-3) 0; font-weight: var(--ohm-type-h3-weight); }
+.menu-detail { margin: 0 var(--ohm-space-3) var(--ohm-space-2); overflow-wrap: anywhere; }
+.menu-item {
+  display: flex; align-items: center; gap: var(--ohm-space-3); width: 100%; min-height: var(--ohm-height-md); padding: 0 var(--ohm-space-3);
+  border: 0; border-radius: var(--ohm-radius-row); background: transparent; color: inherit; font: inherit; letter-spacing: inherit; text-align: left; cursor: pointer;
+}
+.menu-item:hover { background: var(--ohm-wash); }
+.menu-item:focus-visible { outline: 2px solid var(--ohm-focus); outline-offset: -2px; }
+.menu-item .icon { color: var(--ohm-muted); }
+
+/* On a phone the side panel is the screen, with the rail as a bar at its foot; opening a post
+   makes the post the screen, with a way back. */
+.mobile-bottom-nav { display: none; }
+@media (max-width: 760px) {
+  .workspace-shell { display: flex; flex-direction: column; padding: env(safe-area-inset-top) 0 0; }
+  .workspace-rail { display: none; }
+  .directory-panel { flex: 1; margin: 0; padding: var(--ohm-space-3) var(--ohm-space-3) 0; border-radius: 0; box-shadow: none; background: var(--ohm-paper); }
+  .directory-scroll { padding-bottom: calc(72px + env(safe-area-inset-bottom, 0px) + var(--ohm-space-6)); }
+  .workspace-shell:not(.mobile-directory) .directory-panel, .workspace-shell.mobile-directory .workspace-center { display: none; }
+  .workspace-center { flex: 1; }
+  .mobile-only { display: inline-grid; }
+  .screen-header { padding: 0 var(--ohm-space-3); }
+  .screen-scroll { padding-inline: var(--ohm-space-4); }
+  .mobile-directory .mobile-bottom-nav {
+    display: flex; position: fixed; z-index: 14; left: 0; right: 0; bottom: calc(var(--ohm-space-1) + env(safe-area-inset-bottom, 0px));
+    width: 312px; max-width: calc(100% - var(--ohm-space-8)); margin-inline: auto;
+  }
+  .mobile-nav-capsule {
+    flex: 1; height: 56px; display: flex; align-items: center; justify-content: space-around; padding: var(--ohm-space-1);
+    border-radius: var(--ohm-radius-pill); background: var(--ohm-glass); backdrop-filter: blur(20px) saturate(1.1); -webkit-backdrop-filter: blur(20px) saturate(1.1); box-shadow: var(--ohm-float-shadow);
+  }
+  .mobile-nav-capsule .icon-button { width: var(--ohm-touch-min); height: var(--ohm-touch-min); --icon-size: 22px; }
+  .menu { inset: auto var(--ohm-space-4) calc(72px + env(safe-area-inset-bottom, 0px)) var(--ohm-space-4); width: auto; }
+}
+@media (prefers-reduced-transparency: reduce) { .mobile-nav-capsule { background: var(--ohm-paper); backdrop-filter: none; -webkit-backdrop-filter: none; } }
+
+/* ---------- The design system's components, used on both screens ---------- */
+
+/* Button: a pill at a control height, in the app's four variants. One filled action a view. */
+.button {
+  display: inline-flex; align-items: center; justify-content: center; flex: none;
+  height: var(--ohm-height-md); padding: 0 var(--ohm-space-4); border: 0; border-radius: var(--ohm-radius-pill);
+  font: var(--ohm-type-control-weight) var(--ohm-type-body-size) / var(--ohm-type-body-leading) var(--ohm-font-sans);
+  letter-spacing: var(--ohm-type-body-tracking); white-space: nowrap; text-decoration: none; cursor: pointer; user-select: none;
+  background: transparent; color: var(--ohm-ink);
+  transition: background-color var(--ohm-duration-state) var(--ohm-ease-out), transform var(--ohm-duration-press) var(--ohm-ease-out);
+}
+.button:active { transform: scale(var(--ohm-press-scale)); }
+.button:focus-visible, .field:focus-visible { outline: 2px solid var(--ohm-focus); outline-offset: 2px; }
+.button:disabled { opacity: .5; pointer-events: none; }
+.button.sm { height: var(--ohm-height-sm); padding: 0 var(--ohm-space-3); }
+.button.lg { height: var(--ohm-height-lg); padding: 0 calc(var(--ohm-space-4) + var(--ohm-space-1)); }
+.button.primary { background: var(--ohm-accent-fill); color: var(--ohm-on-accent); }
+.button.primary:hover { background: var(--ohm-accent-hover); }
+.button.secondary { background: var(--ohm-wash); }
+.button.secondary:hover { background: color-mix(in oklch, var(--ohm-wash), var(--ohm-ink) 6%); }
+
+/* Field: the app's input. A wash, a field radius, no edge; type at the input size so phones do not zoom. */
+.field-label { display: block; margin-bottom: var(--ohm-space-3); font: var(--ohm-type-h3-weight) var(--ohm-type-small-size) / var(--ohm-type-small-leading) var(--ohm-font-sans); letter-spacing: var(--ohm-type-small-tracking); color: var(--ohm-muted); }
+.field {
+  display: block; width: 100%; min-width: 0; height: var(--ohm-height-md); margin-top: var(--ohm-space-1);
+  padding: var(--ohm-space-2) var(--ohm-space-3); border: 0; border-radius: var(--ohm-radius-field);
+  background: var(--ohm-wash); color: var(--ohm-ink);
+  font: 400 var(--ohm-input-size) / var(--ohm-input-leading) var(--ohm-font-sans); letter-spacing: var(--ohm-type-body-tracking);
+}
+.field::placeholder { color: var(--ohm-muted); }
+
+/* Notice: the app's pill for every message, floating at the top and leaving on its own. */
+#notices { position: fixed; top: var(--ohm-space-4); left: 50%; transform: translateX(-50%); display: grid; gap: var(--ohm-space-2); justify-items: center; pointer-events: none; z-index: 70; }
+.notice {
+  max-width: min(560px, calc(100vw - var(--ohm-space-8))); padding: var(--ohm-space-2) var(--ohm-space-4); border-radius: var(--ohm-radius-pill);
+  background: var(--ohm-float); color: var(--ohm-ink); box-shadow: var(--ohm-popup-shadow); backdrop-filter: var(--ohm-float-blur);
+  font: var(--ohm-type-control-weight) var(--ohm-type-body-size) / var(--ohm-type-body-leading) var(--ohm-font-sans); letter-spacing: var(--ohm-type-body-tracking);
+  animation: notice-in var(--ohm-duration-open) var(--ohm-ease-out);
+}
+.notice[data-tone="error"] { background: var(--ohm-danger-wash); color: var(--ohm-danger); }
+@keyframes notice-in { from { opacity: 0; transform: translateY(-8px); } }

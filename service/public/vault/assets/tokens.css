@@ -1,0 +1,186 @@
+/* ohm design tokens: the single source for color, type, space, shape and motion.
+   DESIGN.md explains every token; change DESIGN.md first, then this file.
+   Only this file (and the brand asset files beside it) may contain raw color or size values. */
+
+@font-face {
+  font-family: "Coconat";
+  src: url("./fonts/coconat-regular.woff2") format("woff2");
+  font-weight: 400;
+  font-style: normal;
+  font-display: swap;
+}
+
+:root {
+  color-scheme: light dark;
+
+  /* ---- type: families ---- */
+  --ohm-font-serif: "Coconat", Georgia, "Times New Roman", serif;
+  --ohm-font-sans: "Helvetica Neue", Helvetica, Arial, sans-serif;
+  --ohm-font-mono: ui-monospace, SFMono-Regular, Menlo, monospace;
+
+  /* ---- type: five roles, compact (app) context ---- */
+  --ohm-type-h1-size: clamp(32px, 6.96cqi, 48px);
+  --ohm-type-h1-leading: 1.1667;
+  --ohm-type-h1-tracking: -0.03em;
+  --ohm-type-h2-size: 24px;
+  --ohm-type-h2-leading: 32px;
+  --ohm-type-h2-tracking: -0.02em;
+  --ohm-type-h3-size: 14px;
+  --ohm-type-h3-leading: 20px;
+  --ohm-type-h3-tracking: -0.02em;
+  --ohm-type-h3-weight: 600;
+  --ohm-type-body-size: 14px;
+  --ohm-type-body-leading: 20px;
+  --ohm-type-body-tracking: -0.01em;
+  --ohm-type-control-weight: 500;
+  --ohm-type-small-size: 12px;
+  --ohm-type-small-leading: 16px;
+  --ohm-type-small-tracking: 0;
+  --ohm-input-size: 16px;
+  --ohm-input-leading: 24px;
+
+  /* ---- type: interface titles, outside the five roles (Helvetica 600; wordmark Coconat 400) ---- */
+  --ohm-type-title-size: 17px;
+  --ohm-type-title-leading: 24px;
+  --ohm-type-title-tracking: -0.01em;
+  --ohm-type-page-title-size: 20px;
+  --ohm-type-page-title-leading: 28px;
+  --ohm-type-page-title-tracking: -0.01em;
+  --ohm-type-title-weight: 600;
+  --ohm-type-wordmark-size: 43.2px;
+  --ohm-type-wordmark-tracking: -0.065em;
+
+  /* ---- color: one green, forest (DESIGN.md §2). It fills in both schemes; on black,
+     green text, marks and the focus ring turn ink, because forest can't be seen there. ---- */
+  --ohm-forest: #013220;
+  --ohm-ebony: #250e0e;
+  --ohm-accent: #013220;
+  --ohm-accent-hover: #00261a;
+  --ohm-accent-fill: #013220;
+  --ohm-on-accent: #fff;
+  --ohm-leaf: light-dark(#013220, #ededed);
+  --ohm-agent: light-dark(#013220, #ededed);
+  --ohm-signal: light-dark(#013220, #ededed);
+  --ohm-selection: light-dark(rgb(1 50 32 / .14), rgb(1 50 32 / .9));
+  --ohm-bubble-self: light-dark(#ebefed, #013220);
+  --ohm-on-signal: light-dark(#fff, #000);
+
+  /* ---- color: one neutral set ---- */
+  --ohm-paper: light-dark(#fff, #000);
+  --ohm-menu: light-dark(#fafafa, #111);
+  --ohm-wash: light-dark(#f5f5f5, #171717);
+  --ohm-line: light-dark(#e5e5e5, #262626);
+  --ohm-muted: light-dark(#6b6b6b, #a1a1a1);
+  --ohm-ink: light-dark(#242424, #ededed);
+  --ohm-danger: light-dark(#a13535, #e3aaa0);
+  --ohm-focus: light-dark(#013220, #ededed);
+  --ohm-overlay: light-dark(rgb(0 0 0 / .2), rgb(0 0 0 / .45));
+
+  /* ---- color: surfaces and states, one job each (DESIGN.md §2) ---- */
+  --ohm-panel: light-dark(#fff, #0b0b0b);
+  --ohm-raised: light-dark(#fff, #191919);
+  --ohm-paper-light: #fff;
+  --ohm-danger-wash: light-dark(#fdecea, #3b1915);
+  --ohm-mark: light-dark(#4076b6, #8bb6ee);
+  --ohm-mark-wash: light-dark(#e8f0fb, #192d45);
+  --ohm-glass: light-dark(rgb(255 255 255 / .42), rgb(48 48 48 / .38));
+  --ohm-glass-strong: light-dark(rgb(255 255 255 / .78), rgb(25 25 25 / .68));
+  --ohm-scrim: rgb(0 0 0 / .45);
+
+  /* ---- color: editorial (website only) ---- */
+  --ohm-paper-editorial: #fafaf9;
+  --ohm-ink-editorial: #363633;
+
+  /* ---- space ---- */
+  --ohm-space-1: 4px;
+  --ohm-space-2: 8px;
+  --ohm-space-3: 12px;
+  --ohm-space-4: 16px;
+  --ohm-space-6: 24px;
+  --ohm-space-8: 32px;
+  --ohm-space-12: 48px;
+  --ohm-space-16: 64px;
+
+  /* ---- size ---- */
+  --ohm-height-xs: 24px;
+  --ohm-height-sm: 32px;
+  --ohm-height-md: 40px;
+  --ohm-height-lg: 48px;
+  --ohm-touch-min: 44px;
+  --ohm-icon-size: 18px;
+  --ohm-icon-stroke: 2.25;
+
+  /* ---- shape ---- */
+  --ohm-radius-pill: 999px;
+  --ohm-radius-row: 14px;
+  --ohm-radius-field: 16px;
+  --ohm-radius-card: 24px;
+  --ohm-radius-panel: 24px;
+  --ohm-radius-sheet: 28px;
+
+  /* ---- elevation ---- */
+  --ohm-popup-shadow: 0 2px 5px -1px light-dark(rgb(0 0 0 / .15), rgb(0 0 0 / .6)), 0 12px 32px -10px light-dark(rgb(0 0 0 / .24), rgb(0 0 0 / .85));
+  --ohm-float: light-dark(rgb(255 255 255 / .94), rgb(26 26 26 / .86));
+  --ohm-float-blur: blur(24px) saturate(1.2);
+  --ohm-float-shadow: 0 8px 28px -10px light-dark(rgb(0 0 0 / .16), rgb(0 0 0 / .5));
+  --ohm-float-shadow-focus: 0 10px 30px -16px light-dark(rgb(0 0 0 / .25), rgb(0 0 0 / .69));
+  --ohm-panel-shadow: 0 12px 32px light-dark(rgb(0 0 0 / .08), rgb(0 0 0 / .4));
+  --ohm-window-shadow: 0 24px 80px -20px light-dark(rgb(0 0 0 / .3), rgb(0 0 0 / .75)), 0 4px 16px -6px light-dark(rgb(0 0 0 / .14), rgb(0 0 0 / .5));
+
+  /* ---- motion ---- */
+  --ohm-duration-press: 130ms;
+  --ohm-duration-state: 180ms;
+  --ohm-duration-open: 240ms;
+  --ohm-duration-close: 160ms;
+  --ohm-duration-expand: 300ms;
+  --ohm-ease-out: cubic-bezier(.23, 1, .32, 1);
+  --ohm-ease-morph: cubic-bezier(.32, .72, 0, 1);
+  --ohm-press-scale: .97;
+  --ohm-atmosphere-drift: 18s;
+  --ohm-atmosphere-grain-opacity: .08;
+}
+
+/* Appearance: system by default; html[data-theme] forces one scheme. */
+html[data-theme="light"] { color-scheme: light; }
+html[data-theme="dark"] { color-scheme: dark; }
+
+@media (max-width: 760px) {
+  :root { --ohm-type-wordmark-size: 38px; }
+}
+
+/* Reading context: mail bodies and publicist chat. Same five roles, larger. */
+[data-reading="chat"],
+[data-reading="mail"] {
+  --ohm-type-h1-size: 24px;
+  --ohm-type-h1-leading: 32px;
+  --ohm-type-h1-tracking: -0.02em;
+  --ohm-type-h2-size: 20px;
+  --ohm-type-h2-leading: 26px;
+  --ohm-type-h2-tracking: -0.01em;
+  --ohm-type-h3-size: 16px;
+  --ohm-type-h3-leading: 24px;
+  --ohm-type-body-size: 16px;
+  --ohm-type-body-leading: 24px;
+  --ohm-type-body-tracking: -0.011em;
+  --ohm-type-small-size: 13px;
+  --ohm-type-small-leading: 18px;
+}
+
+/* Touch: every control is a 44 px target (DESIGN.md §3, rule 12). */
+@media (pointer: coarse) {
+  :root {
+    --ohm-height-xs: var(--ohm-touch-min);
+    --ohm-height-sm: var(--ohm-touch-min);
+    --ohm-height-md: var(--ohm-touch-min);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  :root {
+    --ohm-duration-press: 1ms;
+    --ohm-duration-state: 1ms;
+    --ohm-duration-open: 1ms;
+    --ohm-duration-close: 1ms;
+    --ohm-duration-expand: 1ms;
+  }
+}

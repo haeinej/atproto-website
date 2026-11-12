@@ -182,29 +182,37 @@ async function running() {
   const documents = Object.fromEntries([haein, jun, stranger].map(each => [documentAddress(each.did), each.document]));
   for (const each of [haein, jun, stranger]) each.document.service = [{ id: '#atproto_pds', type: 'AtprotoPersonalDataServer', serviceEndpoint: `https://${each.did.slice('did:web:'.length)}` }];
   const whoIs = createIdentity({ audience, members: `${haein.did},${jun.did}`, get: async url => Response.json(documents[String(url)]) });
-  const env = { DB: await testDatabase() };
+  const env = { DB: await testDatabase(), OHM_APP_ORIGIN: 'https://app.ohmmmm.test', SERVICE_DID: audience };
+  // Who is signed in to ohm, by the session cookie their browser sends.
+  const sessions = new Map();
   // What each member has published, as their own PDS would list it.
   const repositories = new Map();
   const get = async (url, options) => {
     // The service runs on Cloudflare, whose fetch refuses any other way of handling a redirect.
     assert.ok(['follow', 'manual'].includes(options.redirect), `redirect: ${options.redirect}`);
+    // ohm's own sign-in service, asked whose session a cookie is.
+    if (String(url) === 'https://app.ohmmmm.test/api/auth/get-session') {
+      const user = sessions.get(options.headers.Cookie);
+      return Response.json(user ? { session: { id: 's' }, user } : null);
+    }
     const records = repositories.get(`${url.origin}|${url.searchParams.get('collection')}`) ?? [];
     return Response.json({ records: records.map(([key, value]) => ({ uri: `at://${url.searchParams.get('repo')}/${url.searchParams.get('collection')}/${key}`, value })) });
   };
   const service = createService({ whoIs, get });
   // One request, signed by `as` for exactly that request unless told otherwise.
-  const ask = async (as, name, { query = {}, body, token, verb } = {}) => {
-    const url = new URL(`https://vault.ohmmmm.test/xrpc/com.ohmmmm.vault.${name}`);
+  const ask = async (as, name, { query = {}, body, token, verb, cookie, origin, under = '' } = {}) => {
+    const url = new URL(`https://vault.ohmmmm.test${under}/xrpc/${name.includes('.') ? name : `com.ohmmmm.vault.${name}`}`);
     for (const [key, value] of Object.entries(query)) url.searchParams.set(key, value);
-    const bearer = token === null ? null : token ?? await as.token(`com.ohmmmm.vault.${name}`);
-    const posted = ['putPost', 'deletePost', 'importPublished'].includes(name);
+    // A request rides on a cookie, as the page's do, or carries a token from the member's PDS.
+    const bearer = token === null || cookie ? null : token ?? await as.token(`com.ohmmmm.vault.${name}`);
+    const posted = ['putPost', 'deletePost', 'importPublished', 'com.ohmmmm.account.connect', 'com.ohmmmm.account.disconnect'].includes(name);
     return service(new Request(url, {
       method: verb ?? (posted ? 'POST' : 'GET'),
-      headers: { ...(bearer ? { Authorization: `Bearer ${bearer}` } : {}), ...(body === undefined ? {} : { 'Content-Type': 'application/json' }) },
+      headers: { ...(bearer ? { Authorization: `Bearer ${bearer}` } : {}), ...(cookie ? { Cookie: cookie } : {}), ...(origin ? { Origin: origin } : {}), ...(body === undefined ? {} : { 'Content-Type': 'application/json' }) },
       ...(body === undefined ? {} : { body: typeof body === 'string' ? body : JSON.stringify(body) }),
     }), env);
   };
-  return { haein, jun, stranger, ask, env, repositories };
+  return { haein, jun, stranger, ask, env, repositories, sessions };
 }
 
 test('a member\'s vault over the four requests, with the structure read from the posts', async () => {
@@ -290,7 +298,7 @@ test('nobody reads, lists, changes or removes another member\'s posts', async ()
   // No token, a token for another request, one for another service, one from someone not let in,
   // and one that claims to be Haein but is signed by someone else.
   for (const [token, status, error] of [
-    [null, 401, 'AuthRequired'],
+    [null, 401, 'SignInRequired'],
     [await haein.token('com.ohmmmm.vault.listPosts'), 401, 'AuthRequired'],
     [await haein.token('com.ohmmmm.vault.getPost', { aud: 'did:web:another.test' }), 401, 'AuthRequired'],
     [await stranger.token('com.ohmmmm.vault.getPost'), 403, 'NotAMember'],
@@ -351,4 +359,61 @@ test('a member brings in what they have published and writes their vault out, an
   }
   assert.equal((await ask(haein, 'importPublished', { body: { site: 'https://haein.test' }, token: null })).status, 401);
   assert.equal((await ask(haein, 'exportFiles', { token: null })).status, 401);
+});
+
+test('an ohm account signs a member in, once their PDS has said which AT Protocol account is theirs', async () => {
+  const { haein, jun, stranger, ask, sessions } = await running();
+  const ours = 'https://app.ohmmmm.test';
+  const mine = 'ohm.session_token=haein-1';
+  sessions.set(mine, { id: 'user-haein', name: 'Haein' });
+  const account = (name, more = {}) => ask(haein, `com.ohmmmm.account.${name}`, { cookie: mine, origin: ours, ...more });
+  const said = async response => [response.status, (await response.json()).error];
+
+  // Nobody is signed in without a session the sign-in service knows.
+  assert.deepEqual(await said(await ask(haein, 'com.ohmmmm.account.get', { token: null })), [401, 'SignInRequired']);
+  assert.deepEqual(await said(await ask(haein, 'com.ohmmmm.account.get', { cookie: 'ohm.session_token=made-up' })), [401, 'SignInRequired']);
+  // Signed in to ohm, but no AT Protocol account yet: the account says so, and no vault opens.
+  assert.deepEqual(await (await account('get')).json(), { user: { name: 'Haein' }, did: null, service: audience });
+  assert.deepEqual(await said(await ask(haein, 'getTree', { cookie: mine })), [409, 'NotConnected']);
+
+  // Connecting takes a token the PDS issued for exactly that, and nothing less.
+  const connect = token => account('connect', { body: { token } });
+  assert.deepEqual(await said(await connect(await haein.token('com.ohmmmm.vault.getTree'))), [401, 'AuthRequired']);
+  assert.deepEqual(await said(await connect(await stranger.token('com.ohmmmm.account.connect'))), [403, 'NotAMember']);
+  assert.deepEqual(await said(await connect(await jun.token('com.ohmmmm.account.connect', { iss: haein.did }))), [401, 'AuthRequired']);
+  assert.deepEqual(await said(await connect('not a token')), [401, 'AuthRequired']);
+  assert.equal((await (await account('get')).json()).did, null);
+  assert.deepEqual(await (await connect(await haein.token('com.ohmmmm.account.connect'))).json(), { did: haein.did });
+  assert.deepEqual(await (await connect(await haein.token('com.ohmmmm.account.connect'))).json(), { did: haein.did, already: true });
+  assert.deepEqual(await (await account('get')).json(), { user: { name: 'Haein' }, did: haein.did, service: audience });
+
+  // From then on the session alone opens that vault, and it is the same vault a token opens.
+  const written = post('from-the-page');
+  assert.equal((await ask(haein, 'putPost', { cookie: mine, origin: ours, body: { post: written } })).status, 200);
+  assert.deepEqual((await (await ask(haein, 'getPost', { query: { id: written.id } })).json()).post, written);
+  assert.equal((await (await ask(haein, 'getTree', { cookie: mine, under: '/vault' })).json()).posts, 1);
+  // Jun, signed in to ohm and connected to Jun's own account, sees nothing of it.
+  const theirs = 'ohm.session_token=jun-1';
+  sessions.set(theirs, { id: 'user-jun', name: 'Jun' });
+  await ask(jun, 'com.ohmmmm.account.connect', { cookie: theirs, origin: ours, body: { token: await jun.token('com.ohmmmm.account.connect') } });
+  assert.equal((await (await ask(jun, 'getTree', { cookie: theirs })).json()).posts, 0);
+  assert.equal((await ask(jun, 'getPost', { cookie: theirs, query: { id: written.id } })).status, 404);
+
+  // One ohm account works in one AT Protocol account, each way.
+  assert.deepEqual(await said(await ask(jun, 'com.ohmmmm.account.connect', { cookie: theirs, origin: ours, body: { token: await haein.token('com.ohmmmm.account.connect') } })), [409, 'AlreadyConnected']);
+  const third = 'ohm.session_token=someone-1';
+  sessions.set(third, { id: 'user-someone', name: 'Someone' });
+  assert.deepEqual(await said(await ask(haein, 'com.ohmmmm.account.connect', { cookie: third, origin: ours, body: { token: await haein.token('com.ohmmmm.account.connect') } })), [409, 'ConnectedElsewhere']);
+
+  // A cookie is sent with a request any page makes, so a change is refused unless it comes from ohm's own pages.
+  for (const origin of [undefined, 'https://evil.example', 'https://vault.ohmmmm.test']) {
+    assert.deepEqual(await said(await ask(haein, 'putPost', { cookie: mine, origin, body: { post: post('forged') } })), [403, 'WrongOrigin']);
+    assert.deepEqual(await said(await ask(haein, 'com.ohmmmm.account.disconnect', { cookie: mine, origin })), [403, 'WrongOrigin']);
+  }
+  assert.equal((await (await ask(haein, 'getTree', { cookie: mine })).json()).posts, 1);
+
+  // Disconnected, the session opens nothing again. The vault itself is untouched.
+  assert.deepEqual(await (await account('disconnect')).json(), { did: null });
+  assert.deepEqual(await said(await ask(haein, 'getTree', { cookie: mine })), [409, 'NotConnected']);
+  assert.equal((await (await ask(haein, 'getTree')).json()).posts, 1);
 });

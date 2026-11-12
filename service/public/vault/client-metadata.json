@@ -1,0 +1,19 @@
+{
+  "client_id": "https://app.ohmmmm.com/vault/client-metadata.json",
+  "client_name": "ohm",
+  "client_uri": "https://app.ohmmmm.com",
+  "redirect_uris": [
+    "https://app.ohmmmm.com/vault/"
+  ],
+  "scope": "atproto transition:generic",
+  "grant_types": [
+    "authorization_code",
+    "refresh_token"
+  ],
+  "response_types": [
+    "code"
+  ],
+  "token_endpoint_auth_method": "none",
+  "application_type": "web",
+  "dpop_bound_access_tokens": true
+}

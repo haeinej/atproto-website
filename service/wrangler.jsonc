@@ -5,13 +5,24 @@
   "main": "src/worker.mjs",
   "compatibility_date": "2026-10-30",
   "workers_dev": false,
-  // The page at / and its files. A request for anything else, such as /xrpc/…, goes to the Worker.
+  // The page at /vault/ and its files. A request for anything else, such as /xrpc/…, goes to the Worker.
   "assets": { "directory": "./public" },
+  // Two addresses: the service's own, which its DID names, and /vault on the app's, where the page
+  // is and an ohm sign-in lives.
+  // "routes": [
+  //   { "pattern": "vault.example.com", "custom_domain": true },
+  //   { "pattern": "app.example.com/vault", "zone_name": "example.com" },
+  //   { "pattern": "app.example.com/vault/*", "zone_name": "example.com" }
+  // ],
+  // ohm's own sign-in: the Worker that answers /api/auth/get-session.
+  // "services": [{ "binding": "AUTH", "service": "ohm-api" }],
   "preview_urls": false,
   "d1_databases": [{ "binding": "DB", "database_name": "ohm-vault", "database_id": "" }],
   "vars": {
     "SERVICE_DID": "did:web:vault.ohmmmm.com",
     // The DIDs let in, separated by commas. "*" lets anyone in.
-    "MEMBERS": ""
+    "MEMBERS": "",
+    // The address the page is served at. A request that changes anything must come from it.
+    "OHM_APP_ORIGIN": "https://app.ohmmmm.com"
   }
 }

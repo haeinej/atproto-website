@@ -6,8 +6,9 @@
 // What makes the sign-in stay: a key made in this browser that cannot be copied out of it. The PDS
 // ties the sign-in to that key, so what is kept on this device is of no use anywhere else.
 const SCOPE = 'atproto transition:generic';
-const clientId = () => `${location.origin}/client-metadata.json`;
-const redirectUri = () => `${location.origin}/`;
+// The page is served in a folder of its own; what the PDS is told about it lives beside it.
+const clientId = () => new URL('./client-metadata.json', document.baseURI).href;
+const redirectUri = () => new URL('./', document.baseURI).href;
 
 const encode = bytes => btoa(String.fromCharCode(...new Uint8Array(bytes))).replaceAll('+', '-').replaceAll('/', '_').replaceAll('=', '');
 const text = value => encode(new TextEncoder().encode(typeof value === 'string' ? value : JSON.stringify(value)));
@@ -61,7 +62,7 @@ async function form(keys, address, fields) {
 
 // Step one: find the account, ask its PDS to start a sign-in, and send the member there.
 export async function begin(typed) {
-  const account = await readJson(await fetch(`/xrpc/com.ohmmmm.identity.findAccount?${new URLSearchParams({ account: typed })}`), 'Finding your account');
+  const account = await readJson(await fetch(new URL(`./xrpc/com.ohmmmm.identity.findAccount?${new URLSearchParams({ account: typed })}`, document.baseURI)), 'Finding your account');
   const resource = await readJson(await fetch(`${account.pds}/.well-known/oauth-protected-resource`), 'Asking your PDS how to sign in');
   const issuer = resource.authorization_servers?.[0];
   // A PDS on this machine, for trying things out, is the one that may be reached without https.
@@ -96,7 +97,7 @@ export async function finish() {
   const came = new URLSearchParams(location.search.length > 1 ? location.search : location.hash.slice(1));
   if (!came.has('state') || (!came.has('code') && !came.has('error'))) return null;
   // What the PDS sent is taken out of the address at once, so it is not left in the history.
-  history.replaceState(null, '', location.pathname);
+  history.replaceState(null, '', redirectUri());
   const pending = await kept('pending');
   await kept('pending', null);
   if (!pending || came.get('state') !== pending.state) throw new Error('This sign-in was not started here, or was started too long ago. Try again.');

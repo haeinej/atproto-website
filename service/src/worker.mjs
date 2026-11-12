@@ -8,6 +8,7 @@ import { POST, webUrl } from '../../feed/pds.mjs';
 import { postFile } from '../../vault/file.mjs';
 import { importVault, saveImported } from '../../vault/import.mjs';
 import { createIdentity, findAccount } from './identity.mjs';
+import { fromOurPages, links, ohmUser } from './ohm.mjs';
 import { postStore, Refused } from './store.mjs';
 
 const METHODS = {
@@ -18,6 +19,11 @@ const METHODS = {
   'com.ohmmmm.vault.getTree': 'GET',
   'com.ohmmmm.vault.importPublished': 'POST',
   'com.ohmmmm.vault.exportFiles': 'GET',
+};
+const ACCOUNT = {
+  'com.ohmmmm.account.get': 'GET',
+  'com.ohmmmm.account.connect': 'POST',
+  'com.ohmmmm.account.disconnect': 'POST',
 };
 const NSID = /^[a-z](?:[a-z0-9-]{0,61}[a-z0-9])?(?:\.[a-z0-9](?:[a-z0-9-]{0,61}[a-z0-9])?)+\.[a-zA-Z][a-zA-Z0-9]{0,62}$/;
 
@@ -60,18 +66,51 @@ export function createService({ whoIs, get = fetch } = {}) {
   return async function fetch(request, env) {
     try {
       const url = new URL(request.url);
-      const method = /^\/xrpc\/([A-Za-z0-9.]+)$/.exec(url.pathname)?.[1];
+      // The same requests are served at the service's own address and under /vault beside ohm's
+      // sign-in, where a member's browser carries their ohm session.
+      const method = /^(?:\/vault)?\/xrpc\/([A-Za-z0-9.]+)$/.exec(url.pathname)?.[1];
       // Finding an account from a handle needs no sign-in: it is the first step of signing in, and
       // everything it answers with is already public.
       if (method === 'com.ohmmmm.identity.findAccount' && request.method === 'GET') {
         return json(await findAccount(url.searchParams.get('account'), { get }));
       }
+      const identify = whoIs ?? (made ??= createIdentity({ audience: env.SERVICE_DID, members: env.MEMBERS }));
+      const linked = links(env.DB);
+
+      // ---- The ohm account: who is signed in, and which AT Protocol account they work in. ----
+      if (Object.hasOwn(ACCOUNT, method ?? '')) {
+        if (request.method !== ACCOUNT[method]) throw new Refused(405, 'WrongMethod', `${method} is a ${ACCOUNT[method]} request`);
+        const user = await ohmUser(request, env, get) ?? (() => { throw new Refused(401, 'SignInRequired', 'Sign in to ohm first'); })();
+        fromOurPages(request, env);
+        // `service` is who a PDS has to address its token to when the member connects.
+        if (method === 'com.ohmmmm.account.get') return json({ user: { name: user.name }, did: await linked.didOf(user.id), service: env.SERVICE_DID ?? null });
+        if (method === 'com.ohmmmm.account.disconnect') {
+          await linked.disconnect(user.id);
+          return json({ did: null });
+        }
+        // Connecting: the person's own PDS says, in a token it signs for this one request, that the
+        // AT Protocol account is theirs. That is checked exactly as any member's token is, and only
+        // then is the account tied to the ohm account that is signed in.
+        const { token } = await sent(request);
+        if (typeof token !== 'string') throw new Refused(400, 'InvalidRequest', 'Send the token your PDS issued');
+        const did = await identify(new Request(request.url, { headers: { Authorization: `Bearer ${token}` } }), method);
+        return json(await linked.connect(user.id, did));
+      }
+
       if (!method || !Object.hasOwn(METHODS, method)) throw new Refused(404, 'MethodNotFound', 'There is no such request');
       if (request.method !== METHODS[method]) throw new Refused(405, 'WrongMethod', `${method} is a ${METHODS[method]} request`);
       // Who is asking comes first. Nothing about any vault is looked at until that is settled, and
-      // every operation below is given that DID and no other.
-      const identify = whoIs ?? (made ??= createIdentity({ audience: env.SERVICE_DID, members: env.MEMBERS }));
-      const did = await identify(request, method);
+      // every operation below is given that DID and no other. A request carries a token from the
+      // member's own PDS, as the command line and an agent's tools send, or rides on an ohm session,
+      // as the page does; a session is worth exactly the one account it was connected to.
+      let did;
+      if (request.headers.has('Authorization')) {
+        did = await identify(request, method);
+      } else {
+        const user = await ohmUser(request, env, get) ?? (() => { throw new Refused(401, 'SignInRequired', 'Sign in to ohm first'); })();
+        fromOurPages(request, env);
+        did = await linked.didOf(user.id) ?? (() => { throw new Refused(409, 'NotConnected', 'Connect your AT Protocol account first'); })();
+      }
       const posts = postStore(env.DB);
       const query = name => url.searchParams.get(name) ?? undefined;
 
