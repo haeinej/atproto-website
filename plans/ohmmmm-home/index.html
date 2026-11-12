@@ -23,6 +23,7 @@
     <link rel="preload" href="/assets/fonts/coconat-regular.woff2" as="font" type="font/woff2" crossorigin>
     <link rel="stylesheet" href="/styles.css">
     <script src="/sw-register.js" defer></script>
+    <script src="/landing.js" defer></script>
     <title>ohm — An agentic social network</title>
     <script type="application/ld+json">
 {
@@ -51,75 +52,71 @@
 }
     </script>
   </head>
-  <body>
+  <body class="landing">
     <a class="skip" href="#content">Skip to content</a>
 
-    <!-- Site shell, the same on every page. The header is the ohm dot (home) and Docs, which is its own
-         site at docs.ohmmmm.com. The company directory is on the landing page only (the footer). -->
+    <!-- Site shell, the same on every page except aria-current: a sidebar with the ohm dot (home), then
+         About and Docs (its own site, docs.ohmmmm.com). The company directory is on the landing page only. -->
     <header class="site-header">
       <a class="site-mark" href="/"><img src="/assets/favicon.svg" alt="ohm" width="20" height="20"></a>
       <nav class="site-sections" aria-label="Site">
-        <a href="https://docs.ohmmmm.com/">Docs</a>
+        <ul>
+          <li><a href="/about">About</a></li>
+          <li><a href="https://docs.ohmmmm.com/">Docs</a></li>
+        </ul>
       </nav>
     </header>
 
     <main id="content">
       <article aria-labelledby="title">
-        <header>
-          <h1 id="title">ohm</h1>
-          <p class="introduction">ohm extends your home on the web into a social network. Your agent knows what you are working through, understands the people around you, and finds the one you should talk to.</p>
+        <!-- What ohm is in one sentence, and beside it a wave of greens that follows the pointer.
+             The full explanation is on /about. -->
+        <header class="intro" id="intro">
+          <div class="intro-text">
+            <h1 id="title">ohm extends your home on the web into a social network.</h1>
+            <p class="introduction">Bring your website and socials into one workspace, decide what goes public, and stay connected with the right minds.</p>
+            <div class="actions">
+              <a class="button" href="https://docs.ohmmmm.com/quick-start">Bring it home</a>
+            </div>
+          </div>
+          <!-- The section's background: a slow field of the Fatale greens, drawn by landing.js with WebGL. -->
+          <div class="shade-stage" aria-hidden="true">
+            <canvas class="shade-canvas"></canvas>
+          </div>
         </header>
 
-        <section aria-labelledby="the-problem">
-          <h2 id="the-problem">The problem</h2>
-          <p>There is a particular feeling, a chill, that comes when you finally say a problem out loud and discover that someone you already knew had the answer all along. You have been circling a question for days. You asked every coworker in tech and got nowhere. Then you run into an old friend, a designer, and mention it in passing. She solved the same problem months ago, in a completely different context.</p>
-          <p>That moment only happened because you met her that day and happened to speak up. Most of the time, we do not.</p>
-          <p>We know people. We have experiences, skills, and goals. But most of that context stays invisible or disconnected. We do not know whom to reach out to. We do not know what to share, how to present ourselves, or how the people we already know could help us get where we are going. People struggle not only to maintain relationships, but to make something meaningful out of them.</p>
-          <p>Most of what we are really working through never leaves our own notes. The people who could help never see it, and we never see theirs.</p>
-          <p>The problem is the gap between who you are, who you know, and what you actually do with that knowledge.</p>
-        </section>
-
-        <section aria-labelledby="what-ohm-is">
-          <h2 id="what-ohm-is">What ohm is</h2>
-          <p>ohm is your own workspace: one place for everything you make, an editor to work on it, and an agent that knows it. You decide what stays private, what your friends see, and what you publish.</p>
-          <p>A website shows what you have published. Your workspace holds <a href="https://atproto.com/guides/data-repos">what sits behind it</a> as well: the notes and unfinished thinking that never reach the site.</p>
-          <p>What is for everyone becomes your published layer: the part of your work that is out in the open, kept under your own account on an open protocol. Other applications can read it, you can move it, and your website is a view of it. Everything else can live in a folder of your own, on your computer or in the cloud storage you already use. Your workspace on ohm is a working copy of all of it, so you and your agent can work from anywhere. The originals stay with you.</p>
-          <p>Then people connect. You follow the people whose thinking you care about, and when they follow you back, you are friends.</p>
-          <p>Each person has an agent. Yours reads what you have written, including what you have not shared with anyone, so it understands what you are working on and where you are stuck.</p>
-          <p>You can start with an ohm account, with the Bluesky account you already have, or with a server of your own.</p>
-        </section>
-
-        <section aria-labelledby="what-ohm-does">
-          <h2 id="what-ohm-does">What ohm does</h2>
-          <p>Your work stays in order. What you have already made comes in, what you add is filed under labels of your own, and your folder and your workspace stay in step.</p>
-          <p>Nothing is published until you say so. Editing shares nothing. When you publish, you see what will become visible, and to whom, and the public part becomes a website that looks and sounds like you.</p>
-          <p>You can let the people you trust see what you are really thinking about. You do not have to turn it into a post. You choose who can read a note you already wrote.</p>
-          <p>When you are stuck on something that needs another person, your agent helps you find that person. It might be advice from someone who has been there, an honest reaction to something you made, an introduction, or someone to build with. It looks through what your friends have written, then further out, shows you who and why, and drafts the first email with you.</p>
-          <p>There is no messenger to learn. When it is time to reach out, it is an email from you, sent when you say so.</p>
-          <p>You also hear when you are the person someone else is looking for.</p>
-          <p>What your agent can settle alone, it settles. For everything else, it takes you to a person.</p>
-        </section>
-
-        <section aria-labelledby="more-than-keeping-in-touch">
-          <h2 id="more-than-keeping-in-touch">More than keeping in touch</h2>
-          <p>Some of the most important conversations happen with people we have not spoken to in years. Some of the most valuable connections are the ones we never expected to matter. Sometimes a single conversation changes the direction of months of work.</p>
-          <p>We want more of those moments to happen.</p>
-          <p>Not by making people network harder, share more, or treat every friendship as a transaction. By helping them see what they already have, say what they actually mean, and notice the possibilities they would otherwise walk past.</p>
-          <p>It is becoming easier to ask a machine than to ask a person. We want an agent that works the other way, one that sends you back to people.</p>
-          <p>That is what we want an agent to do for you. Help you become the person you meant to be, with the people who matter to you.</p>
-        </section>
       </article>
     </main>
 
+    <!-- The footer, landing page only: the name on the left, the company pages on the right. -->
     <footer class="site-footer">
-      <nav aria-label="Company">
-        <ul>
-          <li><a href="mailto:support@collisions.co">Contact</a></li>
-          <li><a href="/support">Support</a></li>
-          <li><a href="/terms">Terms</a></li>
-          <li><a href="/privacy">Privacy</a></li>
-        </ul>
-      </nav>
+      <div class="footer-top">
+        <p class="footer-name"><img src="/assets/favicon.svg" alt="" width="18" height="18"><span>ohm</span></p>
+        <nav class="footer-columns" aria-label="Company">
+          <div>
+            <p class="footer-label">ohm</p>
+            <ul>
+              <li><a href="/about">About</a></li>
+              <li><a href="https://docs.ohmmmm.com/">Docs</a></li>
+              <li><a href="/support">Support</a></li>
+            </ul>
+          </div>
+          <div>
+            <p class="footer-label">Legal</p>
+            <ul>
+              <li><a href="/terms">Terms</a></li>
+              <li><a href="/privacy">Privacy</a></li>
+              <li><a href="/delete-account">Delete your account</a></li>
+            </ul>
+          </div>
+          <div>
+            <p class="footer-label">Contact</p>
+            <ul>
+              <li><a href="mailto:support@collisions.co">support@collisions.co</a></li>
+            </ul>
+          </div>
+        </nav>
+      </div>
     </footer>
   </body>
 </html>

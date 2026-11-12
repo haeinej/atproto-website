@@ -2,10 +2,14 @@
    custom properties only; the rules below use them and nothing else.
 
    Page shell, the same on every page:
-     .site-header   across the top: the ohm dot (home) and Docs, which is its own site at docs.ohmmmm.com
+     .site-header   the sidebar, top of the left column: the ohm dot (home), then About and Docs
+                    (Docs is its own site, docs.ohmmmm.com), the current one marked with a bar
      main           right column: the page itself (one <article>)
-     .site-footer   bottom of the left column, landing page only: the company directory (Contact, Support, Terms, Privacy)
-   On narrow screens they stack: header, page, directory. */
+     .site-footer   landing page only: the company directory (Contact, Support, Terms, Privacy)
+   On narrow screens: the dot with About and Docs in a row, then the page.
+
+   The landing page (body.landing) is one opening section on a slow WebGL field of the Fatale greens
+   (after vercel.com; landing.js), and a minimal footer. See "Landing" at the end. */
 @font-face {
   font-family: "Coconat";
   src: url("/assets/fonts/coconat-regular.woff2") format("woff2");
@@ -39,7 +43,6 @@
   --ohm-gutter: 48px;
   --ohm-frame: 40px;
   --ohm-mark: 20px;
-  --ohm-header: 64px;
   --ohm-rail: 160px;
   --ohm-rail-gap: clamp(32px, 5vw, 80px);
   --ohm-top: 32px; /* between the header and the columns */
@@ -92,10 +95,10 @@ body {
   margin: 0;
   min-height: 100vh;
   min-height: 100dvh;
-  padding: 0 var(--ohm-frame) var(--ohm-frame);
+  padding: var(--ohm-frame);
   display: grid;
   grid-template-columns: var(--ohm-rail) minmax(0, var(--ohm-measure));
-  grid-template-rows: var(--ohm-header) 1fr auto;
+  grid-template-rows: 1fr auto;
   column-gap: var(--ohm-rail-gap);
 }
 
@@ -111,47 +114,33 @@ body {
 .skip:focus { transform: none; }
 
 .site-header {
-  grid-column: 1 / -1;
+  grid-column: 1;
   grid-row: 1;
-  position: sticky;
-  top: 0;
-  z-index: 2;
-  /* paper to the window's edges, so the page scrolls under it cleanly */
-  margin-inline: calc(var(--ohm-frame) * -1);
-  padding-inline: var(--ohm-frame);
-  display: flex;
-  align-items: center;
-  gap: 28px;
-  background: var(--ohm-paper-editorial);
+  align-self: start;
 }
 
 main {
   grid-column: 2;
-  grid-row: 2 / 4;
-  padding: var(--ohm-top) 0 80px;
-}
-
-.site-footer {
-  grid-column: 1;
-  grid-row: 3;
-  align-self: end;
-  padding-top: var(--ohm-top);
+  grid-row: 1 / 3;
+  padding-bottom: 80px;
 }
 
 @media (min-width: 761px) and (min-height: 480px) {
-  .site-footer {
+  .site-header {
     position: sticky;
-    bottom: var(--ohm-frame);
+    top: var(--ohm-frame);
   }
 }
 
-/* ---------- Header ---------- */
+/* ---------- Sidebar ---------- */
 
 .site-mark {
   display: block;
   flex: none;
   width: var(--ohm-mark);
   height: var(--ohm-mark);
+  /* centred on the first line of the page beside it */
+  margin-top: calc((var(--ohm-size) * var(--ohm-leading) - var(--ohm-mark)) / 2);
   border-radius: 50%;
 }
 
@@ -163,14 +152,36 @@ main {
 
 .site-mark:focus-visible { outline-offset: 3px; }
 
-.site-sections {
-  display: flex;
-  gap: 24px;
+/* About and Docs, under the dot. The current page is in full ink with a bar beside it. */
+.site-sections { margin-top: 40px; }
+
+.site-sections ul {
+  list-style: none;
+  padding: 0;
 }
 
-.site-sections a { text-decoration: none; }
+.site-sections li + li { margin-top: 2px; }
 
-.site-sections a:hover { text-decoration: underline; }
+.site-sections a {
+  position: relative;
+  display: inline-block;
+  color: var(--ohm-ink-quiet);
+  text-decoration: none;
+}
+
+.site-sections a:hover,
+.site-sections a[aria-current] { color: var(--ohm-forest); }
+
+.site-sections a[aria-current]::before {
+  content: "";
+  position: absolute;
+  left: -12px;
+  top: 5px;
+  bottom: 5px;
+  width: 2px;
+  border-radius: 1px;
+  background: var(--ohm-forest);
+}
 
 /* ---------- Directory ---------- */
 
@@ -195,7 +206,7 @@ article > header > h1 + * { margin-top: var(--ohm-title-gap); }
 
 section {
   margin-top: var(--ohm-section-gap);
-  scroll-margin-top: calc(var(--ohm-header) + 8px);
+  scroll-margin-top: var(--ohm-frame);
 }
 
 section > * + h3 { margin-top: var(--ohm-subsection-gap); }
@@ -223,39 +234,263 @@ pre {
 
 section ol { margin: 0; padding-left: 1.2em; }
 
-/* ---------- Narrow screens: header, page, directory ---------- */
+/* ---------- Narrow screens: the dot with About and Docs in a row, then the page ---------- */
 
 @media (max-width: 760px) {
-  :root { --ohm-header: 56px; --ohm-frame: calc(var(--ohm-gutter) / 2); }
+  :root { --ohm-frame: calc(var(--ohm-gutter) / 2); }
 
   body {
     display: block;
+    padding-top: 12px;
     padding-bottom: 32px;
   }
 
-  .site-header { height: var(--ohm-header); }
-
-  .site-sections a {
-    display: inline-block;
-    padding-block: 12px; /* 44px touch target */
-  }
-
-  main { padding: 24px 0 56px; }
-
-  .site-footer { padding-top: 0; }
-
-  .site-footer ul {
+  .site-header {
     display: flex;
-    flex-wrap: wrap;
-    gap: 0 24px;
+    align-items: center;
+    gap: 24px;
   }
 
-  .site-footer a {
-    display: inline-block;
-    padding-block: 12px; /* 44px touch target */
+  .site-mark { margin-top: 0; }
+
+  .site-sections { margin-top: 0; }
+
+  .site-sections ul {
+    display: flex;
+    gap: 20px;
   }
+
+  .site-sections li + li { margin-top: 0; }
+
+  .site-sections a { padding-block: 12px; /* 44px touch target */ }
+
+  .site-sections a[aria-current]::before { display: none; }
+
+  .site-sections a[aria-current] {
+    text-decoration: underline;
+    text-underline-offset: 3px;
+    text-decoration-thickness: 1px;
+  }
+
+  main { padding: 28px 0 56px; }
 }
 
 @media (prefers-reduced-motion: no-preference) {
   html { scroll-behavior: smooth; }
 }
+
+/* ---------- Landing ---------- */
+
+.landing {
+  --ohm-line: rgb(1 50 32 / 0.12);
+  --ohm-statement: 400 clamp(32px, 3.6vw, 48px)/1.12 var(--ohm-font-serif);
+  overflow-x: clip; /* the field runs to the window's edges */
+  grid-template-columns: var(--ohm-rail) minmax(0, 1fr);
+  grid-template-rows: auto auto;
+}
+
+.landing main {
+  grid-column: 2;
+  grid-row: 1;
+  padding: 0;
+}
+
+
+/* Every section on a faint rule. */
+.landing article > :is(header, section) {
+  display: grid;
+  grid-template-columns: minmax(0, var(--ohm-measure));
+  align-content: start;
+  margin: 0;
+  padding: 72px 0 0;
+  scroll-margin-top: var(--ohm-frame);
+}
+
+.landing article > section { margin-top: 72px; border-top: 1px solid var(--ohm-line); }
+
+.landing article > :is(header, section) > * { grid-column: 1; }
+
+.landing article > section > h2 {
+  font: var(--ohm-heading-landing);
+  letter-spacing: -0.02em;
+}
+
+.landing article > section > h2 + * { margin-top: 24px; }
+
+/* The statement, on the field. */
+.landing .intro {
+  position: relative;
+  isolation: isolate;
+  grid-template-columns: minmax(0, var(--ohm-measure));
+  align-content: center;
+  min-height: min(760px, calc(100svh - var(--ohm-frame) * 2));
+  padding-top: 0;
+}
+
+.landing .intro .intro-text { grid-column: 1; }
+
+.landing .intro h1 {
+  font: var(--ohm-statement);
+  letter-spacing: -0.025em;
+  text-wrap: balance;
+}
+
+.landing .intro-text > * + * { margin-top: var(--ohm-paragraph); }
+
+.landing .intro-text > h1 + * { margin-top: 28px; }
+
+.landing .actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  margin-top: 32px;
+}
+
+.landing .button {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  min-height: 40px;
+  padding: 8px 18px;
+  border: 1px solid var(--ohm-forest);
+  border-radius: 999px;
+  background: var(--ohm-forest);
+  color: var(--ohm-paper-editorial);
+  font-size: 15px;
+  text-decoration: none;
+  transition: background-color 0.16s, color 0.16s;
+}
+
+.landing .button:hover { background: #00261a; }
+
+.landing .button-quiet {
+  background: none;
+  color: var(--ohm-forest);
+  border-color: var(--ohm-line);
+}
+
+.landing .button-quiet:hover { background: rgb(1 50 32 / 0.05); }
+
+/* The opening section's background: a slow field of the Fatale greens, drawn by landing.js with
+   WebGL. It runs from the window's top and sides and fades into the page by the section's end, so it
+   has no edge; it is mostly paper and lightest behind the text. Without WebGL the stage shows a still
+   version (.is-still). */
+.landing .intro .shade-stage {
+  position: absolute;
+  z-index: -1;
+  top: -120px; /* past the top of the page, so the field has no edge there */
+  left: calc((var(--ohm-rail) + var(--ohm-rail-gap) + var(--ohm-frame)) * -1);
+  right: calc(var(--ohm-frame) * -1);
+  bottom: -120px;
+  pointer-events: none;
+}
+
+.shade-canvas {
+  display: block;
+  width: 100%;
+  height: 100%;
+}
+
+.landing .site-header { z-index: 2; }
+
+.shade-stage.is-still {
+  background:
+    radial-gradient(34% 40% at 78% 30%, rgb(161 163 130 / 0.30), transparent 72%),
+    radial-gradient(30% 36% at 62% 52%, rgb(22 62 44 / 0.22), transparent 72%),
+    radial-gradient(24% 30% at 88% 60%, rgb(42 20 22 / 0.10), transparent 70%);
+}
+
+/* The footer: the name on the left, small columns of links on the right, a quiet line below. */
+.landing .site-footer {
+  grid-column: 1 / -1;
+  grid-row: 2;
+  padding: 56px 0 24px;
+  font-size: 14px;
+  line-height: 1.5;
+}
+
+.footer-top {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1.6fr);
+  gap: 32px;
+}
+
+.footer-name {
+  align-self: start;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin: 0;
+  color: var(--ohm-ink-quiet);
+  font: 400 26px/1 var(--ohm-font-serif);
+  letter-spacing: -0.02em;
+}
+
+.footer-name img {
+  display: block;
+  flex: none;
+  width: 18px;
+  height: 18px;
+  opacity: 0.7;
+}
+
+.footer-columns {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 32px;
+}
+
+/* Each column's name: bold, in plain case. */
+.footer-label {
+  margin: 0 0 8px;
+  color: var(--ohm-forest);
+  font-size: 14px;
+  font-weight: var(--ohm-strong);
+  letter-spacing: normal;
+  text-transform: none;
+}
+
+.landing .site-footer ul {
+  list-style: none;
+  padding: 0;
+}
+
+.landing .site-footer li + li { margin-top: 4px; }
+
+.landing .site-footer li,
+.landing .site-footer a {
+  font-size: 14px;
+  line-height: 1.5;
+}
+
+.landing .site-footer a {
+  color: var(--ohm-ink-quiet);
+  text-decoration: none;
+}
+
+.landing .site-footer a:hover { color: var(--ohm-forest); }
+
+@media (max-width: 760px) {
+  .landing main { padding-top: 0; }
+
+  .landing .intro .shade-stage { left: calc(var(--ohm-frame) * -1); }
+
+  .landing .intro { min-height: 0; }
+
+  .landing article > :is(header, section) { padding-top: 48px; }
+
+  .landing article > section { margin-top: 48px; }
+
+  .footer-top,
+  .footer-columns { grid-template-columns: minmax(0, 1fr); }
+
+  .footer-columns { gap: 24px; }
+
+  .landing .site-footer a {
+    display: inline-block;
+    padding-block: 6px;
+  }
+
+  .landing .site-footer li + li { margin-top: 0; }
+}
+

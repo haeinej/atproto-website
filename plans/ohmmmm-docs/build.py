@@ -8,8 +8,8 @@ code blocks, **bold**, `code`, [links](/docs/page#section)). Edit here, run, and
 
 It writes, in this folder: index.html, one .html per page, 404.html, sitemap.xml and robots.txt.
 It does not write styles.css, reader.js, _headers, wrangler.jsonc or assets/, which are edited by
-hand. In ../ohmmmm-home it replaces each page's header (the "Site shell" block) and keeps the
-company directory on index.html only.
+hand. In ../ohmmmm-home it replaces each page's sidebar (the "Site shell" block: the dot, About, Docs)
+and keeps the company directory on index.html only.
 
 The live ohmmmm.com is built from another repository (ohm, website/public) and is not touched here.
 Deploy the docs from this folder: npx wrangler deploy --profile ohm"""
@@ -943,20 +943,27 @@ for slug in ORDER:
 
 # ---------------------------------------------------------------- ohmmmm.com
 
-MAIN_SHELL = f"""    <!-- Site shell, the same on every page. The header is the ohm dot (home) and Docs, which is its own
-         site at docs.ohmmmm.com. The company directory is on the landing page only (the footer). -->
+def main_shell(page):
+    """The ohmmmm.com sidebar: the dot (home), then About and Docs, the current one marked."""
+    about = ' aria-current="page"' if page == "about" else ""
+    return f"""    <!-- Site shell, the same on every page except aria-current: a sidebar with the ohm dot (home), then
+         About and Docs (its own site, docs.ohmmmm.com). The company directory is on the landing page only. -->
     <header class="site-header">
       <a class="site-mark" href="/"><img src="/assets/favicon.svg" alt="ohm" width="20" height="20"></a>
       <nav class="site-sections" aria-label="Site">
-        <a href="{DOCS_ORIGIN}/">Docs</a>
+        <ul>
+          <li><a href="/about"{about}>About</a></li>
+          <li><a href="{DOCS_ORIGIN}/">Docs</a></li>
+        </ul>
       </nav>
     </header>
 """
 
+
 SHELL = re.compile(r"    <!-- Site shell.*?\n(?=\n    <main)", re.S)
-for name in ["index", "support", "terms", "privacy", "delete-account", "404"]:
+for name in ["index", "about", "support", "terms", "privacy", "delete-account", "404"]:
     file = site / f"{name}.html"
-    out, count = SHELL.subn(lambda _: MAIN_SHELL, file.read_text(), count=1)
+    out, count = SHELL.subn(lambda _: main_shell(name), file.read_text(), count=1)
     assert count == 1, name
     if name != "index":  # the company directory is on the landing page only
         out = re.sub(r"\n    <footer class=\"site-footer\">.*?</footer>\n", "", out, flags=re.S)
