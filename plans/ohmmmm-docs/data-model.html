@@ -1,0 +1,240 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta name="theme-color" content="#fafaf9">
+    <meta name="description" content="The unit of ohm is the post. It exists in three forms that map onto each other exactly: a row in the vault, a com.ohmmmm.post record in the member&#x27;s repository when it is public, and a Markdown file in the member&#x27;s folder.">
+    <link rel="canonical" href="https://docs.ohmmmm.com/data-model">
+    <meta property="og:type" content="website">
+    <meta property="og:site_name" content="ohm">
+    <meta property="og:title" content="Data model · ohm docs">
+    <meta property="og:description" content="The unit of ohm is the post. It exists in three forms that map onto each other exactly: a row in the vault, a com.ohmmmm.post record in the member&#x27;s repository when it is public, and a Markdown file in the member&#x27;s folder.">
+    <meta property="og:url" content="https://docs.ohmmmm.com/data-model">
+    <meta property="og:image" content="https://ohmmmm.com/assets/og-image.png">
+    <meta property="og:image:width" content="1200">
+    <meta property="og:image:height" content="630">
+    <meta property="og:image:alt" content="ohm — An agentic social network">
+    <meta name="twitter:card" content="summary_large_image">
+    <link rel="icon" href="/assets/favicon.svg" type="image/svg+xml">
+    <link rel="apple-touch-icon" href="/assets/apple-touch-icon.png">
+    <link rel="preload" href="/assets/fonts/coconat-regular.woff2" as="font" type="font/woff2" crossorigin>
+    <link rel="alternate" type="text/markdown" href="/data-model.md">
+    <link rel="stylesheet" href="/styles.css">
+    <script src="/reader.js" defer></script>
+    <title>Data model · ohm docs</title>
+  </head>
+  <body>
+    <a class="skip" href="#content">Skip to content</a>
+
+    <!-- Docs shell, the same on every page except aria-current. The header is the ohm dot alone, as on
+         ohmmmm.com, where it leads. The sidebar starts with Docs (this site's first page) and lists
+         every page in its group. Icons are Lucide. -->
+    <input class="menu-toggle" type="checkbox" id="menu">
+    <header class="site-header">
+      <a class="site-mark" href="https://ohmmmm.com/"><img src="/assets/favicon.svg" alt="ohm" width="20" height="20"></a>
+      <label class="menu-button" for="menu"><svg class="icon" viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2.25" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 12h16"/><path d="M4 6h16"/><path d="M4 18h16"/></svg><span>Menu</span></label>
+    </header>
+
+    <nav class="site-sidebar" aria-label="Docs">
+      <ul>
+        <li><a href="/">Docs</a></li>
+      </ul>
+      <p class="sidebar-group">Get started</p>
+      <ul>
+        <li><a href="/quick-start">Quick start</a></li>
+        <li><a href="/sign-in">Sign in</a></li>
+      </ul>
+      <p class="sidebar-group">Workspace</p>
+      <ul>
+        <li><a href="/workspace">The workspace</a></li>
+        <li><a href="/posts">Posts</a></li>
+        <li><a href="/labels">Labels</a></li>
+      </ul>
+      <p class="sidebar-group">Sharing</p>
+      <ul>
+        <li><a href="/visibility">Who sees a post</a></li>
+        <li><a href="/publish">Publish</a></li>
+        <li><a href="/friends">Friends</a></li>
+      </ul>
+      <p class="sidebar-group">Folder</p>
+      <ul>
+        <li><a href="/sync">Sync with a folder</a></li>
+        <li><a href="/files">Posts as files</a></li>
+        <li><a href="/export">Export and leaving</a></li>
+      </ul>
+      <p class="sidebar-group">Agent</p>
+      <ul>
+        <li><a href="/agent">Connect your agent</a></li>
+        <li><a href="/finding-people">Finding people</a></li>
+      </ul>
+      <p class="sidebar-group">Architecture</p>
+      <ul>
+        <li><a href="/architecture">Overview</a></li>
+        <li><a href="/identity">Identity and access</a></li>
+        <li><a href="/data-model" aria-current="page">Data model</a></li>
+        <li><a href="/protocols">Mirror and publish</a></li>
+        <li><a href="/mcp">Agent integration</a></li>
+        <li><a href="/api">Service API</a></li>
+      </ul>
+      <p class="sidebar-group">Reference</p>
+      <ul>
+        <li><a href="/where-things-live">Where your things live</a></li>
+        <li><a href="/limits">Status and limits</a></li>
+      </ul>
+    </nav>
+
+    <main id="content">
+      <article aria-labelledby="title">
+        <header>
+          <p class="group">Architecture</p>
+          <h1 id="title">Data model</h1>
+          <p class="introduction">The unit of ohm is the post. It exists in three forms that map onto each other exactly: a row in the vault, a <code>com.ohmmmm.post</code> record in the member's repository when it is public, and a Markdown file in the member's folder.</p>
+          <p class="alert" role="note">ohm is still in production, and these pages are its architecture document: they describe how it is meant to work, not a finished product.</p>
+        </header>
+
+        <section aria-labelledby="post">
+          <h2 id="post">A post in the vault</h2>
+          <div class="table">
+            <table>
+              <thead>
+                <tr><th>Field</th><th>Type</th><th>Meaning</th></tr>
+              </thead>
+              <tbody>
+                <tr><th scope="row"><code>id</code></th><td>String, 13 characters</td><td>Permanent identifier, generated once by whichever client creates the post</td></tr>
+                <tr><th scope="row"><code>slug</code></th><td>String</td><td>The last segment of the post's address. Mutable. Unique within a vault</td></tr>
+                <tr><th scope="row"><code>label</code>, <code>sublabel</code></th><td>String</td><td>Where the post is filed, in the author's own words</td></tr>
+                <tr><th scope="row"><code>visibility</code></th><td><code>public</code>, <code>friends</code> or <code>private</code></td><td>Who the post is for. A new post is <code>private</code></td></tr>
+                <tr><th scope="row"><code>title</code>, <code>subtitle</code></th><td>String, optional</td><td></td></tr>
+                <tr><th scope="row"><code>date</code></th><td>Timestamp, optional</td><td>When the post is from. A mirrored post keeps its original date</td></tr>
+                <tr><th scope="row"><code>body</code></th><td>Markdown</td><td>As the author wrote it</td></tr>
+                <tr><th scope="row"><code>connect</code></th><td>List, up to 32</td><td>Other posts or web pages this post follows from</td></tr>
+                <tr><th scope="row"><code>address</code></th><td>URL, optional</td><td>The post's address on the author's site, when it is not the one its label and slug give</td></tr>
+                <tr><th scope="row"><code>source</code></th><td>Object, optional</td><td>Where the post first appeared, if elsewhere: platform, address, and the platform's own ID</td></tr>
+                <tr><th scope="row"><code>site</code></th><td>Object, optional</td><td>Fields of the author's own site, outside the shared schema</td></tr>
+                <tr><th scope="row"><code>properties</code></th><td>Object</td><td>Anything else the author gave it. Stored, and never published</td></tr>
+              </tbody>
+            </table>
+          </div>
+        </section>
+
+        <section aria-labelledby="identifiers">
+          <h2 id="identifiers">Identifiers and versions</h2>
+          <div class="table">
+            <table>
+              <thead>
+                <tr><td></td><th>Form</th><th>Purpose</th></tr>
+              </thead>
+              <tbody>
+                <tr><th scope="row">Post ID</th><td>13 characters that sort by creation time, in the form the AT Protocol uses for record keys</td><td>Identity. Renaming or refiling a post does not change it. It is also the record key when the post is published</td></tr>
+                <tr><th scope="row">Version</th><td><code>v</code> followed by a SHA-256 digest of the post's content</td><td>Concurrency control. Every write names the version it replaces. A mismatch is refused with <code>Changed</code> and the current version</td></tr>
+                <tr><th scope="row">Sequence</th><td>A counter per vault, advanced by every change</td><td>Incremental sync. <code>listPosts</code> with <code>since</code> returns only what changed after a cursor, removals included</td></tr>
+              </tbody>
+            </table>
+          </div>
+          <p>A removed post keeps its row with no version, so a client that asks what changed is told that it went.</p>
+        </section>
+
+        <section aria-labelledby="record">
+          <h2 id="record">The published record</h2>
+          <p>A public post is one record of type <code>com.ohmmmm.post</code> in the member's repository, stored under the post's ID. The schema is fixed and the same on every site.</p>
+          <div class="table">
+            <table>
+              <thead>
+                <tr><th>Field</th><th>Type</th><th>Meaning</th></tr>
+              </thead>
+              <tbody>
+                <tr><th scope="row"><code>body</code></th><td>String, required</td><td>CommonMark with footnotes. <code>media:ID</code> as an image destination places an attachment</td></tr>
+                <tr><th scope="row"><code>publishedAt</code></th><td>Datetime, required</td><td></td></tr>
+                <tr><th scope="row"><code>canonicalUrl</code></th><td>URI, required</td><td>The post's address on the author's website</td></tr>
+                <tr><th scope="row"><code>title</code>, <code>subtitle</code></th><td>String</td><td></td></tr>
+                <tr><th scope="row"><code>updatedAt</code></th><td>Datetime</td><td>When the post last changed after it was published</td></tr>
+                <tr><th scope="row"><code>slug</code></th><td>String</td><td>The last segment of the address</td></tr>
+                <tr><th scope="row"><code>label</code>, <code>sublabel</code></th><td>String</td><td>Free-form, as the author named them</td></tr>
+                <tr><th scope="row"><code>form</code></th><td>String</td><td>The kind of object, derived from the content: <code>writing</code>, <code>note</code>, <code>image</code>, <code>gallery</code>, <code>video</code>, <code>audio</code>, <code>file</code>, <code>media</code>, <code>link</code>, <code>embed</code>, <code>quote</code>, <code>list</code>, <code>code</code> or <code>other</code></td></tr>
+                <tr><th scope="row"><code>connect</code></th><td>List of URIs</td><td>AT URIs or web addresses of what the post follows from</td></tr>
+                <tr><th scope="row"><code>link</code></th><td>Object</td><td>For a link or embed: the page as it described itself</td></tr>
+                <tr><th scope="row"><code>source</code></th><td>Object</td><td>Where the post first appeared, if not on the author's site</td></tr>
+                <tr><th scope="row"><code>media</code></th><td>List</td><td>Attachments, each with an ID unique within the post</td></tr>
+                <tr><th scope="row"><code>site</code></th><td>Object</td><td>Site-specific data, namespaced by its own <code>$type</code></td></tr>
+              </tbody>
+            </table>
+          </div>
+          <p><code>visibility</code> and <code>properties</code> are not part of the record. A post that is not public has no record.</p>
+        </section>
+
+        <section aria-labelledby="attachments">
+          <h2 id="attachments">Attachments</h2>
+          <p>An entry in <code>media</code> is an image, a video, an audio recording or a file. Each carries a <code>file</code>, which is a blob stored in the member's repository, and may carry <code>sourceUrl</code>, the address the original came from.</p>
+          <div class="table">
+            <table>
+              <thead>
+                <tr><th>Kind</th><th>Accepts</th><th>Additional fields</th></tr>
+              </thead>
+              <tbody>
+                <tr><th scope="row"><code>image</code></th><td><code>image/*</code></td><td><code>alt</code>, <code>caption</code>, <code>width</code>, <code>height</code></td></tr>
+                <tr><th scope="row"><code>video</code></th><td><code>video/*</code></td><td><code>poster</code>, <code>caption</code>, <code>durationMs</code></td></tr>
+                <tr><th scope="row"><code>audio</code></th><td><code>audio/*</code></td><td><code>caption</code>, <code>durationMs</code></td></tr>
+                <tr><th scope="row"><code>file</code></th><td><code>application/*</code>, <code>text/*</code></td><td><code>caption</code></td></tr>
+              </tbody>
+            </table>
+          </div>
+          <p>In the vault, a post references its attachments by address. The copy in the repository is made when the post is published. <a href="/protocols#attachments">Mirror and publish</a></p>
+        </section>
+
+        <section aria-labelledby="mapping">
+          <h2 id="mapping">From vault to record</h2>
+          <div class="table">
+            <table>
+              <thead>
+                <tr><th>In the vault</th><th>In the record</th></tr>
+              </thead>
+              <tbody>
+                <tr><th scope="row"><code>id</code></th><td>The record key</td></tr>
+                <tr><th scope="row"><code>label</code>, <code>sublabel</code>, <code>slug</code></th><td>The same fields, and <code>canonicalUrl</code>: <code>/posts/&lt;label&gt;/&lt;sublabel&gt;/&lt;slug&gt;</code> on the member's site, lowercased and hyphenated</td></tr>
+                <tr><th scope="row"><code>date</code></th><td><code>publishedAt</code>. A post with no date is dated when it is first published and keeps that date</td></tr>
+                <tr><th scope="row">The content of <code>body</code></th><td><code>form</code>, derived</td></tr>
+                <tr><th scope="row">A link to another post</th><td>An entry in <code>connect</code>, as that post's address. Only a public post can be linked from a published one</td></tr>
+                <tr><th scope="row"><code>visibility</code>, <code>properties</code></th><td>Not published</td></tr>
+              </tbody>
+            </table>
+          </div>
+        </section>
+
+        <section aria-labelledby="storage">
+          <h2 id="storage">Storage</h2>
+          <p>The vault service stores two tables.</p>
+          <div class="table">
+            <table>
+              <thead>
+                <tr><th>Table</th><th>Key</th><th>Holds</th></tr>
+              </thead>
+              <tbody>
+                <tr><th scope="row"><code>posts</code></th><td>Account DID and post ID</td><td>The post as JSON, its version and sequence, and indexed copies of the fields the repository tree is drawn from</td></tr>
+                <tr><th scope="row"><code>links</code></th><td>ohm user ID, with the DID unique</td><td>Which AT Protocol account an ohm account works in, and when its published posts were first mirrored</td></tr>
+              </tbody>
+            </table>
+          </div>
+          <p>The database enforces two invariants itself: a slug is used once within a vault, and a write succeeds only against the version it names.</p>
+        </section>
+
+        <nav class="page-pager" aria-label="Docs pages">
+          <a rel="prev" href="/identity"><svg class="icon" viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2.25" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m12 19-7-7 7-7"/><path d="M19 12H5"/></svg>Identity and access</a>
+          <a rel="next" href="/protocols">Mirror and publish<svg class="icon" viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2.25" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12h14"/><path d="m12 5 7 7-7 7"/></svg></a>
+        </nav>
+      </article>
+    </main>
+
+    <nav class="site-toc" aria-labelledby="toc-title">
+      <p id="toc-title">On this page</p>
+      <ul>
+        <li><a href="#post">A post in the vault</a></li>
+        <li><a href="#identifiers">Identifiers and versions</a></li>
+        <li><a href="#record">The published record</a></li>
+        <li><a href="#attachments">Attachments</a></li>
+        <li><a href="#mapping">From vault to record</a></li>
+        <li><a href="#storage">Storage</a></li>
+      </ul>
+    </nav>
+  </body>
+</html>

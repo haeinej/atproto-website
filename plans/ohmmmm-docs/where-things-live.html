@@ -19,6 +19,7 @@
     <link rel="icon" href="/assets/favicon.svg" type="image/svg+xml">
     <link rel="apple-touch-icon" href="/assets/apple-touch-icon.png">
     <link rel="preload" href="/assets/fonts/coconat-regular.woff2" as="font" type="font/woff2" crossorigin>
+    <link rel="alternate" type="text/markdown" href="/where-things-live.md">
     <link rel="stylesheet" href="/styles.css">
     <script src="/reader.js" defer></script>
     <title>Where your things live · ohm docs</title>
@@ -44,7 +45,7 @@
         <li><a href="/quick-start">Quick start</a></li>
         <li><a href="/sign-in">Sign in</a></li>
       </ul>
-      <p class="sidebar-group">Your workspace</p>
+      <p class="sidebar-group">Workspace</p>
       <ul>
         <li><a href="/workspace">The workspace</a></li>
         <li><a href="/posts">Posts</a></li>
@@ -56,28 +57,37 @@
         <li><a href="/publish">Publish</a></li>
         <li><a href="/friends">Friends</a></li>
       </ul>
-      <p class="sidebar-group">Your folder</p>
+      <p class="sidebar-group">Folder</p>
       <ul>
         <li><a href="/sync">Sync with a folder</a></li>
         <li><a href="/files">Posts as files</a></li>
         <li><a href="/export">Export and leaving</a></li>
       </ul>
-      <p class="sidebar-group">Your agent</p>
+      <p class="sidebar-group">Agent</p>
       <ul>
         <li><a href="/agent">Connect your agent</a></li>
         <li><a href="/finding-people">Finding people</a></li>
       </ul>
-      <p class="sidebar-group">Before you rely on it</p>
+      <p class="sidebar-group">Architecture</p>
+      <ul>
+        <li><a href="/architecture">Overview</a></li>
+        <li><a href="/identity">Identity and access</a></li>
+        <li><a href="/data-model">Data model</a></li>
+        <li><a href="/protocols">Mirror and publish</a></li>
+        <li><a href="/mcp">Agent integration</a></li>
+        <li><a href="/api">Service API</a></li>
+      </ul>
+      <p class="sidebar-group">Reference</p>
       <ul>
         <li><a href="/where-things-live" aria-current="page">Where your things live</a></li>
-        <li><a href="/limits">What to know first</a></li>
+        <li><a href="/limits">Status and limits</a></li>
       </ul>
     </nav>
 
     <main id="content">
       <article aria-labelledby="title">
         <header>
-          <p class="group">Before you rely on it</p>
+          <p class="group">Reference</p>
           <h1 id="title">Where your things live</h1>
           <p class="introduction">ohm keeps a working copy of your posts, private ones included, so that you and your agent can work from anywhere. Your originals live with you.</p>
           <p class="alert" role="note">ohm is still in production, and these pages are its architecture document: they describe how it is meant to work, not a finished product.</p>
@@ -91,7 +101,7 @@
                 <tr><td></td><th>What is there</th><th>Whose it is</th></tr>
               </thead>
               <tbody>
-                <tr><th scope="row">Your account on the open network</th><td>Your public posts, and your identity</td><td>Yours. It is hosted by Bluesky or on a server you run, and it can be moved. Hosting by ohm is planned</td></tr>
+                <tr><th scope="row">Your account on the open network</th><td>Your public posts, and your identity</td><td>Yours. It is hosted by Bluesky or on a server you run, and it can be moved</td></tr>
                 <tr><th scope="row">Your ohm account</th><td>Who you are when you sign in to ohm</td><td>Made with Google, Microsoft or Bluesky. It holds no posts</td></tr>
                 <tr><th scope="row">Your folder</th><td>Every post that is not public, as Markdown files</td><td>Yours, on your machine or in your own cloud storage</td></tr>
                 <tr><th scope="row">Your workspace on ohm</th><td>A working copy of all of it</td><td>ohm holds it for you</td></tr>
@@ -138,8 +148,8 @@
         </section>
 
         <nav class="page-pager" aria-label="Docs pages">
-          <a rel="prev" href="/finding-people"><svg class="icon" viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2.25" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m12 19-7-7 7-7"/><path d="M19 12H5"/></svg>Finding people</a>
-          <a rel="next" href="/limits">What to know first<svg class="icon" viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2.25" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12h14"/><path d="m12 5 7 7-7 7"/></svg></a>
+          <a rel="prev" href="/api"><svg class="icon" viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2.25" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m12 19-7-7 7-7"/><path d="M19 12H5"/></svg>Service API</a>
+          <a rel="next" href="/limits">Status and limits<svg class="icon" viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2.25" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12h14"/><path d="m12 5 7 7-7 7"/></svg></a>
         </nav>
       </article>
     </main>

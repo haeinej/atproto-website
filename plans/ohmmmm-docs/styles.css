@@ -31,6 +31,7 @@
   --ohm-selection: rgb(161 214 174 / 0.42);
   --ohm-tint: rgb(161 214 174 / 0.3); /* behind the current page in the sidebar */
   --ohm-tint-soft: rgb(161 214 174 / 0.14); /* behind a sidebar row under the pointer */
+  --ohm-figure: #eef5ef; /* the panel a diagram sits on: the soft tint, as a solid colour */
 
   --ohm-size: 16px;
   --ohm-size-small: 14px; /* the sidebar and the reader */
@@ -316,8 +317,7 @@ main {
 
 /* ---------- The page ---------- */
 
-.group,
-.note { color: var(--ohm-ink-quiet); }
+.group { color: var(--ohm-ink-quiet); }
 
 /* The notice on every page: ohm is still being made, and these pages say how it is meant to
    work. It is a warning, so it is set in the red ohm keeps for warnings: a wash with no edge. */
@@ -330,7 +330,6 @@ main {
   font-size: var(--ohm-size-small);
 }
 .alert a { color: inherit; }
-.alert + .note { margin-top: 12px; }
 
 /* The group a page is in, above its title. */
 article > header > .group {
@@ -387,6 +386,48 @@ pre {
   overflow-x: auto;
 }
 
+/* A diagram: drawn by build.py as SVG with a class on every shape, and set on a quiet panel. On a
+   narrow screen it keeps its size and scrolls sideways, so its words stay readable. */
+.figure { margin: 0; }
+section > .figure { margin-block: 1.5em; }
+
+.figure-scroll {
+  padding: 24px;
+  border-radius: 16px;
+  background: var(--ohm-figure);
+  overflow-x: auto;
+}
+
+.figure svg {
+  display: block;
+  width: 100%;
+  min-width: 560px;
+  height: auto;
+  font-family: var(--ohm-font-sans);
+}
+
+.figure figcaption {
+  margin-top: 10px;
+  color: var(--ohm-ink-quiet);
+  font-size: var(--ohm-size-small);
+}
+
+.d-group { fill: rgb(1 50 32 / 0.05); }
+.d-box { fill: var(--ohm-paper-editorial); }
+.d-outside { fill: none; stroke: var(--ohm-line); stroke-width: 1.5; stroke-dasharray: 4 4; }
+.d-note { fill: var(--ohm-forest); }
+.d-title { fill: var(--ohm-forest); font-size: 13.5px; font-weight: 600; letter-spacing: -0.01em; }
+.d-sub { fill: var(--ohm-ink-quiet); font-size: 12px; }
+.d-caption { fill: var(--ohm-ink-quiet); font-size: 10.5px; font-weight: 600; letter-spacing: 0.08em; }
+.d-label { fill: var(--ohm-ink-quiet); font-size: 12px; }
+/* A step's words can sit across another part's line, so they carry the panel's colour behind them. */
+.d-step { fill: var(--ohm-forest); font-size: 12.5px; paint-order: stroke; stroke: var(--ohm-figure); stroke-width: 6px; stroke-linejoin: round; }
+.d-note + .d-step { fill: var(--ohm-paper-editorial); stroke: none; }
+.d-arrow { fill: none; stroke: var(--ohm-forest); stroke-width: 1.5; }
+.d-dashed { stroke-dasharray: 5 4; }
+.d-head { fill: var(--ohm-forest); }
+.d-life { fill: none; stroke: var(--ohm-line); stroke-width: 1.5; }
+
 /* A table is set apart by space alone: no rules, the first column in the heading weight. */
 .table { overflow-x: auto; }
 
@@ -407,6 +448,10 @@ th, td {
 th { font-weight: var(--ohm-strong); }
 
 :is(th, td):last-child { padding-right: 0; }
+
+/* A list of facts has no heading row, and its names keep one width down a page of such lists. */
+.facts thead { display: none; }
+.facts th { width: 8.5em; }
 
 /* The page before and the page after. */
 .page-pager {

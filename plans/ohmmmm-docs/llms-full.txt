@@ -1,0 +1,1572 @@
+# ohm docs
+
+> ohm is an agentic social network that extends a person's own website: a vault of posts that are private, for friends or public, with public posts published to the person's own AT Protocol account, and tools that let their agent work in the vault.
+
+ohm is still in production, and these pages are its architecture document: they describe how it is meant to work, not a finished product.
+
+## System overview
+
+ohm is built from three kinds of system with a strict division of ownership: the member's AT Protocol account, which holds their identity and everything public; ohm's services, which hold a working copy; and clients on the member's device, the only place a write to the member's account originates.
+
+### How it works
+
+Everything in ohm is a post, and every post is in a member's vault: one working copy of all their work, held by ohm, in a structure of labels, sublabels and posts. A post is private, for friends, or public. The whole system follows from keeping two things apart: working in the vault, and publishing from it.
+
+1. **Sign in.** A person signs in to ohm, and once connects the AT Protocol account that owns their posts. That account lives on a Personal Data Server (PDS) they host themselves or at Bluesky. It is theirs whether or not they use ohm.
+2. **Mirror.** What the account has already published is read from its repository into the vault. From then on the vault holds everything: public posts, and private and friends-only ones that exist nowhere else on the network.
+3. **Work.** Posts are read, written and filed in the vault, through any of three clients: the workspace in a browser, an agent's tools, or a synced folder of Markdown files. A new post is private. Saving changes the vault and nothing else.
+4. **Mark.** Setting a post to public or friends marks it. Nothing is shared by marking.
+5. **Publish.** The vault service works out what would have to change in the member's repository for what is published to match the vault. The member reviews that plan and approves it, and their own device, signed in at their own PDS, makes the changes. Public posts become `com.ohmmmm.post` records.
+6. **Read.** The member's website and any other AT Protocol application read those records from the repository. ohm is not in that path.
+7. **Keep.** The vault can be synced to a folder the member holds, or exported, as Markdown files. With a folder connected, nothing depends on ohm keeping its copy.
+
+Three rules hold everywhere and are worth knowing before anything else.
+
+- **Saving never publishes.** Only Publish changes what other people see, and it always shows the change first.
+- **ohm never writes to a member's repository.** It has no credential that could. Every write comes from the member's own device.
+- **Private stays in the vault.** A private post is never written to the repository, where everything is public.
+
+### Components
+
+Diagram: the parts of ohm and what passes between them.
+- On the member's device: the workspace (browser), the agent tools (MCP server) and folder sync (command line).
+- Run by ohm: the vault service (the working copy of every post) and ohm sign-in (accounts and sessions).
+- The member's own account, on the AT Protocol: a Personal Data Server holding their identity and public repository.
+- Device → vault service: API requests.
+- Device → Personal Data Server: sign-in, service tokens, and the writes of a publish.
+- Vault service → Personal Data Server: reads only.
+- Vault service → ohm sign-in: session check.
+- Personal Data Server → the member's website and other applications: public records.
+
+| Component | Runs on | Responsibility | Status |
+| --- | --- | --- | --- |
+| Workspace | The member's browser, served from `app.ohmmmm.com/vault` | Editor, repository tree, publish review | Implemented |
+| Agent tools | An MCP server, `ohm-vault`, on the member's machine | Ten tools composed from service requests. [Agent integration](https://docs.ohmmmm.com/mcp.md) | Implemented |
+| Folder sync | A command-line client on the member's machine | Two-way sync between the vault and a folder of Markdown files | Implemented |
+| Vault service | Cloudflare Workers and D1 | Stores the working copy of every post. Computes mirror and publish plans. Never writes to a member's repository | Implemented |
+| ohm sign-in | Cloudflare Workers and D1 | ohm accounts and sessions, with Google, Microsoft and Bluesky as identity providers | Implemented |
+| Personal Data Server (PDS) | The member's host: self-hosted, or Bluesky | The account's DID, signing key, and repository of public records and files | External |
+| Website and other applications | Their own hosts | Read public records from the repository | External |
+| Network service | | Friends-only delivery, the follow graph, and matching | Planned |
+
+### Ownership
+
+Each kind of data has one system of record. ohm is the system of record for nothing a member cannot take away.
+
+| Data | System of record | What ohm holds |
+| --- | --- | --- |
+| Identity: DID, handle, signing key | The member's PDS | A reference to the DID |
+| Public posts | The member's repository, as `com.ohmmmm.post` records | A working copy |
+| Private and friends-only posts | The member's folder, once connected | A working copy. Until a folder is connected, the only copy |
+| ohm account and session | ohm sign-in | The account itself |
+| The link between an ohm account and a DID | Vault service | One row, unique in both directions |
+
+### Design principles
+
+1. **The service never writes to a member's repository.** It holds no credential that could. Publishing is planned by the service and carried out from the member's device. [Mirror and publish](https://docs.ohmmmm.com/protocols.md)
+2. **Authentication is delegated to the member's PDS.** The PDS signs a short-lived token for each request, and the service verifies it against the account's own DID document. ohm stores no PDS password or token. [Identity and access](https://docs.ohmmmm.com/identity.md)
+3. **Every change is conditional.** A write names the version it replaces and is refused if the post has moved on, so the editor, an agent and a sync can work on the same vault without overwriting each other.
+4. **Capabilities are isolated.** The service offers eight capabilities, each a separate module with its own requests. An agent's tools are compositions of those requests and add none of their own. [Service API](https://docs.ohmmmm.com/api.md)
+5. **Requests are idempotent.** A request sent twice ends in the same state as one sent once. A post's ID is generated by the client, so creating it twice creates one post.
+6. **One portable format.** Sync and export produce the same folder of Markdown files, and reading them back yields the same posts. [Posts as files](https://docs.ohmmmm.com/files.md)
+
+### Deployment
+
+| Address | Serves |
+| --- | --- |
+| `app.ohmmmm.com/vault/` | The workspace, and the service API under `/vault/xrpc/`, where the ohm session cookie is in scope |
+| `vault.ohmmmm.com` | The service API under `/xrpc/`. The service identifies itself as `did:web:vault.ohmmmm.com` |
+| `app.ohmmmm.com/api/auth/` | ohm sign-in |
+| `docs.ohmmmm.com` | This documentation |
+
+The vault service and ohm sign-in are separate Workers with separate databases. The vault service asks ohm sign-in whose session a request carries; ohm sign-in asks the vault service which account a PDS token names. Neither reads the other's database.
+
+### In this section
+
+- [Identity and access](https://docs.ohmmmm.com/identity.md): the two identities, and how every request is authenticated.
+- [Data model](https://docs.ohmmmm.com/data-model.md): a post in the vault, the published record, identifiers and versions.
+- [Mirror and publish](https://docs.ohmmmm.com/protocols.md): the two exchanges with a member's repository.
+- [Agent integration](https://docs.ohmmmm.com/mcp.md): the MCP server, its tools, and how changes are confirmed.
+- [Service API](https://docs.ohmmmm.com/api.md): every request, error and agent tool.
+
+## Identity and access
+
+A member has two identities: an ohm account, which says who is signed in, and an AT Protocol account, which owns their posts. Every request to the vault service is authenticated by one of them, and resolved to exactly one AT Protocol account before any data is read.
+
+### Two identities
+
+| | ohm account | AT Protocol account |
+| --- | --- | --- |
+| Identifies | The person signed in | The owner of the posts |
+| Identifier | An internal user ID | A DID, such as `did:plc:…` or `did:web:example.com` |
+| Issued by | ohm sign-in, through Google, Microsoft or Bluesky | The member's PDS |
+| Credential | A session cookie on `app.ohmmmm.com` | A service token signed by the PDS |
+| Holds | No posts | The repository of public records |
+
+One ohm account is connected to one AT Protocol account, and that account to one ohm account. The vault service enforces the constraint in both directions.
+
+### Resolving an account
+
+A member names their account by its handle, which is a domain name. The service resolves it as the AT Protocol specifies, and believes nothing it cannot confirm from the account's own documents.
+
+1. **Handle to DID.** A `TXT` record at `_atproto.<handle>`, or failing that the file `https://<handle>/.well-known/atproto-did`.
+2. **DID to document.** `did:plc` from the public directory, `did:web` from the domain's `/.well-known/did.json`.
+3. **Confirmation.** The document must name the handle back in `alsoKnownAs`. A handle that points at a DID which does not claim it is refused.
+4. **Endpoints.** The PDS address is the document's `#atproto_pds` service, and the signing key is its `#atproto` verification method.
+
+Redirects are not followed at any step: an answer has to come from the address that was asked.
+
+### Authenticating a request
+
+A request carries one of two credentials.
+
+**A service token from the member's PDS.** This is what the command line and an agent's tools send. The client asks the PDS for a token for one named request, and the service verifies it against the account's DID document.
+
+Diagram: how a request with a service token is authenticated.
+1. Client → Member's PDS: getServiceAuth
+2. Member's PDS → Client: Signed token (response)
+3. Client → Vault service: Request with the token
+4. Vault service → DID document: Resolve the DID
+5. DID document → Vault service: Signing key (response)
+6. Vault service → Client: Response
+
+| Claim | Check |
+| --- | --- |
+| `iss` | A well-formed DID, and on the allow list while access is restricted. Checked before anything is fetched, so a token cannot make the service read an address of the sender's choosing |
+| `aud` | The service's own DID, `did:web:vault.ohmmmm.com` |
+| `lxm` | The exact request being made. A token for one request is not accepted for another |
+| `exp`, `iat` | Not expired, valid for no more than one hour, and not dated in the future. |
+| Signature | ES256K or ES256, in low-S form, against the signing key in the DID document. Documents are cached for five minutes |
+
+**An ohm session.** This is what the workspace sends. A request with no `Authorization` header is checked against ohm sign-in, which answers whose session the cookie is. The service then looks up the AT Protocol account that member connected. A request that changes anything must also originate from ohm's own pages.
+
+### Access levels
+
+Each request declares one access level, and the router settles it before the request's own code runs.
+
+| Level | Accepted credential | Used for |
+| --- | --- | --- |
+| Public | None | Finding an account from its handle |
+| Any authenticated account | A service token from any PDS | Establishing which account a token names, during sign-in |
+| Member | A service token from the member's own PDS, or an ohm session connected to that account | Every request that reads or changes a vault |
+| Member, with an ohm session | An ohm session only | Connecting and disconnecting an AT Protocol account |
+
+A member's vault is served to that member and to nobody else.
+
+### Signing in at the PDS
+
+The workspace needs the member to sign in at their PDS twice in its life: to connect the account, and each time they publish. There are two ways, and both work with any PDS.
+
+- **An app password.** The member types it on ohm's page. The page sends it directly to the member's PDS (`com.atproto.server.createSession`) and to no other host. The resulting PDS session is held in the page's memory for that task and ended with `deleteSession` when the task completes. Neither the password nor the session is stored, and neither reaches ohm.
+- **OAuth.** The member approves at the PDS's own screen, where a passkey works. The flow is the AT Protocol profile of OAuth: pushed authorization requests, PKCE, and DPoP-bound tokens.
+
+### Connecting an account
+
+1. The page resolves the handle with `com.ohmmmm.identity.findAccount`, which also returns the service's DID.
+2. The member signs in at their PDS.
+3. The page asks the PDS for a service token issued for `com.ohmmmm.account.connect`.
+4. The service verifies the token and records the link between the ohm account and the DID. It refuses if either side is already connected elsewhere.
+5. ohm sign-in is told of the link, so that signing in with that AT Protocol account later resolves to the same ohm account.
+
+### Signing in with Bluesky
+
+Bluesky is an identity provider for ohm accounts as well as a host for AT Protocol accounts.
+
+1. The member approves at Bluesky through OAuth.
+2. The page obtains a service token issued for `com.ohmmmm.identity.whoAmI` and hands it to ohm sign-in.
+3. ohm sign-in asks the vault service which account the token names. The service verifies the token as above.
+4. ohm sign-in opens a session for the ohm account connected to that DID, creating the account on first sign-in. The token is accepted once.
+
+Because the identity provider is the member's own AT Protocol account, the connection step is already complete.
+
+### Access during testing
+
+While ohm is tested, the service accepts requests only from DIDs on an allow list. An account that is not on it receives `NotAMember`.
+
+## Data model
+
+The unit of ohm is the post. It exists in three forms that map onto each other exactly: a row in the vault, a `com.ohmmmm.post` record in the member's repository when it is public, and a Markdown file in the member's folder.
+
+### A post in the vault
+
+| Field | Type | Meaning |
+| --- | --- | --- |
+| `id` | String, 13 characters | Permanent identifier, generated once by whichever client creates the post |
+| `slug` | String | The last segment of the post's address. Mutable. Unique within a vault |
+| `label`, `sublabel` | String | Where the post is filed, in the author's own words |
+| `visibility` | `public`, `friends` or `private` | Who the post is for. A new post is `private` |
+| `title`, `subtitle` | String, optional | |
+| `date` | Timestamp, optional | When the post is from. A mirrored post keeps its original date |
+| `body` | Markdown | As the author wrote it |
+| `connect` | List, up to 32 | Other posts or web pages this post follows from |
+| `address` | URL, optional | The post's address on the author's site, when it is not the one its label and slug give |
+| `source` | Object, optional | Where the post first appeared, if elsewhere: platform, address, and the platform's own ID |
+| `site` | Object, optional | Fields of the author's own site, outside the shared schema |
+| `properties` | Object | Anything else the author gave it. Stored, and never published |
+
+### Identifiers and versions
+
+| | Form | Purpose |
+| --- | --- | --- |
+| Post ID | 13 characters that sort by creation time, in the form the AT Protocol uses for record keys | Identity. Renaming or refiling a post does not change it. It is also the record key when the post is published |
+| Version | `v` followed by a SHA-256 digest of the post's content | Concurrency control. Every write names the version it replaces. A mismatch is refused with `Changed` and the current version |
+| Sequence | A counter per vault, advanced by every change | Incremental sync. `listPosts` with `since` returns only what changed after a cursor, removals included |
+
+A removed post keeps its row with no version, so a client that asks what changed is told that it went.
+
+### The published record
+
+A public post is one record of type `com.ohmmmm.post` in the member's repository, stored under the post's ID. The schema is fixed and the same on every site.
+
+| Field | Type | Meaning |
+| --- | --- | --- |
+| `body` | String, required | CommonMark with footnotes. `media:ID` as an image destination places an attachment |
+| `publishedAt` | Datetime, required | |
+| `canonicalUrl` | URI, required | The post's address on the author's website |
+| `title`, `subtitle` | String | |
+| `updatedAt` | Datetime | When the post last changed after it was published |
+| `slug` | String | The last segment of the address |
+| `label`, `sublabel` | String | Free-form, as the author named them |
+| `form` | String | The kind of object, derived from the content: `writing`, `note`, `image`, `gallery`, `video`, `audio`, `file`, `media`, `link`, `embed`, `quote`, `list`, `code` or `other` |
+| `connect` | List of URIs | AT URIs or web addresses of what the post follows from |
+| `link` | Object | For a link or embed: the page as it described itself |
+| `source` | Object | Where the post first appeared, if not on the author's site |
+| `media` | List | Attachments, each with an ID unique within the post |
+| `site` | Object | Site-specific data, namespaced by its own `$type` |
+
+`visibility` and `properties` are not part of the record. A post that is not public has no record.
+
+### Attachments
+
+An entry in `media` is an image, a video, an audio recording or a file. Each carries a `file`, which is a blob stored in the member's repository, and may carry `sourceUrl`, the address the original came from.
+
+| Kind | Accepts | Additional fields |
+| --- | --- | --- |
+| `image` | `image/*` | `alt`, `caption`, `width`, `height` |
+| `video` | `video/*` | `poster`, `caption`, `durationMs` |
+| `audio` | `audio/*` | `caption`, `durationMs` |
+| `file` | `application/*`, `text/*` | `caption` |
+
+In the vault, a post references its attachments by address. The copy in the repository is made when the post is published. [Mirror and publish](https://docs.ohmmmm.com/protocols.md#attachments)
+
+### From vault to record
+
+| In the vault | In the record |
+| --- | --- |
+| `id` | The record key |
+| `label`, `sublabel`, `slug` | The same fields, and `canonicalUrl`: `/posts/<label>/<sublabel>/<slug>` on the member's site, lowercased and hyphenated |
+| `date` | `publishedAt`. A post with no date is dated when it is first published and keeps that date |
+| The content of `body` | `form`, derived |
+| A link to another post | An entry in `connect`, as that post's address. Only a public post can be linked from a published one |
+| `visibility`, `properties` | Not published |
+
+### Storage
+
+The vault service stores two tables.
+
+| Table | Key | Holds |
+| --- | --- | --- |
+| `posts` | Account DID and post ID | The post as JSON, its version and sequence, and indexed copies of the fields the repository tree is drawn from |
+| `links` | ohm user ID, with the DID unique | Which AT Protocol account an ohm account works in, and when its published posts were first mirrored |
+
+The database enforces two invariants itself: a slug is used once within a vault, and a write succeeds only against the version it names.
+
+## Mirror and publish
+
+Two exchanges connect a vault to its member's repository. Mirror reads what is published into the vault. Publish makes what is published match the vault. The service reads the repository in both, and writes to it in neither.
+
+### Mirror
+
+Mirror brings what a member has already published into their vault. It needs no credential at the PDS, because a repository's records are public.
+
+1. **Locate.** The service takes the PDS address from the member's DID document and the website from their handle.
+2. **Discover.** It lists the repository's collections and keeps the shared type, `com.ohmmmm.post`, and any type of the member's own whose records read as posts: a body and a publication date. Protocol and Bluesky types are not examined.
+3. **Read.** It reads every record of those types. Where a post exists in both an older type and the shared one, the shared one is kept.
+4. **Report.** It returns what it found before saving anything: the number of posts, which would differ from what is published, what could not be carried over, and what was skipped.
+5. **Apply.** On request, it saves the posts. Each save is conditional on the post's version, so a post the member has since changed in the vault is never overwritten.
+
+Mirror runs once automatically when an account is first connected, and on demand afterwards. Mirrored posts are already public and remain public. Nothing new is shared.
+
+### Publish
+
+Publish is split between the service, which computes a plan, and the member's device, which carries it out.
+
+Diagram: the sequence of a publish.
+1. Member's device → Vault service: getPublishPlan
+2. Vault service → Member's PDS: listRecords
+3. Vault service → Member's device: Plan and its writes (response)
+4. Member's device: The member approves
+5. Member's device → Member's PDS: createSession
+6. Member's device → Vault service: getAttachment
+7. Member's device → Member's PDS: uploadBlob
+8. Member's device → Member's PDS: applyWrites
+9. Member's device → Member's PDS: deleteSession
+
+1. **Plan.** The device requests `getPublishPlan` with `prepare`. The service compares every post in the vault with the records of the shared type in the repository.
+2. **Read.** The service reads those records from the PDS with `listRecords`. This is its only contact with the PDS.
+3. **Return.** The plan lists what would be created, replaced and removed, what cannot be published and why, and the writes themselves. It is named by a digest of those writes.
+4. **Approve.** The member reviews the plan. Nothing has changed at this point.
+5. **Sign in.** The device signs in at the member's PDS, with an app password or through OAuth.
+6. **Fetch.** For each attachment the PDS does not hold, the device obtains the file through `getAttachment`.
+7. **Upload.** The device stores each file in the repository with `uploadBlob`.
+8. **Write.** The device applies the changes with `applyWrites`.
+9. **Sign out.** The PDS session is ended.
+
+The code that carries out a plan is the same in the workspace and in an agent's tools, so a post published from either is the same record.
+
+### Plan rules
+
+Three rules keep the plan safe in a repository that other software also writes to.
+
+1. **Only the shared post type is touched.** A record of any other type is not examined.
+2. **A record is removed only if it is known to be a post of this vault:** one that is no longer public, or one the member removed. A record the vault does not know is left in place and reported.
+3. **A post that cannot be published is reported with the reason,** and whatever is published of it stays as it is.
+
+| Category | Meaning |
+| --- | --- |
+| `create` | Public in the vault, absent from the repository |
+| `replace` | Public in the vault, and different from the record. The plan names the fields that differ |
+| `remove` | Published, and now private, friends-only or removed from the vault |
+| `unchanged` | Identical to the record |
+| `cannot` | Public in the vault, but not valid as a record. The reasons are listed |
+| `notInVault` | Published under the shared type, and unknown to the vault |
+
+### Attachments
+
+A post in the vault references its files by address. Publishing gives the repository a copy of each.
+
+- **A file the member's PDS already holds** is referenced by its content ID. The service confirms its type and size with a `HEAD` request and nothing is uploaded.
+- **Any other file** is fetched for the device by the service, because a page in a browser cannot read a file from another site. The service fetches only addresses that one of the member's own posts places, over HTTPS, up to 25 MB.
+- **The original address** is recorded with the copy as `sourceUrl`.
+
+A file that cannot be fetched stops that post from publishing and is reported. Other posts are unaffected.
+
+### Consistency and consent
+
+- **Writes are atomic.** `applyWrites` applies a batch entirely or not at all. A plan is sent as one batch up to 200 changes.
+- **Approval is bound to the plan.** The plan's name is a digest of its writes. An agent's confirmation carries that name, so approval of one plan cannot be used for another.
+- **Publishing is repeatable.** A plan is computed from current state each time. Running it again after a partial failure produces only the changes still outstanding.
+- **Records keep their keys.** A record is stored under the post's permanent ID. A record published before posts had IDs is moved to its ID in the same batch that removes the old one.
+
+### Consequences
+
+- ohm cannot publish, edit or remove anything in a member's repository on its own, including in response to a fault or a compromise of the service.
+- Nothing is published in the background. Every publish begins with the member present and signed in at their PDS.
+- A published post is public from the moment it is written. Removing it removes the record, not copies that other services have made.
+
+## Agent integration
+
+An agent reaches a vault through an MCP server that runs on the member's own machine. The server authenticates as the member, composes its tools from service requests, and requires confirmation for every change that others could see.
+
+### Overview
+
+ohm does not run an agent. It ships a Model Context Protocol (MCP) server, `ohm-vault`, that a member runs on their own machine and connects to the agent they already use. The server exposes ten tools, and each tool is a composition of vault service requests made as the member.
+
+Diagram: the path of one tool call.
+1. Agent → MCP server: tools/call
+2. MCP server → Member's PDS: getServiceAuth
+3. Member's PDS → MCP server: Signed token (response)
+4. MCP server → Vault service: Request with the token
+5. Vault service → MCP server: Response
+6. MCP server → Agent: Tool result (response)
+
+1. **Call.** The agent calls a tool over the MCP connection.
+2. **Vouch.** The server asks the member's PDS for a service token for the one request it is about to make.
+3. **Token.** The PDS returns a token signed with the account's key.
+4. **Request.** The server sends the request to the vault service with that token.
+5. **Response.** The service verifies the token and answers. [Identity and access](https://docs.ohmmmm.com/identity.md#authentication)
+6. **Result.** The server returns the tool's result to the agent.
+
+The tools work in the same working copy the workspace shows. A post an agent saves is the same row, with the same version, that the editor opens.
+
+### What an agent should know
+
+An agent that reads only this section can work in a vault correctly.
+
+- **The vault is one person's work,** as posts filed under labels and sublabels. Start with `vault_tree` to see its shape, then `vault_read` or `vault_search`.
+- **Every post is private, for friends, or public.** Private posts are context for helping the member. Nothing from one belongs in anything another person can see.
+- **A new post is saved private.** `vault_save` never shares anything. To change who a post is for, use `vault_set_visibility`, which always asks first.
+- **Saving is not publishing.** A post marked public reaches the member's website and the network only through `vault_publish`. `vault_status` says what is waiting.
+- **Changes are made from a version.** `vault_read` returns it, and `vault_save` passes it back. If the post changed in between, read it again.
+- **A two-call tool is asking for the member's decision.** Show the member what the first call returned, and make the second call only if they agree.
+- **Publishing cannot be recalled.** Other services copy a public post as soon as it is written.
+
+### Protocol
+
+| | |
+| --- | --- |
+| Transport | Standard input and output. One JSON-RPC 2.0 message per line in each direction |
+| Protocol versions | `2025-06-18`, `2025-03-26`, `2024-11-05` |
+| Methods | `initialize`, `ping`, `tools/list`, `tools/call` |
+| Capabilities | Tools only. The server offers no resources and no prompts |
+| Server name | `ohm-vault` |
+| Ordering | Calls are handled one at a time, in the order received, so two changes to the same post cannot cross |
+| Results | A tool's result is JSON, returned as text content. A refusal is a result marked `isError` with a message the agent can read and act on |
+| Annotations | Tools that only read carry `readOnlyHint`. `vault_delete` carries `destructiveHint` |
+| Instructions | On `initialize`, the server states the rules of the vault to the agent: what private means, and that any change other people can see is shown to the member first |
+
+Listing the tools needs no configuration and no sign-in. The server signs in at the PDS the first time a tool is called.
+
+### Configuration
+
+| Setting | Source | Purpose |
+| --- | --- | --- |
+| The member's account | The site configuration file, found in the agent's working folder, or named with `--config` or `OHM_CONTENT_LAYER_CONFIG` | Which AT Protocol account the server acts as |
+| `ATPROTO_APP_PASSWORD` | Environment | An app password for the member's PDS. It can be revoked at the PDS at any time |
+| `OHM_VAULT_URL`, `OHM_VAULT_DID` | Configuration, or the flags `--vault` and `--vault-did` | The vault service to use. Defaults to `https://vault.ohmmmm.com` and `did:web:vault.ohmmmm.com` |
+
+The server is started by the ohm plugin for agents that load it, or directly:
+
+```
+npx github:haeinej/ohm-content-layer mcp
+```
+
+### Authentication
+
+The server holds one credential: the app password, in its own environment on the member's machine.
+
+- **It signs in at the member's PDS** with `com.atproto.server.createSession` and renews the session when it expires.
+- **Each request to the vault service carries its own token,** obtained from the PDS with `getServiceAuth` for that request's name and valid for 60 seconds.
+- **The vault service never receives the app password** or the PDS session. It sees only tokens it can verify against the account's DID document.
+- **Publishing uses the same PDS session.** The server uploads files and applies the plan's writes itself, as the workspace does in a browser. [Mirror and publish](https://docs.ohmmmm.com/protocols.md#publish)
+
+### Tools
+
+| Tool | Effect | Confirmation | Requests used |
+| --- | --- | --- | --- |
+| `vault_tree` | Read | None | `getTree` |
+| `vault_list` | Read | None | `getTree` |
+| `vault_read` | Read | None | `getTree`, `getPost` |
+| `vault_search` | Read | None | `searchPosts` |
+| `vault_save` | Change | When the post is not private | `getTree`, `getPost`, `putPost` |
+| `vault_set_visibility` | Change | Always | `getTree`, `getPost`, `putPost` |
+| `vault_status` | Read | None | `getPublishPlan` |
+| `vault_publish` | Change | Always | `getPublishPlan`, `getAttachment` |
+| `vault_mirror` | Change | Always | `importPublished` |
+| `vault_delete` | Change | Always | `getTree`, `getPost`, `deletePost` |
+
+A tool has no capability of its own. Anything a tool can do, the service API can do, and the access rules are the service's. [Service API](https://docs.ohmmmm.com/api.md)
+
+### Confirmation
+
+A tool that changes something other people can see, or removes something, takes two calls.
+
+1. **The first call changes nothing.** It returns `done: false`, a description of exactly what would happen in `willHappen`, and a `confirm` value.
+2. **The agent shows that description to the member.**
+3. **The second call repeats the request with the `confirm` value,** and only then does the change happen.
+
+The `confirm` value is a digest of the request and of the state it was computed from: the post's current version, or the publish plan. If either has changed between the two calls, the value no longer matches and the call is refused. The server keeps no state between calls, so a confirmation cannot be replayed against a different change.
+
+### Safety model
+
+The same agent reads the member's private posts and content written by other people, which may be written to manipulate it. The controls are properties of the tools, not of the agent's judgement.
+
+| Risk | Control |
+| --- | --- |
+| A private post is exposed by a save | A new post is always private. Widening who can see a post is a separate tool that always requires confirmation |
+| Something is published without the member knowing | Saving never publishes. `vault_publish` always requires confirmation of the exact plan |
+| A post is overwritten | Every save names the version that was read. A stale save is refused |
+| A post is lost | `vault_delete` always requires confirmation |
+| Content leaves the vault another way | No tool sends content to any destination other than the member's own vault and repository |
+
+One exposure is outside these controls: whatever the agent reads is also processed by the provider of the model it runs on.
+
+### Requests without a tool
+
+Some service requests are deliberately not available to an agent.
+
+| Requests | Reason |
+| --- | --- |
+| `listPosts` | It serves incremental sync. The tools read the repository tree |
+| `exportFiles` | Export is for the command line and the workspace |
+| `account.get`, `account.connect`, `account.disconnect` | They require an ohm session, which an agent does not have |
+| `identity.findAccount`, `identity.whoAmI` | They are steps of signing in |
+
+## Service API
+
+The vault service exposes fifteen requests in eight capabilities. This reference is generated from the same tables the service runs on.
+
+### Conventions
+
+The vault service speaks XRPC, the request convention of the AT Protocol. Every request has a namespaced name and is sent to `/xrpc/` followed by that name.
+
+| | |
+| --- | --- |
+| Base addresses | `https://vault.ohmmmm.com`, and `https://app.ohmmmm.com/vault` for the workspace, where the ohm session cookie is in scope |
+| Reads | `GET`, with parameters in the query string |
+| Changes | `POST`, with parameters as a JSON body |
+| Responses | JSON, sent with `Cache-Control: private, no-store`. `getAttachment` answers with the file itself |
+| Idempotency | Every request can be repeated safely. A change names the version it replaces, and a repeat of a change already made reports `unchanged` |
+| Authentication | A service token from the member's PDS in `Authorization: Bearer`, or an ohm session. [Identity and access](https://docs.ohmmmm.com/identity.md) |
+
+The access level of each request is one of four.
+
+| Access | Credential |
+| --- | --- |
+| Public | None. The response contains only public information |
+| Any authenticated account | A service token from any PDS, issued for this request |
+| Member | A service token from the member's own PDS, or an ohm session connected to that account |
+| Member, with an ohm session | An ohm session only. A change must also originate from ohm's own pages |
+
+### Posts
+
+Read and change the posts in a vault, one at a time. Every change names the version it replaces, so two edits never overwrite each other unseen.
+
+#### `com.ohmmmm.vault.listPosts`
+
+Every post with the version it is at. With `since`, a point an earlier list returned, only what changed after it, removals included.
+
+| | |
+| --- | --- |
+| Method | `GET` |
+| Access | Member |
+| Parameters | `since`: optional: the `cursor` of an earlier list |
+| Returns | `posts` (id, version, slug, label, sublabel, visibility, title), `cursor`, and `more` when there is another page |
+
+#### `com.ohmmmm.vault.getPost`
+
+One post in full, and its version.
+
+| | |
+| --- | --- |
+| Method | `GET` |
+| Access | Member |
+| Parameters | `id`: the post's ID |
+| Returns | `post`, `version` |
+
+#### `com.ohmmmm.vault.putPost`
+
+Saves one post. `replaces` is the version being replaced and is left out for a new post. Sent twice, it ends the same as sent once. Whatever the post says about who may see it, only this copy changes.
+
+| | |
+| --- | --- |
+| Method | `POST` |
+| Access | Member |
+| Parameters | `post`: the whole post<br>`replaces`: optional: the version it replaces |
+| Returns | `id`, `version`, and `unchanged` when nothing differed |
+
+#### `com.ohmmmm.vault.deletePost`
+
+Removes one post, for good.
+
+| | |
+| --- | --- |
+| Method | `POST` |
+| Access | Member |
+| Parameters | `id`: the post's ID<br>`replaces`: the version being removed |
+| Returns | `id`, `removed` |
+
+### Structure
+
+The shape of a vault: its labels, the sublabels inside them, and a line for each post. Enough to draw it or decide where something belongs, without reading any post in full.
+
+#### `com.ohmmmm.vault.getTree`
+
+Labels, sublabels, and each post with who may see it, what kind of thing it is, the platform it first appeared on if that was somewhere else, and why it cannot be published, if it cannot.
+
+| | |
+| --- | --- |
+| Method | `GET` |
+| Access | Member |
+| Parameters | None |
+| Returns | `posts`, `public`, `friends`, `private` (counts), and `labels`, each with its `posts` and `sublabels` |
+
+### Search
+
+Find posts by the words in them, at every visibility. A title counts for more than a label, and a label for more than the body.
+
+#### `com.ohmmmm.vault.searchPosts`
+
+The posts that mention every word of `q`, best first, each with a passage that shows where.
+
+| | |
+| --- | --- |
+| Method | `GET` |
+| Access | Member |
+| Parameters | `q`: the words to look for<br>`visibility`: optional: only posts at this visibility<br>`limit`: optional: how many, 10 unless said, 50 at most |
+| Returns | `found`, and `posts` (id, slug, title, label, sublabel, visibility, date, passage) |
+
+### Mirror
+
+Bring what the member has already published on their PDS into the vault. It only reads the PDS, and it never changes a post the member has since changed in the vault.
+
+#### `com.ohmmmm.vault.importPublished`
+
+Reads the member's repository and says what it holds as posts: how many, which would differ from what is published, and what could not be kept. With `apply`, saves them. Without it, changes nothing.
+
+| | |
+| --- | --- |
+| Method | `POST` |
+| Access | Member |
+| Parameters | `apply`: optional: save the posts<br>`site`: optional: the member's website, when it is not the one their handle names<br>`from`: optional: one older post type to read, when it should not be found |
+| Returns | `site`, `types`, `records`, `posts`, `sameAsPublished`, `differs`, `lost`, `cannotBePublishedYet`, `skipped`, `applied`; and with `apply`, `saved`, `unchanged`, `changedThere`, `refused` |
+
+### Publish
+
+Work out what would have to change in the member's own repository for what is published to match their vault. The service changes nothing there and holds no permission to: the member, signed in at their own PDS, makes the changes from the list. Only the shared post type is touched, and a record the vault knows nothing about is never removed.
+
+#### `com.ohmmmm.vault.getPublishPlan`
+
+What publishing would do: the posts it would publish for the first time, replace and take down, the ones that cannot be published and why, and the published records the vault knows nothing about. With `prepare`, also the changes themselves, ready to be made.
+
+| | |
+| --- | --- |
+| Method | `GET` |
+| Access | Member |
+| Parameters | `prepare`: optional: `1` to include `writes`, the changes to make |
+| Returns | `repository`, `pds`, `collection`, `create`, `replace`, `remove`, `unchanged`, `cannot`, `notInVault`, `changes` (how many); and with `prepare`, `writes` and `plan`, a name for exactly these changes |
+
+#### `com.ohmmmm.vault.getAttachment`
+
+One file that one of the member's posts places, fetched from where the post says it is. It answers with the file itself, not JSON. It is for publishing, which sends a copy of each such file to the member's PDS.
+
+| | |
+| --- | --- |
+| Method | `GET` |
+| Access | Member |
+| Parameters | `id`: the post's ID<br>`attachment`: the name the post's record places the file under |
+| Returns | The file, with its type |
+
+### Export
+
+The whole vault written out as files a person can keep: each post as Markdown, where it sits in a folder. The same files open in Obsidian, and read back as the same posts.
+
+#### `com.ohmmmm.vault.exportFiles`
+
+Every post as a file: its path in a folder, and its text.
+
+| | |
+| --- | --- |
+| Method | `GET` |
+| Access | Member |
+| Parameters | None |
+| Returns | `files` (path, text) |
+
+### Account
+
+For a member signed in to ohm: who they are, and which AT Protocol account their vault is. One ohm account works in one AT Protocol account, and the other way round. These ride on the ohm session only; a token from a PDS does not reach them.
+
+#### `com.ohmmmm.account.get`
+
+Who is signed in, the AT Protocol account they connected if they have, and whether what it had published has been brought in.
+
+| | |
+| --- | --- |
+| Method | `GET` |
+| Access | Member, with an ohm session |
+| Parameters | None |
+| Returns | `user` (name), `did`, `mirrored`, and `service`: who a PDS has to address its token to when the member connects |
+
+#### `com.ohmmmm.account.connect`
+
+Ties an AT Protocol account to the ohm account. `token` is one the account's PDS issued for this request and nothing else.
+
+| | |
+| --- | --- |
+| Method | `POST` |
+| Access | Member, with an ohm session |
+| Parameters | `token`: a token from the account's PDS, issued for this request |
+| Returns | `did`, and `already` when it was connected before |
+
+#### `com.ohmmmm.account.disconnect`
+
+Unties the AT Protocol account. The vault is kept, and opens again when the account is connected.
+
+| | |
+| --- | --- |
+| Method | `POST` |
+| Access | Member, with an ohm session |
+| Parameters | None |
+| Returns | `did`, now empty |
+
+### Identity
+
+The first steps of signing in: finding an account from its handle, and saying who a token from a PDS names. Neither touches a vault.
+
+#### `com.ohmmmm.identity.findAccount`
+
+Finds an account from what a person types to sign in: their handle, or their DID. Needs no sign-in, and answers only with what is public.
+
+| | |
+| --- | --- |
+| Method | `GET` |
+| Access | Public |
+| Parameters | `account`: a handle, such as example.com, or a DID |
+| Returns | `did`, `handle`, `pds`, and `service`: this service's own DID |
+
+#### `com.ohmmmm.identity.whoAmI`
+
+Says who a token from a PDS names. The token has to be issued for this request and nothing else, so only its holder can ask.
+
+| | |
+| --- | --- |
+| Method | `GET` |
+| Access | Any authenticated account |
+| Parameters | None |
+| Returns | `did`, and `handle` when the handle points back to the account |
+
+### Errors
+
+A refusal is JSON with an `error` code from the table below and a `message` written to be shown to a person as it is.
+
+| Error | Status | Cause |
+| --- | --- | --- |
+| `SignInRequired` | 401 | The request rides on an ohm session, and there is none |
+| `AuthRequired` | 401 | The token is missing, cannot be read, was issued for another request or service, has run out, or its signature does not match |
+| `NotAMember` | 403 | The account has not been let in yet |
+| `WrongOrigin` | 403 | A request that changes something came with a session but not from ohm's own pages |
+| `NotConnected` | 409 | The ohm account has no AT Protocol account connected yet |
+| `AlreadyConnected` | 409 | The ohm account already works in another AT Protocol account |
+| `ConnectedElsewhere` | 409 | The AT Protocol account is already connected to another ohm account |
+| `SignInUnavailable` | 503 | ohm's sign-in could not be reached to check a session |
+| `MethodNotFound` | 404 | There is no such request |
+| `WrongMethod` | 405 | The request is the other of GET and POST |
+| `InvalidRequest` | 400 | The request is not JSON, or something it says is not what that request takes |
+| `InvalidPost` | 400 | The post is not one the vault can hold. The message lists every reason |
+| `InvalidCursor` | 400 | `since` is not a value an earlier list returned |
+| `NotFound` | 404 | There is no such post |
+| `Changed` | 409 | The post has changed since the version the request names. The answer carries the current version |
+| `SlugTaken` | 409 | Another post in the vault already has that slug |
+| `TooLarge` | 413 | The post is more than 600 KB of text, or a file it places is empty or larger than 25 MB |
+| `FileUnreachable` | 502 | A file a post places could not be fetched from where the post says it is |
+| `AccountNotFound` | 404 | No AT Protocol account answers to that handle or DID |
+| `NoRepository` | 400 | The account's DID document does not say where its repository is kept |
+| `RepositoryUnreachable` | 502 | The account's PDS would not answer |
+| `InternalError` | 500 | Something went wrong in the service itself |
+
+### Agent tools
+
+An agent's tools are compositions of the requests above and add no capability of their own. Each runs on the member's machine and authenticates as the member, with a service token per request.
+
+| Tool | Effect | Requests used |
+| --- | --- | --- |
+| `vault_tree` | Read | `getTree` |
+| `vault_list` | Read | `getTree` |
+| `vault_read` | Read | `getTree`, `getPost` |
+| `vault_search` | Read | `searchPosts` |
+| `vault_save` | Change | `getTree`, `getPost`, `putPost` |
+| `vault_set_visibility` | Change | `getTree`, `getPost`, `putPost` |
+| `vault_status` | Read | `getPublishPlan` |
+| `vault_publish` | Change | `getPublishPlan`, `getAttachment` |
+| `vault_mirror` | Change | `importPublished` |
+| `vault_delete` | Change | `getTree`, `getPost`, `deletePost` |
+
+The server that offers these tools is described in [Agent integration](https://docs.ohmmmm.com/mcp.md). Three rules hold for every tool that changes something.
+
+1. **A new post is private.** Marking it for anyone else is a separate, confirmed step.
+2. **Changes that others can see take two calls.** The first returns what would happen and a `confirm` value bound to exactly that outcome. Only a second call carrying the value proceeds.
+3. **A post is changed from the version that was read.** If it has changed since, nothing is saved.
+
+## Quick start
+
+Your first session in ohm: sign in, say where your posts live, write a post, decide who sees it, and publish. Then connect a folder of your own and bring in your agent.
+
+### 1. Sign in
+
+Sign in or sign up with Google, Microsoft or Bluesky. That makes your ohm account. [More about signing in](https://docs.ohmmmm.com/sign-in.md)
+
+### 2. Say where your posts live
+
+Your posts belong to an account on the open network, not to ohm. Once, you say which one.
+
+- **You have a server of your own.** Enter your handle and an app password from it.
+- **You have a website, and no server yet.** ohm shows you how to set one up beside your site, then you come back with your handle.
+- **You use Bluesky.** Enter your Bluesky handle. If you signed in with Bluesky, this step is already done.
+
+What you have already published there is brought into your workspace on its own.
+
+### 3. Look around your workspace
+
+The workspace has three parts.
+
+- **A narrow rail on the left,** with you at the foot of it.
+- **Your repository beside it:** your labels as folders, with your posts inside them. Labels are the sections of your work, in your own words: Writings, Photographs, Things I make.
+- **The post you have open,** filling the rest.
+
+[More about the workspace](https://docs.ohmmmm.com/workspace.md)
+
+### 4. Write a post
+
+Start a new post and write. A post is Markdown, and it can be one sentence.
+
+You do not say what kind of thing it is. A post with a title is a writing, one without is a note, and one that only shows a photograph is an image. ohm reads that from the post.
+
+To add a picture, paste the address of one that is already on the web.
+
+A new post is private. Nobody else can see it. [More about posts](https://docs.ohmmmm.com/posts.md)
+
+### 5. Decide who sees it
+
+Every post is one of three things.
+
+- **Private.** Only you.
+- **Friends.** The people you follow who follow you back.
+- **Public.** Everyone, on your website and anywhere else your published layer is read.
+
+Changing this does not share anything yet. It marks the post, and a mark on the Publish button shows that something is waiting. [More about who sees a post](https://docs.ohmmmm.com/visibility.md)
+
+### 6. Publish
+
+Press Publish. Before anything happens, you see exactly what will change: which posts will be published for the first time, replaced, or taken down. Then you approve at your own server, and it is done.
+
+A public post is now part of your published layer. Anything published is public for good: other services copy it the moment it is written. Taking it down later removes it from your account, not from every copy. [More about publishing](https://docs.ohmmmm.com/publish.md)
+
+### 7. Connect a folder of your own
+
+Connect a folder on your computer and sync. Each post appears there as a Markdown file, filed in a folder named for its label.
+
+From then on your originals live with you, and ohm holds a working copy. Edit a file in the folder and sync, and the change arrives in your workspace. Syncing never publishes.
+
+Until you connect a folder, ohm holds the only copy of your private and friends-only posts. [More about syncing](https://docs.ohmmmm.com/sync.md)
+
+### 8. Bring in your agent
+
+Connect the coding agent you already use, and it can read and write in your workspace. It reads your private posts too, which is how it knows what you are working on.
+
+Anything that changes what other people see is shown to you first, publishing included. [More about your agent](https://docs.ohmmmm.com/agent.md)
+
+### Things to ask your agent first
+
+- "What have I written about this before?"
+- "Save this as a private note under Writings."
+- "Look at my posts and suggest how to label them."
+- "What is not published yet?"
+
+## Sign in
+
+You sign in to ohm with an ohm account, made with Google, Microsoft or Bluesky. Your posts belong to an account on the open network, the same kind Bluesky uses, and you say once which one is yours.
+
+### Two steps
+
+1. **Sign in or sign up.** With Google, Microsoft or Bluesky. This is your ohm account: it is who is at the keyboard.
+2. **Say where your posts live,** once. This is your account on the open network: it is where your published posts are kept, and it is yours whether or not you use ohm.
+
+If you sign in with Bluesky, the second step is already answered: your Bluesky account is where your posts live.
+
+### Where your posts live
+
+| You have | What you do | What comes with you |
+| --- | --- | --- |
+| A server of your own | Enter your handle and an app password | What you have already published there |
+| A website, and no server yet | Set one up beside your site, then enter your handle | Nothing yet |
+| A Bluesky account | Enter your Bluesky handle and an app password | Your own posts. Replies and reposts are not brought in |
+
+All three give you the same workspace. They differ only in where your account is hosted.
+
+### Proving the account is yours
+
+ohm never takes your word for which account is yours. The server that holds the account says so.
+
+- **With an app password,** typed on ohm's own page. An app password is one you make for apps, and can take away at any time. It goes from the page straight to your own server and nowhere else: not to ohm.
+- **With a passkey,** at your server's own screen. You are sent there, approve, and are brought straight back.
+
+Either way the sign-in at your server is let go as soon as ohm knows the account is yours. What stays is your ohm session.
+
+### Your handle and your identity
+
+Your handle is your name on the open network and the address of your site. It can be a domain you own.
+
+Behind the handle is a permanent identifier that does not change when the handle does. It names the server that hosts your account, so you can move the account to another host and keep your posts, your followers and your name.
+
+### What you see the first time
+
+What you have already published is brought into your workspace on its own. Nothing has to be named: ohm finds your website from your handle, and reads every post you have published, including ones written before the shared post type.
+
+What comes in is already public, and it stays public. Nothing new is shared by signing in.
+
+A post that comes in with no label sits under `other` until you file it.
+
+### One account, one account
+
+An ohm account works in one account on the open network, and that account belongs to one ohm account. If you sign in with Bluesky after connecting the same Bluesky account another way, you arrive in the same place.
+
+### Leaving
+
+You can take everything out and have ohm's copy deleted at any time. Your account on the open network and your published posts stay where they are hosted. [Export and leaving](https://docs.ohmmmm.com/export.md)
+
+## The workspace
+
+The workspace is one page: a narrow rail, your repository beside it, and the post you have open filling the rest.
+
+### Your repository, in the side panel
+
+The side panel is everything you have, as folders that open and close.
+
+- A **label** is a section of your work, in your own words.
+- A **sublabel** is a group inside a label, such as a series or an album.
+- **Posts** sit inside those, private, friends-only and public together. A small mark beside each says who it is for.
+
+A post you have not filed sits under `other`. [Labels](https://docs.ohmmmm.com/labels.md)
+
+### Three ways to look at it
+
+Pills at the top of the side panel choose what the folders are.
+
+| View | The folders are |
+| --- | --- |
+| Labels | Your own sections |
+| Platforms | Where each post first appeared: your website, or somewhere else such as Bluesky |
+| Visibility | Everyone, friends, only you |
+
+A filter beside them leaves out any label, platform or audience you do not want to see. Your choice is kept for next time.
+
+### The post, in the main screen
+
+The main screen is where you write. A post is Markdown, so a heading, a list, a link and a picture are all written as text.
+
+Above the text are the title and what files the post: its label, sublabel, slug and date. Who can see it is beside Save.
+
+What you write is saved to your workspace. Saving shares nothing: a post reaches other people only when you publish it.
+
+### What a post says about itself
+
+| Property | What it is |
+| --- | --- |
+| Title | Optional. A post with a title is a writing; one without is a note |
+| Date | When the post is from. A post that was brought in keeps its original date |
+| Label and sublabel | Where the post is filed |
+| Slug | The last part of the post's address. You can change it |
+| Who can see it | Private, friends or public |
+
+A post also has an ID that is given once and never changes. Renaming or refiling a post does not change which post it is.
+
+### Publish
+
+The Publish button is at the top of the side panel. A mark on it means something is waiting: a post you marked public, a published post you edited, or one you made private or removed.
+
+Pressing it shows what would change, and changes nothing until you approve. [Publish](https://docs.ohmmmm.com/publish.md)
+
+### Bringing in what is new
+
+The arrows beside Publish read your account on the open network again and bring in anything published there since. A post you have changed in your workspace is never overwritten by this.
+
+### When two things edit the same post
+
+You, your agent and a sync can all change a post. Every save says which version it replaces. If the post changed in the meantime, the save is refused and you are shown the current version, so nothing is silently overwritten.
+
+### You
+
+Your picture is at the foot of the rail. Its menu takes your whole vault away as files, disconnects your account on the open network, and signs you out.
+
+## Posts
+
+Everything you keep in ohm is a post: an essay, a note to yourself, a photograph, a link. A post is a piece of Markdown with a date, and it can be one sentence.
+
+### What a post has
+
+- **A body,** in Markdown.
+- **A date.**
+- **A title and a subtitle,** if you give them.
+- **A label,** and a sublabel if you use one. [Labels](https://docs.ohmmmm.com/labels.md)
+- **Who can see it.** A new post is private. [Who sees a post](https://docs.ohmmmm.com/visibility.md)
+- **Pictures and files** placed in the body.
+
+### You do not choose what kind it is
+
+ohm reads what kind of thing a post is from the post. It is not shown on your site. It tells other software what it is looking at, whatever you called the section it sits in.
+
+| What the post contains | Read as |
+| --- | --- |
+| A title, with text and anything placed in the text | writing |
+| No title: a thought, a caption with a photo | note |
+| Only one image | image |
+| Only images, more than one | gallery |
+| Only video | video |
+| Only audio | audio |
+| Only files, such as a PDF | file |
+| Only attachments, of more than one kind | media |
+| No title, and a link on a line of its own | link |
+| The same, when the link plays something, such as a video page | embed |
+| No title, a quoted passage, and a link to its source | quote |
+| Nothing but a list | list |
+| Nothing but code blocks | code |
+
+So two posts under different labels can be the same kind, and one label can hold several kinds.
+
+### Pictures and files
+
+Paste the address of a picture or file that is already on the web.
+
+- **Your workspace keeps the address, not the file.** A post points at its pictures where they are.
+- **When you publish, a copy is sent to your own account.** The published post then no longer depends on the other site staying up.
+- **The original address is kept** with the copy, as its source.
+- **An address that cannot be fetched is named** when you publish: one that needs a sign-in, or a file larger than 25 MB.
+
+An attachment is an image, a video, audio, or a file such as a PDF, EPUB, ZIP, CSV or text file.
+
+Describe a picture in its alt text. In a post with no words of its own, that description is also what names the post in lists.
+
+### Links
+
+A link on a line of its own, in a post with no title, makes the post a link. ohm saves what the page says about itself: its title, description and preview image.
+
+A link that points straight at a picture, a video, an audio file or a document is taken in as that thing. A photograph is an image whether you upload it or point at it.
+
+| The whole post is | What is kept | Read as |
+| --- | --- | --- |
+| A link to a photograph | The photograph, with the link as its source | image |
+| A link to a PDF | The PDF, with the link as its source | file |
+| A link to a video page | The link, with the page's title and preview | embed |
+| A link to an article | The link, with the page's title and preview | link |
+| A sentence, then a link to a photograph | The sentence and the link | link |
+
+### Connecting posts
+
+A link from one post to another is a connection. Use it for a reply, a follow-up, or the next part of a series. A post can connect to as many as 32 others.
+
+A public post that connects to a private one does not show the private post's title, or that it exists, to anyone who cannot read it.
+
+### A post's address
+
+A post's address is built from where it is filed and its slug.
+
+```
+/posts/writings/collisions/trap-of-independency
+       label    sublabel   slug
+```
+
+- **Change the slug** and the address changes. For a published post, the old address sends readers on to the new one.
+- **Move the post to another label** and the address changes too. Publish shows you the new address before it does anything.
+- **A slug is used once** in your workspace.
+
+### Deleting a post
+
+Deleting a private post removes it from your workspace. With a folder connected, the next Sync asks before removing the file.
+
+Deleting a post that is published removes it from your site at the next Publish. Copies that other services already made stay where they are.
+
+## Labels
+
+Labels are the sections of your work, in your own words. Every post sits under one label, and the post's address comes from it.
+
+### Labels are your sections
+
+A label is whatever you call a part of your work: `Writings`, `Photographs`, `Things I make`. Another person might have `Blog`, `Journal` and `Field recordings`.
+
+- A label can be any words, in any language, with any capitalisation.
+- ohm never renames a label or makes one up for you.
+- Each label becomes a list on your site, and a folder when you sync.
+
+### Sublabels are groups inside a label
+
+Use a sublabel when several posts are parts of one thing: the essays of a series, the photographs from one city.
+
+| On your site | Label | Sublabel |
+| --- | --- | --- |
+| Writings → the Collisions essays → one essay | `Writings` | `Collisions` |
+| Writings → an essay on its own | `Writings` | |
+| Photographs → Seoul | `Photographs` | `Seoul` |
+
+Most posts have no sublabel. Inside a sublabel, posts read in the order they were written.
+
+### The address follows the label
+
+| Label | Sublabel | Address |
+| --- | --- | --- |
+| `Writings` | `Collisions` | `/posts/writings/collisions/trap-of-independency` |
+| `Writings` | | `/posts/writings/elsewheren` |
+| `Photographs` | `서울` | `/posts/photographs/서울/…` |
+| `Things I make` | | `/posts/things-i-make/why-i-started-ohm` |
+| none | | `/posts/other/a-stray-note` |
+
+Names are lowercased and their spaces become hyphens. Letters of any script are kept.
+
+Each label and sublabel has an address of its own, such as `/posts/writings/`, which lists what is in it.
+
+### Moving a post
+
+Refiling a post under another label changes its address. Nothing changes for readers until you publish, and Publish shows the new address first.
+
+### Posts with no label
+
+A post you have not filed sits under `other`. It is a last resort, not a section: file the post when you know where it belongs.
+
+### Not sure what your labels should be
+
+Ask your agent: "Look at my posts and suggest how to label them." It starts from a plain default, `Writing`, `Photos` and `Projects`, and asks you questions until the structure is yours. The names are always your decision. [Your agent](https://docs.ohmmmm.com/agent.md)
+
+## Who sees a post
+
+Every post is private, for friends, or public. You choose for each post, and you can change your mind in any direction.
+
+### The three choices
+
+| | Who can read it | Where it is published |
+| --- | --- | --- |
+| Private | Only you | Nowhere |
+| Friends | The people you follow who follow you back | Nowhere outside ohm |
+| Public | Everyone | Your own account on the open network, and your website |
+
+A new post is private. A post that comes in from a folder is private unless its file says otherwise.
+
+### Changing it only marks the post
+
+Setting a post to friends or public does not share it. It marks the post, and the Publish button shows that something is waiting. A public post reaches other people when you press Publish and approve. [Publish](https://docs.ohmmmm.com/publish.md)
+
+### Friends
+
+A friend is someone you follow who follows you back. There is no separate request to approve: following back is the approval. [Friends](https://docs.ohmmmm.com/friends.md)
+
+### Making a post less visible
+
+You can move a public post back to friends or private, and a friends post back to private. At the next Publish it is removed from where it was.
+
+That is not a recall. Copies of a public post that other services made stay where they are, and a friend who already read a post has read it.
+
+### What private means
+
+Private means private from other people. Two things still read a private post.
+
+- **ohm.** Your workspace holds every post, so ohm can read it. ohm shows your private posts to nobody and does not use them to match you with other people.
+- **Your agent,** if you connect one, and therefore the company that runs the model it uses.
+
+[Where your things live](https://docs.ohmmmm.com/where-things-live.md)
+
+## Publish
+
+Publish makes what other people see match your workspace. It is the only thing in ohm that shares anything, and it always shows you what will change first.
+
+### Before you publish
+
+A mark on the Publish button means something is waiting: posts you marked public, published posts you edited, and published posts you made private or removed.
+
+### The steps
+
+1. **You see the changes.** What will be published for the first time, what will be replaced and why, and what will be taken down.
+2. **You approve at your own server.** With an app password typed on ohm's page, or with a passkey at your server's own screen.
+3. **The changes are made,** all of them or none.
+
+### Who makes the changes
+
+You do. ohm works out what would change, and holds no standing permission to write to your account. The changes are made from your browser, or by your agent, signed in at your own server for as long as publishing takes and no longer.
+
+### What Publish does to each post
+
+| Your workspace says | Published now | Publish does |
+| --- | --- | --- |
+| Public | Nothing | Publishes it to your account, with a copy of each picture it places |
+| Public | An older version | Replaces it |
+| Friends or private, or the post is removed | A public post | Takes it down |
+| The same as what is published | | Nothing |
+| Public, but something stops it | Anything | Nothing. The post is named with the reason, and what is published stays as it is |
+
+Editing a published post does not change what readers see. They see the last version you published until you publish again.
+
+### What Publish never touches
+
+- **Anything that is not a post.** Only the shared post type in your account is ever written or removed.
+- **A published post your workspace does not know.** Something published from elsewhere is left where it is and named, so you can bring it in first.
+- **Your folder.** Sync does not publish, and Publish does not sync.
+
+### Where a public post goes
+
+A public post is written to your own account on the AT Protocol, in the repository that belongs to your identity. It is not kept on a platform of ours.
+
+- **Your website can show it.** A site can be a view of what is in that repository.
+- **Other applications can read it.** Every public post has the same shape on every site, so other software can find and read it.
+- **You can move it.** The repository goes with your account to another host.
+
+### Public is for good
+
+Other services copy a public post the moment it is written. Making it private later removes it from your account. It does not remove it from every copy. You are told this each time, before you approve.
+
+### Addresses
+
+A post's record is kept under its permanent ID, so renaming or refiling a post changes its address without making it a different post.
+
+## Friends
+
+A friend is someone you follow who follows you back. Friends can read the posts you mark for friends, and you can read theirs.
+
+### Following
+
+Following someone on ohm is the same follow that Bluesky uses, kept in your own account. Someone you follow on Bluesky is followed here, and following someone here shows on Bluesky.
+
+Following a person brings their public posts to you.
+
+### Becoming friends
+
+When someone you follow follows you back, you are friends. There is no request to accept. The follow-back button says what it grants before you press it.
+
+### What friends can read
+
+- Your posts marked **friends**, in the version you last published.
+- Your **public** posts, like everyone else.
+
+They never see your private posts, or a friends post you have edited and not published again.
+
+Only people on ohm can read friends posts at all.
+
+### The first time you share with friends
+
+You may have followed people on Bluesky long before friends posts existed. Before your first friends post is shared, you see the list of people who would be able to read it, and you can remove anyone from it.
+
+### Ending a friendship
+
+If either of you unfollows, the friendship ends at once. That cuts access from then on. It does not take back what was already read.
+
+### What is visible to others
+
+Who follows whom is public, as it is on Bluesky. That is what lets an agent see a route to someone: you do not know her, but a friend of yours does.
+
+## Sync with a folder
+
+Connect a folder of your own and your posts live there as Markdown files. Sync brings the folder and your workspace into line, in both directions.
+
+### Why connect a folder
+
+Your workspace is a working copy. With a folder connected, the originals of your private and friends-only posts are files you hold, on your own machine or in the cloud storage you already use.
+
+- You can open and edit them in any Markdown editor, such as Obsidian.
+- Deleting ohm's copy loses nothing: syncing from the folder brings every post back.
+
+Until you connect a folder, ohm holds the only copy of your private and friends-only posts, and the workspace says so.
+
+### Connect one
+
+Choose a folder, connect it, and press Sync. The first sync writes every post into it, filed in folders named for your labels. [How posts look as files](https://docs.ohmmmm.com/files.md)
+
+The folder can be on your computer, or in any cloud storage that keeps a folder in sync.
+
+### What Sync does
+
+Sync compares each post in your workspace with its file, and with what was there at the last sync.
+
+| In your folder | In your workspace | Sync does |
+| --- | --- | --- |
+| A new or changed file | Unchanged since the last sync | Updates your workspace |
+| Unchanged since the last sync | A new or changed post | Writes it to your folder |
+| Changed | Changed differently | Overwrites neither. See below |
+| A file removed | The post is still there | Asks you before removing the post |
+
+### When both sides changed
+
+If you edited a post in your folder and in your workspace since the last sync, neither version is overwritten. Sync puts ohm's version beside your file under a name that says so, reports it, and you choose which one stands.
+
+### Sync never publishes
+
+An edit you make to a public post's file arrives in your workspace as a change that is not published yet. Readers see it after you publish.
+
+Writing `visibility: public` in a file only marks the post. It becomes public when you press Publish.
+
+### What you do in the folder, and what Sync makes of it
+
+| In your folder | Sync reads it as |
+| --- | --- |
+| A new file | A new post. Its slug is the file name, and it is private unless the file says otherwise |
+| A file moved to another folder | The post refiled under another label. For a published post this changes its address, which Publish shows first |
+| A file renamed | The same post with a new slug. For a published post, the old address sends readers on |
+| A file deleted | A post to ask you about |
+| `[[another note]]` and `![[image.png]]` | A link to that post, and a picture. They are kept in the file as you wrote them |
+| Properties edited in Obsidian's own panel | The post's properties |
+
+### What Sync leaves alone
+
+- **Files that are not posts.** Your editor's own settings and anything else in the folder stay yours and are not sent.
+- **How you formatted a file.** Sync compares posts, not characters. A file you laid out differently is the same post, and it is rewritten only when the post itself changed in your workspace.
+- **A file that cannot be read as a post.** It is reported to you by name, and nothing is sent.
+
+### If a sync is interrupted
+
+Run it again. A sync can be repeated safely, and it picks up where things stand.
+
+## Posts as files
+
+In your folder, each post is one Markdown file. A label is a folder, a sublabel is a folder inside it, and everything else about the post is written at the top of the file.
+
+### The folder
+
+```
+vault/
+├── writings/
+│   ├── collisions/
+│   │   └── trap-of-independency.md
+│   └── why-i-started-ohm.md
+├── photographs/
+│   └── lisboa/
+│       └── lisboa-12.md
+└── loose-thought.md              no folder: filed under other
+```
+
+### One file
+
+```
+---
+title: Trap of independency
+date: 2026-03-01
+visibility: public
+---
+
+The body, in Markdown.
+
+![The author](https://example.com/media/author.webp)
+```
+
+The part between the two lines of dashes holds the post's properties, as plain YAML. Obsidian shows it in its own properties panel, and you can edit it there.
+
+### What maps to what
+
+| In the file | In your workspace |
+| --- | --- |
+| The folder | The label |
+| The folder inside it | The sublabel |
+| The file name | The slug |
+| `title`, `subtitle`, `date` | The same |
+| `visibility` | Who can see it. A file with none is private |
+| A picture or file placed by its address or path | An attachment |
+| A link to another post | A connection |
+| Any other property | Kept with the post, and never published |
+
+Each file also carries the post's permanent ID as a property. Leave it as it is: it is how a renamed or moved file is known to be the same post.
+
+### Links and pictures
+
+Both ways of writing them are read, and each file keeps whichever it was written in.
+
+| | Standard Markdown | Obsidian |
+| --- | --- | --- |
+| A link to another post | `[the first essay](first-essay.md)` | `[[first-essay]]` |
+| A picture | `![A wet street](street.jpg)` | `![[street.jpg]]` |
+
+### Nothing is lost on the way
+
+A post written out as a file and read back is the same post. That holds for titles and text in any script, and for text that YAML would otherwise misread.
+
+## Export and leaving
+
+You can take everything out of ohm at any time, and have ohm's copy deleted.
+
+### What you get
+
+Every post, private, friends-only and public, and every picture and file ohm kept for them.
+
+### The format
+
+An export is the same folder of Markdown files that Sync uses. There is one format, not two. It opens in Obsidian or any other Markdown editor, and it can be connected and synced again later. [Posts as files](https://docs.ohmmmm.com/files.md)
+
+### How to export
+
+From the menu under your picture, at the foot of the rail.
+
+- **Into a folder,** on your computer. Chrome and Edge can do this.
+- **As one file,** downloaded.
+
+If you already sync, your folder is your export, as of the last sync.
+
+### Deleting ohm's copy
+
+You can ask for everything ohm holds for you to be deleted.
+
+| | After ohm's copy is deleted |
+| --- | --- |
+| Public posts | Still in your own account, and still on your website |
+| Private and friends-only posts | In your folder, if you connected one or exported first. Otherwise gone |
+| Your account and your handle | Unchanged. They were never ohm's |
+
+Export first if you have not connected a folder. Until you do one or the other, ohm holds the only copy of your private and friends-only posts.
+
+### Coming back
+
+Sign in, connect the same folder, and sync. Every post comes back as it was.
+
+## Your agent
+
+Connect the coding agent you already use, and it can read and write in your workspace. It reads everything, private posts included, which is how it knows what you are working on.
+
+### What it is
+
+ohm does not run an agent for you. Your agent is the one you already use, given a set of tools for your workspace. It works only while you are in a session with it.
+
+The tools work in the same workspace you see in the browser. A post your agent saves is there when you open it.
+
+### What it can read
+
+All of your posts: public, friends and private. That is the point. An agent that only saw what you published would know the polished part.
+
+Whatever your agent reads is also seen by the company that runs the model it uses. Keep that in mind before you connect one.
+
+### What it can do, and what needs your yes
+
+| | Alone | Only after showing you |
+| --- | --- | --- |
+| Look at your repository, list and read your posts | Yes | |
+| Search your posts | Yes | |
+| Say what is not published yet | Yes | |
+| Save a new post, as private | Yes | |
+| Edit a private post | Yes | |
+| Edit a post that is not private | | Yes: it shows what changes |
+| Change who a post is for | | Yes |
+| Bring in what you have published | | Yes: it looks first, and says what it found |
+| Publish | | Yes: it shows what will change, and waits |
+| Remove a post | | Yes |
+
+The rule behind the table: reading is free, and anything that changes what other people see, or removes something, is shown to you first. The first answer says exactly what would happen. Only your yes to that exact answer does it.
+
+### The tools
+
+| Tool | What it does |
+| --- | --- |
+| `vault_tree` | Your repository: labels, sublabels, and each post with who it is for |
+| `vault_list`, `vault_read` | List posts, and read one in full |
+| `vault_search` | Find posts by the words in them |
+| `vault_save` | Make a post, always private, or change one |
+| `vault_set_visibility` | Mark a post public, for friends, or private |
+| `vault_status` | What publishing would change |
+| `vault_publish` | Publish |
+| `vault_mirror` | Bring in what you have published |
+| `vault_delete` | Remove a post |
+
+A tool has no ability of its own. Each is a way of asking ohm for something the workspace can already do. [Agent integration](https://docs.ohmmmm.com/mcp.md) describes the server behind them.
+
+### Signing in
+
+Your agent signs in to your own server with an app password, and your server vouches for each thing it asks ohm.
+
+### Other people's writing is not trusted
+
+The same agent reads your private posts and other people's posts. Someone could write a post meant to make an agent give something away. The protection is in the tools, not in the agent's judgement: no tool sends anything out without showing you first.
+
+### Things to ask it
+
+- "What have I written about this before?"
+- "Save this as a private note under Writings."
+- "Look at my posts and suggest how to label them."
+- "Bring in my posts." Then: "File the ones under other."
+- "Make that one public." Then: "Publish."
+- "What is not published yet?"
+
+### Editing alongside it
+
+You and your agent can work in the same workspace at once. Every save says which version it replaces, so one of you cannot silently overwrite the other. [The workspace](https://docs.ohmmmm.com/workspace.md#saving)
+
+## Finding people
+
+When you are stuck on something that needs another person, your agent helps you find that person. What it can settle alone, it settles. For everything else, it takes you to someone.
+
+### When a person is what you need
+
+| You need | That is |
+| --- | --- |
+| Advice | Someone who has lived the situation |
+| Feedback | An honest reaction to something you made |
+| An introduction | A route to a specific person, or kind of person |
+| A collaborator | Someone to build it with |
+
+Before it looks for anyone, your agent checks whether it can settle the matter from your own posts or from what it knows. If it can, it does, and nobody is asked.
+
+### Where it looks
+
+1. **Your friends' posts,** public and friends-only.
+2. **Public posts further out,** from people you do not know.
+3. **If nobody fits,** it drafts a need for you to post.
+
+### How it chooses
+
+1. **Evidence.** A post showing they have lived or thought about exactly this. The suggestion links to it.
+2. **Closeness.** A friend, then a friend of a friend, then a stranger.
+3. **Whether they are likely to say yes,** and what you can offer in return.
+4. **Timing.** Whether it is what they are thinking about now.
+
+You are shown one person and the reason, not a list to work through.
+
+### Reaching out
+
+There is no messenger to learn. Your agent drafts the first email with you, and it opens in your own email. You read it, change it, and send it yourself. The conversation is between the two of you.
+
+### Posting a need
+
+A need is a short post that says you are looking for someone. It is for friends or for everyone, and it is open until you mark it resolved. Your agent shows you the exact text and who will see it before it is posted.
+
+### Being found
+
+You also hear when you are the person someone else is looking for. Your agent passes on only the asks that fit, with the reason they fit.
+
+### What it never does
+
+- It does not hold the conversation for you.
+- It does not use your private posts to match you with strangers.
+- It does not send anything you have not read.
+
+## Where your things live
+
+ohm keeps a working copy of your posts, private ones included, so that you and your agent can work from anywhere. Your originals live with you.
+
+### Three places
+
+| | What is there | Whose it is |
+| --- | --- | --- |
+| Your account on the open network | Your public posts, and your identity | Yours. It is hosted by Bluesky or on a server you run, and it can be moved |
+| Your ohm account | Who you are when you sign in to ohm | Made with Google, Microsoft or Bluesky. It holds no posts |
+| Your folder | Every post that is not public, as Markdown files | Yours, on your machine or in your own cloud storage |
+| Your workspace on ohm | A working copy of all of it | ohm holds it for you |
+
+### By who can see the post
+
+| | The original | ohm's working copy | Who ohm shows it to |
+| --- | --- | --- | --- |
+| Public | Your account, in the open | Yes | Everyone |
+| Friends | Your folder, once connected | Yes | You, and your friends |
+| Private | Your folder, once connected | Yes | Only you |
+
+### What ohm can read
+
+Everything in your workspace, private posts included. An editor and an agent need the whole of your work to be useful, so ohm holds all of it.
+
+- ohm shows your private posts to nobody.
+- ohm does not use your private posts to match you with other people.
+- A private post is never written to your account on the open network. Everything there can be read by anyone.
+
+The promise is not that ohm cannot read your posts. It is that nothing depends on ohm keeping them.
+
+### With and without a folder
+
+With a folder connected, deleting ohm's copy loses nothing. Until you connect one, ohm holds the only copy of your private and friends-only posts. [Sync with a folder](https://docs.ohmmmm.com/sync.md)
+
+### Your identity
+
+Your identity is your own. It is an AT Protocol account, and its name can be your domain. Your follows are kept there too. [Sign in](https://docs.ohmmmm.com/sign-in.md#identity)
+
+## Status and limits
+
+The implementation status of each part of ohm, what cannot be undone, and what ohm is not.
+
+### Implementation status
+
+| Area | Status | Notes |
+| --- | --- | --- |
+| Sign-in with Google, Microsoft or Bluesky | Implemented | In production. Sign-in with Bluesky is not yet verified end to end |
+| Connecting a self-hosted PDS | Implemented | In production |
+| Connecting a Bluesky account | Implemented | Not yet verified end to end |
+| Accounts hosted by ohm | Planned | |
+| Access | Restricted | An allow list of accounts during testing |
+| Workspace | Implemented | Repository tree, three views, filter, editor |
+| Mirror | Implemented | Runs automatically when an account is first connected |
+| Publishing public posts | Implemented | Verified against a test PDS. Not yet run against a live account |
+| Friends-only delivery | Planned | |
+| Attachments stored by ohm | Planned | A post references files by address, and a copy is made at publish |
+| Agent tools | Implemented | Not yet verified with a live sign-in |
+| Folder sync | Implemented | Command line, local folders |
+| Sync from the workspace, and with cloud storage | Planned | |
+| Deleting ohm's copy | Manual | Carried out on request |
+| Agent keys | Planned | Until then an agent signs in with an app password from the member's PDS |
+| Finding people | Planned | |
+
+### Anything you publish is public for good
+
+A public post on the AT Protocol is copied by other services the moment it is written. Taking a post down removes it from your website, not from every copy.
+
+### Your agent reads your private posts
+
+That is how it knows what you are working on. Whichever company runs the model your agent uses sees what it reads.
+
+### ohm can read your private posts
+
+Your workspace includes them, and ohm holds your workspace. ohm shows private posts to nobody. Connect a folder and nothing depends on ohm keeping them.
+
+### What ohm is not
+
+- **Not a place to build an audience.** There is no count of followers to grow and no feed built to keep you scrolling.
+- **Not a replacement for talking to people.** The agent's job ends at the introduction.
+- **Not only an editor.** The editor is what you see. The working copy under it, and your say over where each post goes, are the point.
+- **Not a vault we cannot read.** The working copy includes your private posts, and we can read it.
+- **Not a Bluesky competitor.** Your account, your follows and your public posts are part of the same network.

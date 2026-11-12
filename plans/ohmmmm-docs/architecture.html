@@ -1,0 +1,220 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta name="theme-color" content="#fafaf9">
+    <meta name="description" content="ohm is built from three kinds of system with a strict division of ownership: the member&#x27;s AT Protocol account, which holds their identity and everything public; ohm&#x27;s services, which hold a working copy; and clients on the member&#x27;s device, the only place a write to the member&#x27;s account originates.">
+    <link rel="canonical" href="https://docs.ohmmmm.com/architecture">
+    <meta property="og:type" content="website">
+    <meta property="og:site_name" content="ohm">
+    <meta property="og:title" content="System overview · ohm docs">
+    <meta property="og:description" content="ohm is built from three kinds of system with a strict division of ownership: the member&#x27;s AT Protocol account, which holds their identity and everything public; ohm&#x27;s services, which hold a working copy; and clients on the member&#x27;s device, the only place a write to the member&#x27;s account originates.">
+    <meta property="og:url" content="https://docs.ohmmmm.com/architecture">
+    <meta property="og:image" content="https://ohmmmm.com/assets/og-image.png">
+    <meta property="og:image:width" content="1200">
+    <meta property="og:image:height" content="630">
+    <meta property="og:image:alt" content="ohm — An agentic social network">
+    <meta name="twitter:card" content="summary_large_image">
+    <link rel="icon" href="/assets/favicon.svg" type="image/svg+xml">
+    <link rel="apple-touch-icon" href="/assets/apple-touch-icon.png">
+    <link rel="preload" href="/assets/fonts/coconat-regular.woff2" as="font" type="font/woff2" crossorigin>
+    <link rel="alternate" type="text/markdown" href="/architecture.md">
+    <link rel="stylesheet" href="/styles.css">
+    <script src="/reader.js" defer></script>
+    <title>System overview · ohm docs</title>
+  </head>
+  <body>
+    <a class="skip" href="#content">Skip to content</a>
+
+    <!-- Docs shell, the same on every page except aria-current. The header is the ohm dot alone, as on
+         ohmmmm.com, where it leads. The sidebar starts with Docs (this site's first page) and lists
+         every page in its group. Icons are Lucide. -->
+    <input class="menu-toggle" type="checkbox" id="menu">
+    <header class="site-header">
+      <a class="site-mark" href="https://ohmmmm.com/"><img src="/assets/favicon.svg" alt="ohm" width="20" height="20"></a>
+      <label class="menu-button" for="menu"><svg class="icon" viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2.25" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 12h16"/><path d="M4 6h16"/><path d="M4 18h16"/></svg><span>Menu</span></label>
+    </header>
+
+    <nav class="site-sidebar" aria-label="Docs">
+      <ul>
+        <li><a href="/">Docs</a></li>
+      </ul>
+      <p class="sidebar-group">Get started</p>
+      <ul>
+        <li><a href="/quick-start">Quick start</a></li>
+        <li><a href="/sign-in">Sign in</a></li>
+      </ul>
+      <p class="sidebar-group">Workspace</p>
+      <ul>
+        <li><a href="/workspace">The workspace</a></li>
+        <li><a href="/posts">Posts</a></li>
+        <li><a href="/labels">Labels</a></li>
+      </ul>
+      <p class="sidebar-group">Sharing</p>
+      <ul>
+        <li><a href="/visibility">Who sees a post</a></li>
+        <li><a href="/publish">Publish</a></li>
+        <li><a href="/friends">Friends</a></li>
+      </ul>
+      <p class="sidebar-group">Folder</p>
+      <ul>
+        <li><a href="/sync">Sync with a folder</a></li>
+        <li><a href="/files">Posts as files</a></li>
+        <li><a href="/export">Export and leaving</a></li>
+      </ul>
+      <p class="sidebar-group">Agent</p>
+      <ul>
+        <li><a href="/agent">Connect your agent</a></li>
+        <li><a href="/finding-people">Finding people</a></li>
+      </ul>
+      <p class="sidebar-group">Architecture</p>
+      <ul>
+        <li><a href="/architecture" aria-current="page">Overview</a></li>
+        <li><a href="/identity">Identity and access</a></li>
+        <li><a href="/data-model">Data model</a></li>
+        <li><a href="/protocols">Mirror and publish</a></li>
+        <li><a href="/mcp">Agent integration</a></li>
+        <li><a href="/api">Service API</a></li>
+      </ul>
+      <p class="sidebar-group">Reference</p>
+      <ul>
+        <li><a href="/where-things-live">Where your things live</a></li>
+        <li><a href="/limits">Status and limits</a></li>
+      </ul>
+    </nav>
+
+    <main id="content">
+      <article aria-labelledby="title">
+        <header>
+          <p class="group">Architecture</p>
+          <h1 id="title">System overview</h1>
+          <p class="introduction">ohm is built from three kinds of system with a strict division of ownership: the member's AT Protocol account, which holds their identity and everything public; ohm's services, which hold a working copy; and clients on the member's device, the only place a write to the member's account originates.</p>
+          <p class="alert" role="note">ohm is still in production, and these pages are its architecture document: they describe how it is meant to work, not a finished product.</p>
+        </header>
+
+        <section aria-labelledby="how">
+          <h2 id="how">How it works</h2>
+          <p>Everything in ohm is a post, and every post is in a member's vault: one working copy of all their work, held by ohm, in a structure of labels, sublabels and posts. A post is private, for friends, or public. The whole system follows from keeping two things apart: working in the vault, and publishing from it.</p>
+          <ol>
+            <li><strong>Sign in.</strong> A person signs in to ohm, and once connects the AT Protocol account that owns their posts. That account lives on a Personal Data Server (PDS) they host themselves or at Bluesky. It is theirs whether or not they use ohm.</li>
+            <li><strong>Mirror.</strong> What the account has already published is read from its repository into the vault. From then on the vault holds everything: public posts, and private and friends-only ones that exist nowhere else on the network.</li>
+            <li><strong>Work.</strong> Posts are read, written and filed in the vault, through any of three clients: the workspace in a browser, an agent's tools, or a synced folder of Markdown files. A new post is private. Saving changes the vault and nothing else.</li>
+            <li><strong>Mark.</strong> Setting a post to public or friends marks it. Nothing is shared by marking.</li>
+            <li><strong>Publish.</strong> The vault service works out what would have to change in the member's repository for what is published to match the vault. The member reviews that plan and approves it, and their own device, signed in at their own PDS, makes the changes. Public posts become <code>com.ohmmmm.post</code> records.</li>
+            <li><strong>Read.</strong> The member's website and any other AT Protocol application read those records from the repository. ohm is not in that path.</li>
+            <li><strong>Keep.</strong> The vault can be synced to a folder the member holds, or exported, as Markdown files. With a folder connected, nothing depends on ohm keeping its copy.</li>
+          </ol>
+          <p>Three rules hold everywhere and are worth knowing before anything else.</p>
+          <ul>
+            <li><strong>Saving never publishes.</strong> Only Publish changes what other people see, and it always shows the change first.</li>
+            <li><strong>ohm never writes to a member's repository.</strong> It has no credential that could. Every write comes from the member's own device.</li>
+            <li><strong>Private stays in the vault.</strong> A private post is never written to the repository, where everything is public.</li>
+          </ul>
+        </section>
+
+        <section aria-labelledby="components">
+          <h2 id="components">Components</h2>
+          <figure class="figure">
+            <div class="figure-scroll"><svg viewBox="0 0 640 400" width="640" height="400" role="img" aria-labelledby="figure-system"><title id="figure-system">The parts of ohm and what passes between them</title><defs><marker id="head-system" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path class="d-head" d="M0 0 10 5 0 10z"/></marker></defs><rect class="d-group" x="0" y="0" width="640" height="112" rx="14"/><text class="d-caption" x="16" y="24">MEMBER'S DEVICE</text><rect class="d-box" x="16" y="38" width="192" height="58" rx="10"/><text class="d-title" x="30" y="64">Workspace</text><text class="d-sub" x="30" y="83">Browser</text><rect class="d-box" x="224" y="38" width="192" height="58" rx="10"/><text class="d-title" x="238" y="64">Agent tools</text><text class="d-sub" x="238" y="83">MCP server</text><rect class="d-box" x="432" y="38" width="192" height="58" rx="10"/><text class="d-title" x="446" y="64">Folder sync</text><text class="d-sub" x="446" y="83">Command line</text><rect class="d-group" x="0" y="168" width="296" height="232" rx="14"/><text class="d-caption" x="16" y="192">OHM</text><rect class="d-box" x="16" y="206" width="264" height="64" rx="10"/><text class="d-title" x="30" y="232">Vault service</text><text class="d-sub" x="30" y="251">Working copy of every post</text><rect class="d-box" x="16" y="320" width="264" height="64" rx="10"/><text class="d-title" x="30" y="346">ohm sign-in</text><text class="d-sub" x="30" y="365">Accounts and sessions</text><rect class="d-group" x="344" y="168" width="296" height="118" rx="14"/><text class="d-caption" x="360" y="192">MEMBER'S ACCOUNT</text><rect class="d-box" x="360" y="206" width="264" height="64" rx="10"/><text class="d-title" x="374" y="232">Personal Data Server</text><text class="d-sub" x="374" y="251">Identity and public repository</text><rect class="d-box d-outside" x="344" y="342" width="140" height="58" rx="10"/><text class="d-title" x="358" y="368">Website</text><text class="d-sub" x="358" y="387">Renders records</text><rect class="d-box d-outside" x="500" y="342" width="140" height="58" rx="10"/><text class="d-title" x="514" y="368">Other apps</text><text class="d-sub" x="514" y="387">Read records</text><path class="d-arrow" d="M148 112L148 204" marker-end="url(#head-system)"/><text class="d-label" x="158" y="146" text-anchor="start">API requests</text><path class="d-arrow" d="M528 112L528 204" marker-end="url(#head-system)"/><text class="d-label" x="518" y="146" text-anchor="end">Sign-in, tokens, publish</text><path class="d-arrow" d="M280 238L358 238" marker-end="url(#head-system)"/><text class="d-label" x="320" y="229" text-anchor="middle">reads</text><path class="d-arrow" d="M148 270L148 318" marker-end="url(#head-system)"/><text class="d-label" x="158" y="300" text-anchor="start">session check</text><path class="d-arrow" d="M414 270L414 340" marker-end="url(#head-system)"/><path class="d-arrow" d="M570 270L570 340" marker-end="url(#head-system)"/><text class="d-label" x="492" y="322" text-anchor="middle">public records</text></svg></div>
+            <figcaption>Clients on the member's device call the vault service for everything in the working copy, and the member's own PDS for sign-in and publishing. The vault service only reads from the PDS.</figcaption>
+          </figure>
+          <div class="table">
+            <table>
+              <thead>
+                <tr><th>Component</th><th>Runs on</th><th>Responsibility</th><th>Status</th></tr>
+              </thead>
+              <tbody>
+                <tr><th scope="row">Workspace</th><td>The member's browser, served from <code>app.ohmmmm.com/vault</code></td><td>Editor, repository tree, publish review</td><td>Implemented</td></tr>
+                <tr><th scope="row">Agent tools</th><td>An MCP server, <code>ohm-vault</code>, on the member's machine</td><td>Ten tools composed from service requests. <a href="/mcp">Agent integration</a></td><td>Implemented</td></tr>
+                <tr><th scope="row">Folder sync</th><td>A command-line client on the member's machine</td><td>Two-way sync between the vault and a folder of Markdown files</td><td>Implemented</td></tr>
+                <tr><th scope="row">Vault service</th><td>Cloudflare Workers and D1</td><td>Stores the working copy of every post. Computes mirror and publish plans. Never writes to a member's repository</td><td>Implemented</td></tr>
+                <tr><th scope="row">ohm sign-in</th><td>Cloudflare Workers and D1</td><td>ohm accounts and sessions, with Google, Microsoft and Bluesky as identity providers</td><td>Implemented</td></tr>
+                <tr><th scope="row">Personal Data Server (PDS)</th><td>The member's host: self-hosted, or Bluesky</td><td>The account's DID, signing key, and repository of public records and files</td><td>External</td></tr>
+                <tr><th scope="row">Website and other applications</th><td>Their own hosts</td><td>Read public records from the repository</td><td>External</td></tr>
+                <tr><th scope="row">Network service</th><td></td><td>Friends-only delivery, the follow graph, and matching</td><td>Planned</td></tr>
+              </tbody>
+            </table>
+          </div>
+        </section>
+
+        <section aria-labelledby="ownership">
+          <h2 id="ownership">Ownership</h2>
+          <p>Each kind of data has one system of record. ohm is the system of record for nothing a member cannot take away.</p>
+          <div class="table">
+            <table>
+              <thead>
+                <tr><th>Data</th><th>System of record</th><th>What ohm holds</th></tr>
+              </thead>
+              <tbody>
+                <tr><th scope="row">Identity: DID, handle, signing key</th><td>The member's PDS</td><td>A reference to the DID</td></tr>
+                <tr><th scope="row">Public posts</th><td>The member's repository, as <code>com.ohmmmm.post</code> records</td><td>A working copy</td></tr>
+                <tr><th scope="row">Private and friends-only posts</th><td>The member's folder, once connected</td><td>A working copy. Until a folder is connected, the only copy</td></tr>
+                <tr><th scope="row">ohm account and session</th><td>ohm sign-in</td><td>The account itself</td></tr>
+                <tr><th scope="row">The link between an ohm account and a DID</th><td>Vault service</td><td>One row, unique in both directions</td></tr>
+              </tbody>
+            </table>
+          </div>
+        </section>
+
+        <section aria-labelledby="principles">
+          <h2 id="principles">Design principles</h2>
+          <ol>
+            <li><strong>The service never writes to a member's repository.</strong> It holds no credential that could. Publishing is planned by the service and carried out from the member's device. <a href="/protocols">Mirror and publish</a></li>
+            <li><strong>Authentication is delegated to the member's PDS.</strong> The PDS signs a short-lived token for each request, and the service verifies it against the account's own DID document. ohm stores no PDS password or token. <a href="/identity">Identity and access</a></li>
+            <li><strong>Every change is conditional.</strong> A write names the version it replaces and is refused if the post has moved on, so the editor, an agent and a sync can work on the same vault without overwriting each other.</li>
+            <li><strong>Capabilities are isolated.</strong> The service offers eight capabilities, each a separate module with its own requests. An agent's tools are compositions of those requests and add none of their own. <a href="/api">Service API</a></li>
+            <li><strong>Requests are idempotent.</strong> A request sent twice ends in the same state as one sent once. A post's ID is generated by the client, so creating it twice creates one post.</li>
+            <li><strong>One portable format.</strong> Sync and export produce the same folder of Markdown files, and reading them back yields the same posts. <a href="/files">Posts as files</a></li>
+          </ol>
+        </section>
+
+        <section aria-labelledby="deployment">
+          <h2 id="deployment">Deployment</h2>
+          <div class="table">
+            <table>
+              <thead>
+                <tr><th>Address</th><th>Serves</th></tr>
+              </thead>
+              <tbody>
+                <tr><th scope="row"><code>app.ohmmmm.com/vault/</code></th><td>The workspace, and the service API under <code>/vault/xrpc/</code>, where the ohm session cookie is in scope</td></tr>
+                <tr><th scope="row"><code>vault.ohmmmm.com</code></th><td>The service API under <code>/xrpc/</code>. The service identifies itself as <code>did:web:vault.ohmmmm.com</code></td></tr>
+                <tr><th scope="row"><code>app.ohmmmm.com/api/auth/</code></th><td>ohm sign-in</td></tr>
+                <tr><th scope="row"><code>docs.ohmmmm.com</code></th><td>This documentation</td></tr>
+              </tbody>
+            </table>
+          </div>
+          <p>The vault service and ohm sign-in are separate Workers with separate databases. The vault service asks ohm sign-in whose session a request carries; ohm sign-in asks the vault service which account a PDS token names. Neither reads the other's database.</p>
+        </section>
+
+        <section aria-labelledby="section">
+          <h2 id="section">In this section</h2>
+          <ul>
+            <li><a href="/identity">Identity and access</a>: the two identities, and how every request is authenticated.</li>
+            <li><a href="/data-model">Data model</a>: a post in the vault, the published record, identifiers and versions.</li>
+            <li><a href="/protocols">Mirror and publish</a>: the two exchanges with a member's repository.</li>
+            <li><a href="/mcp">Agent integration</a>: the MCP server, its tools, and how changes are confirmed.</li>
+            <li><a href="/api">Service API</a>: every request, error and agent tool.</li>
+          </ul>
+        </section>
+
+        <nav class="page-pager" aria-label="Docs pages">
+          <a rel="prev" href="/finding-people"><svg class="icon" viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2.25" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m12 19-7-7 7-7"/><path d="M19 12H5"/></svg>Finding people</a>
+          <a rel="next" href="/identity">Identity and access<svg class="icon" viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2.25" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12h14"/><path d="m12 5 7 7-7 7"/></svg></a>
+        </nav>
+      </article>
+    </main>
+
+    <nav class="site-toc" aria-labelledby="toc-title">
+      <p id="toc-title">On this page</p>
+      <ul>
+        <li><a href="#how">How it works</a></li>
+        <li><a href="#components">Components</a></li>
+        <li><a href="#ownership">Ownership</a></li>
+        <li><a href="#principles">Design principles</a></li>
+        <li><a href="#deployment">Deployment</a></li>
+        <li><a href="#section">In this section</a></li>
+      </ul>
+    </nav>
+  </body>
+</html>

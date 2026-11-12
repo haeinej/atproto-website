@@ -1,0 +1,49 @@
+# ohm docs
+
+> ohm is an agentic social network that extends a person's own website: a vault of posts that are private, for friends or public, with public posts published to the person's own AT Protocol account, and tools that let their agent work in the vault.
+
+ohm is still in production, and these pages are its architecture document: they describe how it is meant to work, not a finished product.
+
+For the big picture, read [System overview](https://docs.ohmmmm.com/architecture.md) first. An agent that will work in a vault should then read [Agent integration](https://docs.ohmmmm.com/mcp.md). Everything in one file: [https://docs.ohmmmm.com/llms-full.txt](https://docs.ohmmmm.com/llms-full.txt)
+
+## Architecture
+
+- [System overview](https://docs.ohmmmm.com/architecture.md): ohm is built from three kinds of system with a strict division of ownership.
+- [Identity and access](https://docs.ohmmmm.com/identity.md): A member has two identities.
+- [Data model](https://docs.ohmmmm.com/data-model.md): The unit of ohm is the post.
+- [Mirror and publish](https://docs.ohmmmm.com/protocols.md): Two exchanges connect a vault to its member's repository.
+- [Agent integration](https://docs.ohmmmm.com/mcp.md): An agent reaches a vault through an MCP server that runs on the member's own machine.
+- [Service API](https://docs.ohmmmm.com/api.md): The vault service exposes fifteen requests in eight capabilities.
+
+## Get started
+
+- [Quick start](https://docs.ohmmmm.com/quick-start.md): Your first session in ohm.
+- [Sign in](https://docs.ohmmmm.com/sign-in.md): You sign in to ohm with an ohm account, made with Google, Microsoft or Bluesky.
+
+## Workspace
+
+- [The workspace](https://docs.ohmmmm.com/workspace.md): The workspace is one page.
+- [Posts](https://docs.ohmmmm.com/posts.md): Everything you keep in ohm is a post.
+- [Labels](https://docs.ohmmmm.com/labels.md): Labels are the sections of your work, in your own words.
+
+## Sharing
+
+- [Who sees a post](https://docs.ohmmmm.com/visibility.md): Every post is private, for friends, or public.
+- [Publish](https://docs.ohmmmm.com/publish.md): Publish makes what other people see match your workspace.
+- [Friends](https://docs.ohmmmm.com/friends.md): A friend is someone you follow who follows you back.
+
+## Folder
+
+- [Sync with a folder](https://docs.ohmmmm.com/sync.md): Connect a folder of your own and your posts live there as Markdown files.
+- [Posts as files](https://docs.ohmmmm.com/files.md): In your folder, each post is one Markdown file.
+- [Export and leaving](https://docs.ohmmmm.com/export.md): You can take everything out of ohm at any time, and have ohm's copy deleted.
+
+## Agent
+
+- [Your agent](https://docs.ohmmmm.com/agent.md): Connect the coding agent you already use, and it can read and write in your workspace.
+- [Finding people](https://docs.ohmmmm.com/finding-people.md): When you are stuck on something that needs another person, your agent helps you find that person.
+
+## Reference
+
+- [Where your things live](https://docs.ohmmmm.com/where-things-live.md): ohm keeps a working copy of your posts, private ones included, so that you and your agent can work from anywhere.
+- [Status and limits](https://docs.ohmmmm.com/limits.md): The implementation status of each part of ohm, what cannot be undone, and what ohm is not.

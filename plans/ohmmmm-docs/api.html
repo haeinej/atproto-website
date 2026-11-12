@@ -1,0 +1,485 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta name="theme-color" content="#fafaf9">
+    <meta name="description" content="The vault service exposes fifteen requests in eight capabilities. This reference is generated from the same tables the service runs on.">
+    <link rel="canonical" href="https://docs.ohmmmm.com/api">
+    <meta property="og:type" content="website">
+    <meta property="og:site_name" content="ohm">
+    <meta property="og:title" content="Service API · ohm docs">
+    <meta property="og:description" content="The vault service exposes fifteen requests in eight capabilities. This reference is generated from the same tables the service runs on.">
+    <meta property="og:url" content="https://docs.ohmmmm.com/api">
+    <meta property="og:image" content="https://ohmmmm.com/assets/og-image.png">
+    <meta property="og:image:width" content="1200">
+    <meta property="og:image:height" content="630">
+    <meta property="og:image:alt" content="ohm — An agentic social network">
+    <meta name="twitter:card" content="summary_large_image">
+    <link rel="icon" href="/assets/favicon.svg" type="image/svg+xml">
+    <link rel="apple-touch-icon" href="/assets/apple-touch-icon.png">
+    <link rel="preload" href="/assets/fonts/coconat-regular.woff2" as="font" type="font/woff2" crossorigin>
+    <link rel="alternate" type="text/markdown" href="/api.md">
+    <link rel="stylesheet" href="/styles.css">
+    <script src="/reader.js" defer></script>
+    <title>Service API · ohm docs</title>
+  </head>
+  <body>
+    <a class="skip" href="#content">Skip to content</a>
+
+    <!-- Docs shell, the same on every page except aria-current. The header is the ohm dot alone, as on
+         ohmmmm.com, where it leads. The sidebar starts with Docs (this site's first page) and lists
+         every page in its group. Icons are Lucide. -->
+    <input class="menu-toggle" type="checkbox" id="menu">
+    <header class="site-header">
+      <a class="site-mark" href="https://ohmmmm.com/"><img src="/assets/favicon.svg" alt="ohm" width="20" height="20"></a>
+      <label class="menu-button" for="menu"><svg class="icon" viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2.25" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 12h16"/><path d="M4 6h16"/><path d="M4 18h16"/></svg><span>Menu</span></label>
+    </header>
+
+    <nav class="site-sidebar" aria-label="Docs">
+      <ul>
+        <li><a href="/">Docs</a></li>
+      </ul>
+      <p class="sidebar-group">Get started</p>
+      <ul>
+        <li><a href="/quick-start">Quick start</a></li>
+        <li><a href="/sign-in">Sign in</a></li>
+      </ul>
+      <p class="sidebar-group">Workspace</p>
+      <ul>
+        <li><a href="/workspace">The workspace</a></li>
+        <li><a href="/posts">Posts</a></li>
+        <li><a href="/labels">Labels</a></li>
+      </ul>
+      <p class="sidebar-group">Sharing</p>
+      <ul>
+        <li><a href="/visibility">Who sees a post</a></li>
+        <li><a href="/publish">Publish</a></li>
+        <li><a href="/friends">Friends</a></li>
+      </ul>
+      <p class="sidebar-group">Folder</p>
+      <ul>
+        <li><a href="/sync">Sync with a folder</a></li>
+        <li><a href="/files">Posts as files</a></li>
+        <li><a href="/export">Export and leaving</a></li>
+      </ul>
+      <p class="sidebar-group">Agent</p>
+      <ul>
+        <li><a href="/agent">Connect your agent</a></li>
+        <li><a href="/finding-people">Finding people</a></li>
+      </ul>
+      <p class="sidebar-group">Architecture</p>
+      <ul>
+        <li><a href="/architecture">Overview</a></li>
+        <li><a href="/identity">Identity and access</a></li>
+        <li><a href="/data-model">Data model</a></li>
+        <li><a href="/protocols">Mirror and publish</a></li>
+        <li><a href="/mcp">Agent integration</a></li>
+        <li><a href="/api" aria-current="page">Service API</a></li>
+      </ul>
+      <p class="sidebar-group">Reference</p>
+      <ul>
+        <li><a href="/where-things-live">Where your things live</a></li>
+        <li><a href="/limits">Status and limits</a></li>
+      </ul>
+    </nav>
+
+    <main id="content">
+      <article aria-labelledby="title">
+        <header>
+          <p class="group">Architecture</p>
+          <h1 id="title">Service API</h1>
+          <p class="introduction">The vault service exposes fifteen requests in eight capabilities. This reference is generated from the same tables the service runs on.</p>
+          <p class="alert" role="note">ohm is still in production, and these pages are its architecture document: they describe how it is meant to work, not a finished product.</p>
+        </header>
+
+        <section aria-labelledby="conventions">
+          <h2 id="conventions">Conventions</h2>
+          <p>The vault service speaks XRPC, the request convention of the AT Protocol. Every request has a namespaced name and is sent to <code>/xrpc/</code> followed by that name.</p>
+          <div class="table">
+            <table class="facts">
+              <thead>
+                <tr><td></td><td></td></tr>
+              </thead>
+              <tbody>
+                <tr><th scope="row">Base addresses</th><td><code>https://vault.ohmmmm.com</code>, and <code>https://app.ohmmmm.com/vault</code> for the workspace, where the ohm session cookie is in scope</td></tr>
+                <tr><th scope="row">Reads</th><td><code>GET</code>, with parameters in the query string</td></tr>
+                <tr><th scope="row">Changes</th><td><code>POST</code>, with parameters as a JSON body</td></tr>
+                <tr><th scope="row">Responses</th><td>JSON, sent with <code>Cache-Control: private, no-store</code>. <code>getAttachment</code> answers with the file itself</td></tr>
+                <tr><th scope="row">Idempotency</th><td>Every request can be repeated safely. A change names the version it replaces, and a repeat of a change already made reports <code>unchanged</code></td></tr>
+                <tr><th scope="row">Authentication</th><td>A service token from the member's PDS in <code>Authorization: Bearer</code>, or an ohm session. <a href="/identity">Identity and access</a></td></tr>
+              </tbody>
+            </table>
+          </div>
+          <p>The access level of each request is one of four.</p>
+          <div class="table">
+            <table>
+              <thead>
+                <tr><th>Access</th><th>Credential</th></tr>
+              </thead>
+              <tbody>
+                <tr><th scope="row">Public</th><td>None. The response contains only public information</td></tr>
+                <tr><th scope="row">Any authenticated account</th><td>A service token from any PDS, issued for this request</td></tr>
+                <tr><th scope="row">Member</th><td>A service token from the member's own PDS, or an ohm session connected to that account</td></tr>
+                <tr><th scope="row">Member, with an ohm session</th><td>An ohm session only. A change must also originate from ohm's own pages</td></tr>
+              </tbody>
+            </table>
+          </div>
+        </section>
+
+        <section aria-labelledby="posts">
+          <h2 id="posts">Posts</h2>
+          <p>Read and change the posts in a vault, one at a time. Every change names the version it replaces, so two edits never overwrite each other unseen.</p>
+          <h3><code>com.ohmmmm.vault.listPosts</code></h3>
+          <p>Every post with the version it is at. With <code>since</code>, a point an earlier list returned, only what changed after it, removals included.</p>
+          <div class="table">
+            <table class="facts">
+              <thead>
+                <tr><td></td><td></td></tr>
+              </thead>
+              <tbody>
+                <tr><th scope="row">Method</th><td><code>GET</code></td></tr>
+                <tr><th scope="row">Access</th><td>Member</td></tr>
+                <tr><th scope="row">Parameters</th><td><code>since</code>: optional: the <code>cursor</code> of an earlier list</td></tr>
+                <tr><th scope="row">Returns</th><td><code>posts</code> (id, version, slug, label, sublabel, visibility, title), <code>cursor</code>, and <code>more</code> when there is another page</td></tr>
+              </tbody>
+            </table>
+          </div>
+          <h3><code>com.ohmmmm.vault.getPost</code></h3>
+          <p>One post in full, and its version.</p>
+          <div class="table">
+            <table class="facts">
+              <thead>
+                <tr><td></td><td></td></tr>
+              </thead>
+              <tbody>
+                <tr><th scope="row">Method</th><td><code>GET</code></td></tr>
+                <tr><th scope="row">Access</th><td>Member</td></tr>
+                <tr><th scope="row">Parameters</th><td><code>id</code>: the post's ID</td></tr>
+                <tr><th scope="row">Returns</th><td><code>post</code>, <code>version</code></td></tr>
+              </tbody>
+            </table>
+          </div>
+          <h3><code>com.ohmmmm.vault.putPost</code></h3>
+          <p>Saves one post. <code>replaces</code> is the version being replaced and is left out for a new post. Sent twice, it ends the same as sent once. Whatever the post says about who may see it, only this copy changes.</p>
+          <div class="table">
+            <table class="facts">
+              <thead>
+                <tr><td></td><td></td></tr>
+              </thead>
+              <tbody>
+                <tr><th scope="row">Method</th><td><code>POST</code></td></tr>
+                <tr><th scope="row">Access</th><td>Member</td></tr>
+                <tr><th scope="row">Parameters</th><td><code>post</code>: the whole post<br><code>replaces</code>: optional: the version it replaces</td></tr>
+                <tr><th scope="row">Returns</th><td><code>id</code>, <code>version</code>, and <code>unchanged</code> when nothing differed</td></tr>
+              </tbody>
+            </table>
+          </div>
+          <h3><code>com.ohmmmm.vault.deletePost</code></h3>
+          <p>Removes one post, for good.</p>
+          <div class="table">
+            <table class="facts">
+              <thead>
+                <tr><td></td><td></td></tr>
+              </thead>
+              <tbody>
+                <tr><th scope="row">Method</th><td><code>POST</code></td></tr>
+                <tr><th scope="row">Access</th><td>Member</td></tr>
+                <tr><th scope="row">Parameters</th><td><code>id</code>: the post's ID<br><code>replaces</code>: the version being removed</td></tr>
+                <tr><th scope="row">Returns</th><td><code>id</code>, <code>removed</code></td></tr>
+              </tbody>
+            </table>
+          </div>
+        </section>
+
+        <section aria-labelledby="structure">
+          <h2 id="structure">Structure</h2>
+          <p>The shape of a vault: its labels, the sublabels inside them, and a line for each post. Enough to draw it or decide where something belongs, without reading any post in full.</p>
+          <h3><code>com.ohmmmm.vault.getTree</code></h3>
+          <p>Labels, sublabels, and each post with who may see it, what kind of thing it is, the platform it first appeared on if that was somewhere else, and why it cannot be published, if it cannot.</p>
+          <div class="table">
+            <table class="facts">
+              <thead>
+                <tr><td></td><td></td></tr>
+              </thead>
+              <tbody>
+                <tr><th scope="row">Method</th><td><code>GET</code></td></tr>
+                <tr><th scope="row">Access</th><td>Member</td></tr>
+                <tr><th scope="row">Parameters</th><td>None</td></tr>
+                <tr><th scope="row">Returns</th><td><code>posts</code>, <code>public</code>, <code>friends</code>, <code>private</code> (counts), and <code>labels</code>, each with its <code>posts</code> and <code>sublabels</code></td></tr>
+              </tbody>
+            </table>
+          </div>
+        </section>
+
+        <section aria-labelledby="search">
+          <h2 id="search">Search</h2>
+          <p>Find posts by the words in them, at every visibility. A title counts for more than a label, and a label for more than the body.</p>
+          <h3><code>com.ohmmmm.vault.searchPosts</code></h3>
+          <p>The posts that mention every word of <code>q</code>, best first, each with a passage that shows where.</p>
+          <div class="table">
+            <table class="facts">
+              <thead>
+                <tr><td></td><td></td></tr>
+              </thead>
+              <tbody>
+                <tr><th scope="row">Method</th><td><code>GET</code></td></tr>
+                <tr><th scope="row">Access</th><td>Member</td></tr>
+                <tr><th scope="row">Parameters</th><td><code>q</code>: the words to look for<br><code>visibility</code>: optional: only posts at this visibility<br><code>limit</code>: optional: how many, 10 unless said, 50 at most</td></tr>
+                <tr><th scope="row">Returns</th><td><code>found</code>, and <code>posts</code> (id, slug, title, label, sublabel, visibility, date, passage)</td></tr>
+              </tbody>
+            </table>
+          </div>
+        </section>
+
+        <section aria-labelledby="mirror">
+          <h2 id="mirror">Mirror</h2>
+          <p>Bring what the member has already published on their PDS into the vault. It only reads the PDS, and it never changes a post the member has since changed in the vault.</p>
+          <h3><code>com.ohmmmm.vault.importPublished</code></h3>
+          <p>Reads the member's repository and says what it holds as posts: how many, which would differ from what is published, and what could not be kept. With <code>apply</code>, saves them. Without it, changes nothing.</p>
+          <div class="table">
+            <table class="facts">
+              <thead>
+                <tr><td></td><td></td></tr>
+              </thead>
+              <tbody>
+                <tr><th scope="row">Method</th><td><code>POST</code></td></tr>
+                <tr><th scope="row">Access</th><td>Member</td></tr>
+                <tr><th scope="row">Parameters</th><td><code>apply</code>: optional: save the posts<br><code>site</code>: optional: the member's website, when it is not the one their handle names<br><code>from</code>: optional: one older post type to read, when it should not be found</td></tr>
+                <tr><th scope="row">Returns</th><td><code>site</code>, <code>types</code>, <code>records</code>, <code>posts</code>, <code>sameAsPublished</code>, <code>differs</code>, <code>lost</code>, <code>cannotBePublishedYet</code>, <code>skipped</code>, <code>applied</code>; and with <code>apply</code>, <code>saved</code>, <code>unchanged</code>, <code>changedThere</code>, <code>refused</code></td></tr>
+              </tbody>
+            </table>
+          </div>
+        </section>
+
+        <section aria-labelledby="publish">
+          <h2 id="publish">Publish</h2>
+          <p>Work out what would have to change in the member's own repository for what is published to match their vault. The service changes nothing there and holds no permission to: the member, signed in at their own PDS, makes the changes from the list. Only the shared post type is touched, and a record the vault knows nothing about is never removed.</p>
+          <h3><code>com.ohmmmm.vault.getPublishPlan</code></h3>
+          <p>What publishing would do: the posts it would publish for the first time, replace and take down, the ones that cannot be published and why, and the published records the vault knows nothing about. With <code>prepare</code>, also the changes themselves, ready to be made.</p>
+          <div class="table">
+            <table class="facts">
+              <thead>
+                <tr><td></td><td></td></tr>
+              </thead>
+              <tbody>
+                <tr><th scope="row">Method</th><td><code>GET</code></td></tr>
+                <tr><th scope="row">Access</th><td>Member</td></tr>
+                <tr><th scope="row">Parameters</th><td><code>prepare</code>: optional: <code>1</code> to include <code>writes</code>, the changes to make</td></tr>
+                <tr><th scope="row">Returns</th><td><code>repository</code>, <code>pds</code>, <code>collection</code>, <code>create</code>, <code>replace</code>, <code>remove</code>, <code>unchanged</code>, <code>cannot</code>, <code>notInVault</code>, <code>changes</code> (how many); and with <code>prepare</code>, <code>writes</code> and <code>plan</code>, a name for exactly these changes</td></tr>
+              </tbody>
+            </table>
+          </div>
+          <h3><code>com.ohmmmm.vault.getAttachment</code></h3>
+          <p>One file that one of the member's posts places, fetched from where the post says it is. It answers with the file itself, not JSON. It is for publishing, which sends a copy of each such file to the member's PDS.</p>
+          <div class="table">
+            <table class="facts">
+              <thead>
+                <tr><td></td><td></td></tr>
+              </thead>
+              <tbody>
+                <tr><th scope="row">Method</th><td><code>GET</code></td></tr>
+                <tr><th scope="row">Access</th><td>Member</td></tr>
+                <tr><th scope="row">Parameters</th><td><code>id</code>: the post's ID<br><code>attachment</code>: the name the post's record places the file under</td></tr>
+                <tr><th scope="row">Returns</th><td>The file, with its type</td></tr>
+              </tbody>
+            </table>
+          </div>
+        </section>
+
+        <section aria-labelledby="export">
+          <h2 id="export">Export</h2>
+          <p>The whole vault written out as files a person can keep: each post as Markdown, where it sits in a folder. The same files open in Obsidian, and read back as the same posts.</p>
+          <h3><code>com.ohmmmm.vault.exportFiles</code></h3>
+          <p>Every post as a file: its path in a folder, and its text.</p>
+          <div class="table">
+            <table class="facts">
+              <thead>
+                <tr><td></td><td></td></tr>
+              </thead>
+              <tbody>
+                <tr><th scope="row">Method</th><td><code>GET</code></td></tr>
+                <tr><th scope="row">Access</th><td>Member</td></tr>
+                <tr><th scope="row">Parameters</th><td>None</td></tr>
+                <tr><th scope="row">Returns</th><td><code>files</code> (path, text)</td></tr>
+              </tbody>
+            </table>
+          </div>
+        </section>
+
+        <section aria-labelledby="account">
+          <h2 id="account">Account</h2>
+          <p>For a member signed in to ohm: who they are, and which AT Protocol account their vault is. One ohm account works in one AT Protocol account, and the other way round. These ride on the ohm session only; a token from a PDS does not reach them.</p>
+          <h3><code>com.ohmmmm.account.get</code></h3>
+          <p>Who is signed in, the AT Protocol account they connected if they have, and whether what it had published has been brought in.</p>
+          <div class="table">
+            <table class="facts">
+              <thead>
+                <tr><td></td><td></td></tr>
+              </thead>
+              <tbody>
+                <tr><th scope="row">Method</th><td><code>GET</code></td></tr>
+                <tr><th scope="row">Access</th><td>Member, with an ohm session</td></tr>
+                <tr><th scope="row">Parameters</th><td>None</td></tr>
+                <tr><th scope="row">Returns</th><td><code>user</code> (name), <code>did</code>, <code>mirrored</code>, and <code>service</code>: who a PDS has to address its token to when the member connects</td></tr>
+              </tbody>
+            </table>
+          </div>
+          <h3><code>com.ohmmmm.account.connect</code></h3>
+          <p>Ties an AT Protocol account to the ohm account. <code>token</code> is one the account's PDS issued for this request and nothing else.</p>
+          <div class="table">
+            <table class="facts">
+              <thead>
+                <tr><td></td><td></td></tr>
+              </thead>
+              <tbody>
+                <tr><th scope="row">Method</th><td><code>POST</code></td></tr>
+                <tr><th scope="row">Access</th><td>Member, with an ohm session</td></tr>
+                <tr><th scope="row">Parameters</th><td><code>token</code>: a token from the account's PDS, issued for this request</td></tr>
+                <tr><th scope="row">Returns</th><td><code>did</code>, and <code>already</code> when it was connected before</td></tr>
+              </tbody>
+            </table>
+          </div>
+          <h3><code>com.ohmmmm.account.disconnect</code></h3>
+          <p>Unties the AT Protocol account. The vault is kept, and opens again when the account is connected.</p>
+          <div class="table">
+            <table class="facts">
+              <thead>
+                <tr><td></td><td></td></tr>
+              </thead>
+              <tbody>
+                <tr><th scope="row">Method</th><td><code>POST</code></td></tr>
+                <tr><th scope="row">Access</th><td>Member, with an ohm session</td></tr>
+                <tr><th scope="row">Parameters</th><td>None</td></tr>
+                <tr><th scope="row">Returns</th><td><code>did</code>, now empty</td></tr>
+              </tbody>
+            </table>
+          </div>
+        </section>
+
+        <section aria-labelledby="identity">
+          <h2 id="identity">Identity</h2>
+          <p>The first steps of signing in: finding an account from its handle, and saying who a token from a PDS names. Neither touches a vault.</p>
+          <h3><code>com.ohmmmm.identity.findAccount</code></h3>
+          <p>Finds an account from what a person types to sign in: their handle, or their DID. Needs no sign-in, and answers only with what is public.</p>
+          <div class="table">
+            <table class="facts">
+              <thead>
+                <tr><td></td><td></td></tr>
+              </thead>
+              <tbody>
+                <tr><th scope="row">Method</th><td><code>GET</code></td></tr>
+                <tr><th scope="row">Access</th><td>Public</td></tr>
+                <tr><th scope="row">Parameters</th><td><code>account</code>: a handle, such as example.com, or a DID</td></tr>
+                <tr><th scope="row">Returns</th><td><code>did</code>, <code>handle</code>, <code>pds</code>, and <code>service</code>: this service's own DID</td></tr>
+              </tbody>
+            </table>
+          </div>
+          <h3><code>com.ohmmmm.identity.whoAmI</code></h3>
+          <p>Says who a token from a PDS names. The token has to be issued for this request and nothing else, so only its holder can ask.</p>
+          <div class="table">
+            <table class="facts">
+              <thead>
+                <tr><td></td><td></td></tr>
+              </thead>
+              <tbody>
+                <tr><th scope="row">Method</th><td><code>GET</code></td></tr>
+                <tr><th scope="row">Access</th><td>Any authenticated account</td></tr>
+                <tr><th scope="row">Parameters</th><td>None</td></tr>
+                <tr><th scope="row">Returns</th><td><code>did</code>, and <code>handle</code> when the handle points back to the account</td></tr>
+              </tbody>
+            </table>
+          </div>
+        </section>
+
+        <section aria-labelledby="errors">
+          <h2 id="errors">Errors</h2>
+          <p>A refusal is JSON with an <code>error</code> code from the table below and a <code>message</code> written to be shown to a person as it is.</p>
+          <div class="table">
+            <table>
+              <thead>
+                <tr><th>Error</th><th>Status</th><th>Cause</th></tr>
+              </thead>
+              <tbody>
+                <tr><th scope="row"><code>SignInRequired</code></th><td>401</td><td>The request rides on an ohm session, and there is none</td></tr>
+                <tr><th scope="row"><code>AuthRequired</code></th><td>401</td><td>The token is missing, cannot be read, was issued for another request or service, has run out, or its signature does not match</td></tr>
+                <tr><th scope="row"><code>NotAMember</code></th><td>403</td><td>The account has not been let in yet</td></tr>
+                <tr><th scope="row"><code>WrongOrigin</code></th><td>403</td><td>A request that changes something came with a session but not from ohm's own pages</td></tr>
+                <tr><th scope="row"><code>NotConnected</code></th><td>409</td><td>The ohm account has no AT Protocol account connected yet</td></tr>
+                <tr><th scope="row"><code>AlreadyConnected</code></th><td>409</td><td>The ohm account already works in another AT Protocol account</td></tr>
+                <tr><th scope="row"><code>ConnectedElsewhere</code></th><td>409</td><td>The AT Protocol account is already connected to another ohm account</td></tr>
+                <tr><th scope="row"><code>SignInUnavailable</code></th><td>503</td><td>ohm's sign-in could not be reached to check a session</td></tr>
+                <tr><th scope="row"><code>MethodNotFound</code></th><td>404</td><td>There is no such request</td></tr>
+                <tr><th scope="row"><code>WrongMethod</code></th><td>405</td><td>The request is the other of GET and POST</td></tr>
+                <tr><th scope="row"><code>InvalidRequest</code></th><td>400</td><td>The request is not JSON, or something it says is not what that request takes</td></tr>
+                <tr><th scope="row"><code>InvalidPost</code></th><td>400</td><td>The post is not one the vault can hold. The message lists every reason</td></tr>
+                <tr><th scope="row"><code>InvalidCursor</code></th><td>400</td><td><code>since</code> is not a value an earlier list returned</td></tr>
+                <tr><th scope="row"><code>NotFound</code></th><td>404</td><td>There is no such post</td></tr>
+                <tr><th scope="row"><code>Changed</code></th><td>409</td><td>The post has changed since the version the request names. The answer carries the current version</td></tr>
+                <tr><th scope="row"><code>SlugTaken</code></th><td>409</td><td>Another post in the vault already has that slug</td></tr>
+                <tr><th scope="row"><code>TooLarge</code></th><td>413</td><td>The post is more than 600 KB of text, or a file it places is empty or larger than 25 MB</td></tr>
+                <tr><th scope="row"><code>FileUnreachable</code></th><td>502</td><td>A file a post places could not be fetched from where the post says it is</td></tr>
+                <tr><th scope="row"><code>AccountNotFound</code></th><td>404</td><td>No AT Protocol account answers to that handle or DID</td></tr>
+                <tr><th scope="row"><code>NoRepository</code></th><td>400</td><td>The account's DID document does not say where its repository is kept</td></tr>
+                <tr><th scope="row"><code>RepositoryUnreachable</code></th><td>502</td><td>The account's PDS would not answer</td></tr>
+                <tr><th scope="row"><code>InternalError</code></th><td>500</td><td>Something went wrong in the service itself</td></tr>
+              </tbody>
+            </table>
+          </div>
+        </section>
+
+        <section aria-labelledby="tools">
+          <h2 id="tools">Agent tools</h2>
+          <p>An agent's tools are compositions of the requests above and add no capability of their own. Each runs on the member's machine and authenticates as the member, with a service token per request.</p>
+          <div class="table">
+            <table>
+              <thead>
+                <tr><th>Tool</th><th>Effect</th><th>Requests used</th></tr>
+              </thead>
+              <tbody>
+                <tr><th scope="row"><code>vault_tree</code></th><td>Read</td><td><code>getTree</code></td></tr>
+                <tr><th scope="row"><code>vault_list</code></th><td>Read</td><td><code>getTree</code></td></tr>
+                <tr><th scope="row"><code>vault_read</code></th><td>Read</td><td><code>getTree</code>, <code>getPost</code></td></tr>
+                <tr><th scope="row"><code>vault_search</code></th><td>Read</td><td><code>searchPosts</code></td></tr>
+                <tr><th scope="row"><code>vault_save</code></th><td>Change</td><td><code>getTree</code>, <code>getPost</code>, <code>putPost</code></td></tr>
+                <tr><th scope="row"><code>vault_set_visibility</code></th><td>Change</td><td><code>getTree</code>, <code>getPost</code>, <code>putPost</code></td></tr>
+                <tr><th scope="row"><code>vault_status</code></th><td>Read</td><td><code>getPublishPlan</code></td></tr>
+                <tr><th scope="row"><code>vault_publish</code></th><td>Change</td><td><code>getPublishPlan</code>, <code>getAttachment</code></td></tr>
+                <tr><th scope="row"><code>vault_mirror</code></th><td>Change</td><td><code>importPublished</code></td></tr>
+                <tr><th scope="row"><code>vault_delete</code></th><td>Change</td><td><code>getTree</code>, <code>getPost</code>, <code>deletePost</code></td></tr>
+              </tbody>
+            </table>
+          </div>
+          <p>The server that offers these tools is described in <a href="/mcp">Agent integration</a>. Three rules hold for every tool that changes something.</p>
+          <ol>
+            <li><strong>A new post is private.</strong> Marking it for anyone else is a separate, confirmed step.</li>
+            <li><strong>Changes that others can see take two calls.</strong> The first returns what would happen and a <code>confirm</code> value bound to exactly that outcome. Only a second call carrying the value proceeds.</li>
+            <li><strong>A post is changed from the version that was read.</strong> If it has changed since, nothing is saved.</li>
+          </ol>
+        </section>
+
+        <nav class="page-pager" aria-label="Docs pages">
+          <a rel="prev" href="/mcp"><svg class="icon" viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2.25" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m12 19-7-7 7-7"/><path d="M19 12H5"/></svg>Agent integration</a>
+          <a rel="next" href="/where-things-live">Where your things live<svg class="icon" viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2.25" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12h14"/><path d="m12 5 7 7-7 7"/></svg></a>
+        </nav>
+      </article>
+    </main>
+
+    <nav class="site-toc" aria-labelledby="toc-title">
+      <p id="toc-title">On this page</p>
+      <ul>
+        <li><a href="#conventions">Conventions</a></li>
+        <li><a href="#posts">Posts</a></li>
+        <li><a href="#structure">Structure</a></li>
+        <li><a href="#search">Search</a></li>
+        <li><a href="#mirror">Mirror</a></li>
+        <li><a href="#publish">Publish</a></li>
+        <li><a href="#export">Export</a></li>
+        <li><a href="#account">Account</a></li>
+        <li><a href="#identity">Identity</a></li>
+        <li><a href="#errors">Errors</a></li>
+        <li><a href="#tools">Agent tools</a></li>
+      </ul>
+    </nav>
+  </body>
+</html>

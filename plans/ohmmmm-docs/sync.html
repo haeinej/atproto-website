@@ -19,6 +19,7 @@
     <link rel="icon" href="/assets/favicon.svg" type="image/svg+xml">
     <link rel="apple-touch-icon" href="/assets/apple-touch-icon.png">
     <link rel="preload" href="/assets/fonts/coconat-regular.woff2" as="font" type="font/woff2" crossorigin>
+    <link rel="alternate" type="text/markdown" href="/sync.md">
     <link rel="stylesheet" href="/styles.css">
     <script src="/reader.js" defer></script>
     <title>Sync with a folder · ohm docs</title>
@@ -44,7 +45,7 @@
         <li><a href="/quick-start">Quick start</a></li>
         <li><a href="/sign-in">Sign in</a></li>
       </ul>
-      <p class="sidebar-group">Your workspace</p>
+      <p class="sidebar-group">Workspace</p>
       <ul>
         <li><a href="/workspace">The workspace</a></li>
         <li><a href="/posts">Posts</a></li>
@@ -56,32 +57,40 @@
         <li><a href="/publish">Publish</a></li>
         <li><a href="/friends">Friends</a></li>
       </ul>
-      <p class="sidebar-group">Your folder</p>
+      <p class="sidebar-group">Folder</p>
       <ul>
         <li><a href="/sync" aria-current="page">Sync with a folder</a></li>
         <li><a href="/files">Posts as files</a></li>
         <li><a href="/export">Export and leaving</a></li>
       </ul>
-      <p class="sidebar-group">Your agent</p>
+      <p class="sidebar-group">Agent</p>
       <ul>
         <li><a href="/agent">Connect your agent</a></li>
         <li><a href="/finding-people">Finding people</a></li>
       </ul>
-      <p class="sidebar-group">Before you rely on it</p>
+      <p class="sidebar-group">Architecture</p>
+      <ul>
+        <li><a href="/architecture">Overview</a></li>
+        <li><a href="/identity">Identity and access</a></li>
+        <li><a href="/data-model">Data model</a></li>
+        <li><a href="/protocols">Mirror and publish</a></li>
+        <li><a href="/mcp">Agent integration</a></li>
+        <li><a href="/api">Service API</a></li>
+      </ul>
+      <p class="sidebar-group">Reference</p>
       <ul>
         <li><a href="/where-things-live">Where your things live</a></li>
-        <li><a href="/limits">What to know first</a></li>
+        <li><a href="/limits">Status and limits</a></li>
       </ul>
     </nav>
 
     <main id="content">
       <article aria-labelledby="title">
         <header>
-          <p class="group">Your folder</p>
+          <p class="group">Folder</p>
           <h1 id="title">Sync with a folder</h1>
           <p class="introduction">Connect a folder of your own and your posts live there as Markdown files. Sync brings the folder and your workspace into line, in both directions.</p>
           <p class="alert" role="note">ohm is still in production, and these pages are its architecture document: they describe how it is meant to work, not a finished product.</p>
-          <p class="note">Sync is built for a folder on your computer, from the command line. It is not in the workspace yet, and cloud storage comes after.</p>
         </header>
 
         <section aria-labelledby="why">

@@ -4,9 +4,12 @@
 
 The docs' words are in this file: GROUPS sets the sidebar and the order of pages, and each doc()
 call below is one page, written in a small Markdown (## headings with {#ids}, lists, tables,
-code blocks, **bold**, `code`, [links](/docs/page#section)). Edit here, run, and commit what changes.
+code blocks, **bold**, `code`, [links](/docs/page#section), ### headings inside a section, and
+{{figure:name}} for a diagram drawn in FIGURES). Edit here, run, and commit what changes. The
+Service API page is read from ../../service/CAPABILITIES.md.
 
-It writes, in this folder: index.html, one .html per page, 404.html, sitemap.xml and robots.txt.
+It writes, in this folder: index.html, one .html per page, 404.html, sitemap.xml and robots.txt,
+and for agents a .md copy of each page, llms.txt and llms-full.txt.
 It does not write styles.css, reader.js, _headers, wrangler.jsonc or assets/, which are edited by
 hand. In ../ohmmmm-home it replaces each page's sidebar (the "Site shell" block: the dot, About, Docs)
 and keeps the company directory on index.html only.
@@ -26,18 +29,19 @@ HOME_ORIGIN = "https://ohmmmm.com"
 
 GROUPS = [
     ("Get started", ["quick-start", "sign-in"]),
-    ("Your workspace", ["workspace", "posts", "labels"]),
+    ("Workspace", ["workspace", "posts", "labels"]),
     ("Sharing", ["visibility", "publish", "friends"]),
-    ("Your folder", ["sync", "files", "export"]),
-    ("Your agent", ["agent", "finding-people"]),
-    ("Before you rely on it", ["where-things-live", "limits"]),
+    ("Folder", ["sync", "files", "export"]),
+    ("Agent", ["agent", "finding-people"]),
+    ("Architecture", ["architecture", "identity", "data-model", "protocols", "mcp", "api"]),
+    ("Reference", ["where-things-live", "limits"]),
 ]
 
 PAGES = {}
 
 
-def doc(slug, title, intro, body, note=None, nav=None):
-    PAGES[slug] = dict(title=title, nav=nav or title, intro=intro, note=note, body=body)
+def doc(slug, title, intro, body, nav=None):
+    PAGES[slug] = dict(title=title, nav=nav or title, intro=intro, body=body)
 
 
 # On every page: ohm is still being made, and these pages say how it is meant to work.
@@ -111,7 +115,6 @@ If you sign in with Bluesky, the second step is already answered: your Bluesky a
 | A website, and no server yet | Set one up beside your site, then enter your handle | Nothing yet |
 | A Bluesky account | Enter your Bluesky handle and an app password | Your own posts. Replies and reposts are not brought in |
 All three give you the same workspace. They differ only in where your account is hosted.
-Someone with none of these cannot go further today. An account that ohm hosts for you is planned.
 
 ## Proving the account is yours {#proof}
 ohm never takes your word for which account is yours. The server that holds the account says so.
@@ -219,7 +222,6 @@ Paste the address of a picture or file that is already on the web.
 - **When you publish, a copy is sent to your own account.** The published post then no longer depends on the other site staying up.
 - **The original address is kept** with the copy, as its source.
 - **An address that cannot be fetched is named** when you publish: one that needs a sign-in, or a file larger than 25 MB.
-Dropping a file in from your computer, and ohm keeping its own copy of each file, are planned.
 An attachment is an image, a video, audio, or a file such as a PDF, EPUB, ZIP, CSV or text file.
 Describe a picture in its alt text. In a post with no words of its own, that description is also what names the post in lists.
 
@@ -322,7 +324,6 @@ Private means private from other people. Two things still read a private post.
 
 doc("publish", "Publish",
     "Publish makes what other people see match your workspace. It is the only thing in ohm that shares anything, and it always shows you what will change first.",
-    note="Publishing public posts is built. Serving friends-only posts to friends is not.",
     body="""
 ## Before you publish {#status}
 A mark on the Publish button means something is waiting: posts you marked public, published posts you edited, and published posts you made private or removed.
@@ -360,17 +361,11 @@ A public post is written to your own account on the AT Protocol, in the reposito
 Other services copy a public post the moment it is written. Making it private later removes it from your account. It does not remove it from every copy. You are told this each time, before you approve.
 
 ## Addresses {#addresses}
-A post's record is kept under its permanent ID, so renaming or refiling a post changes its address without making it a different post. The old address sending readers on to the new one is planned.
-
-## What is not built {#not}
-- **Friends.** A post marked for friends is not shown to anyone else yet. [Friends](/docs/friends)
-- **A preview** of a post as it will appear.
-- **Holding a copy of each file in your workspace.** Today a copy is made when you publish.
+A post's record is kept under its permanent ID, so renaming or refiling a post changes its address without making it a different post.
 """)
 
 doc("friends", "Friends",
     "A friend is someone you follow who follows you back. Friends can read the posts you mark for friends, and you can read theirs.",
-    note="Friends reading each other's posts is not built yet. This is how it is planned to work.",
     body="""
 ## Following {#following}
 Following someone on ohm is the same follow that Bluesky uses, kept in your own account. Someone you follow on Bluesky is followed here, and following someone here shows on Bluesky.
@@ -397,7 +392,6 @@ Who follows whom is public, as it is on Bluesky. That is what lets an agent see 
 
 doc("sync", "Sync with a folder",
     "Connect a folder of your own and your posts live there as Markdown files. Sync brings the folder and your workspace into line, in both directions.",
-    note="Sync is built for a folder on your computer, from the command line. It is not in the workspace yet, and cloud storage comes after.",
     body="""
 ## Why connect a folder {#why}
 Your workspace is a working copy. With a folder connected, the originals of your private and friends-only posts are files you hold, on your own machine or in the cloud storage you already use.
@@ -446,7 +440,6 @@ Run it again. A sync can be repeated safely, and it picks up where things stand.
 
 doc("files", "Posts as files",
     "In your folder, each post is one Markdown file. A label is a folder, a sublabel is a folder inside it, and everything else about the post is written at the top of the file.",
-    note="The file format below is built, and is what writing your vault out gives you.",
     body="""
 ## The folder {#folder}
 ```
@@ -513,7 +506,6 @@ From the menu under your picture, at the foot of the rail.
 - **Into a folder,** on your computer. Chrome and Edge can do this.
 - **As one file,** downloaded.
 If you already sync, your folder is your export, as of the last sync.
-Deleting ohm's copy on request is not built yet: ask, and it is done by hand.
 
 ## Deleting ohm's copy {#deleting}
 You can ask for everything ohm holds for you to be deleted.
@@ -530,7 +522,6 @@ Sign in, connect the same folder, and sync. Every post comes back as it was.
 
 doc("agent", "Your agent",
     "Connect the coding agent you already use, and it can read and write in your workspace. It reads everything, private posts included, which is how it knows what you are working on.",
-    note="The agent's tools are built. They sign in with an app password from your own server.",
     nav="Connect your agent",
     body="""
 ## What it is {#what}
@@ -568,10 +559,10 @@ The rule behind the table: reading is free, and anything that changes what other
 | `vault_publish` | Publish |
 | `vault_mirror` | Bring in what you have published |
 | `vault_delete` | Remove a post |
-A tool has no ability of its own. Each is a way of asking ohm for something the workspace can already do.
+A tool has no ability of its own. Each is a way of asking ohm for something the workspace can already do. [Agent integration](/docs/mcp) describes the server behind them.
 
 ## Signing in {#sign-in}
-Your agent signs in to your own server with an app password, and your server vouches for each thing it asks ohm. A key made only for an agent, which reaches your workspace and nothing else and can be taken away, is planned.
+Your agent signs in to your own server with an app password, and your server vouches for each thing it asks ohm.
 
 ## Other people's writing is not trusted {#safety}
 The same agent reads your private posts and other people's posts. Someone could write a post meant to make an agent give something away. The protection is in the tools, not in the agent's judgement: no tool sends anything out without showing you first.
@@ -584,17 +575,12 @@ The same agent reads your private posts and other people's posts. Someone could 
 - "Make that one public." Then: "Publish."
 - "What is not published yet?"
 
-## Not built yet {#not}
-- **Sync** from your agent. It runs from the command line.
-- **Following, and drafting an email to someone.** [Finding people](/docs/finding-people)
-
 ## Editing alongside it {#together}
 You and your agent can work in the same workspace at once. Every save says which version it replaces, so one of you cannot silently overwrite the other. [The workspace](/docs/workspace#saving)
 """)
 
 doc("finding-people", "Finding people",
     "When you are stuck on something that needs another person, your agent helps you find that person. What it can settle alone, it settles. For everything else, it takes you to someone.",
-    note="Finding people is not built yet. This is how it is planned to work.",
     body="""
 ## When a person is what you need {#kinds}
 | You need | That is |
@@ -638,7 +624,7 @@ doc("where-things-live", "Where your things live",
 ## Three places {#places}
 | | What is there | Whose it is |
 | --- | --- | --- |
-| Your account on the open network | Your public posts, and your identity | Yours. It is hosted by Bluesky or on a server you run, and it can be moved. Hosting by ohm is planned |
+| Your account on the open network | Your public posts, and your identity | Yours. It is hosted by Bluesky or on a server you run, and it can be moved |
 | Your ohm account | Who you are when you sign in to ohm | Made with Google, Microsoft or Bluesky. It holds no posts |
 | Your folder | Every post that is not public, as Markdown files | Yours, on your machine or in your own cloud storage |
 | Your workspace on ohm | A working copy of all of it | ohm holds it for you |
@@ -664,27 +650,28 @@ With a folder connected, deleting ohm's copy loses nothing. Until you connect on
 Your identity is your own. It is an AT Protocol account, and its name can be your domain. Your follows are kept there too. [Sign in](/docs/sign-in#identity)
 """)
 
-doc("limits", "What to know first",
-    "ohm is early. This page says what is built, what cannot be undone, and what ohm is not.",
+doc("limits", "Status and limits",
+    "The implementation status of each part of ohm, what cannot be undone, and what ohm is not.",
     body="""
-## It is early {#early}
-| Part | Where it stands |
-| --- | --- |
-| Signing in with Google, Microsoft or Bluesky | Built. One person has used it |
-| Saying where your posts live, with a server of your own | Built, and used |
-| The same, with a Bluesky account | Built. Nobody has finished one yet |
-| An account that ohm hosts for you | Not built yet |
-| Who is let in | One account, while it is tested |
-| The workspace in the browser | Built: your repository, three views and a filter, writing and filing posts |
-| Bringing in what you have published | Built. It runs on its own the first time |
-| Publishing public posts | Built, and tested against a stand-in server. Not yet run against a real account |
-| Showing friends-only posts to friends | Not built yet |
-| Pictures and files kept by ohm | Not built yet. A post points at them, and a copy is made when you publish |
-| Your agent working in the workspace | Built. Not yet run with a real sign-in |
-| Syncing with a folder on your computer | Built, from the command line |
-| Syncing from the workspace, and with cloud storage | Later |
-| Deleting everything ohm holds for you | By hand, on request |
-| Your agent finding people | Not built yet |
+## Implementation status {#status}
+| Area | Status | Notes |
+| --- | --- | --- |
+| Sign-in with Google, Microsoft or Bluesky | Implemented | In production. Sign-in with Bluesky is not yet verified end to end |
+| Connecting a self-hosted PDS | Implemented | In production |
+| Connecting a Bluesky account | Implemented | Not yet verified end to end |
+| Accounts hosted by ohm | Planned | |
+| Access | Restricted | An allow list of accounts during testing |
+| Workspace | Implemented | Repository tree, three views, filter, editor |
+| Mirror | Implemented | Runs automatically when an account is first connected |
+| Publishing public posts | Implemented | Verified against a test PDS. Not yet run against a live account |
+| Friends-only delivery | Planned | |
+| Attachments stored by ohm | Planned | A post references files by address, and a copy is made at publish |
+| Agent tools | Implemented | Not yet verified with a live sign-in |
+| Folder sync | Implemented | Command line, local folders |
+| Sync from the workspace, and with cloud storage | Planned | |
+| Deleting ohm's copy | Manual | Carried out on request |
+| Agent keys | Planned | Until then an agent signs in with an app password from the member's PDS |
+| Finding people | Planned | |
 
 ## Anything you publish is public for good {#for-good}
 A public post on the AT Protocol is copied by other services the moment it is written. Taking a post down removes it from your website, not from every copy.
@@ -702,6 +689,458 @@ Your workspace includes them, and ohm holds your workspace. ohm shows private po
 - **Not a vault we cannot read.** The working copy includes your private posts, and we can read it.
 - **Not a Bluesky competitor.** Your account, your follows and your public posts are part of the same network.
 """)
+
+# ---------------------------------------------------------------- architecture
+#
+# These pages describe the system itself: its parts, who owns what, how a request is proved, and
+# what is exchanged. The request reference is read from service/CAPABILITIES.md, which the
+# service's own tables write, so it cannot say anything the service does not do.
+
+SERVICE_REFERENCE = docs_site.parent.parent / "service" / "CAPABILITIES.md"
+
+ACCESS = {
+    "Anyone": "Public",
+    "Whoever holds a token from a PDS": "Any authenticated account",
+    "The member": "Member",
+    "The member, signed in to ohm": "Member, with an ohm session",
+}
+
+
+def service_reference():
+    """→ (capabilities, errors, tools) as the service's reference lists them."""
+    text = SERVICE_REFERENCE.read_text()
+    request = re.compile(
+        r"### `([\w.]+)`\n\n(.+?)\n\n\| \| \|\n\| --- \| --- \|\n\| Reads or changes \| .+?\(`(GET|POST)`\) \|\n"
+        r"\| Who may ask \| (.+?) \|\n\| Takes \| (.+?) \|\n\| Gives \| (.+?) \|\n")
+    capabilities = []
+    for chunk in re.split(r"\n(?=## )", text):
+        found = request.findall(chunk)
+        if found:
+            name, about = re.match(r"## (.+?)\n\n(.+?)\n", chunk).groups()
+            capabilities.append((name, about, found))
+    rows = lambda heading: [
+        [cell.strip() for cell in line.strip().strip("|").split("|")]
+        for line in text.split(f"\n## {heading}\n")[1].split("\n## ")[0].split("\n")
+        if line.startswith("| `")
+    ]
+    assert len(capabilities) == 8 and sum(len(found) for _, _, found in capabilities) == 15, capabilities
+    return capabilities, rows("When the answer is no"), [row for row in rows("The tools an agent has") if row[0].startswith("`vault_")]
+
+
+def api_body():
+    capabilities, errors, tools = service_reference()
+    out = ["""
+## Conventions {#conventions}
+The vault service speaks XRPC, the request convention of the AT Protocol. Every request has a namespaced name and is sent to `/xrpc/` followed by that name.
+| | |
+| --- | --- |
+| Base addresses | `https://vault.ohmmmm.com`, and `https://app.ohmmmm.com/vault` for the workspace, where the ohm session cookie is in scope |
+| Reads | `GET`, with parameters in the query string |
+| Changes | `POST`, with parameters as a JSON body |
+| Responses | JSON, sent with `Cache-Control: private, no-store`. `getAttachment` answers with the file itself |
+| Idempotency | Every request can be repeated safely. A change names the version it replaces, and a repeat of a change already made reports `unchanged` |
+| Authentication | A service token from the member's PDS in `Authorization: Bearer`, or an ohm session. [Identity and access](/docs/identity) |
+The access level of each request is one of four.
+| Access | Credential |
+| --- | --- |
+| Public | None. The response contains only public information |
+| Any authenticated account | A service token from any PDS, issued for this request |
+| Member | A service token from the member's own PDS, or an ohm session connected to that account |
+| Member, with an ohm session | An ohm session only. A change must also originate from ohm's own pages |
+"""]
+    for name, about, requests in capabilities:
+        out.append(f"## {name} {{#{name.lower()}}}\n{about}")
+        for request, summary, method, access, takes, gives in requests:
+            out.append(f"### `{request}`\n{summary}\n| | |\n| --- | --- |\n| Method | `{method}` |\n| Access | {ACCESS[access]} |\n"
+                       f"| Parameters | {'None' if takes == 'Nothing' else takes} |\n| Returns | {gives} |")
+    out.append("## Errors {#errors}\nA refusal is JSON with an `error` code from the table below and a `message` written to be shown to a person as it is.\n"
+               "| Error | Status | Cause |\n| --- | --- | --- |\n" + "\n".join(f"| {code} | {status} | {cause} |" for code, status, cause in errors))
+    out.append("## Agent tools {#tools}\nAn agent's tools are compositions of the requests above and add no capability of their own. Each runs on the member's machine and "
+               "authenticates as the member, with a service token per request.\n| Tool | Effect | Requests used |\n| --- | --- | --- |\n"
+               + "\n".join(f"| {tool} | {'Read' if effect == 'Reads only' else 'Change'} | {made} |" for tool, effect, made, _ in tools)
+               + "\nThe server that offers these tools is described in [Agent integration](/docs/mcp). Three rules hold for every tool that changes something.\n"
+               "1. **A new post is private.** Marking it for anyone else is a separate, confirmed step.\n"
+               "2. **Changes that others can see take two calls.** The first returns what would happen and a `confirm` value bound to exactly that outcome. Only a second call carrying the value proceeds.\n"
+               "3. **A post is changed from the version that was read.** If it has changed since, nothing is saved.")
+    return "\n".join(out)
+
+
+doc("architecture", "System overview",
+    "ohm is built from three kinds of system with a strict division of ownership: the member's AT Protocol account, which holds their identity and everything public; ohm's services, which hold a working copy; and clients on the member's device, the only place a write to the member's account originates.",
+    nav="Overview",
+    body="""
+## How it works {#how}
+Everything in ohm is a post, and every post is in a member's vault: one working copy of all their work, held by ohm, in a structure of labels, sublabels and posts. A post is private, for friends, or public. The whole system follows from keeping two things apart: working in the vault, and publishing from it.
+1. **Sign in.** A person signs in to ohm, and once connects the AT Protocol account that owns their posts. That account lives on a Personal Data Server (PDS) they host themselves or at Bluesky. It is theirs whether or not they use ohm.
+2. **Mirror.** What the account has already published is read from its repository into the vault. From then on the vault holds everything: public posts, and private and friends-only ones that exist nowhere else on the network.
+3. **Work.** Posts are read, written and filed in the vault, through any of three clients: the workspace in a browser, an agent's tools, or a synced folder of Markdown files. A new post is private. Saving changes the vault and nothing else.
+4. **Mark.** Setting a post to public or friends marks it. Nothing is shared by marking.
+5. **Publish.** The vault service works out what would have to change in the member's repository for what is published to match the vault. The member reviews that plan and approves it, and their own device, signed in at their own PDS, makes the changes. Public posts become `com.ohmmmm.post` records.
+6. **Read.** The member's website and any other AT Protocol application read those records from the repository. ohm is not in that path.
+7. **Keep.** The vault can be synced to a folder the member holds, or exported, as Markdown files. With a folder connected, nothing depends on ohm keeping its copy.
+Three rules hold everywhere and are worth knowing before anything else.
+- **Saving never publishes.** Only Publish changes what other people see, and it always shows the change first.
+- **ohm never writes to a member's repository.** It has no credential that could. Every write comes from the member's own device.
+- **Private stays in the vault.** A private post is never written to the repository, where everything is public.
+
+## Components {#components}
+{{figure:system}}
+| Component | Runs on | Responsibility | Status |
+| --- | --- | --- | --- |
+| Workspace | The member's browser, served from `app.ohmmmm.com/vault` | Editor, repository tree, publish review | Implemented |
+| Agent tools | An MCP server, `ohm-vault`, on the member's machine | Ten tools composed from service requests. [Agent integration](/docs/mcp) | Implemented |
+| Folder sync | A command-line client on the member's machine | Two-way sync between the vault and a folder of Markdown files | Implemented |
+| Vault service | Cloudflare Workers and D1 | Stores the working copy of every post. Computes mirror and publish plans. Never writes to a member's repository | Implemented |
+| ohm sign-in | Cloudflare Workers and D1 | ohm accounts and sessions, with Google, Microsoft and Bluesky as identity providers | Implemented |
+| Personal Data Server (PDS) | The member's host: self-hosted, or Bluesky | The account's DID, signing key, and repository of public records and files | External |
+| Website and other applications | Their own hosts | Read public records from the repository | External |
+| Network service | | Friends-only delivery, the follow graph, and matching | Planned |
+
+## Ownership {#ownership}
+Each kind of data has one system of record. ohm is the system of record for nothing a member cannot take away.
+| Data | System of record | What ohm holds |
+| --- | --- | --- |
+| Identity: DID, handle, signing key | The member's PDS | A reference to the DID |
+| Public posts | The member's repository, as `com.ohmmmm.post` records | A working copy |
+| Private and friends-only posts | The member's folder, once connected | A working copy. Until a folder is connected, the only copy |
+| ohm account and session | ohm sign-in | The account itself |
+| The link between an ohm account and a DID | Vault service | One row, unique in both directions |
+
+## Design principles {#principles}
+1. **The service never writes to a member's repository.** It holds no credential that could. Publishing is planned by the service and carried out from the member's device. [Mirror and publish](/docs/protocols)
+2. **Authentication is delegated to the member's PDS.** The PDS signs a short-lived token for each request, and the service verifies it against the account's own DID document. ohm stores no PDS password or token. [Identity and access](/docs/identity)
+3. **Every change is conditional.** A write names the version it replaces and is refused if the post has moved on, so the editor, an agent and a sync can work on the same vault without overwriting each other.
+4. **Capabilities are isolated.** The service offers eight capabilities, each a separate module with its own requests. An agent's tools are compositions of those requests and add none of their own. [Service API](/docs/api)
+5. **Requests are idempotent.** A request sent twice ends in the same state as one sent once. A post's ID is generated by the client, so creating it twice creates one post.
+6. **One portable format.** Sync and export produce the same folder of Markdown files, and reading them back yields the same posts. [Posts as files](/docs/files)
+
+## Deployment {#deployment}
+| Address | Serves |
+| --- | --- |
+| `app.ohmmmm.com/vault/` | The workspace, and the service API under `/vault/xrpc/`, where the ohm session cookie is in scope |
+| `vault.ohmmmm.com` | The service API under `/xrpc/`. The service identifies itself as `did:web:vault.ohmmmm.com` |
+| `app.ohmmmm.com/api/auth/` | ohm sign-in |
+| `docs.ohmmmm.com` | This documentation |
+The vault service and ohm sign-in are separate Workers with separate databases. The vault service asks ohm sign-in whose session a request carries; ohm sign-in asks the vault service which account a PDS token names. Neither reads the other's database.
+
+## In this section {#section}
+- [Identity and access](/docs/identity): the two identities, and how every request is authenticated.
+- [Data model](/docs/data-model): a post in the vault, the published record, identifiers and versions.
+- [Mirror and publish](/docs/protocols): the two exchanges with a member's repository.
+- [Agent integration](/docs/mcp): the MCP server, its tools, and how changes are confirmed.
+- [Service API](/docs/api): every request, error and agent tool.
+""")
+
+doc("identity", "Identity and access",
+    "A member has two identities: an ohm account, which says who is signed in, and an AT Protocol account, which owns their posts. Every request to the vault service is authenticated by one of them, and resolved to exactly one AT Protocol account before any data is read.",
+    body="""
+## Two identities {#two}
+| | ohm account | AT Protocol account |
+| --- | --- | --- |
+| Identifies | The person signed in | The owner of the posts |
+| Identifier | An internal user ID | A DID, such as `did:plc:…` or `did:web:example.com` |
+| Issued by | ohm sign-in, through Google, Microsoft or Bluesky | The member's PDS |
+| Credential | A session cookie on `app.ohmmmm.com` | A service token signed by the PDS |
+| Holds | No posts | The repository of public records |
+One ohm account is connected to one AT Protocol account, and that account to one ohm account. The vault service enforces the constraint in both directions.
+
+## Resolving an account {#resolution}
+A member names their account by its handle, which is a domain name. The service resolves it as the AT Protocol specifies, and believes nothing it cannot confirm from the account's own documents.
+1. **Handle to DID.** A `TXT` record at `_atproto.<handle>`, or failing that the file `https://<handle>/.well-known/atproto-did`.
+2. **DID to document.** `did:plc` from the public directory, `did:web` from the domain's `/.well-known/did.json`.
+3. **Confirmation.** The document must name the handle back in `alsoKnownAs`. A handle that points at a DID which does not claim it is refused.
+4. **Endpoints.** The PDS address is the document's `#atproto_pds` service, and the signing key is its `#atproto` verification method.
+Redirects are not followed at any step: an answer has to come from the address that was asked.
+
+## Authenticating a request {#authentication}
+A request carries one of two credentials.
+**A service token from the member's PDS.** This is what the command line and an agent's tools send. The client asks the PDS for a token for one named request, and the service verifies it against the account's DID document.
+{{figure:auth}}
+| Claim | Check |
+| --- | --- |
+| `iss` | A well-formed DID, and on the allow list while access is restricted. Checked before anything is fetched, so a token cannot make the service read an address of the sender's choosing |
+| `aud` | The service's own DID, `did:web:vault.ohmmmm.com` |
+| `lxm` | The exact request being made. A token for one request is not accepted for another |
+| `exp`, `iat` | Not expired, valid for no more than one hour, and not dated in the future. |
+| Signature | ES256K or ES256, in low-S form, against the signing key in the DID document. Documents are cached for five minutes |
+**An ohm session.** This is what the workspace sends. A request with no `Authorization` header is checked against ohm sign-in, which answers whose session the cookie is. The service then looks up the AT Protocol account that member connected. A request that changes anything must also originate from ohm's own pages.
+
+## Access levels {#access}
+Each request declares one access level, and the router settles it before the request's own code runs.
+| Level | Accepted credential | Used for |
+| --- | --- | --- |
+| Public | None | Finding an account from its handle |
+| Any authenticated account | A service token from any PDS | Establishing which account a token names, during sign-in |
+| Member | A service token from the member's own PDS, or an ohm session connected to that account | Every request that reads or changes a vault |
+| Member, with an ohm session | An ohm session only | Connecting and disconnecting an AT Protocol account |
+A member's vault is served to that member and to nobody else.
+
+## Signing in at the PDS {#pds}
+The workspace needs the member to sign in at their PDS twice in its life: to connect the account, and each time they publish. There are two ways, and both work with any PDS.
+- **An app password.** The member types it on ohm's page. The page sends it directly to the member's PDS (`com.atproto.server.createSession`) and to no other host. The resulting PDS session is held in the page's memory for that task and ended with `deleteSession` when the task completes. Neither the password nor the session is stored, and neither reaches ohm.
+- **OAuth.** The member approves at the PDS's own screen, where a passkey works. The flow is the AT Protocol profile of OAuth: pushed authorization requests, PKCE, and DPoP-bound tokens.
+
+## Connecting an account {#connect}
+1. The page resolves the handle with `com.ohmmmm.identity.findAccount`, which also returns the service's DID.
+2. The member signs in at their PDS.
+3. The page asks the PDS for a service token issued for `com.ohmmmm.account.connect`.
+4. The service verifies the token and records the link between the ohm account and the DID. It refuses if either side is already connected elsewhere.
+5. ohm sign-in is told of the link, so that signing in with that AT Protocol account later resolves to the same ohm account.
+
+## Signing in with Bluesky {#bluesky}
+Bluesky is an identity provider for ohm accounts as well as a host for AT Protocol accounts.
+1. The member approves at Bluesky through OAuth.
+2. The page obtains a service token issued for `com.ohmmmm.identity.whoAmI` and hands it to ohm sign-in.
+3. ohm sign-in asks the vault service which account the token names. The service verifies the token as above.
+4. ohm sign-in opens a session for the ohm account connected to that DID, creating the account on first sign-in. The token is accepted once.
+Because the identity provider is the member's own AT Protocol account, the connection step is already complete.
+
+## Access during testing {#allow-list}
+While ohm is tested, the service accepts requests only from DIDs on an allow list. An account that is not on it receives `NotAMember`.
+""")
+
+doc("data-model", "Data model",
+    "The unit of ohm is the post. It exists in three forms that map onto each other exactly: a row in the vault, a `com.ohmmmm.post` record in the member's repository when it is public, and a Markdown file in the member's folder.",
+    body="""
+## A post in the vault {#post}
+| Field | Type | Meaning |
+| --- | --- | --- |
+| `id` | String, 13 characters | Permanent identifier, generated once by whichever client creates the post |
+| `slug` | String | The last segment of the post's address. Mutable. Unique within a vault |
+| `label`, `sublabel` | String | Where the post is filed, in the author's own words |
+| `visibility` | `public`, `friends` or `private` | Who the post is for. A new post is `private` |
+| `title`, `subtitle` | String, optional | |
+| `date` | Timestamp, optional | When the post is from. A mirrored post keeps its original date |
+| `body` | Markdown | As the author wrote it |
+| `connect` | List, up to 32 | Other posts or web pages this post follows from |
+| `address` | URL, optional | The post's address on the author's site, when it is not the one its label and slug give |
+| `source` | Object, optional | Where the post first appeared, if elsewhere: platform, address, and the platform's own ID |
+| `site` | Object, optional | Fields of the author's own site, outside the shared schema |
+| `properties` | Object | Anything else the author gave it. Stored, and never published |
+
+## Identifiers and versions {#identifiers}
+| | Form | Purpose |
+| --- | --- | --- |
+| Post ID | 13 characters that sort by creation time, in the form the AT Protocol uses for record keys | Identity. Renaming or refiling a post does not change it. It is also the record key when the post is published |
+| Version | `v` followed by a SHA-256 digest of the post's content | Concurrency control. Every write names the version it replaces. A mismatch is refused with `Changed` and the current version |
+| Sequence | A counter per vault, advanced by every change | Incremental sync. `listPosts` with `since` returns only what changed after a cursor, removals included |
+A removed post keeps its row with no version, so a client that asks what changed is told that it went.
+
+## The published record {#record}
+A public post is one record of type `com.ohmmmm.post` in the member's repository, stored under the post's ID. The schema is fixed and the same on every site.
+| Field | Type | Meaning |
+| --- | --- | --- |
+| `body` | String, required | CommonMark with footnotes. `media:ID` as an image destination places an attachment |
+| `publishedAt` | Datetime, required | |
+| `canonicalUrl` | URI, required | The post's address on the author's website |
+| `title`, `subtitle` | String | |
+| `updatedAt` | Datetime | When the post last changed after it was published |
+| `slug` | String | The last segment of the address |
+| `label`, `sublabel` | String | Free-form, as the author named them |
+| `form` | String | The kind of object, derived from the content: `writing`, `note`, `image`, `gallery`, `video`, `audio`, `file`, `media`, `link`, `embed`, `quote`, `list`, `code` or `other` |
+| `connect` | List of URIs | AT URIs or web addresses of what the post follows from |
+| `link` | Object | For a link or embed: the page as it described itself |
+| `source` | Object | Where the post first appeared, if not on the author's site |
+| `media` | List | Attachments, each with an ID unique within the post |
+| `site` | Object | Site-specific data, namespaced by its own `$type` |
+`visibility` and `properties` are not part of the record. A post that is not public has no record.
+
+## Attachments {#attachments}
+An entry in `media` is an image, a video, an audio recording or a file. Each carries a `file`, which is a blob stored in the member's repository, and may carry `sourceUrl`, the address the original came from.
+| Kind | Accepts | Additional fields |
+| --- | --- | --- |
+| `image` | `image/*` | `alt`, `caption`, `width`, `height` |
+| `video` | `video/*` | `poster`, `caption`, `durationMs` |
+| `audio` | `audio/*` | `caption`, `durationMs` |
+| `file` | `application/*`, `text/*` | `caption` |
+In the vault, a post references its attachments by address. The copy in the repository is made when the post is published. [Mirror and publish](/docs/protocols#attachments)
+
+## From vault to record {#mapping}
+| In the vault | In the record |
+| --- | --- |
+| `id` | The record key |
+| `label`, `sublabel`, `slug` | The same fields, and `canonicalUrl`: `/posts/<label>/<sublabel>/<slug>` on the member's site, lowercased and hyphenated |
+| `date` | `publishedAt`. A post with no date is dated when it is first published and keeps that date |
+| The content of `body` | `form`, derived |
+| A link to another post | An entry in `connect`, as that post's address. Only a public post can be linked from a published one |
+| `visibility`, `properties` | Not published |
+
+## Storage {#storage}
+The vault service stores two tables.
+| Table | Key | Holds |
+| --- | --- | --- |
+| `posts` | Account DID and post ID | The post as JSON, its version and sequence, and indexed copies of the fields the repository tree is drawn from |
+| `links` | ohm user ID, with the DID unique | Which AT Protocol account an ohm account works in, and when its published posts were first mirrored |
+The database enforces two invariants itself: a slug is used once within a vault, and a write succeeds only against the version it names.
+""")
+
+doc("protocols", "Mirror and publish",
+    "Two exchanges connect a vault to its member's repository. Mirror reads what is published into the vault. Publish makes what is published match the vault. The service reads the repository in both, and writes to it in neither.",
+    body="""
+## Mirror {#mirror}
+Mirror brings what a member has already published into their vault. It needs no credential at the PDS, because a repository's records are public.
+1. **Locate.** The service takes the PDS address from the member's DID document and the website from their handle.
+2. **Discover.** It lists the repository's collections and keeps the shared type, `com.ohmmmm.post`, and any type of the member's own whose records read as posts: a body and a publication date. Protocol and Bluesky types are not examined.
+3. **Read.** It reads every record of those types. Where a post exists in both an older type and the shared one, the shared one is kept.
+4. **Report.** It returns what it found before saving anything: the number of posts, which would differ from what is published, what could not be carried over, and what was skipped.
+5. **Apply.** On request, it saves the posts. Each save is conditional on the post's version, so a post the member has since changed in the vault is never overwritten.
+Mirror runs once automatically when an account is first connected, and on demand afterwards. Mirrored posts are already public and remain public. Nothing new is shared.
+
+## Publish {#publish}
+Publish is split between the service, which computes a plan, and the member's device, which carries it out.
+{{figure:publish}}
+1. **Plan.** The device requests `getPublishPlan` with `prepare`. The service compares every post in the vault with the records of the shared type in the repository.
+2. **Read.** The service reads those records from the PDS with `listRecords`. This is its only contact with the PDS.
+3. **Return.** The plan lists what would be created, replaced and removed, what cannot be published and why, and the writes themselves. It is named by a digest of those writes.
+4. **Approve.** The member reviews the plan. Nothing has changed at this point.
+5. **Sign in.** The device signs in at the member's PDS, with an app password or through OAuth.
+6. **Fetch.** For each attachment the PDS does not hold, the device obtains the file through `getAttachment`.
+7. **Upload.** The device stores each file in the repository with `uploadBlob`.
+8. **Write.** The device applies the changes with `applyWrites`.
+9. **Sign out.** The PDS session is ended.
+The code that carries out a plan is the same in the workspace and in an agent's tools, so a post published from either is the same record.
+
+## Plan rules {#rules}
+Three rules keep the plan safe in a repository that other software also writes to.
+1. **Only the shared post type is touched.** A record of any other type is not examined.
+2. **A record is removed only if it is known to be a post of this vault:** one that is no longer public, or one the member removed. A record the vault does not know is left in place and reported.
+3. **A post that cannot be published is reported with the reason,** and whatever is published of it stays as it is.
+| Category | Meaning |
+| --- | --- |
+| `create` | Public in the vault, absent from the repository |
+| `replace` | Public in the vault, and different from the record. The plan names the fields that differ |
+| `remove` | Published, and now private, friends-only or removed from the vault |
+| `unchanged` | Identical to the record |
+| `cannot` | Public in the vault, but not valid as a record. The reasons are listed |
+| `notInVault` | Published under the shared type, and unknown to the vault |
+
+## Attachments {#attachments}
+A post in the vault references its files by address. Publishing gives the repository a copy of each.
+- **A file the member's PDS already holds** is referenced by its content ID. The service confirms its type and size with a `HEAD` request and nothing is uploaded.
+- **Any other file** is fetched for the device by the service, because a page in a browser cannot read a file from another site. The service fetches only addresses that one of the member's own posts places, over HTTPS, up to 25 MB.
+- **The original address** is recorded with the copy as `sourceUrl`.
+A file that cannot be fetched stops that post from publishing and is reported. Other posts are unaffected.
+
+## Consistency and consent {#consistency}
+- **Writes are atomic.** `applyWrites` applies a batch entirely or not at all. A plan is sent as one batch up to 200 changes.
+- **Approval is bound to the plan.** The plan's name is a digest of its writes. An agent's confirmation carries that name, so approval of one plan cannot be used for another.
+- **Publishing is repeatable.** A plan is computed from current state each time. Running it again after a partial failure produces only the changes still outstanding.
+- **Records keep their keys.** A record is stored under the post's permanent ID. A record published before posts had IDs is moved to its ID in the same batch that removes the old one.
+
+## Consequences {#consequences}
+- ohm cannot publish, edit or remove anything in a member's repository on its own, including in response to a fault or a compromise of the service.
+- Nothing is published in the background. Every publish begins with the member present and signed in at their PDS.
+- A published post is public from the moment it is written. Removing it removes the record, not copies that other services have made.
+""")
+
+CONFIRMED = {
+    "vault_save": "When the post is not private",
+    "vault_set_visibility": "Always", "vault_publish": "Always", "vault_mirror": "Always", "vault_delete": "Always",
+}
+
+
+def mcp_body():
+    _, _, tools = service_reference()
+    listed = "\n".join(
+        f"| {tool} | {'Read' if effect == 'Reads only' else 'Change'} | {CONFIRMED.get(tool.strip('`'), 'None') if effect != 'Reads only' else 'None'} | {made} |"
+        for tool, effect, made, _ in tools)
+    assert len(tools) == 10 and all(name in [tool.strip("`") for tool, *_ in tools] for name in CONFIRMED), tools
+    return f"""
+## Overview {{#overview}}
+ohm does not run an agent. It ships a Model Context Protocol (MCP) server, `ohm-vault`, that a member runs on their own machine and connects to the agent they already use. The server exposes ten tools, and each tool is a composition of vault service requests made as the member.
+{{{{figure:mcp}}}}
+1. **Call.** The agent calls a tool over the MCP connection.
+2. **Vouch.** The server asks the member's PDS for a service token for the one request it is about to make.
+3. **Token.** The PDS returns a token signed with the account's key.
+4. **Request.** The server sends the request to the vault service with that token.
+5. **Response.** The service verifies the token and answers. [Identity and access](/docs/identity#authentication)
+6. **Result.** The server returns the tool's result to the agent.
+The tools work in the same working copy the workspace shows. A post an agent saves is the same row, with the same version, that the editor opens.
+
+## What an agent should know {{#model}}
+An agent that reads only this section can work in a vault correctly.
+- **The vault is one person's work,** as posts filed under labels and sublabels. Start with `vault_tree` to see its shape, then `vault_read` or `vault_search`.
+- **Every post is private, for friends, or public.** Private posts are context for helping the member. Nothing from one belongs in anything another person can see.
+- **A new post is saved private.** `vault_save` never shares anything. To change who a post is for, use `vault_set_visibility`, which always asks first.
+- **Saving is not publishing.** A post marked public reaches the member's website and the network only through `vault_publish`. `vault_status` says what is waiting.
+- **Changes are made from a version.** `vault_read` returns it, and `vault_save` passes it back. If the post changed in between, read it again.
+- **A two-call tool is asking for the member's decision.** Show the member what the first call returned, and make the second call only if they agree.
+- **Publishing cannot be recalled.** Other services copy a public post as soon as it is written.
+
+## Protocol {{#protocol}}
+| | |
+| --- | --- |
+| Transport | Standard input and output. One JSON-RPC 2.0 message per line in each direction |
+| Protocol versions | `2025-06-18`, `2025-03-26`, `2024-11-05` |
+| Methods | `initialize`, `ping`, `tools/list`, `tools/call` |
+| Capabilities | Tools only. The server offers no resources and no prompts |
+| Server name | `ohm-vault` |
+| Ordering | Calls are handled one at a time, in the order received, so two changes to the same post cannot cross |
+| Results | A tool's result is JSON, returned as text content. A refusal is a result marked `isError` with a message the agent can read and act on |
+| Annotations | Tools that only read carry `readOnlyHint`. `vault_delete` carries `destructiveHint` |
+| Instructions | On `initialize`, the server states the rules of the vault to the agent: what private means, and that any change other people can see is shown to the member first |
+Listing the tools needs no configuration and no sign-in. The server signs in at the PDS the first time a tool is called.
+
+## Configuration {{#configuration}}
+| Setting | Source | Purpose |
+| --- | --- | --- |
+| The member's account | The site configuration file, found in the agent's working folder, or named with `--config` or `OHM_CONTENT_LAYER_CONFIG` | Which AT Protocol account the server acts as |
+| `ATPROTO_APP_PASSWORD` | Environment | An app password for the member's PDS. It can be revoked at the PDS at any time |
+| `OHM_VAULT_URL`, `OHM_VAULT_DID` | Configuration, or the flags `--vault` and `--vault-did` | The vault service to use. Defaults to `https://vault.ohmmmm.com` and `did:web:vault.ohmmmm.com` |
+The server is started by the ohm plugin for agents that load it, or directly:
+```
+npx github:haeinej/ohm-content-layer mcp
+```
+
+## Authentication {{#authentication}}
+The server holds one credential: the app password, in its own environment on the member's machine.
+- **It signs in at the member's PDS** with `com.atproto.server.createSession` and renews the session when it expires.
+- **Each request to the vault service carries its own token,** obtained from the PDS with `getServiceAuth` for that request's name and valid for 60 seconds.
+- **The vault service never receives the app password** or the PDS session. It sees only tokens it can verify against the account's DID document.
+- **Publishing uses the same PDS session.** The server uploads files and applies the plan's writes itself, as the workspace does in a browser. [Mirror and publish](/docs/protocols#publish)
+
+## Tools {{#tools}}
+| Tool | Effect | Confirmation | Requests used |
+| --- | --- | --- | --- |
+{listed}
+A tool has no capability of its own. Anything a tool can do, the service API can do, and the access rules are the service's. [Service API](/docs/api)
+
+## Confirmation {{#confirmation}}
+A tool that changes something other people can see, or removes something, takes two calls.
+1. **The first call changes nothing.** It returns `done: false`, a description of exactly what would happen in `willHappen`, and a `confirm` value.
+2. **The agent shows that description to the member.**
+3. **The second call repeats the request with the `confirm` value,** and only then does the change happen.
+The `confirm` value is a digest of the request and of the state it was computed from: the post's current version, or the publish plan. If either has changed between the two calls, the value no longer matches and the call is refused. The server keeps no state between calls, so a confirmation cannot be replayed against a different change.
+
+## Safety model {{#safety}}
+The same agent reads the member's private posts and content written by other people, which may be written to manipulate it. The controls are properties of the tools, not of the agent's judgement.
+| Risk | Control |
+| --- | --- |
+| A private post is exposed by a save | A new post is always private. Widening who can see a post is a separate tool that always requires confirmation |
+| Something is published without the member knowing | Saving never publishes. `vault_publish` always requires confirmation of the exact plan |
+| A post is overwritten | Every save names the version that was read. A stale save is refused |
+| A post is lost | `vault_delete` always requires confirmation |
+| Content leaves the vault another way | No tool sends content to any destination other than the member's own vault and repository |
+One exposure is outside these controls: whatever the agent reads is also processed by the provider of the model it runs on.
+
+## Requests without a tool {{#excluded}}
+Some service requests are deliberately not available to an agent.
+| Requests | Reason |
+| --- | --- |
+| `listPosts` | It serves incremental sync. The tools read the repository tree |
+| `exportFiles` | Export is for the command line and the workspace |
+| `account.get`, `account.connect`, `account.disconnect` | They require an ohm session, which an agent does not have |
+| `identity.findAccount`, `identity.whoAmI` | They are steps of signing in |
+"""
+
+
+doc("mcp", "Agent integration",
+    "An agent reaches a vault through an MCP server that runs on the member's own machine. The server authenticates as the member, composes its tools from service requests, and requires confirmation for every change that others could see.",
+    body=mcp_body())
+
+doc("api", "Service API",
+    "The vault service exposes fifteen requests in eight capabilities. This reference is generated from the same tables the service runs on.",
+    body=api_body())
 
 # ---------------------------------------------------------------- markup
 
@@ -735,6 +1174,12 @@ def blocks(lines, indent):
         line = lines[i]
         if not line.strip():
             i += 1
+        elif line.startswith("{{figure:"):
+            out.append(pad + FIGURES[line.strip()[9:-2]]())
+            i += 1
+        elif line.startswith("### "):
+            out.append(f"{pad}<h3>{inline_code_safe(line[4:])}</h3>")
+            i += 1
         elif line.startswith("```"):
             j = i + 1
             while not lines[j].startswith("```"):
@@ -747,12 +1192,15 @@ def blocks(lines, indent):
                 rows.append([c.strip() for c in lines[i].strip().strip("|").split("|")])
                 i += 1
             head, body = rows[0], rows[2:]
-            t = [f'{pad}<div class="table">', f"{pad}  <table>", f"{pad}    <thead>",
-                 f"{pad}      <tr>" + "".join(f"<th>{inline_code_safe(c)}</th>" if c else "<td></td>" for c in head) + "</tr>",
+            cell = lambda text: "<br>".join(inline_code_safe(part) for part in text.split("<br>"))
+            # A table with nothing in its heading is a list of facts: a name, then what it is.
+            facts = ' class="facts"' if not any(head) else ""
+            t = [f'{pad}<div class="table">', f"{pad}  <table{facts}>", f"{pad}    <thead>",
+                 f"{pad}      <tr>" + "".join(f"<th>{cell(c)}</th>" if c else "<td></td>" for c in head) + "</tr>",
                  f"{pad}    </thead>", f"{pad}    <tbody>"]
             for row in body:
                 cells = "".join(
-                    (f'<th scope="row">{inline_code_safe(c)}</th>' if n == 0 else f"<td>{inline_code_safe(c)}</td>")
+                    (f'<th scope="row">{cell(c)}</th>' if n == 0 else f"<td>{cell(c)}</td>")
                     for n, c in enumerate(row)
                 )
                 t.append(f"{pad}      <tr>{cells}</tr>")
@@ -809,6 +1257,119 @@ ARROW_RIGHT = icon('<path d="M5 12h14"/>', '<path d="m12 5 7 7-7 7"/>')
 MENU = icon('<path d="M4 12h16"/>', '<path d="M4 6h16"/>', '<path d="M4 18h16"/>')
 
 
+# ---------------------------------------------------------------- figures
+#
+# Diagrams are drawn here as SVG and placed in a page with a line reading {{figure:name}}. They
+# carry no styles of their own (the site's policy allows none inline): every shape has a class,
+# and styles.css sets how each class looks.
+
+def esc(text):
+    return html.escape(text, quote=False)
+
+
+def figure(name, title, caption, width, height, parts):
+    head = (f'<marker id="head-{name}" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">'
+            '<path class="d-head" d="M0 0 10 5 0 10z"/></marker>')
+    drawn = "".join(parts).replace("url(#head)", f"url(#head-{name})")
+    return (f'<figure class="figure">\n            <div class="figure-scroll"><svg viewBox="0 0 {width} {height}" width="{width}" height="{height}" role="img" '
+            f'aria-labelledby="figure-{name}"><title id="figure-{name}">{esc(title)}</title><defs>{head}</defs>{drawn}</svg></div>\n'
+            f'            <figcaption>{inline_code_safe(caption)}</figcaption>\n          </figure>')
+
+
+def box(x, y, w, h, title, sub="", kind="d-box"):
+    out = f'<rect class="{kind}" x="{x}" y="{y}" width="{w}" height="{h}" rx="10"/>'
+    out += f'<text class="d-title" x="{x + 14}" y="{y + (26 if sub else h / 2 + 5)}">{esc(title)}</text>'
+    if sub:
+        out += f'<text class="d-sub" x="{x + 14}" y="{y + 45}">{esc(sub)}</text>'
+    return out
+
+
+def group(x, y, w, h, label):
+    return f'<rect class="d-group" x="{x}" y="{y}" width="{w}" height="{h}" rx="14"/><text class="d-caption" x="{x + 16}" y="{y + 24}">{esc(label)}</text>'
+
+
+def arrow(x1, y1, x2, y2, label="", at=None, anchor="start", dashed=False):
+    out = f'<path class="d-arrow{" d-dashed" if dashed else ""}" d="M{x1} {y1}L{x2} {y2}" marker-end="url(#head)"/>'
+    if label:
+        lx, ly = at
+        out += f'<text class="d-label" x="{lx}" y="{ly}" text-anchor="{anchor}">{esc(label)}</text>'
+    return out
+
+
+def system_figure():
+    parts = [
+        group(0, 0, 640, 112, "MEMBER'S DEVICE"),
+        box(16, 38, 192, 58, "Workspace", "Browser"),
+        box(224, 38, 192, 58, "Agent tools", "MCP server"),
+        box(432, 38, 192, 58, "Folder sync", "Command line"),
+        group(0, 168, 296, 232, "OHM"),
+        box(16, 206, 264, 64, "Vault service", "Working copy of every post"),
+        box(16, 320, 264, 64, "ohm sign-in", "Accounts and sessions"),
+        group(344, 168, 296, 118, "MEMBER'S ACCOUNT"),
+        box(360, 206, 264, 64, "Personal Data Server", "Identity and public repository"),
+        box(344, 342, 140, 58, "Website", "Renders records", "d-box d-outside"),
+        box(500, 342, 140, 58, "Other apps", "Read records", "d-box d-outside"),
+        arrow(148, 112, 148, 204, "API requests", (158, 146)),
+        arrow(528, 112, 528, 204, "Sign-in, tokens, publish", (518, 146), "end"),
+        arrow(280, 238, 358, 238, "reads", (320, 229), "middle"),
+        arrow(148, 270, 148, 318, "session check", (158, 300)),
+        arrow(414, 270, 414, 340),
+        arrow(570, 270, 570, 340, "public records", (492, 322), "middle"),
+    ]
+    return figure("system", "The parts of ohm and what passes between them",
+                  "Clients on the member's device call the vault service for everything in the working copy, and the member's own PDS for sign-in and publishing. "
+                  "The vault service only reads from the PDS.", 640, 400, parts)
+
+
+def sequence_figure(name, title, caption, actors, steps):
+    width, top, row = 640, 0, 42
+    column = width / len(actors)
+    centre = [round(column * (n + 0.5)) for n in range(len(actors))]
+    head = min(column - 16, 168)
+    height = top + 40 + 30 + row * len(steps)
+    parts = []
+    for n, actor in enumerate(actors):
+        parts.append(f'<path class="d-life" d="M{centre[n]} {top + 40}L{centre[n]} {height - 6}"/>')
+        parts.append(f'<rect class="d-box" x="{centre[n] - head / 2}" y="{top}" width="{head}" height="40" rx="10"/>')
+        parts.append(f'<text class="d-title" x="{centre[n]}" y="{top + 25}" text-anchor="middle">{esc(actor)}</text>')
+    y = top + 40 + 38
+    for number, (start, end, label, *reply) in enumerate(steps, 1):
+        text = f"{number}  {label}"
+        if start == end:
+            wide = len(text) * 6.4 + 28
+            parts.append(f'<rect class="d-note" x="{centre[start] - wide / 2}" y="{y - 20}" width="{wide}" height="28" rx="14"/>')
+            parts.append(f'<text class="d-step" x="{centre[start]}" y="{y - 1}" text-anchor="middle">{esc(text)}</text>')
+        else:
+            toward = 1 if end > start else -1
+            parts.append(arrow(centre[start] + 1 * toward, y, centre[end] - 2 * toward, y, dashed=bool(reply)))
+            parts.append(f'<text class="d-step" x="{(centre[start] + centre[end]) / 2}" y="{y - 8}" text-anchor="middle">{esc(text)}</text>')
+        y += row
+    return figure(name, title, caption, width, height, parts)
+
+
+SEQUENCES = {
+    "auth": ("How a request with a service token is authenticated",
+             ["Client", "Member's PDS", "Vault service", "DID document"],
+             [(0, 1, "getServiceAuth"), (1, 0, "Signed token", True), (0, 2, "Request with the token"), (2, 3, "Resolve the DID"),
+              (3, 2, "Signing key", True), (2, 0, "Response", True)]),
+    "mcp": ("The path of one tool call",
+            ["Agent", "MCP server", "Member's PDS", "Vault service"],
+            [(0, 1, "tools/call"), (1, 2, "getServiceAuth"), (2, 1, "Signed token", True), (1, 3, "Request with the token"),
+             (3, 1, "Response", True), (1, 0, "Tool result", True)]),
+    "publish": ("The sequence of a publish",
+                ["Vault service", "Member's device", "Member's PDS"],
+                [(1, 0, "getPublishPlan"), (0, 2, "listRecords"), (0, 1, "Plan and its writes", True), (1, 1, "The member approves"),
+                 (1, 2, "createSession"), (1, 0, "getAttachment"), (1, 2, "uploadBlob"), (1, 2, "applyWrites"), (1, 2, "deleteSession")]),
+}
+CAPTIONS = {
+    "auth": "The PDS vouches for one request at a time. The vault service trusts the signature because the key comes from the account's own DID document. Dashed lines are responses.",
+    "mcp": "The MCP server runs on the member's machine and acts as the member. Dashed lines are responses.",
+    "publish": "The vault service computes the plan and reads the repository. Every write comes from the member's device, signed in at the member's own PDS. Dashed lines are responses.",
+}
+FIGURES = {"system": system_figure, **{
+    name: (lambda name=name: sequence_figure(name, SEQUENCES[name][0], CAPTIONS[name], *SEQUENCES[name][1:])) for name in SEQUENCES
+}}
+
 # ---------------------------------------------------------------- docs.ohmmmm.com
 
 def docs_sidebar(current):
@@ -844,6 +1405,7 @@ def plain(text):
 
 
 def head(path, title, description):
+    markdown = "/llms.txt" if path in ("/", "/404") else f"{path}.md"
     return f"""<!doctype html>
 <html lang="en">
   <head>
@@ -865,6 +1427,7 @@ def head(path, title, description):
     <link rel="icon" href="/assets/favicon.svg" type="image/svg+xml">
     <link rel="apple-touch-icon" href="/assets/apple-touch-icon.png">
     <link rel="preload" href="/assets/fonts/coconat-regular.woff2" as="font" type="font/woff2" crossorigin>
+    <link rel="alternate" type="text/markdown" href="{markdown}">
     <link rel="stylesheet" href="/styles.css">
     <script src="/reader.js" defer></script>
     <title>{title}</title>
@@ -891,7 +1454,6 @@ def docs_page(slug):
     pager = [f'          <a rel="prev" href="{href(before[0])}">{ARROW_LEFT}{before[1]}</a>']
     if n + 1 < len(ORDER):
         pager.append(f'          <a rel="next" href="{href(ORDER[n + 1])}">{PAGES[ORDER[n + 1]]["title"]}{ARROW_RIGHT}</a>')
-    note = f'\n          <p class="note">{inline_code_safe(p["note"])}</p>' if p["note"] else ""
     body = "\n\n".join(
         f'        <section aria-labelledby="{sid}">\n          <h2 id="{sid}">{inline_code_safe(heading)}</h2>\n{content}\n        </section>'
         for sid, heading, content in parts
@@ -906,7 +1468,7 @@ def docs_page(slug):
           <p class="group">{GROUP_OF[slug]}</p>
           <h1 id="title">{p['title']}</h1>
           <p class="introduction">{inline_code_safe(p['intro'])}</p>
-          <p class="alert" role="note">{inline_code_safe(ALERT)}</p>{note}
+          <p class="alert" role="note">{inline_code_safe(ALERT)}</p>
         </header>
 
 {body}
@@ -928,8 +1490,9 @@ def first_sentence(text):
     return re.match(r".*?[.:](?= |$)", text).group(0).rstrip(":").rstrip(".") + "."
 
 
-INDEX_INTRO = ("How ohm works, in the order you meet it: signing in, your workspace, sharing, "
-               "your own folder, your agent, and what to know before you rely on it.")
+INDEX_INTRO = ("How ohm works. The guides follow the product in the order you meet it: signing in, the workspace, "
+               "sharing, your own folder and your agent. Architecture describes the system underneath: its components, "
+               "how requests are authenticated, the data model, and the service API.")
 
 
 def docs_index():
@@ -950,6 +1513,7 @@ def docs_index():
         <header>
           <h1 id="title">Docs</h1>
           <p class="introduction">{INDEX_INTRO}</p>
+          <p class="introduction">Reading as an agent? Every page is also plain Markdown: start at <a href="/llms.txt">llms.txt</a>.</p>
           <p class="alert" role="note">{inline_code_safe(ALERT)}</p>
         </header>
 
@@ -996,6 +1560,110 @@ for slug in ORDER:
     + "".join(f"  <url><loc>{DOCS_ORIGIN}{href(s)}</loc></url>\n" for s in ["index"] + ORDER)
     + "</urlset>\n")
 (docs_site / "robots.txt").write_text(f"User-agent: *\nAllow: /\n\nSitemap: {DOCS_ORIGIN}/sitemap.xml\n")
+
+
+# ---------------------------------------------------------------- for agents
+#
+# The same pages as Markdown, which an agent reads more easily than HTML: one .md beside each
+# page, /llms.txt listing them (llmstxt.org), and /llms-full.txt with all of them in one file.
+# A diagram is written out as the exchanges it shows.
+
+FIGURE_TEXT = {
+    "system": """Diagram: the parts of ohm and what passes between them.
+- On the member's device: the workspace (browser), the agent tools (MCP server) and folder sync (command line).
+- Run by ohm: the vault service (the working copy of every post) and ohm sign-in (accounts and sessions).
+- The member's own account, on the AT Protocol: a Personal Data Server holding their identity and public repository.
+- Device → vault service: API requests.
+- Device → Personal Data Server: sign-in, service tokens, and the writes of a publish.
+- Vault service → Personal Data Server: reads only.
+- Vault service → ohm sign-in: session check.
+- Personal Data Server → the member's website and other applications: public records.""",
+}
+
+
+def figure_text(name):
+    if name in FIGURE_TEXT:
+        return FIGURE_TEXT[name]
+    title, actors, steps = SEQUENCES[name]
+    lines = [f"Diagram: {title[0].lower() + title[1:]}."]
+    for number, (start, end, label, *reply) in enumerate(steps, 1):
+        who = actors[start] if start == end else f"{actors[start]} → {actors[end]}"
+        lines.append(f"{number}. {who}: {label}{' (response)' if reply and label != 'Response' else ''}")
+    return "\n".join(lines)
+
+
+def md_link(text):
+    """Links between pages point at the Markdown copies."""
+    return re.sub(r"\]\(/docs/([\w-]+)(#[\w-]+)?\)", lambda m: f"]({DOCS_ORIGIN}/{m.group(1)}.md{m.group(2) or ''})", text)
+
+
+def md_body(body):
+    """The small Markdown these pages are written in, as standard Markdown: a blank line between
+    blocks, since here each line of prose is a paragraph of its own."""
+    out, kind, fenced = [], None, False
+    for line in body.strip().split("\n"):
+        if line.startswith("```"):
+            fenced = not fenced
+            if fenced and out:
+                out.append("")
+            out.append(line)
+            kind = "code"
+            continue
+        if fenced:
+            out.append(line)
+            continue
+        if not line.strip():
+            continue
+        if line.startswith("{{figure:"):
+            now, line = "figure", figure_text(line.strip()[9:-2])
+        elif line.startswith("#"):
+            now, line = "heading", re.sub(r" \{#[\w-]+\}$", "", line)
+        elif line.startswith("|"):
+            now = "table"
+        elif line.startswith("- "):
+            now = "ul"
+        elif re.match(r"\d+\. ", line):
+            now = "ol"
+        else:
+            now = "p"
+        if out and not (now == kind and now in ("table", "ul", "ol")):
+            out.append("")
+        out.append(md_link(line))
+        kind = now
+    return "\n".join(out)
+
+
+def md_page(slug, level=1):
+    p = PAGES[slug]
+    body = md_body(p["body"])
+    if level > 1:  # inside the one-file copy, a page is a section and its sections sit under it
+        body = re.sub(r"^(#+) ", lambda m: "#" * (len(m.group(1)) + level - 1) + " ", body, flags=re.M)
+    return f"{'#' * level} {p['title']}\n\n{md_link(p['intro'])}\n\n{body}\n"
+
+
+AGENT_ORDER = [s for s in ORDER if GROUP_OF[s] == "Architecture"] + [s for s in ORDER if GROUP_OF[s] != "Architecture"]
+LLMS_INTRO = (f"# ohm docs\n\n> ohm is an agentic social network that extends a person's own website: a vault of posts that are private, "
+              f"for friends or public, with public posts published to the person's own AT Protocol account, and tools that let their agent work in the vault.\n\n"
+              f"{ALERT}\n\n")
+
+
+def llms_index():
+    out = [LLMS_INTRO + f"For the big picture, read [System overview]({DOCS_ORIGIN}/architecture.md) first. An agent that will work in a vault should then read "
+           f"[Agent integration]({DOCS_ORIGIN}/mcp.md). Everything in one file: [{DOCS_ORIGIN}/llms-full.txt]({DOCS_ORIGIN}/llms-full.txt)\n"]
+    for name in ["Architecture"] + [name for name, _ in GROUPS if name != "Architecture"]:
+        out.append(f"## {name}\n\n" + "\n".join(
+            f"- [{PAGES[s]['title']}]({DOCS_ORIGIN}/{s}.md): {plain_text(first_sentence(PAGES[s]['intro']))}" for s in ORDER if GROUP_OF[s] == name) + "\n")
+    return "\n".join(out)
+
+
+def plain_text(text):
+    return re.sub(r"[`*]", "", text)
+
+
+for slug in ORDER:
+    (docs_site / f"{slug}.md").write_text(f"{md_page(slug)}\n---\n{ALERT}\nAll pages: {DOCS_ORIGIN}/llms.txt\n")
+(docs_site / "llms.txt").write_text(llms_index())
+(docs_site / "llms-full.txt").write_text(LLMS_INTRO + "\n".join(md_page(slug, level=2) for slug in AGENT_ORDER))
 
 
 # ---------------------------------------------------------------- ohmmmm.com
@@ -1045,7 +1713,7 @@ for slug in ["index"] + ORDER:
     text = docs_index() if slug == "index" else docs_page(slug)
     assert "/docs" not in re.sub(r"https://docs\.ohmmmm\.com", "", text), slug
     for target, anchor in re.findall(r'href="/([\w-]*)(?:#([\w-]+))?"', text):
-        if target == "assets":
+        if target in ("assets", "llms"):
             continue
         target = target or "index"
         assert target in ids, (slug, target)

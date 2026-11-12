@@ -4,12 +4,12 @@
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <meta name="theme-color" content="#fafaf9">
-    <meta name="description" content="ohm is early. This page says what is built, what cannot be undone, and what ohm is not.">
+    <meta name="description" content="The implementation status of each part of ohm, what cannot be undone, and what ohm is not.">
     <link rel="canonical" href="https://docs.ohmmmm.com/limits">
     <meta property="og:type" content="website">
     <meta property="og:site_name" content="ohm">
-    <meta property="og:title" content="What to know first · ohm docs">
-    <meta property="og:description" content="ohm is early. This page says what is built, what cannot be undone, and what ohm is not.">
+    <meta property="og:title" content="Status and limits · ohm docs">
+    <meta property="og:description" content="The implementation status of each part of ohm, what cannot be undone, and what ohm is not.">
     <meta property="og:url" content="https://docs.ohmmmm.com/limits">
     <meta property="og:image" content="https://ohmmmm.com/assets/og-image.png">
     <meta property="og:image:width" content="1200">
@@ -19,9 +19,10 @@
     <link rel="icon" href="/assets/favicon.svg" type="image/svg+xml">
     <link rel="apple-touch-icon" href="/assets/apple-touch-icon.png">
     <link rel="preload" href="/assets/fonts/coconat-regular.woff2" as="font" type="font/woff2" crossorigin>
+    <link rel="alternate" type="text/markdown" href="/limits.md">
     <link rel="stylesheet" href="/styles.css">
     <script src="/reader.js" defer></script>
-    <title>What to know first · ohm docs</title>
+    <title>Status and limits · ohm docs</title>
   </head>
   <body>
     <a class="skip" href="#content">Skip to content</a>
@@ -44,7 +45,7 @@
         <li><a href="/quick-start">Quick start</a></li>
         <li><a href="/sign-in">Sign in</a></li>
       </ul>
-      <p class="sidebar-group">Your workspace</p>
+      <p class="sidebar-group">Workspace</p>
       <ul>
         <li><a href="/workspace">The workspace</a></li>
         <li><a href="/posts">Posts</a></li>
@@ -56,56 +57,66 @@
         <li><a href="/publish">Publish</a></li>
         <li><a href="/friends">Friends</a></li>
       </ul>
-      <p class="sidebar-group">Your folder</p>
+      <p class="sidebar-group">Folder</p>
       <ul>
         <li><a href="/sync">Sync with a folder</a></li>
         <li><a href="/files">Posts as files</a></li>
         <li><a href="/export">Export and leaving</a></li>
       </ul>
-      <p class="sidebar-group">Your agent</p>
+      <p class="sidebar-group">Agent</p>
       <ul>
         <li><a href="/agent">Connect your agent</a></li>
         <li><a href="/finding-people">Finding people</a></li>
       </ul>
-      <p class="sidebar-group">Before you rely on it</p>
+      <p class="sidebar-group">Architecture</p>
+      <ul>
+        <li><a href="/architecture">Overview</a></li>
+        <li><a href="/identity">Identity and access</a></li>
+        <li><a href="/data-model">Data model</a></li>
+        <li><a href="/protocols">Mirror and publish</a></li>
+        <li><a href="/mcp">Agent integration</a></li>
+        <li><a href="/api">Service API</a></li>
+      </ul>
+      <p class="sidebar-group">Reference</p>
       <ul>
         <li><a href="/where-things-live">Where your things live</a></li>
-        <li><a href="/limits" aria-current="page">What to know first</a></li>
+        <li><a href="/limits" aria-current="page">Status and limits</a></li>
       </ul>
     </nav>
 
     <main id="content">
       <article aria-labelledby="title">
         <header>
-          <p class="group">Before you rely on it</p>
-          <h1 id="title">What to know first</h1>
-          <p class="introduction">ohm is early. This page says what is built, what cannot be undone, and what ohm is not.</p>
+          <p class="group">Reference</p>
+          <h1 id="title">Status and limits</h1>
+          <p class="introduction">The implementation status of each part of ohm, what cannot be undone, and what ohm is not.</p>
           <p class="alert" role="note">ohm is still in production, and these pages are its architecture document: they describe how it is meant to work, not a finished product.</p>
         </header>
 
-        <section aria-labelledby="early">
-          <h2 id="early">It is early</h2>
+        <section aria-labelledby="status">
+          <h2 id="status">Implementation status</h2>
           <div class="table">
             <table>
               <thead>
-                <tr><th>Part</th><th>Where it stands</th></tr>
+                <tr><th>Area</th><th>Status</th><th>Notes</th></tr>
               </thead>
               <tbody>
-                <tr><th scope="row">Signing in with Google, Microsoft or Bluesky</th><td>Built. One person has used it</td></tr>
-                <tr><th scope="row">Saying where your posts live, with a server of your own</th><td>Built, and used</td></tr>
-                <tr><th scope="row">The same, with a Bluesky account</th><td>Built. Nobody has finished one yet</td></tr>
-                <tr><th scope="row">An account that ohm hosts for you</th><td>Not built yet</td></tr>
-                <tr><th scope="row">Who is let in</th><td>One account, while it is tested</td></tr>
-                <tr><th scope="row">The workspace in the browser</th><td>Built: your repository, three views and a filter, writing and filing posts</td></tr>
-                <tr><th scope="row">Bringing in what you have published</th><td>Built. It runs on its own the first time</td></tr>
-                <tr><th scope="row">Publishing public posts</th><td>Built, and tested against a stand-in server. Not yet run against a real account</td></tr>
-                <tr><th scope="row">Showing friends-only posts to friends</th><td>Not built yet</td></tr>
-                <tr><th scope="row">Pictures and files kept by ohm</th><td>Not built yet. A post points at them, and a copy is made when you publish</td></tr>
-                <tr><th scope="row">Your agent working in the workspace</th><td>Built. Not yet run with a real sign-in</td></tr>
-                <tr><th scope="row">Syncing with a folder on your computer</th><td>Built, from the command line</td></tr>
-                <tr><th scope="row">Syncing from the workspace, and with cloud storage</th><td>Later</td></tr>
-                <tr><th scope="row">Deleting everything ohm holds for you</th><td>By hand, on request</td></tr>
-                <tr><th scope="row">Your agent finding people</th><td>Not built yet</td></tr>
+                <tr><th scope="row">Sign-in with Google, Microsoft or Bluesky</th><td>Implemented</td><td>In production. Sign-in with Bluesky is not yet verified end to end</td></tr>
+                <tr><th scope="row">Connecting a self-hosted PDS</th><td>Implemented</td><td>In production</td></tr>
+                <tr><th scope="row">Connecting a Bluesky account</th><td>Implemented</td><td>Not yet verified end to end</td></tr>
+                <tr><th scope="row">Accounts hosted by ohm</th><td>Planned</td><td></td></tr>
+                <tr><th scope="row">Access</th><td>Restricted</td><td>An allow list of accounts during testing</td></tr>
+                <tr><th scope="row">Workspace</th><td>Implemented</td><td>Repository tree, three views, filter, editor</td></tr>
+                <tr><th scope="row">Mirror</th><td>Implemented</td><td>Runs automatically when an account is first connected</td></tr>
+                <tr><th scope="row">Publishing public posts</th><td>Implemented</td><td>Verified against a test PDS. Not yet run against a live account</td></tr>
+                <tr><th scope="row">Friends-only delivery</th><td>Planned</td><td></td></tr>
+                <tr><th scope="row">Attachments stored by ohm</th><td>Planned</td><td>A post references files by address, and a copy is made at publish</td></tr>
+                <tr><th scope="row">Agent tools</th><td>Implemented</td><td>Not yet verified with a live sign-in</td></tr>
+                <tr><th scope="row">Folder sync</th><td>Implemented</td><td>Command line, local folders</td></tr>
+                <tr><th scope="row">Sync from the workspace, and with cloud storage</th><td>Planned</td><td></td></tr>
+                <tr><th scope="row">Deleting ohm's copy</th><td>Manual</td><td>Carried out on request</td></tr>
+                <tr><th scope="row">Agent keys</th><td>Planned</td><td>Until then an agent signs in with an app password from the member's PDS</td></tr>
+                <tr><th scope="row">Finding people</th><td>Planned</td><td></td></tr>
               </tbody>
             </table>
           </div>
@@ -146,7 +157,7 @@
     <nav class="site-toc" aria-labelledby="toc-title">
       <p id="toc-title">On this page</p>
       <ul>
-        <li><a href="#early">It is early</a></li>
+        <li><a href="#status">Implementation status</a></li>
         <li><a href="#for-good">Anything you publish is public for good</a></li>
         <li><a href="#agent">Your agent reads your private posts</a></li>
         <li><a href="#ohm">ohm can read your private posts</a></li>

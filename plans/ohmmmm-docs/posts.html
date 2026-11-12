@@ -19,6 +19,7 @@
     <link rel="icon" href="/assets/favicon.svg" type="image/svg+xml">
     <link rel="apple-touch-icon" href="/assets/apple-touch-icon.png">
     <link rel="preload" href="/assets/fonts/coconat-regular.woff2" as="font" type="font/woff2" crossorigin>
+    <link rel="alternate" type="text/markdown" href="/posts.md">
     <link rel="stylesheet" href="/styles.css">
     <script src="/reader.js" defer></script>
     <title>Posts · ohm docs</title>
@@ -44,7 +45,7 @@
         <li><a href="/quick-start">Quick start</a></li>
         <li><a href="/sign-in">Sign in</a></li>
       </ul>
-      <p class="sidebar-group">Your workspace</p>
+      <p class="sidebar-group">Workspace</p>
       <ul>
         <li><a href="/workspace">The workspace</a></li>
         <li><a href="/posts" aria-current="page">Posts</a></li>
@@ -56,28 +57,37 @@
         <li><a href="/publish">Publish</a></li>
         <li><a href="/friends">Friends</a></li>
       </ul>
-      <p class="sidebar-group">Your folder</p>
+      <p class="sidebar-group">Folder</p>
       <ul>
         <li><a href="/sync">Sync with a folder</a></li>
         <li><a href="/files">Posts as files</a></li>
         <li><a href="/export">Export and leaving</a></li>
       </ul>
-      <p class="sidebar-group">Your agent</p>
+      <p class="sidebar-group">Agent</p>
       <ul>
         <li><a href="/agent">Connect your agent</a></li>
         <li><a href="/finding-people">Finding people</a></li>
       </ul>
-      <p class="sidebar-group">Before you rely on it</p>
+      <p class="sidebar-group">Architecture</p>
+      <ul>
+        <li><a href="/architecture">Overview</a></li>
+        <li><a href="/identity">Identity and access</a></li>
+        <li><a href="/data-model">Data model</a></li>
+        <li><a href="/protocols">Mirror and publish</a></li>
+        <li><a href="/mcp">Agent integration</a></li>
+        <li><a href="/api">Service API</a></li>
+      </ul>
+      <p class="sidebar-group">Reference</p>
       <ul>
         <li><a href="/where-things-live">Where your things live</a></li>
-        <li><a href="/limits">What to know first</a></li>
+        <li><a href="/limits">Status and limits</a></li>
       </ul>
     </nav>
 
     <main id="content">
       <article aria-labelledby="title">
         <header>
-          <p class="group">Your workspace</p>
+          <p class="group">Workspace</p>
           <h1 id="title">Posts</h1>
           <p class="introduction">Everything you keep in ohm is a post: an essay, a note to yourself, a photograph, a link. A post is a piece of Markdown with a date, and it can be one sentence.</p>
           <p class="alert" role="note">ohm is still in production, and these pages are its architecture document: they describe how it is meant to work, not a finished product.</p>
@@ -132,7 +142,6 @@
             <li><strong>The original address is kept</strong> with the copy, as its source.</li>
             <li><strong>An address that cannot be fetched is named</strong> when you publish: one that needs a sign-in, or a file larger than 25 MB.</li>
           </ul>
-          <p>Dropping a file in from your computer, and ohm keeping its own copy of each file, are planned.</p>
           <p>An attachment is an image, a video, audio, or a file such as a PDF, EPUB, ZIP, CSV or text file.</p>
           <p>Describe a picture in its alt text. In a post with no words of its own, that description is also what names the post in lists.</p>
         </section>

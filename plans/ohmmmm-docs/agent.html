@@ -19,6 +19,7 @@
     <link rel="icon" href="/assets/favicon.svg" type="image/svg+xml">
     <link rel="apple-touch-icon" href="/assets/apple-touch-icon.png">
     <link rel="preload" href="/assets/fonts/coconat-regular.woff2" as="font" type="font/woff2" crossorigin>
+    <link rel="alternate" type="text/markdown" href="/agent.md">
     <link rel="stylesheet" href="/styles.css">
     <script src="/reader.js" defer></script>
     <title>Your agent · ohm docs</title>
@@ -44,7 +45,7 @@
         <li><a href="/quick-start">Quick start</a></li>
         <li><a href="/sign-in">Sign in</a></li>
       </ul>
-      <p class="sidebar-group">Your workspace</p>
+      <p class="sidebar-group">Workspace</p>
       <ul>
         <li><a href="/workspace">The workspace</a></li>
         <li><a href="/posts">Posts</a></li>
@@ -56,32 +57,40 @@
         <li><a href="/publish">Publish</a></li>
         <li><a href="/friends">Friends</a></li>
       </ul>
-      <p class="sidebar-group">Your folder</p>
+      <p class="sidebar-group">Folder</p>
       <ul>
         <li><a href="/sync">Sync with a folder</a></li>
         <li><a href="/files">Posts as files</a></li>
         <li><a href="/export">Export and leaving</a></li>
       </ul>
-      <p class="sidebar-group">Your agent</p>
+      <p class="sidebar-group">Agent</p>
       <ul>
         <li><a href="/agent" aria-current="page">Connect your agent</a></li>
         <li><a href="/finding-people">Finding people</a></li>
       </ul>
-      <p class="sidebar-group">Before you rely on it</p>
+      <p class="sidebar-group">Architecture</p>
+      <ul>
+        <li><a href="/architecture">Overview</a></li>
+        <li><a href="/identity">Identity and access</a></li>
+        <li><a href="/data-model">Data model</a></li>
+        <li><a href="/protocols">Mirror and publish</a></li>
+        <li><a href="/mcp">Agent integration</a></li>
+        <li><a href="/api">Service API</a></li>
+      </ul>
+      <p class="sidebar-group">Reference</p>
       <ul>
         <li><a href="/where-things-live">Where your things live</a></li>
-        <li><a href="/limits">What to know first</a></li>
+        <li><a href="/limits">Status and limits</a></li>
       </ul>
     </nav>
 
     <main id="content">
       <article aria-labelledby="title">
         <header>
-          <p class="group">Your agent</p>
+          <p class="group">Agent</p>
           <h1 id="title">Your agent</h1>
           <p class="introduction">Connect the coding agent you already use, and it can read and write in your workspace. It reads everything, private posts included, which is how it knows what you are working on.</p>
           <p class="alert" role="note">ohm is still in production, and these pages are its architecture document: they describe how it is meant to work, not a finished product.</p>
-          <p class="note">The agent's tools are built. They sign in with an app password from your own server.</p>
         </header>
 
         <section aria-labelledby="what">
@@ -140,12 +149,12 @@
               </tbody>
             </table>
           </div>
-          <p>A tool has no ability of its own. Each is a way of asking ohm for something the workspace can already do.</p>
+          <p>A tool has no ability of its own. Each is a way of asking ohm for something the workspace can already do. <a href="/mcp">Agent integration</a> describes the server behind them.</p>
         </section>
 
         <section aria-labelledby="sign-in">
           <h2 id="sign-in">Signing in</h2>
-          <p>Your agent signs in to your own server with an app password, and your server vouches for each thing it asks ohm. A key made only for an agent, which reaches your workspace and nothing else and can be taken away, is planned.</p>
+          <p>Your agent signs in to your own server with an app password, and your server vouches for each thing it asks ohm.</p>
         </section>
 
         <section aria-labelledby="safety">
@@ -162,14 +171,6 @@
             <li>"Bring in my posts." Then: "File the ones under other."</li>
             <li>"Make that one public." Then: "Publish."</li>
             <li>"What is not published yet?"</li>
-          </ul>
-        </section>
-
-        <section aria-labelledby="not">
-          <h2 id="not">Not built yet</h2>
-          <ul>
-            <li><strong>Sync</strong> from your agent. It runs from the command line.</li>
-            <li><strong>Following, and drafting an email to someone.</strong> <a href="/finding-people">Finding people</a></li>
           </ul>
         </section>
 
@@ -195,7 +196,6 @@
         <li><a href="#sign-in">Signing in</a></li>
         <li><a href="#safety">Other people's writing is not trusted</a></li>
         <li><a href="#ask">Things to ask it</a></li>
-        <li><a href="#not">Not built yet</a></li>
         <li><a href="#together">Editing alongside it</a></li>
       </ul>
     </nav>

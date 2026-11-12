@@ -1,0 +1,229 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta name="theme-color" content="#fafaf9">
+    <meta name="description" content="A member has two identities: an ohm account, which says who is signed in, and an AT Protocol account, which owns their posts. Every request to the vault service is authenticated by one of them, and resolved to exactly one AT Protocol account before any data is read.">
+    <link rel="canonical" href="https://docs.ohmmmm.com/identity">
+    <meta property="og:type" content="website">
+    <meta property="og:site_name" content="ohm">
+    <meta property="og:title" content="Identity and access · ohm docs">
+    <meta property="og:description" content="A member has two identities: an ohm account, which says who is signed in, and an AT Protocol account, which owns their posts. Every request to the vault service is authenticated by one of them, and resolved to exactly one AT Protocol account before any data is read.">
+    <meta property="og:url" content="https://docs.ohmmmm.com/identity">
+    <meta property="og:image" content="https://ohmmmm.com/assets/og-image.png">
+    <meta property="og:image:width" content="1200">
+    <meta property="og:image:height" content="630">
+    <meta property="og:image:alt" content="ohm — An agentic social network">
+    <meta name="twitter:card" content="summary_large_image">
+    <link rel="icon" href="/assets/favicon.svg" type="image/svg+xml">
+    <link rel="apple-touch-icon" href="/assets/apple-touch-icon.png">
+    <link rel="preload" href="/assets/fonts/coconat-regular.woff2" as="font" type="font/woff2" crossorigin>
+    <link rel="alternate" type="text/markdown" href="/identity.md">
+    <link rel="stylesheet" href="/styles.css">
+    <script src="/reader.js" defer></script>
+    <title>Identity and access · ohm docs</title>
+  </head>
+  <body>
+    <a class="skip" href="#content">Skip to content</a>
+
+    <!-- Docs shell, the same on every page except aria-current. The header is the ohm dot alone, as on
+         ohmmmm.com, where it leads. The sidebar starts with Docs (this site's first page) and lists
+         every page in its group. Icons are Lucide. -->
+    <input class="menu-toggle" type="checkbox" id="menu">
+    <header class="site-header">
+      <a class="site-mark" href="https://ohmmmm.com/"><img src="/assets/favicon.svg" alt="ohm" width="20" height="20"></a>
+      <label class="menu-button" for="menu"><svg class="icon" viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2.25" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 12h16"/><path d="M4 6h16"/><path d="M4 18h16"/></svg><span>Menu</span></label>
+    </header>
+
+    <nav class="site-sidebar" aria-label="Docs">
+      <ul>
+        <li><a href="/">Docs</a></li>
+      </ul>
+      <p class="sidebar-group">Get started</p>
+      <ul>
+        <li><a href="/quick-start">Quick start</a></li>
+        <li><a href="/sign-in">Sign in</a></li>
+      </ul>
+      <p class="sidebar-group">Workspace</p>
+      <ul>
+        <li><a href="/workspace">The workspace</a></li>
+        <li><a href="/posts">Posts</a></li>
+        <li><a href="/labels">Labels</a></li>
+      </ul>
+      <p class="sidebar-group">Sharing</p>
+      <ul>
+        <li><a href="/visibility">Who sees a post</a></li>
+        <li><a href="/publish">Publish</a></li>
+        <li><a href="/friends">Friends</a></li>
+      </ul>
+      <p class="sidebar-group">Folder</p>
+      <ul>
+        <li><a href="/sync">Sync with a folder</a></li>
+        <li><a href="/files">Posts as files</a></li>
+        <li><a href="/export">Export and leaving</a></li>
+      </ul>
+      <p class="sidebar-group">Agent</p>
+      <ul>
+        <li><a href="/agent">Connect your agent</a></li>
+        <li><a href="/finding-people">Finding people</a></li>
+      </ul>
+      <p class="sidebar-group">Architecture</p>
+      <ul>
+        <li><a href="/architecture">Overview</a></li>
+        <li><a href="/identity" aria-current="page">Identity and access</a></li>
+        <li><a href="/data-model">Data model</a></li>
+        <li><a href="/protocols">Mirror and publish</a></li>
+        <li><a href="/mcp">Agent integration</a></li>
+        <li><a href="/api">Service API</a></li>
+      </ul>
+      <p class="sidebar-group">Reference</p>
+      <ul>
+        <li><a href="/where-things-live">Where your things live</a></li>
+        <li><a href="/limits">Status and limits</a></li>
+      </ul>
+    </nav>
+
+    <main id="content">
+      <article aria-labelledby="title">
+        <header>
+          <p class="group">Architecture</p>
+          <h1 id="title">Identity and access</h1>
+          <p class="introduction">A member has two identities: an ohm account, which says who is signed in, and an AT Protocol account, which owns their posts. Every request to the vault service is authenticated by one of them, and resolved to exactly one AT Protocol account before any data is read.</p>
+          <p class="alert" role="note">ohm is still in production, and these pages are its architecture document: they describe how it is meant to work, not a finished product.</p>
+        </header>
+
+        <section aria-labelledby="two">
+          <h2 id="two">Two identities</h2>
+          <div class="table">
+            <table>
+              <thead>
+                <tr><td></td><th>ohm account</th><th>AT Protocol account</th></tr>
+              </thead>
+              <tbody>
+                <tr><th scope="row">Identifies</th><td>The person signed in</td><td>The owner of the posts</td></tr>
+                <tr><th scope="row">Identifier</th><td>An internal user ID</td><td>A DID, such as <code>did:plc:…</code> or <code>did:web:example.com</code></td></tr>
+                <tr><th scope="row">Issued by</th><td>ohm sign-in, through Google, Microsoft or Bluesky</td><td>The member's PDS</td></tr>
+                <tr><th scope="row">Credential</th><td>A session cookie on <code>app.ohmmmm.com</code></td><td>A service token signed by the PDS</td></tr>
+                <tr><th scope="row">Holds</th><td>No posts</td><td>The repository of public records</td></tr>
+              </tbody>
+            </table>
+          </div>
+          <p>One ohm account is connected to one AT Protocol account, and that account to one ohm account. The vault service enforces the constraint in both directions.</p>
+        </section>
+
+        <section aria-labelledby="resolution">
+          <h2 id="resolution">Resolving an account</h2>
+          <p>A member names their account by its handle, which is a domain name. The service resolves it as the AT Protocol specifies, and believes nothing it cannot confirm from the account's own documents.</p>
+          <ol>
+            <li><strong>Handle to DID.</strong> A <code>TXT</code> record at <code>_atproto.&lt;handle&gt;</code>, or failing that the file <code>https://&lt;handle&gt;/.well-known/atproto-did</code>.</li>
+            <li><strong>DID to document.</strong> <code>did:plc</code> from the public directory, <code>did:web</code> from the domain's <code>/.well-known/did.json</code>.</li>
+            <li><strong>Confirmation.</strong> The document must name the handle back in <code>alsoKnownAs</code>. A handle that points at a DID which does not claim it is refused.</li>
+            <li><strong>Endpoints.</strong> The PDS address is the document's <code>#atproto_pds</code> service, and the signing key is its <code>#atproto</code> verification method.</li>
+          </ol>
+          <p>Redirects are not followed at any step: an answer has to come from the address that was asked.</p>
+        </section>
+
+        <section aria-labelledby="authentication">
+          <h2 id="authentication">Authenticating a request</h2>
+          <p>A request carries one of two credentials.</p>
+          <p><strong>A service token from the member's PDS.</strong> This is what the command line and an agent's tools send. The client asks the PDS for a token for one named request, and the service verifies it against the account's DID document.</p>
+          <figure class="figure">
+            <div class="figure-scroll"><svg viewBox="0 0 640 322" width="640" height="322" role="img" aria-labelledby="figure-auth"><title id="figure-auth">How a request with a service token is authenticated</title><defs><marker id="head-auth" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path class="d-head" d="M0 0 10 5 0 10z"/></marker></defs><path class="d-life" d="M80 40L80 316"/><rect class="d-box" x="8.0" y="0" width="144.0" height="40" rx="10"/><text class="d-title" x="80" y="25" text-anchor="middle">Client</text><path class="d-life" d="M240 40L240 316"/><rect class="d-box" x="168.0" y="0" width="144.0" height="40" rx="10"/><text class="d-title" x="240" y="25" text-anchor="middle">Member's PDS</text><path class="d-life" d="M400 40L400 316"/><rect class="d-box" x="328.0" y="0" width="144.0" height="40" rx="10"/><text class="d-title" x="400" y="25" text-anchor="middle">Vault service</text><path class="d-life" d="M560 40L560 316"/><rect class="d-box" x="488.0" y="0" width="144.0" height="40" rx="10"/><text class="d-title" x="560" y="25" text-anchor="middle">DID document</text><path class="d-arrow" d="M81 78L238 78" marker-end="url(#head-auth)"/><text class="d-step" x="160.0" y="70" text-anchor="middle">1  getServiceAuth</text><path class="d-arrow d-dashed" d="M239 120L82 120" marker-end="url(#head-auth)"/><text class="d-step" x="160.0" y="112" text-anchor="middle">2  Signed token</text><path class="d-arrow" d="M81 162L398 162" marker-end="url(#head-auth)"/><text class="d-step" x="240.0" y="154" text-anchor="middle">3  Request with the token</text><path class="d-arrow" d="M401 204L558 204" marker-end="url(#head-auth)"/><text class="d-step" x="480.0" y="196" text-anchor="middle">4  Resolve the DID</text><path class="d-arrow d-dashed" d="M559 246L402 246" marker-end="url(#head-auth)"/><text class="d-step" x="480.0" y="238" text-anchor="middle">5  Signing key</text><path class="d-arrow d-dashed" d="M399 288L82 288" marker-end="url(#head-auth)"/><text class="d-step" x="240.0" y="280" text-anchor="middle">6  Response</text></svg></div>
+            <figcaption>The PDS vouches for one request at a time. The vault service trusts the signature because the key comes from the account's own DID document. Dashed lines are responses.</figcaption>
+          </figure>
+          <div class="table">
+            <table>
+              <thead>
+                <tr><th>Claim</th><th>Check</th></tr>
+              </thead>
+              <tbody>
+                <tr><th scope="row"><code>iss</code></th><td>A well-formed DID, and on the allow list while access is restricted. Checked before anything is fetched, so a token cannot make the service read an address of the sender's choosing</td></tr>
+                <tr><th scope="row"><code>aud</code></th><td>The service's own DID, <code>did:web:vault.ohmmmm.com</code></td></tr>
+                <tr><th scope="row"><code>lxm</code></th><td>The exact request being made. A token for one request is not accepted for another</td></tr>
+                <tr><th scope="row"><code>exp</code>, <code>iat</code></th><td>Not expired, valid for no more than one hour, and not dated in the future.</td></tr>
+                <tr><th scope="row">Signature</th><td>ES256K or ES256, in low-S form, against the signing key in the DID document. Documents are cached for five minutes</td></tr>
+              </tbody>
+            </table>
+          </div>
+          <p><strong>An ohm session.</strong> This is what the workspace sends. A request with no <code>Authorization</code> header is checked against ohm sign-in, which answers whose session the cookie is. The service then looks up the AT Protocol account that member connected. A request that changes anything must also originate from ohm's own pages.</p>
+        </section>
+
+        <section aria-labelledby="access">
+          <h2 id="access">Access levels</h2>
+          <p>Each request declares one access level, and the router settles it before the request's own code runs.</p>
+          <div class="table">
+            <table>
+              <thead>
+                <tr><th>Level</th><th>Accepted credential</th><th>Used for</th></tr>
+              </thead>
+              <tbody>
+                <tr><th scope="row">Public</th><td>None</td><td>Finding an account from its handle</td></tr>
+                <tr><th scope="row">Any authenticated account</th><td>A service token from any PDS</td><td>Establishing which account a token names, during sign-in</td></tr>
+                <tr><th scope="row">Member</th><td>A service token from the member's own PDS, or an ohm session connected to that account</td><td>Every request that reads or changes a vault</td></tr>
+                <tr><th scope="row">Member, with an ohm session</th><td>An ohm session only</td><td>Connecting and disconnecting an AT Protocol account</td></tr>
+              </tbody>
+            </table>
+          </div>
+          <p>A member's vault is served to that member and to nobody else.</p>
+        </section>
+
+        <section aria-labelledby="pds">
+          <h2 id="pds">Signing in at the PDS</h2>
+          <p>The workspace needs the member to sign in at their PDS twice in its life: to connect the account, and each time they publish. There are two ways, and both work with any PDS.</p>
+          <ul>
+            <li><strong>An app password.</strong> The member types it on ohm's page. The page sends it directly to the member's PDS (<code>com.atproto.server.createSession</code>) and to no other host. The resulting PDS session is held in the page's memory for that task and ended with <code>deleteSession</code> when the task completes. Neither the password nor the session is stored, and neither reaches ohm.</li>
+            <li><strong>OAuth.</strong> The member approves at the PDS's own screen, where a passkey works. The flow is the AT Protocol profile of OAuth: pushed authorization requests, PKCE, and DPoP-bound tokens.</li>
+          </ul>
+        </section>
+
+        <section aria-labelledby="connect">
+          <h2 id="connect">Connecting an account</h2>
+          <ol>
+            <li>The page resolves the handle with <code>com.ohmmmm.identity.findAccount</code>, which also returns the service's DID.</li>
+            <li>The member signs in at their PDS.</li>
+            <li>The page asks the PDS for a service token issued for <code>com.ohmmmm.account.connect</code>.</li>
+            <li>The service verifies the token and records the link between the ohm account and the DID. It refuses if either side is already connected elsewhere.</li>
+            <li>ohm sign-in is told of the link, so that signing in with that AT Protocol account later resolves to the same ohm account.</li>
+          </ol>
+        </section>
+
+        <section aria-labelledby="bluesky">
+          <h2 id="bluesky">Signing in with Bluesky</h2>
+          <p>Bluesky is an identity provider for ohm accounts as well as a host for AT Protocol accounts.</p>
+          <ol>
+            <li>The member approves at Bluesky through OAuth.</li>
+            <li>The page obtains a service token issued for <code>com.ohmmmm.identity.whoAmI</code> and hands it to ohm sign-in.</li>
+            <li>ohm sign-in asks the vault service which account the token names. The service verifies the token as above.</li>
+            <li>ohm sign-in opens a session for the ohm account connected to that DID, creating the account on first sign-in. The token is accepted once.</li>
+          </ol>
+          <p>Because the identity provider is the member's own AT Protocol account, the connection step is already complete.</p>
+        </section>
+
+        <section aria-labelledby="allow-list">
+          <h2 id="allow-list">Access during testing</h2>
+          <p>While ohm is tested, the service accepts requests only from DIDs on an allow list. An account that is not on it receives <code>NotAMember</code>.</p>
+        </section>
+
+        <nav class="page-pager" aria-label="Docs pages">
+          <a rel="prev" href="/architecture"><svg class="icon" viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2.25" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m12 19-7-7 7-7"/><path d="M19 12H5"/></svg>System overview</a>
+          <a rel="next" href="/data-model">Data model<svg class="icon" viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2.25" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12h14"/><path d="m12 5 7 7-7 7"/></svg></a>
+        </nav>
+      </article>
+    </main>
+
+    <nav class="site-toc" aria-labelledby="toc-title">
+      <p id="toc-title">On this page</p>
+      <ul>
+        <li><a href="#two">Two identities</a></li>
+        <li><a href="#resolution">Resolving an account</a></li>
+        <li><a href="#authentication">Authenticating a request</a></li>
+        <li><a href="#access">Access levels</a></li>
+        <li><a href="#pds">Signing in at the PDS</a></li>
+        <li><a href="#connect">Connecting an account</a></li>
+        <li><a href="#bluesky">Signing in with Bluesky</a></li>
+        <li><a href="#allow-list">Access during testing</a></li>
+      </ul>
+    </nav>
+  </body>
+</html>

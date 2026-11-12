@@ -4,12 +4,12 @@
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <meta name="theme-color" content="#fafaf9">
-    <meta name="description" content="How ohm works, in the order you meet it: signing in, your workspace, sharing, your own folder, your agent, and what to know before you rely on it.">
+    <meta name="description" content="How ohm works. The guides follow the product in the order you meet it: signing in, the workspace, sharing, your own folder and your agent. Architecture describes the system underneath: its components, how requests are authenticated, the data model, and the service API.">
     <link rel="canonical" href="https://docs.ohmmmm.com/">
     <meta property="og:type" content="website">
     <meta property="og:site_name" content="ohm">
     <meta property="og:title" content="ohm docs">
-    <meta property="og:description" content="How ohm works, in the order you meet it: signing in, your workspace, sharing, your own folder, your agent, and what to know before you rely on it.">
+    <meta property="og:description" content="How ohm works. The guides follow the product in the order you meet it: signing in, the workspace, sharing, your own folder and your agent. Architecture describes the system underneath: its components, how requests are authenticated, the data model, and the service API.">
     <meta property="og:url" content="https://docs.ohmmmm.com/">
     <meta property="og:image" content="https://ohmmmm.com/assets/og-image.png">
     <meta property="og:image:width" content="1200">
@@ -19,6 +19,7 @@
     <link rel="icon" href="/assets/favicon.svg" type="image/svg+xml">
     <link rel="apple-touch-icon" href="/assets/apple-touch-icon.png">
     <link rel="preload" href="/assets/fonts/coconat-regular.woff2" as="font" type="font/woff2" crossorigin>
+    <link rel="alternate" type="text/markdown" href="/llms.txt">
     <link rel="stylesheet" href="/styles.css">
     <script src="/reader.js" defer></script>
     <title>ohm docs</title>
@@ -44,7 +45,7 @@
         <li><a href="/quick-start">Quick start</a></li>
         <li><a href="/sign-in">Sign in</a></li>
       </ul>
-      <p class="sidebar-group">Your workspace</p>
+      <p class="sidebar-group">Workspace</p>
       <ul>
         <li><a href="/workspace">The workspace</a></li>
         <li><a href="/posts">Posts</a></li>
@@ -56,21 +57,30 @@
         <li><a href="/publish">Publish</a></li>
         <li><a href="/friends">Friends</a></li>
       </ul>
-      <p class="sidebar-group">Your folder</p>
+      <p class="sidebar-group">Folder</p>
       <ul>
         <li><a href="/sync">Sync with a folder</a></li>
         <li><a href="/files">Posts as files</a></li>
         <li><a href="/export">Export and leaving</a></li>
       </ul>
-      <p class="sidebar-group">Your agent</p>
+      <p class="sidebar-group">Agent</p>
       <ul>
         <li><a href="/agent">Connect your agent</a></li>
         <li><a href="/finding-people">Finding people</a></li>
       </ul>
-      <p class="sidebar-group">Before you rely on it</p>
+      <p class="sidebar-group">Architecture</p>
+      <ul>
+        <li><a href="/architecture">Overview</a></li>
+        <li><a href="/identity">Identity and access</a></li>
+        <li><a href="/data-model">Data model</a></li>
+        <li><a href="/protocols">Mirror and publish</a></li>
+        <li><a href="/mcp">Agent integration</a></li>
+        <li><a href="/api">Service API</a></li>
+      </ul>
+      <p class="sidebar-group">Reference</p>
       <ul>
         <li><a href="/where-things-live">Where your things live</a></li>
-        <li><a href="/limits">What to know first</a></li>
+        <li><a href="/limits">Status and limits</a></li>
       </ul>
     </nav>
 
@@ -78,7 +88,8 @@
       <article aria-labelledby="title">
         <header>
           <h1 id="title">Docs</h1>
-          <p class="introduction">How ohm works, in the order you meet it: signing in, your workspace, sharing, your own folder, your agent, and what to know before you rely on it.</p>
+          <p class="introduction">How ohm works. The guides follow the product in the order you meet it: signing in, the workspace, sharing, your own folder and your agent. Architecture describes the system underneath: its components, how requests are authenticated, the data model, and the service API.</p>
+          <p class="introduction">Reading as an agent? Every page is also plain Markdown: start at <a href="/llms.txt">llms.txt</a>.</p>
           <p class="alert" role="note">ohm is still in production, and these pages are its architecture document: they describe how it is meant to work, not a finished product.</p>
         </header>
 
@@ -90,8 +101,8 @@
           </ul>
         </section>
 
-        <section aria-labelledby="your-workspace">
-          <h2 id="your-workspace">Your workspace</h2>
+        <section aria-labelledby="workspace">
+          <h2 id="workspace">Workspace</h2>
           <ul class="pages">
             <li><a href="/workspace">The workspace</a>. The workspace is one page.</li>
             <li><a href="/posts">Posts</a>. Everything you keep in ohm is a post.</li>
@@ -108,8 +119,8 @@
           </ul>
         </section>
 
-        <section aria-labelledby="your-folder">
-          <h2 id="your-folder">Your folder</h2>
+        <section aria-labelledby="folder">
+          <h2 id="folder">Folder</h2>
           <ul class="pages">
             <li><a href="/sync">Sync with a folder</a>. Connect a folder of your own and your posts live there as Markdown files.</li>
             <li><a href="/files">Posts as files</a>. In your folder, each post is one Markdown file.</li>
@@ -117,19 +128,31 @@
           </ul>
         </section>
 
-        <section aria-labelledby="your-agent">
-          <h2 id="your-agent">Your agent</h2>
+        <section aria-labelledby="agent">
+          <h2 id="agent">Agent</h2>
           <ul class="pages">
             <li><a href="/agent">Your agent</a>. Connect the coding agent you already use, and it can read and write in your workspace.</li>
             <li><a href="/finding-people">Finding people</a>. When you are stuck on something that needs another person, your agent helps you find that person.</li>
           </ul>
         </section>
 
-        <section aria-labelledby="before-you-rely-on-it">
-          <h2 id="before-you-rely-on-it">Before you rely on it</h2>
+        <section aria-labelledby="architecture">
+          <h2 id="architecture">Architecture</h2>
+          <ul class="pages">
+            <li><a href="/architecture">System overview</a>. ohm is built from three kinds of system with a strict division of ownership.</li>
+            <li><a href="/identity">Identity and access</a>. A member has two identities.</li>
+            <li><a href="/data-model">Data model</a>. The unit of ohm is the post.</li>
+            <li><a href="/protocols">Mirror and publish</a>. Two exchanges connect a vault to its member's repository.</li>
+            <li><a href="/mcp">Agent integration</a>. An agent reaches a vault through an MCP server that runs on the member's own machine.</li>
+            <li><a href="/api">Service API</a>. The vault service exposes fifteen requests in eight capabilities.</li>
+          </ul>
+        </section>
+
+        <section aria-labelledby="reference">
+          <h2 id="reference">Reference</h2>
           <ul class="pages">
             <li><a href="/where-things-live">Where your things live</a>. ohm keeps a working copy of your posts, private ones included, so that you and your agent can work from anywhere.</li>
-            <li><a href="/limits">What to know first</a>. ohm is early.</li>
+            <li><a href="/limits">Status and limits</a>. The implementation status of each part of ohm, what cannot be undone, and what ohm is not.</li>
           </ul>
         </section>
 
@@ -143,11 +166,12 @@
       <p id="toc-title">On this page</p>
       <ul>
         <li><a href="#get-started">Get started</a></li>
-        <li><a href="#your-workspace">Your workspace</a></li>
+        <li><a href="#workspace">Workspace</a></li>
         <li><a href="#sharing">Sharing</a></li>
-        <li><a href="#your-folder">Your folder</a></li>
-        <li><a href="#your-agent">Your agent</a></li>
-        <li><a href="#before-you-rely-on-it">Before you rely on it</a></li>
+        <li><a href="#folder">Folder</a></li>
+        <li><a href="#agent">Agent</a></li>
+        <li><a href="#architecture">Architecture</a></li>
+        <li><a href="#reference">Reference</a></li>
       </ul>
     </nav>
   </body>

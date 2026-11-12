@@ -1,0 +1,275 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta name="theme-color" content="#fafaf9">
+    <meta name="description" content="An agent reaches a vault through an MCP server that runs on the member&#x27;s own machine. The server authenticates as the member, composes its tools from service requests, and requires confirmation for every change that others could see.">
+    <link rel="canonical" href="https://docs.ohmmmm.com/mcp">
+    <meta property="og:type" content="website">
+    <meta property="og:site_name" content="ohm">
+    <meta property="og:title" content="Agent integration · ohm docs">
+    <meta property="og:description" content="An agent reaches a vault through an MCP server that runs on the member&#x27;s own machine. The server authenticates as the member, composes its tools from service requests, and requires confirmation for every change that others could see.">
+    <meta property="og:url" content="https://docs.ohmmmm.com/mcp">
+    <meta property="og:image" content="https://ohmmmm.com/assets/og-image.png">
+    <meta property="og:image:width" content="1200">
+    <meta property="og:image:height" content="630">
+    <meta property="og:image:alt" content="ohm — An agentic social network">
+    <meta name="twitter:card" content="summary_large_image">
+    <link rel="icon" href="/assets/favicon.svg" type="image/svg+xml">
+    <link rel="apple-touch-icon" href="/assets/apple-touch-icon.png">
+    <link rel="preload" href="/assets/fonts/coconat-regular.woff2" as="font" type="font/woff2" crossorigin>
+    <link rel="alternate" type="text/markdown" href="/mcp.md">
+    <link rel="stylesheet" href="/styles.css">
+    <script src="/reader.js" defer></script>
+    <title>Agent integration · ohm docs</title>
+  </head>
+  <body>
+    <a class="skip" href="#content">Skip to content</a>
+
+    <!-- Docs shell, the same on every page except aria-current. The header is the ohm dot alone, as on
+         ohmmmm.com, where it leads. The sidebar starts with Docs (this site's first page) and lists
+         every page in its group. Icons are Lucide. -->
+    <input class="menu-toggle" type="checkbox" id="menu">
+    <header class="site-header">
+      <a class="site-mark" href="https://ohmmmm.com/"><img src="/assets/favicon.svg" alt="ohm" width="20" height="20"></a>
+      <label class="menu-button" for="menu"><svg class="icon" viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2.25" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 12h16"/><path d="M4 6h16"/><path d="M4 18h16"/></svg><span>Menu</span></label>
+    </header>
+
+    <nav class="site-sidebar" aria-label="Docs">
+      <ul>
+        <li><a href="/">Docs</a></li>
+      </ul>
+      <p class="sidebar-group">Get started</p>
+      <ul>
+        <li><a href="/quick-start">Quick start</a></li>
+        <li><a href="/sign-in">Sign in</a></li>
+      </ul>
+      <p class="sidebar-group">Workspace</p>
+      <ul>
+        <li><a href="/workspace">The workspace</a></li>
+        <li><a href="/posts">Posts</a></li>
+        <li><a href="/labels">Labels</a></li>
+      </ul>
+      <p class="sidebar-group">Sharing</p>
+      <ul>
+        <li><a href="/visibility">Who sees a post</a></li>
+        <li><a href="/publish">Publish</a></li>
+        <li><a href="/friends">Friends</a></li>
+      </ul>
+      <p class="sidebar-group">Folder</p>
+      <ul>
+        <li><a href="/sync">Sync with a folder</a></li>
+        <li><a href="/files">Posts as files</a></li>
+        <li><a href="/export">Export and leaving</a></li>
+      </ul>
+      <p class="sidebar-group">Agent</p>
+      <ul>
+        <li><a href="/agent">Connect your agent</a></li>
+        <li><a href="/finding-people">Finding people</a></li>
+      </ul>
+      <p class="sidebar-group">Architecture</p>
+      <ul>
+        <li><a href="/architecture">Overview</a></li>
+        <li><a href="/identity">Identity and access</a></li>
+        <li><a href="/data-model">Data model</a></li>
+        <li><a href="/protocols">Mirror and publish</a></li>
+        <li><a href="/mcp" aria-current="page">Agent integration</a></li>
+        <li><a href="/api">Service API</a></li>
+      </ul>
+      <p class="sidebar-group">Reference</p>
+      <ul>
+        <li><a href="/where-things-live">Where your things live</a></li>
+        <li><a href="/limits">Status and limits</a></li>
+      </ul>
+    </nav>
+
+    <main id="content">
+      <article aria-labelledby="title">
+        <header>
+          <p class="group">Architecture</p>
+          <h1 id="title">Agent integration</h1>
+          <p class="introduction">An agent reaches a vault through an MCP server that runs on the member's own machine. The server authenticates as the member, composes its tools from service requests, and requires confirmation for every change that others could see.</p>
+          <p class="alert" role="note">ohm is still in production, and these pages are its architecture document: they describe how it is meant to work, not a finished product.</p>
+        </header>
+
+        <section aria-labelledby="overview">
+          <h2 id="overview">Overview</h2>
+          <p>ohm does not run an agent. It ships a Model Context Protocol (MCP) server, <code>ohm-vault</code>, that a member runs on their own machine and connects to the agent they already use. The server exposes ten tools, and each tool is a composition of vault service requests made as the member.</p>
+          <figure class="figure">
+            <div class="figure-scroll"><svg viewBox="0 0 640 322" width="640" height="322" role="img" aria-labelledby="figure-mcp"><title id="figure-mcp">The path of one tool call</title><defs><marker id="head-mcp" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path class="d-head" d="M0 0 10 5 0 10z"/></marker></defs><path class="d-life" d="M80 40L80 316"/><rect class="d-box" x="8.0" y="0" width="144.0" height="40" rx="10"/><text class="d-title" x="80" y="25" text-anchor="middle">Agent</text><path class="d-life" d="M240 40L240 316"/><rect class="d-box" x="168.0" y="0" width="144.0" height="40" rx="10"/><text class="d-title" x="240" y="25" text-anchor="middle">MCP server</text><path class="d-life" d="M400 40L400 316"/><rect class="d-box" x="328.0" y="0" width="144.0" height="40" rx="10"/><text class="d-title" x="400" y="25" text-anchor="middle">Member's PDS</text><path class="d-life" d="M560 40L560 316"/><rect class="d-box" x="488.0" y="0" width="144.0" height="40" rx="10"/><text class="d-title" x="560" y="25" text-anchor="middle">Vault service</text><path class="d-arrow" d="M81 78L238 78" marker-end="url(#head-mcp)"/><text class="d-step" x="160.0" y="70" text-anchor="middle">1  tools/call</text><path class="d-arrow" d="M241 120L398 120" marker-end="url(#head-mcp)"/><text class="d-step" x="320.0" y="112" text-anchor="middle">2  getServiceAuth</text><path class="d-arrow d-dashed" d="M399 162L242 162" marker-end="url(#head-mcp)"/><text class="d-step" x="320.0" y="154" text-anchor="middle">3  Signed token</text><path class="d-arrow" d="M241 204L558 204" marker-end="url(#head-mcp)"/><text class="d-step" x="400.0" y="196" text-anchor="middle">4  Request with the token</text><path class="d-arrow d-dashed" d="M559 246L242 246" marker-end="url(#head-mcp)"/><text class="d-step" x="400.0" y="238" text-anchor="middle">5  Response</text><path class="d-arrow d-dashed" d="M239 288L82 288" marker-end="url(#head-mcp)"/><text class="d-step" x="160.0" y="280" text-anchor="middle">6  Tool result</text></svg></div>
+            <figcaption>The MCP server runs on the member's machine and acts as the member. Dashed lines are responses.</figcaption>
+          </figure>
+          <ol>
+            <li><strong>Call.</strong> The agent calls a tool over the MCP connection.</li>
+            <li><strong>Vouch.</strong> The server asks the member's PDS for a service token for the one request it is about to make.</li>
+            <li><strong>Token.</strong> The PDS returns a token signed with the account's key.</li>
+            <li><strong>Request.</strong> The server sends the request to the vault service with that token.</li>
+            <li><strong>Response.</strong> The service verifies the token and answers. <a href="/identity#authentication">Identity and access</a></li>
+            <li><strong>Result.</strong> The server returns the tool's result to the agent.</li>
+          </ol>
+          <p>The tools work in the same working copy the workspace shows. A post an agent saves is the same row, with the same version, that the editor opens.</p>
+        </section>
+
+        <section aria-labelledby="model">
+          <h2 id="model">What an agent should know</h2>
+          <p>An agent that reads only this section can work in a vault correctly.</p>
+          <ul>
+            <li><strong>The vault is one person's work,</strong> as posts filed under labels and sublabels. Start with <code>vault_tree</code> to see its shape, then <code>vault_read</code> or <code>vault_search</code>.</li>
+            <li><strong>Every post is private, for friends, or public.</strong> Private posts are context for helping the member. Nothing from one belongs in anything another person can see.</li>
+            <li><strong>A new post is saved private.</strong> <code>vault_save</code> never shares anything. To change who a post is for, use <code>vault_set_visibility</code>, which always asks first.</li>
+            <li><strong>Saving is not publishing.</strong> A post marked public reaches the member's website and the network only through <code>vault_publish</code>. <code>vault_status</code> says what is waiting.</li>
+            <li><strong>Changes are made from a version.</strong> <code>vault_read</code> returns it, and <code>vault_save</code> passes it back. If the post changed in between, read it again.</li>
+            <li><strong>A two-call tool is asking for the member's decision.</strong> Show the member what the first call returned, and make the second call only if they agree.</li>
+            <li><strong>Publishing cannot be recalled.</strong> Other services copy a public post as soon as it is written.</li>
+          </ul>
+        </section>
+
+        <section aria-labelledby="protocol">
+          <h2 id="protocol">Protocol</h2>
+          <div class="table">
+            <table class="facts">
+              <thead>
+                <tr><td></td><td></td></tr>
+              </thead>
+              <tbody>
+                <tr><th scope="row">Transport</th><td>Standard input and output. One JSON-RPC 2.0 message per line in each direction</td></tr>
+                <tr><th scope="row">Protocol versions</th><td><code>2025-06-18</code>, <code>2025-03-26</code>, <code>2024-11-05</code></td></tr>
+                <tr><th scope="row">Methods</th><td><code>initialize</code>, <code>ping</code>, <code>tools/list</code>, <code>tools/call</code></td></tr>
+                <tr><th scope="row">Capabilities</th><td>Tools only. The server offers no resources and no prompts</td></tr>
+                <tr><th scope="row">Server name</th><td><code>ohm-vault</code></td></tr>
+                <tr><th scope="row">Ordering</th><td>Calls are handled one at a time, in the order received, so two changes to the same post cannot cross</td></tr>
+                <tr><th scope="row">Results</th><td>A tool's result is JSON, returned as text content. A refusal is a result marked <code>isError</code> with a message the agent can read and act on</td></tr>
+                <tr><th scope="row">Annotations</th><td>Tools that only read carry <code>readOnlyHint</code>. <code>vault_delete</code> carries <code>destructiveHint</code></td></tr>
+                <tr><th scope="row">Instructions</th><td>On <code>initialize</code>, the server states the rules of the vault to the agent: what private means, and that any change other people can see is shown to the member first</td></tr>
+              </tbody>
+            </table>
+          </div>
+          <p>Listing the tools needs no configuration and no sign-in. The server signs in at the PDS the first time a tool is called.</p>
+        </section>
+
+        <section aria-labelledby="configuration">
+          <h2 id="configuration">Configuration</h2>
+          <div class="table">
+            <table>
+              <thead>
+                <tr><th>Setting</th><th>Source</th><th>Purpose</th></tr>
+              </thead>
+              <tbody>
+                <tr><th scope="row">The member's account</th><td>The site configuration file, found in the agent's working folder, or named with <code>--config</code> or <code>OHM_CONTENT_LAYER_CONFIG</code></td><td>Which AT Protocol account the server acts as</td></tr>
+                <tr><th scope="row"><code>ATPROTO_APP_PASSWORD</code></th><td>Environment</td><td>An app password for the member's PDS. It can be revoked at the PDS at any time</td></tr>
+                <tr><th scope="row"><code>OHM_VAULT_URL</code>, <code>OHM_VAULT_DID</code></th><td>Configuration, or the flags <code>--vault</code> and <code>--vault-did</code></td><td>The vault service to use. Defaults to <code>https://vault.ohmmmm.com</code> and <code>did:web:vault.ohmmmm.com</code></td></tr>
+              </tbody>
+            </table>
+          </div>
+          <p>The server is started by the ohm plugin for agents that load it, or directly:</p>
+          <pre>npx github:haeinej/ohm-content-layer mcp</pre>
+        </section>
+
+        <section aria-labelledby="authentication">
+          <h2 id="authentication">Authentication</h2>
+          <p>The server holds one credential: the app password, in its own environment on the member's machine.</p>
+          <ul>
+            <li><strong>It signs in at the member's PDS</strong> with <code>com.atproto.server.createSession</code> and renews the session when it expires.</li>
+            <li><strong>Each request to the vault service carries its own token,</strong> obtained from the PDS with <code>getServiceAuth</code> for that request's name and valid for 60 seconds.</li>
+            <li><strong>The vault service never receives the app password</strong> or the PDS session. It sees only tokens it can verify against the account's DID document.</li>
+            <li><strong>Publishing uses the same PDS session.</strong> The server uploads files and applies the plan's writes itself, as the workspace does in a browser. <a href="/protocols#publish">Mirror and publish</a></li>
+          </ul>
+        </section>
+
+        <section aria-labelledby="tools">
+          <h2 id="tools">Tools</h2>
+          <div class="table">
+            <table>
+              <thead>
+                <tr><th>Tool</th><th>Effect</th><th>Confirmation</th><th>Requests used</th></tr>
+              </thead>
+              <tbody>
+                <tr><th scope="row"><code>vault_tree</code></th><td>Read</td><td>None</td><td><code>getTree</code></td></tr>
+                <tr><th scope="row"><code>vault_list</code></th><td>Read</td><td>None</td><td><code>getTree</code></td></tr>
+                <tr><th scope="row"><code>vault_read</code></th><td>Read</td><td>None</td><td><code>getTree</code>, <code>getPost</code></td></tr>
+                <tr><th scope="row"><code>vault_search</code></th><td>Read</td><td>None</td><td><code>searchPosts</code></td></tr>
+                <tr><th scope="row"><code>vault_save</code></th><td>Change</td><td>When the post is not private</td><td><code>getTree</code>, <code>getPost</code>, <code>putPost</code></td></tr>
+                <tr><th scope="row"><code>vault_set_visibility</code></th><td>Change</td><td>Always</td><td><code>getTree</code>, <code>getPost</code>, <code>putPost</code></td></tr>
+                <tr><th scope="row"><code>vault_status</code></th><td>Read</td><td>None</td><td><code>getPublishPlan</code></td></tr>
+                <tr><th scope="row"><code>vault_publish</code></th><td>Change</td><td>Always</td><td><code>getPublishPlan</code>, <code>getAttachment</code></td></tr>
+                <tr><th scope="row"><code>vault_mirror</code></th><td>Change</td><td>Always</td><td><code>importPublished</code></td></tr>
+                <tr><th scope="row"><code>vault_delete</code></th><td>Change</td><td>Always</td><td><code>getTree</code>, <code>getPost</code>, <code>deletePost</code></td></tr>
+              </tbody>
+            </table>
+          </div>
+          <p>A tool has no capability of its own. Anything a tool can do, the service API can do, and the access rules are the service's. <a href="/api">Service API</a></p>
+        </section>
+
+        <section aria-labelledby="confirmation">
+          <h2 id="confirmation">Confirmation</h2>
+          <p>A tool that changes something other people can see, or removes something, takes two calls.</p>
+          <ol>
+            <li><strong>The first call changes nothing.</strong> It returns <code>done: false</code>, a description of exactly what would happen in <code>willHappen</code>, and a <code>confirm</code> value.</li>
+            <li><strong>The agent shows that description to the member.</strong></li>
+            <li>**The second call repeats the request with the <code>confirm</code> value,** and only then does the change happen.</li>
+          </ol>
+          <p>The <code>confirm</code> value is a digest of the request and of the state it was computed from: the post's current version, or the publish plan. If either has changed between the two calls, the value no longer matches and the call is refused. The server keeps no state between calls, so a confirmation cannot be replayed against a different change.</p>
+        </section>
+
+        <section aria-labelledby="safety">
+          <h2 id="safety">Safety model</h2>
+          <p>The same agent reads the member's private posts and content written by other people, which may be written to manipulate it. The controls are properties of the tools, not of the agent's judgement.</p>
+          <div class="table">
+            <table>
+              <thead>
+                <tr><th>Risk</th><th>Control</th></tr>
+              </thead>
+              <tbody>
+                <tr><th scope="row">A private post is exposed by a save</th><td>A new post is always private. Widening who can see a post is a separate tool that always requires confirmation</td></tr>
+                <tr><th scope="row">Something is published without the member knowing</th><td>Saving never publishes. <code>vault_publish</code> always requires confirmation of the exact plan</td></tr>
+                <tr><th scope="row">A post is overwritten</th><td>Every save names the version that was read. A stale save is refused</td></tr>
+                <tr><th scope="row">A post is lost</th><td><code>vault_delete</code> always requires confirmation</td></tr>
+                <tr><th scope="row">Content leaves the vault another way</th><td>No tool sends content to any destination other than the member's own vault and repository</td></tr>
+              </tbody>
+            </table>
+          </div>
+          <p>One exposure is outside these controls: whatever the agent reads is also processed by the provider of the model it runs on.</p>
+        </section>
+
+        <section aria-labelledby="excluded">
+          <h2 id="excluded">Requests without a tool</h2>
+          <p>Some service requests are deliberately not available to an agent.</p>
+          <div class="table">
+            <table>
+              <thead>
+                <tr><th>Requests</th><th>Reason</th></tr>
+              </thead>
+              <tbody>
+                <tr><th scope="row"><code>listPosts</code></th><td>It serves incremental sync. The tools read the repository tree</td></tr>
+                <tr><th scope="row"><code>exportFiles</code></th><td>Export is for the command line and the workspace</td></tr>
+                <tr><th scope="row"><code>account.get</code>, <code>account.connect</code>, <code>account.disconnect</code></th><td>They require an ohm session, which an agent does not have</td></tr>
+                <tr><th scope="row"><code>identity.findAccount</code>, <code>identity.whoAmI</code></th><td>They are steps of signing in</td></tr>
+              </tbody>
+            </table>
+          </div>
+        </section>
+
+        <nav class="page-pager" aria-label="Docs pages">
+          <a rel="prev" href="/protocols"><svg class="icon" viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2.25" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m12 19-7-7 7-7"/><path d="M19 12H5"/></svg>Mirror and publish</a>
+          <a rel="next" href="/api">Service API<svg class="icon" viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2.25" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12h14"/><path d="m12 5 7 7-7 7"/></svg></a>
+        </nav>
+      </article>
+    </main>
+
+    <nav class="site-toc" aria-labelledby="toc-title">
+      <p id="toc-title">On this page</p>
+      <ul>
+        <li><a href="#overview">Overview</a></li>
+        <li><a href="#model">What an agent should know</a></li>
+        <li><a href="#protocol">Protocol</a></li>
+        <li><a href="#configuration">Configuration</a></li>
+        <li><a href="#authentication">Authentication</a></li>
+        <li><a href="#tools">Tools</a></li>
+        <li><a href="#confirmation">Confirmation</a></li>
+        <li><a href="#safety">Safety model</a></li>
+        <li><a href="#excluded">Requests without a tool</a></li>
+      </ul>
+    </nav>
+  </body>
+</html>

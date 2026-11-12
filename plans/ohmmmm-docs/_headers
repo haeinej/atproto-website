@@ -13,3 +13,13 @@
 
 /assets/*.png
   Cache-Control: public, max-age=86400, stale-while-revalidate=604800
+
+# The Markdown copies of the pages, for agents (written by build.py).
+/*.md
+  Content-Type: text/markdown; charset=utf-8
+
+/llms.txt
+  Content-Type: text/plain; charset=utf-8
+
+/llms-full.txt
+  Content-Type: text/plain; charset=utf-8
