@@ -65,6 +65,7 @@
 
           <!-- One step, used three ways: Bluesky, your own PDS, and connecting either to an ohm account. -->
           <div id="connect" hidden>
+            <button class="icon-button card-back" id="step-back" type="button" aria-label="Back" title="Back"><svg class="icon" aria-hidden="true"><use href="#icon-back"/></svg></button>
             <h1 id="handle-title">Connect your account</h1>
             <p id="handle-text"></p>
             <form id="handle-form" class="stack">
@@ -74,7 +75,7 @@
               <button class="button primary lg wide" type="submit">Continue</button>
             </form>
             <p class="small" id="cirrus-help">No PDS yet? <a href="https://cirrus.earth/start/quick-start/" target="_blank" rel="noopener">Set one up with Cirrus</a>. It runs on your own Cloudflare account, at your own domain. Then come back and type your handle.</p>
-            <p class="switch"><span id="signed-in-as"></span> <button class="link" id="leave" type="button">Sign out</button></p>
+            <p class="switch" id="signed-in"><span id="signed-in-as"></span> <button class="link" id="leave" type="button">Sign out</button></p>
           </div>
         </section>
       </main>

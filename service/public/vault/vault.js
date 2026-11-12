@@ -161,9 +161,11 @@ function handleStep(step, who = '') {
   $('handle-label').textContent = label;
   $('handle').placeholder = placeholder;
   $('handle').value = localStorage.getItem(`ohm.handle.${step === 'bluesky' ? 'bluesky' : 'own'}`) ?? '';
-  // Connecting, the way out is signing out of ohm; otherwise it is back to the ways in.
-  $('signed-in-as').textContent = step === 'connect' ? (who ? `Signed in as ${who}.` : 'Signed in.') : '';
-  $('leave').textContent = step === 'connect' ? 'Sign out' : 'Back';
+  // Connecting, the way out is signing out of ohm; otherwise it is the arrow in the panel's
+  // corner, back to the ways in.
+  $('signed-in-as').textContent = who ? `Signed in as ${who}.` : 'Signed in.';
+  $('signed-in').hidden = step !== 'connect';
+  $('step-back').hidden = step === 'connect';
   // Someone without a PDS is shown where to get one. A Bluesky account already has its own.
   $('cirrus-help').hidden = step === 'bluesky';
   screen('connect');
@@ -190,7 +192,8 @@ async function signOut() {
   location.reload();
 }
 $('sign-out').addEventListener('click', signOut);
-$('leave').addEventListener('click', () => (state.step === 'connect' ? signOut() : screen('sign-in')));
+$('leave').addEventListener('click', signOut);
+$('step-back').addEventListener('click', () => screen('sign-in'));
 
 // ---- Onboarding, step two, once: which AT Protocol account this ohm account works in. ----
 $('site-address').value = localStorage.getItem('ohm.site') ?? '';

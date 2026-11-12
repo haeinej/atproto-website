@@ -103,7 +103,10 @@ code { font-family: var(--ohm-font-mono); }
   font: 400 var(--ohm-type-body-size) / var(--ohm-type-body-leading) var(--ohm-font-sans);
   letter-spacing: var(--ohm-type-body-tracking);
   container-type: inline-size;
+  position: relative;
 }
+/* A step that can be left has an arrow in the panel's top left corner. */
+.card-back { position: absolute; top: var(--ohm-space-3); left: var(--ohm-space-3); }
 /* The title is the panel's one line in Coconat, in the forest ink the wordmark has. */
 .card h1 { margin: 0 0 var(--ohm-space-8); font: 400 var(--ohm-type-h1-size) / var(--ohm-type-h1-leading) var(--ohm-font-serif); letter-spacing: var(--ohm-type-h1-tracking); color: var(--ohm-forest); text-wrap: balance; }
 .card p { text-wrap: pretty; }
