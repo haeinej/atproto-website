@@ -8,7 +8,7 @@
 // After that the ohm session alone opens their vault, in the app's screen: a rail, a side panel,
 // the post.
 // Everything shown is put on the page as text, never as markup.
-import { askPds, begin, finish, leave, restore } from './signin.js';
+import { askPds, begin, beginWithPassword, finish, leave, restore } from './signin.js';
 
 const $ = id => document.getElementById(id);
 const state = { mode: 'ohm', me: null, audience: '', did: '', tree: null, current: null, page: 'vault', signup: false, busy: false, step: 'own' };
@@ -150,16 +150,21 @@ for (const name of Object.keys(PROVIDERS)) $(name).addEventListener('click', () 
 const STEPS = {
   bluesky: {
     title: 'Bluesky', label: 'Your Bluesky handle', placeholder: 'name.bsky.social',
-    text: 'Bluesky will ask you to confirm, and bring you straight back. Your password is never typed here.',
+    text: 'Sign in here with your handle and an app password from Bluesky.',
+    help: 'https://bsky.app/settings/app-passwords', there: 'Approve at Bluesky instead',
   },
   own: {
     title: 'Your own PDS', label: 'Your handle', placeholder: 'example.com',
-    text: 'Your handle is your own domain. Your PDS, Cirrus or any other, will ask you to confirm, with your passkey there if you have one, and bring you straight back.',
+    text: 'Your handle is your own domain. Sign in here with it and an app password from your PDS, Cirrus or any other.',
+    help: 'https://cirrus.earth/guides/create-app-password/', there: 'Use a passkey at your PDS instead',
   },
 };
 function handleStep(step) {
   state.step = step;
-  const { title, label, placeholder, text } = STEPS[step];
+  const { title, label, placeholder, text, help, there } = STEPS[step];
+  $('password-help').href = help;
+  $('approve-there').textContent = there;
+  $('password').value = '';
   $('handle-title').textContent = title;
   $('handle-text').textContent = text;
   $('handle-label').textContent = label;
@@ -199,15 +204,44 @@ $('leave').addEventListener('click', signOut);
 
 $('site-address').value = localStorage.getItem('ohm.site') ?? '';
 $('older').value = localStorage.getItem('ohm.older') ?? '';
+// The handle as it was typed, tidied. A Bluesky name typed on its own is the handle Bluesky gives it.
+function typedHandle() {
+  let handle = $('handle').value.trim().replace(/^@/, '');
+  if (state.step === 'bluesky' && handle && !handle.includes('.') && !handle.includes(':')) handle = `${handle}.bsky.social`;
+  $('handle').value = handle;
+  localStorage.setItem(`ohm.handle.${state.step}`, handle);
+  return handle;
+}
+// Continue: the handle and an app password, here on ohm's own panel. The password goes to the
+// member's own PDS and is cleared from the page at once; nothing is kept.
 $('handle-form').addEventListener('submit', async event => {
   event.preventDefault();
+  if (state.busy) return;
   const connecting = Boolean(state.me);
+  const password = $('password').value;
+  if (!password) {
+    notice('Type an app password, or use the other way below.', 'error');
+    $('password').focus();
+    return;
+  }
+  state.busy = true;
   try {
-    // A Bluesky name typed on its own is the handle Bluesky gives it.
-    let handle = $('handle').value.trim().replace(/^@/, '');
-    if (state.step === 'bluesky' && handle && !handle.includes('.') && !handle.includes(':')) handle = `${handle}.bsky.social`;
-    $('handle').value = handle;
-    localStorage.setItem(`ohm.handle.${state.step}`, handle);
+    await beginWithPassword(typedHandle(), password, connecting ? 'connect' : 'sign-in');
+    $('password').value = '';
+    state.busy = false;
+    await open();
+  } catch (problem) {
+    notice(`${connecting ? 'Connecting' : 'Signing in'} did not work: ${problem.message}`, 'error');
+  } finally {
+    state.busy = false;
+  }
+});
+// The other way: approve at the PDS itself, which is where a passkey works.
+$('approve-there').addEventListener('click', async () => {
+  const connecting = Boolean(state.me);
+  if (!$('handle').reportValidity()) return;
+  try {
+    const handle = typedHandle();
     notice(state.step === 'bluesky' ? 'Taking you to Bluesky…' : 'Taking you to your PDS…');
     await begin(handle, connecting ? 'connect' : 'sign-in');
   } catch (problem) {

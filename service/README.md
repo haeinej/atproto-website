@@ -41,7 +41,9 @@ A request sent twice ends the same as sent once. Saving a post, whatever it says
 1. *Who you are*: an ohm account, made with Google, Microsoft or Bluesky. For Google and Microsoft, ohm's own sign-in (Better Auth, in the `ohm` repository, at `/api/auth/` on the same address) does the work, and the page only calls it. For Bluesky, the member types their handle and approves at Bluesky; Bluesky issues a token naming them, the page hands it to ohm's sign-in, and ohm's sign-in asks this service who it names (`com.ohmmmm.identity.whoAmI`, below) and signs them in, making their ohm account the first time.
 2. *Where your posts live*, asked once: a PDS of your own, one you set up now with Cirrus, or your Bluesky account. The member types their handle, the service finds the account (`GET /xrpc/com.ohmmmm.identity.findAccount?account=`, which needs no sign-in and answers only with what is public, and with this service's own DID), and the page sends them to the server that holds the account to approve, with a passkey there if they have one. That server issues one token for exactly this, the service ties the AT Protocol account to the ohm account, and ohm's sign-in is told too, so signing in with that account later is the same ohm account. Someone who signed in with Bluesky has answered already and skips this step.
 
-Either way the page then lets the sign-in at the PDS go: the ohm session, a cookie the browser keeps, is what stays. Signing in at a PDS is AT Protocol's own sign-in for applications, so it works with any PDS that offers it. [public/vault/client-metadata.json](public/vault/client-metadata.json) is what a PDS reads to learn who is asking; its addresses have to be the ones the page is served at.
+**Signing in at the PDS happens on ohm's own panel.** The member types their handle and an app password: one they make at their PDS for apps, and can take away again. The page sends it straight to the member's own PDS (`com.atproto.server.createSession`) and to nobody else, not to ohm. The sign-in it gives lives in the page's memory for that visit only, and is ended as soon as ohm has signed the member in; neither it nor the password is kept. The other way, offered under the form, is to approve at the PDS itself, which is where a passkey works: AT Protocol's own sign-in for applications. What the PDS shows of ohm on that screen (its name, mark and links) comes from [public/vault/client-metadata.json](public/vault/client-metadata.json); the screen itself is the PDS's.
+
+Either way the page then lets the sign-in at the PDS go: the ohm session, a cookie the browser keeps, is what stays. Both ways work with any PDS: Cirrus, and Bluesky's. The addresses in the client metadata have to be the ones the page is served at.
 
 Where ohm's sign-in does not take AT Protocol accounts yet (`/api/account/config` says whether it does), a Bluesky sign-in is kept in the browser instead, tied to a key that cannot be copied out of it, and the PDS issues a token for each request the page makes.
 
@@ -83,7 +85,7 @@ Either way, `MEMBERS` lists the DIDs let in and is checked before any document i
 | [src/worker.mjs](src/worker.mjs) | The requests |
 | [schema.sql](schema.sql) | The database's tables |
 
-Tests are in [../test/service.test.mjs](../test/service.test.mjs) and [../test/identity.test.mjs](../test/identity.test.mjs), and run against the SQLite built into Node, which is what Cloudflare D1 is.
+Tests are in [../test/service.test.mjs](../test/service.test.mjs), [../test/identity.test.mjs](../test/identity.test.mjs) and, for the page's app-password sign-in, [../test/signin.test.mjs](../test/signin.test.mjs), and run against the SQLite built into Node, which is what Cloudflare D1 is.
 
 ## Deploying
 

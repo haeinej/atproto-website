@@ -2,6 +2,9 @@
   "client_id": "https://app.ohmmmm.com/vault/client-metadata.json",
   "client_name": "ohm",
   "client_uri": "https://app.ohmmmm.com",
+  "logo_uri": "https://app.ohmmmm.com/icons/icon-192.png",
+  "tos_uri": "https://ohmmmm.com/terms",
+  "policy_uri": "https://ohmmmm.com/privacy",
   "redirect_uris": [
     "https://app.ohmmmm.com/vault/"
   ],

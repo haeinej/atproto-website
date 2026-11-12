@@ -128,8 +128,30 @@ export async function finish() {
   return { ...pending.account, purpose: pending.purpose };
 }
 
-// A sign-in kept from an earlier visit, if there is one.
+// ---- The other way in: an app password, typed on ohm's own panel. ----
+// An app password is one the member makes at their PDS for apps, and can take away again. It goes
+// from this page straight to the member's own PDS, and to nobody else: not to ohm. The sign-in it
+// gives lives for this visit only, in the page's memory, and is ended as soon as ohm has signed the
+// member in. Neither it nor the password is kept anywhere.
+let brief = null;
+export async function beginWithPassword(typed, password, purpose = 'sign-in') {
+  const account = await readJson(await fetch(new URL(`./xrpc/com.ohmmmm.identity.findAccount?${new URLSearchParams({ account: typed })}`, document.baseURI)), 'Finding your account');
+  const response = await fetch(`${account.pds}/xrpc/com.atproto.server.createSession`, {
+    method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ identifier: account.did, password }),
+  });
+  const data = await response.json().catch(() => ({}));
+  if (data.error === 'AuthFactorTokenRequired') throw new Error('Your account asks for a code as well as a password. Make an app password and use that here.');
+  if (response.status === 401 || response.status === 400) throw new Error('That password was not accepted');
+  if (!response.ok) throw new Error(`Your PDS: ${data.message || data.error || `HTTP ${response.status}`}`);
+  // The PDS says whose sign-in this is. It has to be the account that was asked for.
+  if (data.did !== account.did || typeof data.accessJwt !== 'string') throw new Error('Your PDS signed in a different account than the one you typed');
+  brief = { account, purpose, accessJwt: data.accessJwt, refreshJwt: data.refreshJwt ?? null };
+  return { ...account, purpose };
+}
+
+// A sign-in kept from an earlier visit, if there is one, or the one an app password just gave.
 export async function restore() {
+  if (brief) return { ...brief.account, purpose: brief.purpose };
   const session = await kept('session');
   return session ? { ...session.account, purpose: session.purpose } : null;
 }
@@ -152,6 +174,11 @@ async function fresh(session) {
 
 // One request to the member's own PDS, as the member.
 export async function askPds(method, query) {
+  if (brief) {
+    const url = new URL(`/xrpc/${method}`, brief.account.pds);
+    if (query) url.search = new URLSearchParams(query);
+    return readJson(await fetch(url, { headers: { Authorization: `Bearer ${brief.accessJwt}` } }), 'Your PDS');
+  }
   let session = await kept('session');
   if (!session) throw new Error('You are not signed in');
   for (let renewed = false, again = false; ;) {
@@ -180,6 +207,11 @@ export async function askPds(method, query) {
 
 // Sign out: tell the PDS the sign-in is over, and forget it here.
 export async function leave() {
+  if (brief) {
+    const { account, refreshJwt } = brief;
+    brief = null;
+    if (refreshJwt) await fetch(`${account.pds}/xrpc/com.atproto.server.deleteSession`, { method: 'POST', headers: { Authorization: `Bearer ${refreshJwt}` } }).catch(() => {});
+  }
   const session = await kept('session');
   await kept('session', null);
   await kept('pending', null);
