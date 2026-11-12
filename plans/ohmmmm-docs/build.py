@@ -40,8 +40,8 @@ def doc(slug, title, intro, body, note=None, nav=None):
     PAGES[slug] = dict(title=title, nav=nav or title, intro=intro, note=note, body=body)
 
 
-# On every page: these pages are the plan, and ohm is still being made.
-ALERT = "This is the plan for ohm. ohm is still in production, and these pages are its architecture document: they describe how it is meant to work, not a finished product. [What is built today](/docs/limits#early)"
+# On every page: ohm is still being made, and these pages say how it is meant to work.
+ALERT = "ohm is still in production, and these pages are its architecture document: they describe how it is meant to work, not a finished product."
 
 doc("quick-start", "Quick start",
     "Your first session in ohm: sign in, say where your posts live, write a post, decide who sees it, and publish. Then connect a folder of your own and bring in your agent.",

@@ -23,6 +23,8 @@
 
   /* One ink, like a printed page: the Fatale forest green on warm paper. */
   --ohm-forest: #013220;
+  --ohm-danger: #a13535; /* a warning's text, as in the app */
+  --ohm-danger-wash: #fdecea; /* and what it sits on */
   --ohm-paper-editorial: #fafaf9;
   --ohm-ink-quiet: #4c6e61; /* forest at 70% on paper, 5.4:1 */
   --ohm-line: rgb(1 50 32 / 0.14); /* the reader's rail */
@@ -317,16 +319,17 @@ main {
 .group,
 .note { color: var(--ohm-ink-quiet); }
 
-/* The notice on every page: these pages are the plan, and ohm is still being made. A tinted
-   block with the forest line the reader's rail uses, so it reads as said to you and not as text. */
+/* The notice on every page: ohm is still being made, and these pages say how it is meant to
+   work. It is a warning, so it is set in the red ohm keeps for warnings: a wash with no edge. */
 .alert {
   margin-block: var(--ohm-top) 0;
   padding: 14px 18px;
   border-radius: 16px;
-  background: var(--ohm-tint);
-  box-shadow: inset 3px 0 0 var(--ohm-forest);
+  background: var(--ohm-danger-wash);
+  color: var(--ohm-danger);
   font-size: var(--ohm-size-small);
 }
+.alert a { color: inherit; }
 .alert + .note { margin-top: 12px; }
 
 /* The group a page is in, above its title. */
