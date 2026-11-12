@@ -944,16 +944,25 @@ for slug in ORDER:
 # ---------------------------------------------------------------- ohmmmm.com
 
 def main_shell(page):
-    """The ohmmmm.com sidebar: the dot (home), then About and Docs, the current one marked."""
+    """The ohmmmm.com sidebar: the dot (home), then About and Docs, the current one marked.
+    On phones it folds into a bar with the dot and Menu, which opens the same list full screen."""
+    home = ' aria-current="page"' if page == "index" else ""
     about = ' aria-current="page"' if page == "about" else ""
+    arrow = ('<svg class="icon" viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" '
+             'stroke-width="2.25" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">'
+             '<path d="M7 7h10v10"/><path d="M7 17 17 7"/></svg>')
     return f"""    <!-- Site shell, the same on every page except aria-current: a sidebar with the ohm dot (home), then
-         About and Docs (its own site, docs.ohmmmm.com). The company directory is on the landing page only. -->
+         About and Docs (its own site, docs.ohmmmm.com). On phones: the dot and Menu, which opens the list
+         full screen (the checkbox holds it open; no script). -->
+    <input class="menu-toggle" type="checkbox" id="menu" aria-label="Menu">
     <header class="site-header">
       <a class="site-mark" href="/"><img src="/assets/favicon.svg" alt="ohm" width="20" height="20"></a>
+      <label class="menu-button" for="menu"><span class="menu-open">Menu</span><span class="menu-close">Close</span></label>
       <nav class="site-sections" aria-label="Site">
         <ul>
+          <li class="menu-only"><a href="/"{home}>Home</a></li>
           <li><a href="/about"{about}>About</a></li>
-          <li><a href="{DOCS_ORIGIN}/">Docs</a></li>
+          <li><a href="{DOCS_ORIGIN}/">Docs{arrow}</a></li>
         </ul>
       </nav>
     </header>
