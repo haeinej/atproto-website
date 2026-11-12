@@ -195,6 +195,7 @@ a.button.primary { color: var(--ohm-on-accent); }
 #filters { margin-bottom: var(--ohm-space-2); }
 .filter-name { margin: 0 var(--ohm-space-2) var(--ohm-space-1); }
 #counts { margin: 0 var(--ohm-space-2) var(--ohm-space-3); }
+#counts:empty { display: none; }
 #tree { --tree-row: var(--ohm-height-sm); --tree-indent: var(--ohm-space-4); }
 #tree ul { list-style: none; margin: 0; padding: 0; }
 /* A folder's row and a post's row are one kind of row: a height, a radius, a wash when it is the

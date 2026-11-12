@@ -450,10 +450,8 @@ function showTree() {
   const all = everyPost();
   const shown = all.filter(post => Object.entries(KINDS).every(([kind, { of }]) => !hidden[kind].has(of(post))));
   const out = all.length - shown.length;
-  const count = name => shown.filter(post => post.visibility === name).length;
-  $('counts').textContent = all.length
-    ? `${out ? `${shown.length} of ${plural(all.length, 'post')}` : plural(all.length, 'post')}: ${count('private')} only me, ${count('friends')} friends, ${count('public')} everyone`
-    : 'Your vault is empty.';
+  // Only an empty vault says so; the tree speaks for itself otherwise.
+  $('counts').textContent = all.length ? '' : 'Your vault is empty.';
 
   // The pills that choose the view.
   $('views').replaceChildren(...Object.entries(KINDS).map(([kind, { name }]) => pill(name, view.kind === kind, () => { view.kind = kind; remember(); showTree(); })));
