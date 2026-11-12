@@ -1,0 +1,218 @@
+/* ohmmmm.com: the editorial context from DESIGN.md. Values live in these
+   custom properties only; the rules below use them and nothing else.
+
+   Page shell (see website/README.md for what goes where):
+     .site-header  left rail, top: the ohm dot, linking home
+     main          right column: the page itself (one <article>)
+     .site-footer  left rail, bottom: the company directory (Contact, Support, Terms, Privacy)
+   On narrow screens the three stack in source order: dot, page, directory. */
+@font-face {
+  font-family: "Coconat";
+  src: url("/assets/fonts/coconat-regular.woff2") format("woff2");
+  font-weight: 400;
+  font-style: normal;
+  font-display: swap;
+}
+
+:root {
+  color-scheme: light;
+  --ohm-font-serif: "Coconat", Georgia, "Times New Roman", serif;
+  --ohm-font-sans: "Helvetica Neue", Helvetica, Arial, sans-serif;
+
+  /* One ink, like a printed page: the Fatale forest green on warm paper. */
+  --ohm-forest: #013220;
+  --ohm-paper-editorial: #fafaf9;
+  --ohm-ink-quiet: #4c6e61; /* forest at 70% on paper, 5.4:1 */
+  --ohm-selection: rgb(161 214 174 / 0.42);
+
+  /* One size for everything except the page title. Headings differ by weight. */
+  --ohm-size: 16px;
+  --ohm-leading: 1.65;
+  --ohm-text: 400 var(--ohm-size)/var(--ohm-leading) var(--ohm-font-sans);
+  --ohm-tracking: -0.015em;
+  --ohm-strong: 600;
+  --ohm-title: 400 clamp(40px, 6vw, 60px)/1.05 var(--ohm-font-serif); /* Coconat has one weight */
+  --ohm-title-tracking: -0.02em;
+  --ohm-title-gap: 28px;
+
+  --ohm-measure: 620px;
+  --ohm-gutter: 48px;
+  --ohm-frame: 40px;
+  --ohm-mark: 20px;
+  --ohm-rail: 160px;
+  --ohm-rail-gap: clamp(40px, 6vw, 96px);
+  --ohm-paragraph: 1em;
+  --ohm-section-gap: 2.5em;
+  --ohm-subsection-gap: 1.75em;
+
+  font-family: var(--ohm-font-sans);
+  font-synthesis: none;
+  -webkit-font-smoothing: antialiased;
+  background: var(--ohm-paper-editorial);
+  color: var(--ohm-forest);
+}
+
+* { box-sizing: border-box; }
+
+::selection { background: var(--ohm-selection); }
+
+body,
+h1, h2, h3, p, ul, li {
+  font: var(--ohm-text);
+  letter-spacing: var(--ohm-tracking);
+}
+
+h1, h2, h3, p, ul { margin: 0; }
+
+h2, h3 { font-weight: var(--ohm-strong); }
+
+/* The page title: the one large thing on the page. */
+h1 {
+  font: var(--ohm-title);
+  letter-spacing: var(--ohm-title-tracking);
+}
+
+a {
+  color: inherit;
+  text-underline-offset: 3px;
+  text-decoration-thickness: 1px;
+}
+
+a:focus-visible {
+  outline: 2px solid currentColor;
+  outline-offset: 4px;
+  border-radius: 2px;
+}
+
+/* ---------- Shell ---------- */
+
+body {
+  margin: 0;
+  min-height: 100vh;
+  min-height: 100dvh;
+  padding: var(--ohm-frame);
+  display: grid;
+  grid-template-columns: var(--ohm-rail) minmax(0, var(--ohm-measure));
+  grid-template-rows: 1fr auto;
+  column-gap: var(--ohm-rail-gap);
+}
+
+.skip {
+  position: absolute;
+  left: var(--ohm-frame);
+  top: 8px;
+  transform: translateY(-200%);
+}
+
+.skip:focus { transform: none; }
+
+.site-header {
+  grid-column: 1;
+  grid-row: 1;
+  align-self: start;
+}
+
+main {
+  grid-column: 2;
+  grid-row: 1 / 3;
+  padding-bottom: 80px;
+}
+
+.site-footer {
+  grid-column: 1;
+  grid-row: 2;
+  align-self: end;
+}
+
+@media (min-width: 761px) and (min-height: 480px) {
+  .site-header {
+    position: sticky;
+    top: var(--ohm-frame);
+  }
+
+  .site-footer {
+    position: sticky;
+    bottom: var(--ohm-frame);
+  }
+}
+
+/* ---------- Rail ---------- */
+
+.site-mark {
+  display: block;
+  width: var(--ohm-mark);
+  height: var(--ohm-mark);
+  /* centred on the first line of the page beside it */
+  margin-top: calc((var(--ohm-size) * var(--ohm-leading) - var(--ohm-mark)) / 2);
+  border-radius: 50%;
+}
+
+.site-mark img {
+  display: block;
+  width: 100%;
+  height: 100%;
+}
+
+.site-footer ul {
+  list-style: none;
+  padding: 0;
+}
+
+.site-footer a {
+  text-decoration: none;
+}
+
+.site-footer a:hover { text-decoration: underline; }
+
+/* ---------- Main: the page ---------- */
+
+.updated { color: var(--ohm-ink-quiet); }
+
+/* Spacing is the only hierarchy: a line between paragraphs, more between sections. */
+article > header > * + *,
+section > * + * { margin-top: var(--ohm-paragraph); }
+
+article > header > h1 + * { margin-top: var(--ohm-title-gap); }
+
+section {
+  margin-top: var(--ohm-section-gap);
+  scroll-margin-top: var(--ohm-frame);
+}
+
+section > :is(p, ul) + h3 { margin-top: var(--ohm-subsection-gap); }
+
+section p,
+section li {
+  text-wrap: pretty;
+  overflow-wrap: break-word;
+}
+
+section ul { padding-left: 1.2em; }
+
+section li + li { margin-top: 0.4em; }
+
+/* ---------- Narrow screens: dot, page, directory ---------- */
+
+@media (max-width: 760px) {
+  body {
+    display: block;
+    padding: 28px calc(var(--ohm-gutter) / 2) 32px;
+  }
+
+  main { padding: 40px 0 56px; }
+
+  .site-footer ul {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0 24px;
+  }
+
+  .site-footer a {
+    display: inline-block;
+    padding-block: 12px; /* 44px touch target */
+  }
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  html { scroll-behavior: smooth; }
+}
