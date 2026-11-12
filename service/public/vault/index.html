@@ -30,8 +30,8 @@
     </svg>
 
     <!-- Before the vault opens: the website's shell (the dot at the top of the rail, the company
-         directory at its foot) around one panel in the middle, for signing in or signing up:
-         with an ohm account, or with the AT Protocol account the posts belong to. -->
+         directory at its foot) around one panel in the middle, which takes someone through
+         onboarding: sign in or sign up, then say where their posts live. -->
     <div id="site" class="site" hidden>
       <header class="site-header">
         <a class="site-mark" href="https://ohmmmm.com/"><img src="./assets/ohm-dot.svg" alt="ohm" width="20" height="20"></a>
@@ -39,14 +39,11 @@
 
       <main class="onboarding">
         <section class="card" aria-labelledby="onboarding-title">
+
+          <!-- Step one: who you are. An ohm account, made with Google, Microsoft or Bluesky. -->
           <div id="sign-in" hidden>
             <h1 id="onboarding-title">Sign in to ohm</h1>
             <div class="stack">
-              <!-- The one filled action, signing in or up: the account that is already yours. -->
-              <button class="button primary lg wide" id="own-pds" type="button">
-                <svg class="icon" aria-hidden="true"><use href="#icon-at"/></svg>
-                <span>Continue with your own PDS</span>
-              </button>
               <button class="button secondary lg wide" id="google" type="button" hidden>
                 <svg width="20" height="20" viewBox="0 0 24 24" aria-hidden="true"><path fill="#4285F4" d="M21.6 12.23c0-.71-.06-1.39-.18-2.05H12v3.88h5.38a4.6 4.6 0 0 1-2 3.02v2.52h3.24c1.9-1.75 2.98-4.33 2.98-7.37Z"/><path fill="#34A853" d="M12 22c2.7 0 4.96-.9 6.62-2.4l-3.24-2.52c-.9.6-2.06.96-3.38.96-2.6 0-4.8-1.76-5.59-4.12H3.06v2.6A10 10 0 0 0 12 22Z"/><path fill="#FBBC05" d="M6.41 13.92a6 6 0 0 1 0-3.84v-2.6H3.06a10 10 0 0 0 0 9.04l3.35-2.6Z"/><path fill="#EA4335" d="M12 5.96c1.47 0 2.79.5 3.83 1.5l2.87-2.87A9.6 9.6 0 0 0 12 2a10 10 0 0 0-8.94 5.48l3.35 2.6A5.99 5.99 0 0 1 12 5.96Z"/></svg>
                 <span>Continue with Google</span>
@@ -63,10 +60,44 @@
             <p class="switch"><span id="switch-text">Don’t have an account?</span> <button class="link" id="switch-mode" type="button">Sign up</button></p>
           </div>
 
-          <!-- One step, used three ways: Bluesky, your own PDS, and connecting either to an ohm account. -->
+          <!-- Step two, once: where your posts live. Skipped by someone who signed in with Bluesky,
+               whose posts live there already. -->
+          <div id="where" hidden>
+            <h1>Where do your posts live?</h1>
+            <p>Your posts stay yours: they are kept in an AT Protocol account that you can move or take away. Choose the one ohm should work in.</p>
+            <div class="stack">
+              <button class="button primary lg wide" id="have-pds" type="button">
+                <svg class="icon" aria-hidden="true"><use href="#icon-at"/></svg>
+                <span>I have my own PDS</span>
+              </button>
+              <button class="button secondary lg wide" id="have-site" type="button">
+                <svg class="icon" aria-hidden="true"><use href="#icon-public"/></svg>
+                <span>I have a website, but no PDS</span>
+              </button>
+              <button class="button secondary lg wide" id="have-bluesky" type="button">
+                <svg width="20" height="20" viewBox="0 0 24 24" aria-hidden="true"><path fill="#0085FF" d="M12 10.8c-1.087-2.114-4.046-6.053-6.798-7.995C2.566.944 1.561 1.266.902 1.565.139 1.908 0 3.08 0 3.768c0 .69.378 5.65.624 6.479.815 2.736 3.713 3.66 6.383 3.364.136-.02.275-.039.415-.056-.138.022-.276.04-.415.056-3.912.58-7.387 2.005-2.83 7.078 5.013 5.19 6.87-1.113 7.823-4.308.953 3.195 2.05 9.271 7.733 4.308 4.267-4.308 1.172-6.498-2.74-7.078a8.741 8.741 0 0 1-.415-.056c.14.017.279.036.415.056 2.67.297 5.568-.628 6.383-3.364.246-.828.624-5.79.624-6.478 0-.69-.139-1.861-.902-2.206-.659-.298-1.664-.62-4.3 1.24C16.046 4.748 13.087 8.687 12 10.8Z"/></svg>
+                <span>Use my Bluesky account</span>
+              </button>
+            </div>
+            <p class="switch"><span id="signed-in-as"></span> <button class="link" id="leave" type="button">Sign out</button></p>
+          </div>
+
+          <!-- A website and no PDS: Cirrus runs one beside the website, on the same Cloudflare account. -->
+          <div id="cirrus" hidden>
+            <button class="icon-button card-back" data-back type="button" aria-label="Back" title="Back"><svg class="icon" aria-hidden="true"><use href="#icon-back"/></svg></button>
+            <h1>Set up your PDS</h1>
+            <p>A PDS is where your posts are kept. Cirrus runs one on your own Cloudflare account, at your own domain, beside your website. It takes a few minutes.</p>
+            <div class="stack">
+              <a class="button primary lg wide" href="https://cirrus.earth/start/quick-start/" target="_blank" rel="noopener">Open the Cirrus quick start</a>
+              <button class="button secondary lg wide" id="cirrus-done" type="button">I’ve set it up</button>
+            </div>
+            <p class="small">The quick start opens in a new tab. Come back here when your handle is set.</p>
+          </div>
+
+          <!-- The handle, asked for by Bluesky and by a PDS of your own. -->
           <div id="connect" hidden>
-            <button class="icon-button card-back" id="step-back" type="button" aria-label="Back" title="Back"><svg class="icon" aria-hidden="true"><use href="#icon-back"/></svg></button>
-            <h1 id="handle-title">Connect your account</h1>
+            <button class="icon-button card-back" data-back type="button" aria-label="Back" title="Back"><svg class="icon" aria-hidden="true"><use href="#icon-back"/></svg></button>
+            <h1 id="handle-title">Your own PDS</h1>
             <p id="handle-text"></p>
             <form id="handle-form" class="stack">
               <label class="field-label"><span id="handle-label">Your handle</span>
@@ -74,8 +105,6 @@
               </label>
               <button class="button primary lg wide" type="submit">Continue</button>
             </form>
-            <p class="small" id="cirrus-help">No PDS yet? <a href="https://cirrus.earth/start/quick-start/" target="_blank" rel="noopener">Set one up with Cirrus</a>. It runs on your own Cloudflare account, at your own domain. Then come back and type your handle.</p>
-            <p class="switch" id="signed-in"><span id="signed-in-as"></span> <button class="link" id="leave" type="button">Sign out</button></p>
           </div>
         </section>
       </main>

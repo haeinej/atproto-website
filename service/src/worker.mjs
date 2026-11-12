@@ -78,6 +78,17 @@ export function createService({ whoIs, get = fetch } = {}) {
       const identify = whoIs ?? (made ??= createIdentity({ audience: env.SERVICE_DID, members: env.MEMBERS }));
       const linked = links(env.DB);
 
+      // Who a token from a PDS names. ohm's own sign-in asks this to sign a member in with their
+      // AT Protocol account: the token is issued for this request and nothing else. The handle is
+      // given only when the handle itself points back to the account.
+      if (method === 'com.ohmmmm.identity.whoAmI') {
+        if (request.method !== 'GET') throw new Refused(405, 'WrongMethod', `${method} is a GET request`);
+        const did = await identify(request, method);
+        const account = await findAccount(did, { get }).catch(() => null);
+        const handle = account?.handle && (await findAccount(account.handle, { get }).catch(() => null))?.did === did ? account.handle : null;
+        return json({ did, handle });
+      }
+
       // ---- The ohm account: who is signed in, and which AT Protocol account they work in. ----
       if (Object.hasOwn(ACCOUNT, method ?? '')) {
         if (request.method !== ACCOUNT[method]) throw new Refused(405, 'WrongMethod', `${method} is a ${ACCOUNT[method]} request`);

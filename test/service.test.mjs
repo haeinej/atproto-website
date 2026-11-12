@@ -370,6 +370,21 @@ test('finding an account needs no sign-in, and says who its PDS should issue tok
   }
 });
 
+test('a token from a PDS says who it names, for that request only and for members only', async () => {
+  const { haein, jun, stranger, ask } = await running();
+  const who = 'com.ohmmmm.identity.whoAmI';
+  const named = await ask(haein, who, { token: await haein.token(who) });
+  // The stand-in documents name no handle, so none is given.
+  assert.deepEqual([named.status, await named.json()], [200, { did: haein.did, handle: null }]);
+  assert.equal((await (await ask(jun, who, { token: await jun.token(who) })).json()).did, jun.did);
+  // A token issued for reading the vault does not say who someone is to ohm's sign-in, nor the other way round.
+  assert.equal((await ask(haein, who, { token: await haein.token('com.ohmmmm.vault.getTree') })).status, 401);
+  assert.equal((await ask(haein, 'getTree', { token: await haein.token(who) })).status, 401);
+  assert.equal((await ask(stranger, who, { token: await stranger.token(who) })).status, 403);
+  assert.equal((await ask(haein, who, { token: null })).status, 401);
+  assert.equal((await ask(haein, who, { token: await haein.token(who), verb: 'POST' })).status, 405);
+});
+
 test('an ohm account signs a member in, once their PDS has said which AT Protocol account is theirs', async () => {
   const { haein, jun, stranger, ask, sessions } = await running();
   const ours = 'https://app.ohmmmm.test';

@@ -112,7 +112,8 @@ code { font-family: var(--ohm-font-mono); }
 .card p { text-wrap: pretty; }
 .card a { color: var(--ohm-ink); text-decoration: underline; text-underline-offset: 3px; }
 .card a:focus-visible { outline: 2px solid var(--ohm-focus); outline-offset: 4px; }
-#cirrus-help { margin: var(--ohm-space-4) 0 0; }
+a.button { color: var(--ohm-ink); text-decoration: none; }
+a.button.primary { color: var(--ohm-on-accent); }
 .card .field-label { text-align: left; }
 .stack { display: grid; gap: var(--ohm-space-3); margin-bottom: var(--ohm-space-3); }
 .wide { width: 100%; gap: var(--ohm-space-2); font-size: var(--ohm-input-size); }
