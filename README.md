@@ -1,13 +1,13 @@
 # ohm content layer
 
-Build your own home on AT Protocol from the website you already have. Your posts and profile live in a repository on a Personal Data Server (PDS) you run, described by schemas under your own domain, and readable by other AT Protocol applications. Your website stays yours and becomes a view of that repository.
+Build your own home on AT Protocol from the website you already have. Your posts and profile live in a repository on a Personal Data Server (PDS) you run. Every post is one shared record type, `com.ohmmmm.post`, so other AT Protocol applications can find and read it, and anything only your site needs is described by schemas under your own domain. Your website stays yours and becomes a view of that repository.
 
 You can start from an existing website, from an export of your posts on another platform, or from nothing.
 
 ## What you get
 
 - **An identity you own.** Everything hangs off your DID, the same kind of identity Bluesky uses. [Cirrus](https://github.com/ascorbic/cirrus) runs your PDS on Cloudflare.
-- **One kind of record for everything you publish.** An essay, a photograph, a project write-up, and an imported social post are all posts, with a fixed schema other software can read.
+- **One kind of record for everything you publish.** An essay, a photograph, a project write-up, and an imported social post are all posts, in one schema with one name on every site, so other software can find and read them.
 - **A posts page.** A Cloudflare Worker serves a list of every post, a page for each, and JSON feeds.
 - **Your own site, unchanged.** A renderer rebuilds your existing pages from the records, byte for byte, so only where the content comes from changes.
 
@@ -59,11 +59,11 @@ A post has a Markdown body, a date, and an address. Five things say what it is a
 | Platform | Where the post was first published | From its source | `website`, `x`, `substack` |
 | Visibility | Who can see it | You, when publishing | `public`, `private` |
 
-Labels are where you start: they are the names in your site's header. The form is the part that is the same on every site, so other software can tell an essay from a photo set whatever you call your sections. There are thirteen forms (writing, note, image, gallery, video, audio, file, media, link, embed, quote, list, code). You never type one, and it is not shown on your site. [Forms, labels, and sublabels](docs/labels.md)
+Labels are where you start: they are the names in your site's header. The form is the part that is the same on every site, so other software can tell an essay from a photo set whatever you call your sections. There are fourteen forms (writing, note, image, gallery, video, audio, file, media, link, embed, quote, list, code, and other for anything else). You never type one, and it is not shown on your site. The list can grow, and software reads a form it does not know as `other`. [Forms, labels, and sublabels](docs/labels.md)
 
 ### A fixed schema, and a layer of your own
 
-The post schema is fixed and identical on every site, which is what makes your posts readable elsewhere. Your profile uses Bluesky's own fields. Anything only your site needs goes in an optional layer: you declare it in a schema under your domain, and it is saved under the record's `site` field. That layer is unlisted, meaning your own site shows it and applications it does not apply to never see it. When something means the same as a fixed field, fill the fixed field. [The fixed schema and your own fields](docs/schema-layers.md)
+The post schema is fixed and identical on every site, and it has one name everywhere: `com.ohmmmm.post`. That is what lets other software find your posts and read them. Your profile uses Bluesky's own fields. Anything only your site needs goes in an optional layer: you declare it in a schema under your domain, and it is saved under the record's `site` field. That layer is unlisted, meaning your own site shows it and applications it does not apply to never see it. When something means the same as a fixed field, fill the fixed field. [The fixed schema and your own fields](docs/schema-layers.md)
 
 ### Addresses follow labels
 
@@ -73,7 +73,7 @@ The post schema is fixed and identical on every site, which is what makes your p
 | `/posts/writings/` | One label |
 | `/posts/writings/collisions/` | One sublabel |
 | `/posts/writings/collisions/trap-of-independency` | A post |
-| `at://did:web:pds.example.com/com.example.post/trap-of-independency` | The same post's record |
+| `at://did:web:pds.example.com/com.ohmmmm.post/trap-of-independency` | The same post's record |
 
 Because the address comes from the label, every post has one; a post published without a label is filed under `other`. An address always ends in the post's own key, so the short `/posts/trap-of-independency` and the address a post had before it was refiled both redirect to the current one.
 
@@ -96,7 +96,8 @@ Your picture, name, pronouns, verified handle, description, and links sit above 
 | --- | --- |
 | `identity` | Shows an identity and the record types in its repository. Takes a handle or DID |
 | `configure` | Prints a site configuration from `--site` and `--handle` or `--did` |
-| `lexicon` | Prints a schema under your domain: `--kind post`, `postSite`, `profile`, `profileLink`, or `profileSite` |
+| `lexicon` | Prints a schema: `--kind post` for the shared post schema, or `postSite`, `profile`, `profileLink`, `profileSite` for your own, under your domain |
+| `migrate` | Previews or copies posts from an older post type, such as `com.example.post`, to `com.ohmmmm.post` |
 | `publish` | Previews or publishes a post |
 | `profile` | Previews or saves your profile |
 | `posts` | Lists every public post with its form, label, and opening lines |
@@ -157,6 +158,8 @@ Every record on a PDS is public, so a private post is not sent there. It is save
 
 Open `https://example.com/notes/private/` to sign in. The posts list then includes your private posts and offers the Visibility arrangement. Visitors see neither. Publishing the same key with `--private` again replaces the post. Each attachment can be up to 25 MB.
 
+A private post's record holds the address it would have if it were public, such as `https://example.com/posts/writings/hello`. It is served from the private area because of where it is stored, not because of anything written in it.
+
 ## Rebuild your own pages from records
 
 Your own website can build its existing pages from the same records without its design changing. The site's source is the specification: the result must be the same bytes as before, with only the source of the content swapped.
@@ -175,6 +178,38 @@ ohm-content-layer render build --slug essay --rules render-rules.json --kind ess
 
 It runs when your site is built, so the site stays plain HTML. It handles pages that hold one post or several hundred, and stops on markup it does not handle instead of dropping it. [The build-renderer skill](skills/build-renderer/SKILL.md) has the method and what to check.
 
+## Move to the shared post schema
+
+Sites set up before the post schema was shared keep their posts under a type of their own, such as `com.example.post`. The `migrate` command copies them to `com.ohmmmm.post`. Each post keeps its key, so its address on your site does not change, and the older records are left where they are.
+
+```sh
+ohm-content-layer migrate --from com.example.post
+ohm-content-layer migrate --from com.example.post --key hello
+ohm-content-layer migrate --from com.example.post --publish
+```
+
+The first prints a count of what would be copied and changes nothing. `--key` prints one post's new record in full. `--publish` writes, and needs `ATPROTO_APP_PASSWORD`. A site configuration that still has `ATPROTO_POST_COLLECTION` gives `--from` its default.
+
+| In the older record | In the new one |
+| --- | --- |
+| The type `com.example.post`, on the record and on each attachment | `com.ohmmmm.post` |
+| An attachment's `original` | `file` |
+| A link's `site` | `siteName` |
+| `tags`, from before labels | The first is the label and the second the sublabel |
+| Links and connections to your own posts under the older type | The same posts under `com.ohmmmm.post` |
+| A private post's private address in `canonicalUrl` | The address it would have if it were public |
+| A field the shared schema has no place for, such as `summary` | Kept in your own layer, under `site`. Declare it in your `postSite` schema |
+| `source.author`, and an image's `credit` and `extractedText` | Not kept. The preview lists them under `leftBehind` |
+
+Do it in this order, because the site reads only `com.ohmmmm.post` from this version on:
+
+1. Add `"ATPROTO_SITE_NAMESPACE": "com.example"` to your site configuration, with your own domain written backwards. Your profile and your optional schemas are found under it. A configuration that still has `ATPROTO_POST_COLLECTION` works without this.
+2. Preview, read what would be moved and left behind, and declare the moved fields in your `postSite` schema.
+3. Run it with `--publish`.
+4. Deploy the site Worker. Deploying before step 3 leaves the site with no posts to show.
+
+Private posts need no migration. One saved before this change is read as the shared schema has it, and publishing it again with `--private` saves it in the new shape. A mirror writes each post again under the shared type on its next runs.
+
 ## Import an X archive
 
 Extract your X export and keep `data/tweets.js`, any `tweets-partN.js` files, and `data/tweets_media/` together. The importer is a Java program in this repository, so this part needs a clone, Java 21, and Maven. [X archive instructions](https://help.x.com/en/managing-your-account/how-to-download-your-x-archive)
@@ -182,7 +217,7 @@ Extract your X export and keep `data/tweets.js`, any `tweets-partN.js` files, an
 ```sh
 mvn -f importer/pom.xml package
 java -jar importer/target/x-archive-importer.jar \
-  --archive /path/to/extracted-archive --collection com.example.post --site https://example.com
+  --archive /path/to/extracted-archive --site https://example.com
 ```
 
 That previews offline. To publish a reviewed selection, add `--publish --pds https://pds.example.com --handle example.com --did did:web:pds.example.com`, and `--id YOUR_X_POST_ID` once for each post, or leave `--id` out to import everything eligible. Imported posts are notes; `--label 'Tweets'` files them under a name. The preview reports the replies, reposts, quote posts, and entries with missing media that it leaves out. `--also-bluesky` also posts compatible text and images to Bluesky.
@@ -207,13 +242,12 @@ npm run --silent configure -- --site https://example.com --handle example.com --
 
 - `--mode attach` is for a hostname that already serves a Cloudflare Pages or Workers site. The Worker mounts `/notes/`, `/notes.json`, and everything under `/posts/`. For a subdomain such as `www.example.com`, pass `--zone example.com`. [Cloudflare Worker routes](https://developers.cloudflare.com/workers/configuration/routing/routes/)
 - `--mode standalone` is for a free hostname such as `journal.example.com`, which serves the posts page at its root. [Cloudflare Custom Domains](https://developers.cloudflare.com/workers/configuration/routing/custom-domains/)
-- `--name` picks the Worker's name, `--kv` an existing KV namespace, and `--collection` a post type other than the one derived from your domain (`com.example.post` for `example.com`). Keep the collection once posts are live, because it is part of their addresses.
+- `--name` picks the Worker's name and `--kv` an existing KV namespace. `--namespace` sets where your own optional schemas are declared, when it is not your domain written backwards (`com.example` for `example.com`). It is saved as `ATPROTO_SITE_NAMESPACE`. There is no post type to choose: every post is `com.ohmmmm.post`.
 
-**3. Your schemas.** Generate them once and keep them with your site's source. Do not edit the post schema; your own fields go in the optional schema beside it.
+**3. Your schemas.** The post schema is shared and is in this repository at [lexicons/com/ohmmmm/post.json](lexicons/com/ohmmmm/post.json); you do not generate or edit it. Your own fields go in an optional schema under your domain. Generate it once and keep it with your site's source.
 
 ```sh
 mkdir -p lexicons/com/example
-npm run --silent lexicon > lexicons/com/example/post.json
 npm run --silent lexicon -- --kind postSite > lexicons/com/example/postSite.json
 ```
 
@@ -257,7 +291,7 @@ Set `INCLUDE_BLUESKY_POSTS=true` in the Worker's configuration to list native Bl
 | [feed/](feed/) | The site Worker: identity, forms, the feeds, post pages, and private posts |
 | [site/](site/) | The posts page and its stylesheet |
 | [scripts/](scripts/) and [bin/](bin/) | The commands |
-| [lexicons/](lexicons/com/haeinjung/) | Schema templates: the fixed post and profile schemas, and the optional ones |
+| [lexicons/](lexicons/) | The shared post schema, [com/ohmmmm/post.json](lexicons/com/ohmmmm/post.json), and under [com/haeinjung/](lexicons/com/haeinjung/) the templates for a site's own schemas: the profile and the optional ones |
 | [importer/](importer/) | The X archive importer |
 | [skills/](skills/) and [AGENTS.md](AGENTS.md) | What a coding agent reads: the purpose, the rules, and the four skills |
 | [docs/](docs/) | The guides linked above |
@@ -275,7 +309,8 @@ Tried for real:
 Not yet:
 
 - **Private posts and the profile command have not been run against Cloudflare.** Private posts are tested with stand-ins for Cloudflare Access and its storage.
-- **The X importer has changes that are not compiled.** It now saves each post's form and a single label.
+- **The X importer has changes that are not compiled.** It now saves each post's form and a single label, and writes `com.ohmmmm.post` records.
+- **The migrate command has only been previewed.** It has read a live repository and its converted records pass the schema, but it has not written to a PDS.
 - **There is no command to change a published post.** Changing a label, moving a private post to public, or deleting one is done by hand.
 - **The site renderer stops on quotations, code, and captions.** A page that uses one is reported as not done.
 - **Embeds do not play.** An embed is shown as a card that links out.

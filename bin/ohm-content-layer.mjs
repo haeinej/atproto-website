@@ -4,7 +4,8 @@
 const commands = {
   identity: ['identity.mjs', 'Show an identity and the repository it owns. Takes a handle or DID.'],
   configure: ['configure.mjs', 'Print a site configuration for --site and --handle or --did.'],
-  lexicon: ['lexicon.mjs', 'Print a schema under your domain: --kind post, postSite, profile, profileLink, or profileSite.'],
+  lexicon: ['lexicon.mjs', 'Print a schema: --kind post for the shared post schema, or postSite, profile, profileLink, profileSite for your own.'],
+  migrate: ['migrate.mjs', 'Preview or copy posts from an older post type to com.ohmmmm.post: --from com.example.post.'],
   posts: ['posts.mjs', 'List every public post with its form, label, and opening lines.'],
   profile: ['profile.mjs', 'Preview or save your profile: --name, --description, --pronouns, --avatar, --link.'],
   publish: ['publish.mjs', 'Preview or publish a post: --file, --slug, --title, --label, --media. Add --publish to save.'],

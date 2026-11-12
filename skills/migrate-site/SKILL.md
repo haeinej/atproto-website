@@ -20,7 +20,7 @@ Only the content side of the website changes.
 | Where the site gets its content: content files, data files, the code that loads content and hands it to a page | Layout, templates' markup, CSS, fonts, images that are part of the design |
 | Build steps whose only job is to assemble content | Navigation, and the addresses of pages that are not posts |
 | Redirects from an item's old address to its post, and the sitemap entries for moved items | |
-| New files this project needs: its configuration, the Lexicon, a content loader | Scripts unrelated to content, analytics, SEO tags, deploy and hosting configuration |
+| New files this project needs: its configuration, the site's own optional Lexicon, a content loader | Scripts unrelated to content, analytics, SEO tags, deploy and hosting configuration |
 
 If a page mixes content and layout in one file, lift the content out and leave the markup around it exactly as it was. If you think something on the right-hand side has to change, stop and ask the owner. Do not tidy, modernise, or fix unrelated code, even when it is clearly wrong; mention it instead.
 

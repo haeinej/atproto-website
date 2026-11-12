@@ -28,8 +28,8 @@ Your posts are not stored by this project. They are records in your repository, 
 | Address | What it is |
 | --- | --- |
 | `at://did:web:pds.example.com` | Your repository |
-| `at://did:web:pds.example.com/com.example.post` | Every post in it |
-| `at://did:web:pds.example.com/com.example.post/hello` | One post |
+| `at://did:web:pds.example.com/com.ohmmmm.post` | Every post in it |
+| `at://did:web:pds.example.com/com.ohmmmm.post/hello` | One post |
 | `at://did:web:pds.example.com/com.example.profile/self` | Your profile |
 
 The website, its feeds, and its pages are views of that repository. If the site disappeared, the repository would still hold everything, and you could point other software at it. The one exception is a private post, which is kept off the repository on purpose because a repository is public.

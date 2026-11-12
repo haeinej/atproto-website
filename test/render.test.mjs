@@ -30,8 +30,8 @@ const record = {
     '**End.**',
   ].join('\n\n'),
   media: [
-    { id: 'street', sourceUrl: 'https://cdn.example.org/small.jpg', width: 1456, height: 1941, original: { ref: { $link: 'bafkstreet' } } },
-    { id: 'logo', width: 64, height: 64, original: { ref: { $link: 'bafklogo' } } },
+    { id: 'street', sourceUrl: 'https://cdn.example.org/small.jpg', width: 1456, height: 1941, file: { ref: { $link: 'bafkstreet' } } },
+    { id: 'logo', width: 64, height: 64, file: { ref: { $link: 'bafklogo' } } },
   ],
 };
 const rules = {
@@ -45,7 +45,7 @@ const rules = {
     { name: 'date_ko', from: 'publishedAt', pattern: '(<div class="details"><span>)(.*?)(</span>)', date: { locale: 'ko-KR' } },
   ],
 };
-const context = { site: 'https://example.com', blobUrl: media => `https://pds.example.com/blob/${media.original.ref.$link}` };
+const context = { site: 'https://example.com', blobUrl: media => `https://pds.example.com/blob/${media.file.ref.$link}` };
 const adoptPage = (changes = {}, options = { images: 'page' }) =>
   adopt(changes.page ?? page, { ...record, ...changes.record }, changes.rules ?? rules, options, context);
 
@@ -205,11 +205,11 @@ test('a paper: an attached file in the header, footnotes, quotes written as refe
     title: 'A paper', publishedAt: '2026-01-01T00:00:00Z',
     body: [
       '![Read the original PDF ↗](media:original)',
-      'Discovery[^1] isn\'t "disclosure"[^2]. See [the earlier piece](<at://did:web:pds.example.com/com.example.post/earlier>).',
+      'Discovery[^1] isn\'t "disclosure"[^2]. See [the earlier piece](<at://did:web:pds.example.com/com.ohmmmm.post/earlier>).',
       '## Notes',
       '[^1]: Testing whether alignment exists.\n[^2]: Revealing private context.',
     ].join('\n\n'),
-    media: [{ $type: 'com.example.post#file', id: 'original', original: { ref: { $link: 'bafkpaper' } } }],
+    media: [{ $type: 'com.ohmmmm.post#file', id: 'original', file: { ref: { $link: 'bafkpaper' } } }],
   };
   const paperRules = {
     posts: { earlier: '/writing/earlier.html' },
@@ -221,7 +221,7 @@ test('a paper: an attached file in the header, footnotes, quotes written as refe
       { name: 'body', pattern: '(<div class="body">)(.*?)(\\s*</div>\\n</article>)' },
     ],
   };
-  const where = { ...context, did: 'did:web:pds.example.com', collection: 'com.example.post' };
+  const where = { ...context, did: 'did:web:pds.example.com', collection: 'com.ohmmmm.post' };
   const adopted = adopt(paper, post, paperRules, { images: 'page' }, where);
   assert.deepEqual(adopted.findings, []);
   assert.deepEqual(adopted.blocks, ['image', 'p', 'h2', 'ol']);
@@ -244,7 +244,7 @@ test('several posts on one page, with the site\'s own language and a row of link
   const post = (id, title, subtitle, body) => ({
     title, subtitle, publishedAt: '2026-01-01T00:00:00Z',
     body: `${body}\n\n- [Visit ↗](<https://example.org/${id}>)\n- ![Read the paper](media:paper)`,
-    media: [{ $type: 'com.example.post#file', id: 'paper', original: { ref: { $link: 'bafk' } } }],
+    media: [{ $type: 'com.ohmmmm.post#file', id: 'paper', file: { ref: { $link: 'bafk' } } }],
   });
   const posts = { one: post('one', 'First', 'made a thing', 'It **worked**.'), two: post('two', 'Second', 'made another', 'It also worked.') };
   const projectRules = {
@@ -284,7 +284,7 @@ test('several posts on one page, with the site\'s own language and a row of link
   assert.match(kept.template, /<a href="\.\.\/x\/\.\.\/one-page\.html" target="_blank" rel="noopener"><span lang="en">\{\{one:b\.1\.i\.0\}\}/);
   // A link that holds an image is an image, not a row of links.
   const gallery = '<main><h1>T</h1><div class="b"><div class="set"><a class="photo" href="/media/full.png"><img src="/media/a.png" alt="A wall"></a></div></div></article></main>';
-  const pictured = adopt(gallery, { title: 'T', publishedAt: '2026-01-01T00:00:00Z', body: '[![A wall](media:a)](</media/full.png>)', media: [{ id: 'a', original: { ref: { $link: 'b' } } }] },
+  const pictured = adopt(gallery, { title: 'T', publishedAt: '2026-01-01T00:00:00Z', body: '[![A wall](media:a)](</media/full.png>)', media: [{ id: 'a', file: { ref: { $link: 'b' } } }] },
     { slots: [{ name: 'title', pattern: '(<h1>)(.*?)(</h1>)' }, { name: 'body', pattern: '(<div class="b">)(.*?)(</div></article>)' }] }, { images: 'page' }, context);
   assert.deepEqual([pictured.findings, pictured.blocks], [[], ['image']]);
   // Addresses in the page's own folder can be written without the folder.
@@ -318,7 +318,7 @@ test('a gallery item: a video or image in a wrapper, with the page\'s own smalle
   ] };
   const item = (year, place) => ({
     publishedAt: `${year}-01-01T00:00:00Z`, label: 'photographs', sublabel: place, body: '![](media:item)',
-    media: [{ id: 'item', width: 1803, height: 2400, original: { ref: { $link: 'bafk' } } }],
+    media: [{ id: 'item', width: 1803, height: 2400, file: { ref: { $link: 'bafk' } } }],
   });
   const posts = { a: [item(2025, 'Lisboa'), 'a\\.jpg'], b: [item(2026, '서울'), 'b\\.mp4'] };
   let template = gallery;

@@ -84,7 +84,10 @@ export async function mirror(env, { get = fetch, now = new Date(), budget = Numb
         if (!post.body.trim()) throw new Error('nothing to mirror');
         const hash = await digest([post.title, post.body, post.images.map(image => image.url), source.label, source.sublabel, post.connect]);
         const stateKey = `mirror:${source.platform}:${key}`;
-        if ((await env.MIRROR.get(stateKey, 'json'))?.hash === hash) { result.unchanged++; continue; }
+        // What the last run wrote. A post written under another post type has to be written again.
+        const last = await env.MIRROR.get(stateKey, 'json');
+        const written = last?.collection === pds.collection;
+        if (written && last.hash === hash) { result.unchanged++; continue; }
         // A run does a bounded amount of work; what is left is picked up by the next one.
         if (left <= 0) { result.waiting++; continue; }
         left--;
@@ -96,7 +99,7 @@ export async function mirror(env, { get = fetch, now = new Date(), budget = Numb
           const bytes = new Uint8Array(await response.arrayBuffer());
           if (bytes.length > 20_000_000) throw new Error(`the image ${image.url} is larger than 20 MB`);
           const { blob } = await call(pds, env.PDS_AUTH_TOKEN, 'com.atproto.repo.uploadBlob', { body: bytes, mime }, get);
-          media.push({ $type: `${pds.collection}#image`, id: image.id, original: blob, sourceUrl: image.url, ...(image.alt ? { alt: image.alt } : {}) });
+          media.push({ $type: `${pds.collection}#image`, id: image.id, file: blob, sourceUrl: image.url, ...(image.alt ? { alt: image.alt } : {}) });
         }
         const content = { title: post.title, facts: bodyFacts(post.body), kinds: media.map(() => 'image') };
         const form = identifyForm(content);
@@ -104,7 +107,11 @@ export async function mirror(env, { get = fetch, now = new Date(), budget = Numb
         if (problems.length) throw new Error(problems.join('; '));
         const record = {
           $type: pds.collection, body: post.body, publishedAt: post.publishedAt,
-          canonicalUrl: new URL(postPath(source, key), site).href,
+          // The post's address on the person's own site. A post mirrored from their website is at
+          // the page it came from; one from another platform is on the posts page.
+          canonicalUrl: (source.platform === 'website' && webUrl(item.url)) || new URL(postPath(source, key), site).href,
+          // The source's version changed since this record was last written.
+          ...(written ? { updatedAt: now.toISOString() } : {}),
           ...(post.title && form !== 'note' && form !== 'quote' ? { title: post.title } : {}),
           form, label: source.label, ...(source.sublabel ? { sublabel: source.sublabel } : {}),
           ...(post.connect.length ? { connect: post.connect } : {}),
@@ -113,7 +120,7 @@ export async function mirror(env, { get = fetch, now = new Date(), budget = Numb
           ...(media.length ? { media } : {}),
         };
         await call(pds, env.PDS_AUTH_TOKEN, 'com.atproto.repo.putRecord', { body: { repo: pds.did, collection: pds.collection, rkey: key, record } }, get);
-        await env.MIRROR.put(stateKey, JSON.stringify({ hash, at: report.at }));
+        await env.MIRROR.put(stateKey, JSON.stringify({ hash, at: report.at, collection: pds.collection }));
         result.written.push({ key, form, ...(post.simplified.length ? { simplified: post.simplified } : {}) });
       } catch (problem) {
         result.problems.push(`${item.url ?? item.id}: ${problem.message}`);

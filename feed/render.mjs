@@ -147,8 +147,7 @@ export function postPage(post) {
   const card = link ? `<a class="link-card" href="${escape(link.uri)}">${
     link.image ? `<img src="${escape(link.image)}" alt="" loading="lazy" decoding="async">` : ''}<span class="link-text">${
     link.title ? `<strong>${escape(link.title)}</strong>` : ''}${
-    link.description ? `<span>${escape(link.description)}</span>` : ''}<small>${escape(link.site)}</small></span></a>` : '';
-  const summary = post.summary ? `<meta name="description" content="${escape(post.summary)}">` : '';
+    link.description ? `<span>${escape(link.description)}</span>` : ''}<small>${escape(link.siteName)}</small></span></a>` : '';
   return `<!doctype html>
 <html lang="en">
 <head>
@@ -158,7 +157,6 @@ export function postPage(post) {
   <link rel="canonical" href="${escape(post.canonicalUrl)}">
   ${post.uri ? `<link rel="alternate" href="${escape(post.uri)}">` : ''}
   <link rel="stylesheet" href="/notes/notes.css">
-  ${summary}
   ${hidden ? '<meta name="robots" content="noindex">' : ''}
 </head>
 <body>

@@ -6,9 +6,9 @@
 // The rule these checks enforce: when something means the same as a fixed field, fill that field.
 // Only what has no match goes in the optional layer, and only once the site's schema declares it.
 import { readFile } from 'node:fs/promises';
+import { POST_FIELDS } from '../feed/pds.mjs';
 
-export const POST_FIELDS = ['title', 'subtitle', 'body', 'summary', 'publishedAt', 'updatedAt', 'canonicalUrl', 'form', 'label',
-  'sublabel', 'connect', 'link', 'source', 'media', 'site'];
+export { POST_FIELDS };
 export const PROFILE_FIELDS = ['displayName', 'description', 'pronouns', 'website', 'links', 'avatar', 'banner', 'labels',
   'joinedViaStarterPack', 'pinnedPost', 'createdAt', 'site'];
 
@@ -41,6 +41,7 @@ const fits = {
 // Build a record's optional layer from --site values: key=value pairs, or JSON files holding several.
 export async function siteLayer(specs, type, schemaPath, { fields, matches, kind }) {
   if (!specs.length) return undefined;
+  if (!type) throw new Error('Your own fields are declared under your own namespace. Set ATPROTO_SITE_NAMESPACE in your site config to your domain written backwards, such as com.example');
   const path = schemaPath ?? `lexicons/${type.replaceAll('.', '/')}.json`;
   const schema = JSON.parse(await readFile(path, 'utf8').catch(() => {
     throw new Error(`No optional schema at ${path}. Create it with: npm run --silent lexicon -- --kind ${type.split('.').at(-1)} > ${path}`);

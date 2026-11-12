@@ -69,14 +69,14 @@ function world() {
       if (options.headers.Authorization !== 'Bearer pds-token') return Response.json({}, { status: 401 });
       const { rkey, record } = JSON.parse(options.body);
       records.set(rkey, record);
-      return Response.json({ uri: `at://did:web:pds.example.test/com.example.post/${rkey}` });
+      return Response.json({ uri: `at://did:web:pds.example.test/com.ohmmmm.post/${rkey}` });
     }
     if (address === 'https://example.com/media/street.jpg') return new Response(new Uint8Array([1, 2, 3]), { headers: { 'Content-Type': 'image/jpeg' } });
     if (address in feeds) return typeof feeds[address] === 'string' ? new Response(feeds[address]) : Response.json(feeds[address]);
     return new Response('', { status: 404 });
   };
   const env = {
-    ATPROTO_DID: 'did:web:pds.example.test', ATPROTO_PDS_ORIGIN: 'https://pds.example.test', ATPROTO_POST_COLLECTION: 'com.example.post',
+    ATPROTO_DID: 'did:web:pds.example.test', ATPROTO_PDS_ORIGIN: 'https://pds.example.test', ATPROTO_SITE_NAMESPACE: 'com.example',
     SITE_ORIGIN: 'https://example.com', PDS_AUTH_TOKEN: 'pds-token', MIRROR_TOKEN: 'button-token',
     MIRROR_SOURCES: JSON.stringify([
       { platform: 'website', feed: 'https://example.com/feed.json', label: 'Writing' },
@@ -94,9 +94,10 @@ test('one run mirrors every connected platform, and the next run writes only wha
     ['website', 2, ['a-walk', 'second'], []], ['substack', 1, ['substack-a-letter'], []],
   ]);
   assert.deepEqual(records.get('a-walk'), {
-    $type: 'com.example.post', body: 'The street went quiet.\n\n![A wet street](media:image-1)', publishedAt: '2026-06-01T09:00:00.000Z',
-    canonicalUrl: 'https://example.com/posts/writing/a-walk', title: 'A walk', form: 'writing', label: 'Writing',
-    media: [{ $type: 'com.example.post#image', id: 'image-1', original: { $type: 'blob', mimeType: 'image/jpeg', size: 3, ref: { $link: 'bafk1' } },
+    $type: 'com.ohmmmm.post', body: 'The street went quiet.\n\n![A wet street](media:image-1)', publishedAt: '2026-06-01T09:00:00.000Z',
+    // A post mirrored from the person's website is at the page it came from.
+    canonicalUrl: 'https://example.com/writing/a-walk.html', title: 'A walk', form: 'writing', label: 'Writing',
+    media: [{ $type: 'com.ohmmmm.post#image', id: 'image-1', file: { $type: 'blob', mimeType: 'image/jpeg', size: 3, ref: { $link: 'bafk1' } },
       sourceUrl: 'https://example.com/media/street.jpg', alt: 'A wet street' }],
   });
   // A post from another platform says where it first appeared, and is filed where its source says.
@@ -115,6 +116,14 @@ test('one run mirrors every connected platform, and the next run writes only wha
   feeds['https://example.com/feed.json'].items[1].content_html = '<p>More, revised.</p>';
   const third = await mirror(env, { get });
   assert.deepEqual([third.sources[0].written.map(post => post.key), [...records.keys()], records.get('second').body], [['second'], ['second'], 'More, revised.']);
+  // A record written again because its source changed says when.
+  assert.equal(records.get('second').updatedAt, third.at);
+
+  // What an earlier version wrote under another post type is written again under the shared one.
+  const { records: moved, get: fetchMoved, env: older } = world();
+  await older.MIRROR.put('mirror:website:second', JSON.stringify({ hash: 'any', at: '2026-01-01T00:00:00.000Z' }));
+  const again = await mirror(older, { get: fetchMoved });
+  assert.deepEqual([again.sources[0].written.map(post => post.key), moved.get('second').$type, 'updatedAt' in moved.get('second')], [['a-walk', 'second'], 'com.ohmmmm.post', false]);
 });
 
 test('a run does a bounded amount of work, and a problem with one post does not stop the rest', async () => {

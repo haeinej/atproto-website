@@ -16,7 +16,7 @@ import java.util.List;
 import java.util.regex.Pattern;
 
 record Post(String id, Instant createdAt, String text, String body, List<Post.Media> media) {
-    static final String COLLECTION = "com.haeinjung.post";
+    static final String COLLECTION = "com.ohmmmm.post";
     static final String BLUESKY_COLLECTION = "app.bsky.feed.post";
     private static final ObjectMapper JSON = new ObjectMapper();
     private static final long X_EPOCH = 1_288_834_974_657L;
@@ -129,7 +129,7 @@ record Post(String id, Instant createdAt, String text, String body, List<Post.Me
         ObjectNode archiveEntry(String collection) {
             var entry = JSON.createObjectNode().put("$type", collection + "#" + kind)
                     .put("id", id).put("sourceUrl", sourceUrl);
-            entry.set("original", blob());
+            entry.set("file", blob());
             if (kind.equals("image")) {
                 if (!alt.isBlank()) entry.put("alt", alt);
                 if (width > 0 && height > 0) entry.put("width", width).put("height", height);

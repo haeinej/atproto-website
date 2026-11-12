@@ -22,7 +22,7 @@ The street went quiet after the rain.
 
 A label is the section of your site the block belongs to, in your own words: `Writings`, `photographs`, `Field notes`. Add a sublabel when the block is part of a group inside that section, such as an essay series. A block has exactly one label; if you give none, it is filed under `other`. The sublabel is optional. The block's address comes from them: `/posts/field-notes/after-the-rain`.
 
-You do not say what kind of thing the block is. The publish command identifies its form from the content and saves it: `rain.md` has words and a photo and no title, so it is a note. With a title it would be a writing, and with only the photo it would be an image. There are thirteen forms in all, covering galleries, video, audio, files, links, embeds, quotes, lists, and code. [Forms, labels, and sublabels](labels.md)
+You do not say what kind of thing the block is. The publish command identifies its form from the content and saves it: `rain.md` has words and a photo and no title, so it is a note. With a title it would be a writing, and with only the photo it would be an image. There are fourteen forms in all, covering galleries, video, audio, files, links, embeds, quotes, lists, and code, with `other` for anything else. [Forms, labels, and sublabels](labels.md)
 
 ## Preview and publish
 
@@ -40,11 +40,11 @@ This prints a local preview. When ready, set `ATPROTO_APP_PASSWORD` and rerun th
 
 ## What the record needs
 
-The smallest complete record has a type, a body, a publication date, a canonical URL, and its form. This example adds a label. Replace `com.example.post` with your site's collection.
+The smallest complete record has a type, a body, a publication date, a canonical URL, and its form. This example adds a label. The type is the same on every site.
 
 ```json
 {
-  "$type": "com.example.post",
+  "$type": "com.ohmmmm.post",
   "body": "I want to remember how the city smelled after the rain.",
   "publishedAt": "2026-01-14T09:00:00Z",
   "canonicalUrl": "https://example.com/posts/field-notes/after-the-rain",
@@ -53,6 +53,6 @@ The smallest complete record has a type, a body, a publication date, a canonical
 }
 ```
 
-The same record can become a full page, a short feed entry, or a gallery card. Your site decides which fields to show and how to lay them out. [Generate your site's Lexicon](set-up-with-an-agent.md)
+The same record can become a full page, a short feed entry, or a gallery card. Your site decides which fields to show and how to lay them out. [Set up with your coding agent](set-up-with-an-agent.md)
 
 Use [Group and connect blocks](group-and-connect.md) to build a series, connect related posts, or quote a passage.

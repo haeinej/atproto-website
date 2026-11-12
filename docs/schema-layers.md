@@ -20,7 +20,7 @@ This is a rule of the project, and the tools enforce it. The publish command has
 
 Most sites have things the fixed schema has no place for: a small line above a title, an episode number, a translation, a project's status. These go in your optional layer.
 
-1. Create your optional schema once, beside your post schema. A profile has one too.
+1. Create your optional schema once, under your own namespace. A profile has one too. The namespace is your domain written backwards and comes from `ATPROTO_SITE_NAMESPACE` in your site configuration.
 
    ```sh
    npm run --silent lexicon -- --kind postSite > lexicons/com/example/postSite.json

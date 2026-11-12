@@ -1,6 +1,6 @@
 import {
-  ARCHIVE_POST, BSKY_POST, BSKY_PROFILE, COLLECTION, isRecordKey, normalizeArchivePost, normalizeNote, normalizePost,
-  normalizeProfile, pdsConfig, siblingCollection,
+  BSKY_POST, BSKY_PROFILE, COLLECTION, isRecordKey, normalizeArchivePost, normalizeNote, normalizePost,
+  normalizeProfile, pdsConfig, POST,
 } from './pds.mjs';
 import { OTHER } from './forms.mjs';
 import { isDid, resolveIdentity } from './identity.mjs';
@@ -49,7 +49,8 @@ async function readRecord(pds, collection, rkey, request) {
 
 // The site's own profile record, or the account's Bluesky profile when there is none.
 async function loadProfile(pds, request) {
-  for (const collection of [siblingCollection(pds.collection, 'profile'), BSKY_PROFILE]) {
+  // The person's own profile type is under their namespace. A site that names none uses Bluesky's.
+  for (const collection of [...(pds.namespace ? [`${pds.namespace}.profile`] : []), BSKY_PROFILE]) {
     const value = await readRecord(pds, collection, 'self', request);
     if (!value) continue;
     const links = [];
@@ -126,7 +127,7 @@ export async function refreshNotes(env, request = fetch, now = new Date()) {
   };
   // A profile that cannot be read leaves the feed as it is.
   const profile = await loadProfile(pds, request).catch(() => null);
-  const snapshot = { ...pds, refreshedAt: now.toISOString(), notes: latest, graph, identity, ...(profile ? { profile } : {}) };
+  const snapshot = { did: pds.did, origin: pds.origin, collection: pds.collection, refreshedAt: now.toISOString(), notes: latest, graph, identity, ...(profile ? { profile } : {}) };
   await env.NOTES.put(SNAPSHOT_KEY, JSON.stringify(snapshot), { expirationTtl: MAX_AGE });
   return snapshot;
 }
@@ -219,7 +220,8 @@ export default {
     const age = Date.now() - Date.parse(snapshot?.refreshedAt);
     const origin = URL.canParse(env.ATPROTO_PDS_ORIGIN) && new URL(env.ATPROTO_PDS_ORIGIN).origin;
     if (!snapshot || snapshot.did !== env.ATPROTO_DID || snapshot.origin !== origin ||
-        (snapshot.collection ?? ARCHIVE_POST) !== (env.ATPROTO_POST_COLLECTION ?? ARCHIVE_POST) ||
+        // A snapshot built from an older post type is not served.
+        snapshot.collection !== POST ||
         !(age < MAX_AGE * 1000)) {
       return Response.json({ error: 'Notes are unavailable' }, { status: 503, headers });
     }

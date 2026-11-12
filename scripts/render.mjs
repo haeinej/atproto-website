@@ -54,7 +54,7 @@ try {
   const record = await loadRecord(values, pds);
   const blobUrl = media => {
     const url = new URL('/xrpc/com.atproto.sync.getBlob', pds.origin);
-    url.search = new URLSearchParams({ did: pds.did, cid: media.original.ref.$link });
+    url.search = new URLSearchParams({ did: pds.did, cid: media.file.ref.$link });
     return url.href;
   };
   const sidecar = values.prefix ? `${values.template}.${values.prefix}.json` : `${values.template}.json`;

@@ -2,6 +2,7 @@
 // namespace and are served only to a request that Cloudflare Access has signed in.
 import { isRecordKey, normalizeArchivePost, pdsConfig } from './pds.mjs';
 import { postPage, renderArchivePost } from './render.mjs';
+import { upgradePost } from './upgrade.mjs';
 
 export const PRIVATE_POST = 'private:';
 export const PRIVATE_BLOB = 'private-blob:';
@@ -37,8 +38,11 @@ export async function signedIn(request, env, get = fetch) {
   }
 }
 
+// A private post saved before the post schema was shared is read as the shared schema has it.
+const saved = (value, key, pds) => upgradePost(value, { did: pds.did, key, namespace: pds.namespace }).record;
+
 function privatePost(value, key, pds) {
-  const post = normalizeArchivePost(value, key, {
+  const post = normalizeArchivePost(saved(value, key, pds), key, {
     ...pds,
     mediaHref: id => `/notes/private/blob/${encodeURIComponent(key)}/${encodeURIComponent(id)}`,
   });
@@ -91,7 +95,7 @@ export async function servePrivate(request, env, pathname, get = fetch) {
   const pds = pdsConfig(env);
   if (section === 'graph.json' && parts.length === 1) return Response.json(await privateGraph(env, pds), { headers });
   if (!isRecordKey(key)) return missing();
-  const value = await env.NOTES.get(PRIVATE_POST + key, 'json');
+  const value = saved(await env.NOTES.get(PRIVATE_POST + key, 'json'), key, pds);
   if (section === 'posts' && parts.length === 2) {
     const post = privatePost(value, key, pds);
     if (!post) return missing();
@@ -102,7 +106,7 @@ export async function servePrivate(request, env, pathname, get = fetch) {
   if (section === 'blob' && parts.length === 3) {
     // `~link` is the preview image of a link post; any other ID is one of the post's attachments.
     const blob = id === '~link' ? value?.link?.image
-      : Array.isArray(value?.media) && value.media.find(item => item?.id === id)?.original;
+      : Array.isArray(value?.media) && value.media.find(item => item?.id === id)?.file;
     const cid = blob?.ref?.$link;
     if (!/^(?:image|video|audio|application|text)\/[a-z0-9.+-]+$/.test(blob?.mimeType ?? '') || !/^b[a-z2-7]{20,120}$/.test(cid ?? '')) return missing();
     const bytes = await env.NOTES.get(PRIVATE_BLOB + cid, 'arrayBuffer');

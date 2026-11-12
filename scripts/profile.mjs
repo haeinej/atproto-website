@@ -3,7 +3,7 @@
 import { readFile, stat } from 'node:fs/promises';
 import { extname } from 'node:path';
 import { parseArgs } from 'node:util';
-import { pdsConfig, siblingCollection, webUrl } from '../feed/pds.mjs';
+import { ownCollection, pdsConfig, webUrl } from '../feed/pds.mjs';
 import { siteVars } from './config.mjs';
 import { PROFILE_FIELDS, PROFILE_MATCHES, siteLayer } from './layers.mjs';
 import { rpc, signIn } from './rpc.mjs';
@@ -37,9 +37,10 @@ try {
     },
   });
   const vars = await siteVars(values.config);
-  const { did, origin, collection } = pdsConfig(vars);
-  const profileType = siblingCollection(collection, 'profile');
-  const linkType = siblingCollection(collection, 'profileLink');
+  const { did, origin, namespace } = pdsConfig(vars);
+  // The profile's record types are the person's own, under their namespace.
+  const profileType = ownCollection(namespace, 'profile');
+  const linkType = ownCollection(namespace, 'profileLink');
   // A preview still works when the PDS cannot be reached; saving does not, since it would lose what is there.
   const read = type => rpc(origin, 'com.atproto.repo.getRecord', { query: { repo: did, collection: type, rkey: 'self' } })
     .then(result => result.data.value, problem => { if (values.publish) throw problem; });
@@ -71,7 +72,7 @@ try {
   // A Bluesky profile's links are Bluesky's own records, so they are not carried across.
   if (!values.link && savedLinks && !values['from-bluesky']) record.links = savedLinks;
   // Sections Bluesky has no field for go in the site's own layer. Giving any replaces that layer.
-  const own = await siteLayer(values.site, siblingCollection(collection, 'profileSite'), values['site-schema'],
+  const own = await siteLayer(values.site, ownCollection(namespace, 'profileSite'), values['site-schema'],
     { fields: PROFILE_FIELDS, matches: PROFILE_MATCHES, kind: 'profile' });
   if (own) record.site = own;
   if (values['from-bluesky'] && !own) delete record.site;

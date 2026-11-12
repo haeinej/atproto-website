@@ -58,7 +58,7 @@ npm run publish:post -- --file ./essay.md --slug trap-of-independency \
 
 Labels differ from site to site, so a label cannot tell other software what a post is. One site files its essays under `Writings`, another under `Blog`, a third under `Essais`. The form is the part that is the same everywhere: all three are a `writing`.
 
-There are thirteen forms, and the list is fixed. You do not choose one, and it is not shown on your site. The publish command reads it off the post's format and saves it in the record.
+There are fourteen forms. You do not choose one, and it is not shown on your site. The publish command reads it off the post's format and saves it in the record.
 
 | What the post contains | Form |
 | --- | --- |
@@ -75,6 +75,9 @@ There are thirteen forms, and the list is fixed. You do not choose one, and it i
 | No title, a quoted passage, and a link to its source | quote |
 | Nothing but a list, such as an ordered set of links | list |
 | Nothing but code blocks | code |
+| Anything the forms above do not describe | other |
+
+Nothing is identified as `other` today: a post that fits no narrower form is a writing or a note. It is there for kinds of post that have no form of their own yet. The list can also grow. Software that meets a form it does not know reads it as `other`, and shows the post's title, body, and attachments.
 
 Some examples, using the labels above.
 
@@ -128,6 +131,7 @@ The form also sets limits, and the publish command refuses a post that breaks th
 | quote | None | Yes | None | A quoted passage and a link to its source |
 | list | Optional | Yes | None | Only a list |
 | code | Optional | No | None | Only code blocks |
+| other | Optional | Yes | Any | |
 
 An attachment is an image, a video, audio, or a file. Files are PDF, EPUB, ZIP, JSON, plain text, CSV, and Markdown.
 
@@ -141,4 +145,4 @@ You do not need a website to start. A coding agent can help you work it out. It 
 
 ## Where the rules live
 
-[`feed/forms.mjs`](../feed/forms.mjs) holds the forms, how a form is identified, and the check. The `form` field in [the Lexicon](../lexicons/com/haeinjung/post.json) lists the same thirteen.
+[`feed/forms.mjs`](../feed/forms.mjs) holds the forms, how a form is identified, and the check. The `form` field in [the Lexicon](../lexicons/com/ohmmmm/post.json) lists the same fourteen.

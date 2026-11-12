@@ -1,6 +1,6 @@
-// Every post is one of a fixed set of forms. The form says what kind of object the post is, and it
-// is read off the post's own format, so nobody has to name it. The list is closed: tools accept
-// only the forms written here. A post's label and sublabel are the author's own words for where
+// Every post has a form. The form says what kind of object the post is, and it is read off the
+// post's own format, so nobody has to name it. These tools write only the forms listed here. The
+// list can grow, so a form that is not here is read as `other`. A post's label and sublabel are the author's own words for where
 // the post sits on their site, and are not restricted.
 
 const ANY = ['image', 'video', 'audio', 'file'];
@@ -23,6 +23,9 @@ export const FORMS = {
   quote: { title: 'none', words: true, media: NONE, needs: 'quote' },
   list: { title: 'optional', words: true, media: NONE, needs: 'list' },
   code: { title: 'optional', words: false, media: NONE, needs: 'code' },
+  // Anything the forms above do not describe. Nothing is identified as this; it is where a kind of
+  // post that has no form of its own yet is filed, and how a form this software does not know is read.
+  other: { title: 'optional', words: true, media: ANY },
 };
 
 // Sites whose links play something. A post that is a link to one of these is an embed.
@@ -38,6 +41,13 @@ export function isPlayer(href) {
 }
 
 export const isForm = value => typeof value === 'string' && Object.hasOwn(FORMS, value);
+
+// The form a record names, as this software understands it: one it knows, or `other` for one it
+// does not. A record that names no form has none, and its form is identified from its content.
+export function readForm(value) {
+  if (typeof value !== 'string' || !value.trim()) return undefined;
+  return isForm(value) ? value : 'other';
+}
 
 // Every post is filed under a label, because its address is built from it. A post nobody has
 // labelled is filed under this one.

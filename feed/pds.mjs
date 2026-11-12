@@ -1,19 +1,43 @@
-import { cleanName, isForm, OTHER } from './forms.mjs';
+import { cleanName, OTHER, readForm } from './forms.mjs';
 
+// An older note type, read only when a site asks for it with INCLUDE_LEGACY_NOTES.
 export const COLLECTION = 'com.haeinjung.note';
 export const BSKY_POST = 'app.bsky.feed.post';
-export const ARCHIVE_POST = 'com.haeinjung.post';
+// Every site's posts are this one record type, so any software can find them by one name. Only a
+// site's own optional schemas sit under the person's own domain.
+export const POST = 'com.ohmmmm.post';
 export const BSKY_PROFILE = 'app.bsky.actor.profile';
+// The fixed fields of a post, the same on every site.
+export const POST_FIELDS = ['title', 'subtitle', 'body', 'publishedAt', 'updatedAt', 'canonicalUrl', 'form', 'label',
+  'sublabel', 'connect', 'link', 'source', 'media', 'site'];
 const DID = /^(?:did:plc:[a-z2-7]{24}|did:web:[a-zA-Z0-9.-]+)$/;
 const RECORD_KEY = /^[a-zA-Z0-9._:~-]{1,512}$/;
 const NSID = /^[a-z](?:[a-z0-9-]{0,61}[a-z0-9])?(?:\.[a-z0-9](?:[a-z0-9-]{0,61}[a-z0-9])?)+\.[a-zA-Z][a-zA-Z0-9]{0,62}$/;
 
-export function postCollection(value = ARCHIVE_POST) {
-  const authority = typeof value === 'string' ? value.slice(0, value.lastIndexOf('.')) : '';
-  if (!authority || authority.length > 253 || value.trim() !== value || !NSID.test(value) ||
-      value.startsWith('com.atproto.') || value.startsWith('app.bsky.') || value === COLLECTION) {
-    throw new Error('Use a custom post NSID under your domain, such as com.example.post');
+// The person's own namespace: their domain written backwards, such as com.example. Their optional
+// schemas are declared under it, as com.example.postSite and com.example.profile.
+export function ownNamespace(value) {
+  if (typeof value !== 'string' || value.length > 253 || !NSID.test(`${value}.x`) ||
+      ['com.atproto', 'app.bsky'].some(taken => value === taken || value.startsWith(`${taken}.`))) {
+    throw new Error('Use the namespace of your own domain, such as com.example');
   }
+  return value;
+}
+
+// One of the person's own record types: com.example + profile -> com.example.profile.
+export function ownCollection(namespace, name) {
+  if (!namespace) throw new Error('Set ATPROTO_SITE_NAMESPACE in your site config to your domain written backwards, such as com.example');
+  return `${namespace}.${name}`;
+}
+
+// A post type from before the post schema was shared, such as com.example.post. It still says two
+// things: the person's namespace, and where their older posts are.
+function olderPostCollection(value) {
+  if (value === undefined || value === POST) return undefined;
+  if (typeof value !== 'string' || !NSID.test(value) || value === COLLECTION) {
+    throw new Error('ATPROTO_POST_COLLECTION is no longer needed: every post is com.ohmmmm.post. Set ATPROTO_SITE_NAMESPACE to your domain written backwards, such as com.example');
+  }
+  ownNamespace(value.slice(0, value.lastIndexOf('.')));
   return value;
 }
 
@@ -30,18 +54,13 @@ export function postPath({ label, sublabel } = {}, key) {
   return `/posts/${[...folders, key].map(encodeURIComponent).join('/')}`;
 }
 
-// A record type beside the post type: com.example.post -> com.example.profile.
-export function siblingCollection(collection, name) {
-  return `${collection.slice(0, collection.lastIndexOf('.'))}.${name}`;
-}
-
 export function isRecordKey(key) {
   return typeof key === 'string' && RECORD_KEY.test(key) && key !== '.' && key !== '..';
 }
 
 const AT_URI = /^at:\/\/([^/]+)\/([^/]+)\/([^/]+)$/;
 
-export function postLink(uri, ownerDid, archiveCollection = ARCHIVE_POST) {
+export function postLink(uri, ownerDid, archiveCollection = POST) {
   if (typeof uri !== 'string') return null;
   const match = AT_URI.exec(uri);
   if (!match) return null;
@@ -74,7 +93,16 @@ export function filing(value) {
   const tags = Array.isArray(value.tags) ? value.tags.map(cleanName).filter(Boolean) : [];
   const label = cleanName(value.label) || tags[0] || OTHER;
   const sublabel = cleanName(value.sublabel) || (cleanName(value.label) ? '' : tags[1] ?? '');
-  return { form: isForm(value.form) ? value.form : undefined, label, sublabel };
+  return { form: readForm(value.form), label, sublabel };
+}
+
+// The person's namespace as their site configuration gives it: ATPROTO_SITE_NAMESPACE, or the
+// domain part of the post type an older configuration names.
+export function siteNamespace(env) {
+  const older = olderPostCollection(env.ATPROTO_POST_COLLECTION);
+  const namespace = env.ATPROTO_SITE_NAMESPACE !== undefined ? ownNamespace(env.ATPROTO_SITE_NAMESPACE)
+    : older?.slice(0, older.lastIndexOf('.'));
+  return { namespace, older };
 }
 
 export function pdsConfig(env) {
@@ -85,7 +113,12 @@ export function pdsConfig(env) {
   if (!origin || (origin.protocol !== 'https:' && !loopback) || origin.href !== `${origin.origin}/`) {
     throw new Error('Set the PDS origin to an HTTPS URL or a loopback HTTP URL for local development');
   }
-  return { did, origin: origin.origin, collection: postCollection(env.ATPROTO_POST_COLLECTION) };
+  const { namespace, older } = siteNamespace(env);
+  return {
+    did, origin: origin.origin, collection: POST,
+    ...(namespace ? { namespace } : {}),
+    ...(older ? { olderCollection: older } : {}),
+  };
 }
 
 export function normalizeNote(value) {
@@ -152,7 +185,7 @@ const MEDIA_TYPES = {
 };
 
 export function normalizeArchivePost(value, key, pds) {
-  const collection = pds.collection ?? ARCHIVE_POST;
+  const collection = pds.collection ?? POST;
   if (value?.$type !== collection || typeof value.body !== 'string' ||
       typeof value.publishedAt !== 'string' || new TextEncoder().encode(value.body).length > 262_144) return null;
   const time = Date.parse(value.publishedAt);
@@ -170,8 +203,8 @@ export function normalizeArchivePost(value, key, pds) {
       if (!Object.hasOwn(MEDIA_TYPES, kind) || typeof attachment.id !== 'string' || media.has(attachment.id)) continue;
       // A private post's media is served by the site, so the caller supplies where to find it.
       const url = pds.mediaHref
-        ? blobCid(attachment.original, MEDIA_TYPES[kind]) && pds.mediaHref(attachment.id)
-        : blobUrl(attachment.original, MEDIA_TYPES[kind], pds);
+        ? blobCid(attachment.file, MEDIA_TYPES[kind]) && pds.mediaHref(attachment.id)
+        : blobUrl(attachment.file, MEDIA_TYPES[kind], pds);
       if (!url) continue;
       media.set(attachment.id, {
         kind,
@@ -191,7 +224,7 @@ export function normalizeArchivePost(value, key, pds) {
     uri,
     title: text(value.link.title, 300),
     description: text(value.link.description, 1000),
-    site: text(value.link.site, 100) || new URL(uri).hostname.replace(/^www\./, ''),
+    siteName: text(value.link.siteName, 100) || new URL(uri).hostname.replace(/^www\./, ''),
     ...(image ? { image } : {}),
   };
   return {
@@ -199,7 +232,6 @@ export function normalizeArchivePost(value, key, pds) {
     title: text(value.title, 300),
     // A subtitle belongs to a title, so one without the other is ignored.
     subtitle: text(value.title, 300) ? text(value.subtitle, 300) : '',
-    summary: typeof value.summary === 'string' ? value.summary.trim().slice(0, 300) : '',
     createdAt: new Date(time).toISOString(),
     canonicalUrl,
     permalink: postPath({ label, sublabel }, key),

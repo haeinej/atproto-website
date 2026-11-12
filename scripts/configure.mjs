@@ -1,17 +1,20 @@
 import { readFile } from 'node:fs/promises';
 import { parseArgs } from 'node:util';
 import { resolveIdentity } from '../feed/identity.mjs';
-import { pdsConfig, postCollection, webUrl } from '../feed/pds.mjs';
+import { ownNamespace, pdsConfig, webUrl } from '../feed/pds.mjs';
 
 try {
   const { values } = parseArgs({
     options: {
       site: { type: 'string' }, pds: { type: 'string' }, did: { type: 'string' }, handle: { type: 'string' },
       zone: { type: 'string' }, mode: { type: 'string', default: 'attach' },
-      name: { type: 'string' }, kv: { type: 'string' }, collection: { type: 'string' },
+      name: { type: 'string' }, kv: { type: 'string' }, namespace: { type: 'string' }, collection: { type: 'string' },
       'access-team': { type: 'string' }, 'access-aud': { type: 'string' },
     },
   });
+  if (values.collection !== undefined) {
+    throw new Error('Every post is com.ohmmmm.post, so there is no post type to choose. For your own optional schemas, set --namespace to your domain written backwards, such as com.example');
+  }
   const siteUrl = webUrl(values.site);
   const site = siteUrl && new URL(siteUrl);
   if (!site || site.protocol !== 'https:' || site.href !== `${site.origin}/` || site.port) {
@@ -46,7 +49,8 @@ try {
   config.vars.SITE_ORIGIN = site.origin;
   config.vars.ATPROTO_DID = pds.did;
   config.vars.ATPROTO_PDS_ORIGIN = pds.origin;
-  config.vars.ATPROTO_POST_COLLECTION = postCollection(values.collection ?? zone.split('.').reverse().join('.') + '.post');
+  // Where the person's own optional schemas are declared: their domain written backwards.
+  config.vars.ATPROTO_SITE_NAMESPACE = ownNamespace(values.namespace ?? zone.split('.').reverse().join('.'));
   if (standalone) {
     config.routes = [{ pattern: site.hostname, custom_domain: true }];
     config.vars.STANDALONE_SITE = 'true';

@@ -6,7 +6,7 @@ import { extname, join, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { parseArgs } from 'node:util';
 import { cleanName, formProblems, identifyForm, isPlayer, OTHER } from '../feed/forms.mjs';
-import { connectUri, pdsConfig, postPath, siblingCollection, webUrl } from '../feed/pds.mjs';
+import { connectUri, pdsConfig, postPath, webUrl } from '../feed/pds.mjs';
 import { PRIVATE_BLOB, PRIVATE_POST } from '../feed/private.mjs';
 import { bodyFacts } from '../feed/render.mjs';
 import { configPath } from './config.mjs';
@@ -15,6 +15,7 @@ import { POST_FIELDS, POST_MATCHES, siteLayer } from './layers.mjs';
 import { rpc, signIn } from './rpc.mjs';
 
 const SLUG = /^[a-z0-9]+(?:-[a-z0-9]+)*$/;
+const graphemes = text => [...new Intl.Segmenter().segment(text)].length;
 const types = {
   '.avif': 'image/avif', '.gif': 'image/gif', '.jpg': 'image/jpeg', '.jpeg': 'image/jpeg',
   '.png': 'image/png', '.webp': 'image/webp', '.mp4': 'video/mp4', '.webm': 'video/webm',
@@ -66,9 +67,9 @@ function pageFacts(html, url) {
   }
   const title = plain(meta['og:title'] ?? /<title[^>]*>([^<]*)<\/title>/i.exec(html)?.[1] ?? '', 300);
   const description = plain(meta['og:description'] ?? meta.description ?? '', 1000);
-  const site = plain(meta['og:site_name'] ?? '', 100);
+  const siteName = plain(meta['og:site_name'] ?? '', 100);
   const image = meta['og:image'] && URL.canParse(plain(meta['og:image'], 2000), url) ? webUrl(new URL(plain(meta['og:image'], 2000), url).href) : undefined;
-  return { ...(title ? { title } : {}), ...(description ? { description } : {}), ...(site ? { site } : {}), ...(image ? { image } : {}) };
+  return { ...(title ? { title } : {}), ...(description ? { description } : {}), ...(siteName ? { siteName } : {}), ...(image ? { image } : {}) };
 }
 
 // Look at what an address points to. A file comes back saved in `folder`, ready to attach, with the
@@ -158,7 +159,7 @@ async function publish(folder) {
   }
   const configFile = configPath(values.config);
   const { vars } = JSON.parse(await readFile(configFile, 'utf8'));
-  const { did, origin, collection } = pdsConfig(vars);
+  const { did, origin, collection, namespace } = pdsConfig(vars);
   const site = webUrl(vars.SITE_ORIGIN);
   if (!site) throw new Error('Set SITE_ORIGIN in the feed config');
   let body = (await readFile(values.file, 'utf8')).trim();
@@ -173,6 +174,8 @@ async function publish(folder) {
     }
     return uri;
   }))];
+  if (connect.length > 32) throw new Error('A post connects to at most 32 others');
+  if (values.title !== undefined && graphemes(values.title) > 300) throw new Error('--title can be at most 300 characters');
   let facts = bodyFacts(body);
   // Look at what the post's link points to. This decides two things below: whether the post is the
   // file itself, and what a link or embed post keeps about its page.
@@ -209,8 +212,8 @@ async function publish(folder) {
   const label = cleanName(values.label) || OTHER;
   const subtitle = (values.subtitle ?? '').trim();
   if (subtitle && !values.title) throw new Error('A --subtitle sits under a --title; set both');
-  if (subtitle.length > 300) throw new Error('--subtitle can be at most 300 characters');
-  const own = await siteLayer(values.site, siblingCollection(collection, 'postSite'), values['site-schema'],
+  if (graphemes(subtitle) > 300) throw new Error('--subtitle can be at most 300 characters');
+  const own = await siteLayer(values.site, namespace && `${namespace}.postSite`, values['site-schema'],
     { fields: POST_FIELDS, matches: POST_MATCHES, kind: 'post' });
   let source;
   if (['source-platform', 'source-url', 'source-id'].some(option => values[option] !== undefined)) {
@@ -226,8 +229,10 @@ async function publish(folder) {
     $type: collection,
     body,
     publishedAt: publishedAt.toISOString(),
-    // A public post's address follows its label and sublabel.
-    canonicalUrl: new URL(values.private ? `/notes/private/posts/${values.slug}` : postPath({ label, sublabel }, values.slug), site).href,
+    // The post's address on the public site, which follows its label and sublabel. A private post
+    // holds the same address, the one it would have if it were public, so making it public later
+    // moves it without rewriting it.
+    canonicalUrl: new URL(postPath({ label, sublabel }, values.slug), site).href,
     ...(values.title ? { title: values.title } : {}),
     ...(subtitle ? { subtitle } : {}),
     form,
@@ -248,10 +253,12 @@ async function publish(folder) {
       if (size > 0 && size <= 5_000_000) preview = { ...found.file, size };
     }
   }
+  // Where the owner reads a private post, signed in. It is not part of the record.
+  const privateUrl = new URL(`/notes/private/posts/${values.slug}`, site).href;
   if (!values.publish) {
     const fromWeb = Object.fromEntries([...attachments].filter(([, { sourceUrl }]) => sourceUrl).map(([id, { sourceUrl }]) => [id, sourceUrl]));
     console.log(JSON.stringify({
-      ...(values.private ? { visibility: 'private' } : {}), record, attachments: [...attachments.keys()],
+      ...(values.private ? { visibility: 'private', privateUrl } : {}), record, attachments: [...attachments.keys()],
       ...(Object.keys(fromWeb).length ? { fromWeb } : {}),
       ...(preview ? { linkImage: preview.sourceUrl } : {}),
     }, null, 2));
@@ -274,7 +281,7 @@ async function publish(folder) {
       kvPut(configFile, PRIVATE_BLOB + cid, path);
       record.media.push({
         $type: `${collection}#${kindOf(mime)}`, id,
-        original: { $type: 'blob', mimeType: mime, size, ref: { $link: cid } },
+        file: { $type: 'blob', mimeType: mime, size, ref: { $link: cid } },
         ...(sourceUrl ? { sourceUrl } : {}),
         ...(width && height ? { width, height } : {}),
       });
@@ -287,7 +294,7 @@ async function publish(folder) {
     const file = join(folder, 'record.json');
     await writeFile(file, JSON.stringify(record));
     kvPut(configFile, PRIVATE_POST + values.slug, file);
-    console.log(record.canonicalUrl);
+    console.log(privateUrl);
     return;
   }
   const token = await signIn(origin, did);
@@ -302,7 +309,7 @@ async function publish(folder) {
           typeof blob.ref?.$link !== 'string') {
         throw new Error(`Upload failed for ${id} (HTTP ${uploaded.response.status})`);
       }
-      record.media.push({ $type: `${collection}#${kindOf(mime)}`, id, original: blob, ...(sourceUrl ? { sourceUrl } : {}), ...(width && height ? { width, height } : {}) });
+      record.media.push({ $type: `${collection}#${kindOf(mime)}`, id, file: blob, ...(sourceUrl ? { sourceUrl } : {}), ...(width && height ? { width, height } : {}) });
     }
   }
   if (preview) {
