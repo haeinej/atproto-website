@@ -185,7 +185,9 @@ async function running() {
   const env = { DB: await testDatabase() };
   // What each member has published, as their own PDS would list it.
   const repositories = new Map();
-  const get = async url => {
+  const get = async (url, options) => {
+    // The service runs on Cloudflare, whose fetch refuses any other way of handling a redirect.
+    assert.ok(['follow', 'manual'].includes(options.redirect), `redirect: ${options.redirect}`);
     const records = repositories.get(`${url.origin}|${url.searchParams.get('collection')}`) ?? [];
     return Response.json({ records: records.map(([key, value]) => ({ uri: `at://${url.searchParams.get('repo')}/${url.searchParams.get('collection')}/${key}`, value })) });
   };

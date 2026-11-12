@@ -41,7 +41,9 @@ function service(members = `${haein.did}, ${jun.did}`, documents = { [haein.did]
   const fetched = [];
   const whoIs = createIdentity({
     audience, members, directory: 'https://plc.test',
-    get: async url => {
+    get: async (url, options) => {
+      // The service runs on Cloudflare, whose fetch refuses any other way of handling a redirect.
+      assert.ok(['follow', 'manual'].includes(options.redirect), `redirect: ${options.redirect}`);
       fetched.push(String(url));
       const did = Object.keys(documents).find(each => documentAddress(each, 'https://plc.test') === String(url));
       return did ? Response.json(documents[did]) : new Response('Not found', { status: 404 });
@@ -122,7 +124,8 @@ test('an account is found from the handle a person types, and a handle is believ
   const did = 'did:web:pds.haein.test';
   const document = { id: did, alsoKnownAs: ['at://haein.test'], service: [{ id: '#atproto_pds', type: 'AtprotoPersonalDataServer', serviceEndpoint: 'https://pds.haein.test' }] };
   const asked = [];
-  const world = routes => async url => {
+  const world = routes => async (url, options) => {
+    assert.ok(['follow', 'manual'].includes(options.redirect), `redirect: ${options.redirect}`);
     asked.push(String(url));
     const found = routes[String(url).split('?')[0]] ?? routes[String(url)];
     return found === undefined ? new Response('Not found', { status: 404 }) : typeof found === 'string' ? new Response(found) : Response.json(found);

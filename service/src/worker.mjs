@@ -29,7 +29,7 @@ async function published(get, pds, did, collection) {
   for (let page = 0; page < 50; page++) {
     const url = new URL('/xrpc/com.atproto.repo.listRecords', pds);
     url.search = new URLSearchParams({ repo: did, collection, limit: '100', ...(cursor ? { cursor } : {}) });
-    const response = await get(url, { redirect: 'error', signal: AbortSignal.timeout(20_000) });
+    const response = await get(url, { redirect: 'manual', signal: AbortSignal.timeout(20_000) });
     if (!response.ok) throw new Refused(502, 'RepositoryUnreachable', `Your PDS would not list ${collection} (HTTP ${response.status})`);
     const data = await response.json();
     for (const record of data.records ?? []) {

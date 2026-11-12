@@ -73,7 +73,9 @@ export async function findAccount(typed, { get = fetch, directory } = {}) {
   const refuse = message => { throw new Refused(404, 'AccountNotFound', message); };
   let did = DID.test(String(typed ?? '').trim()) ? String(typed).trim() : null;
   const handle = did ? null : HANDLE.test(input) ? input : refuse('A handle is a domain name, such as example.com');
-  const options = { redirect: 'error', signal: AbortSignal.timeout(8_000) };
+  // A redirect is not followed: the answer has to come from the address that was asked. Cloudflare
+  // accepts only 'follow' and 'manual' here, and a request made with anything else fails outright.
+  const options = { redirect: 'manual', signal: AbortSignal.timeout(8_000) };
   if (handle) {
     try {
       const url = new URL('https://cloudflare-dns.com/dns-query');
@@ -120,7 +122,7 @@ export function createIdentity({ audience, members, get = fetch, directory, now 
     if (held && held.until > now()) return held.key;
     let key = null;
     try {
-      const response = await get(documentAddress(did, directory), { headers: { Accept: 'application/json' }, redirect: 'error', signal: AbortSignal.timeout(10_000) });
+      const response = await get(documentAddress(did, directory), { headers: { Accept: 'application/json' }, redirect: 'manual', signal: AbortSignal.timeout(10_000) });
       if (response.ok) {
         const document = await response.json();
         key = signingKey(document, did);
