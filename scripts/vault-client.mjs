@@ -42,6 +42,8 @@ export function vaultClient({ pds, session, renew, vault, audience, get = fetch 
     // The vault's structure, and the posts that mention some words.
     tree: () => ask('getTree'),
     search: query => ask('searchPosts', { query }),
+    // What the member has published on their PDS, looked at or, with `apply`, brought in.
+    mirror: ({ apply = false } = {}) => ask('importPublished', { body: { apply } }),
     get: id => ask('getPost', { query: { id } }),
     put: (post, replaces) => ask('putPost', { body: { post, ...(replaces ? { replaces } : {}) } }),
     remove: (id, replaces) => ask('deletePost', { body: { id, replaces } }),

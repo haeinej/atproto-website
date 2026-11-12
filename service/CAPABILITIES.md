@@ -246,12 +246,13 @@ The tools are in [../mcp/tools.mjs](../mcp/tools.mjs), and reach the service as 
 | `vault_search` | Reads only | `searchPosts` | Search the person's own posts at every visibility, private ones included. Returns the best matches with a passage from each. |
 | `vault_save` | Changes | `getTree`, `getPost`, `putPost` | Create a post, or change one that was read. A new post is always private; use vault_set_visibility to mark it for anyone else. To change a post, pass the version vault_read gave; fields left out stay as they are. Changing a post that is not private needs the two calls described in the answer. |
 | `vault_set_visibility` | Changes | `getTree`, `getPost`, `putPost` | Change who a post is for: public (everyone), friends, or private (only the person). The post itself does not change. Always takes two calls. |
+| `vault_mirror` | Changes | `importPublished` | Bring what the person has already published on their PDS into the vault. Always takes two calls: the first only looks, and says what is there, what would differ from what is published, and what could not be kept; the second, with the confirm value, brings the posts in. It only reads the PDS, never publishes, and never changes a post the person has since changed in the vault. Posts that come with no label land under "other" and want filing. |
 | `vault_delete` | Changes | `getTree`, `getPost`, `deletePost` | Remove a post for good. Always takes two calls. |
 
 Three rules hold for every tool that changes something:
 
 1. A new post is always private.
-2. Changing a post that is not private, changing who a post is for, and removing a post each take two calls. The first answers with what would happen and a `confirm` value; only a second call carrying that value does it.
+2. Changing a post that is not private, changing who a post is for, bringing posts in from the PDS, and removing a post each take two calls. The first answers with what would happen and a `confirm` value; only a second call carrying that value does it.
 3. A post is changed from the version that was read. If it has changed since, the tool says so and nothing is saved.
 
 ### Requests with no tool
@@ -261,7 +262,6 @@ An agent cannot ask for these. They are for the editor, for the command line, or
 | Request | Capability | Why it has no tool |
 | --- | --- | --- |
 | `listPosts` | Posts | It is for keeping a copy in step: every post's version, and what changed since. The tools read the structure instead |
-| `importPublished` | Mirror | It runs on its own when an account is first connected, and from the editor after that. Whether an agent should start one is not decided |
 | `exportFiles` | Export | The command line and the editor write the vault out. An agent reads posts one at a time |
 | `get` | Account | It rides on an ohm session, which an agent does not have |
 | `connect` | Account | It rides on an ohm session, which an agent does not have |

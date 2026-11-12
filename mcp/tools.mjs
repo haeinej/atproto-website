@@ -75,6 +75,12 @@ export const TOOLS = [
     requests: ['getTree', 'getPost', 'putPost'],
   },
   {
+    name: 'vault_mirror',
+    description: "Bring what the person has already published on their PDS into the vault. Always takes two calls: the first only looks, and says what is there, what would differ from what is published, and what could not be kept; the second, with the confirm value, brings the posts in. It only reads the PDS, never publishes, and never changes a post the person has since changed in the vault. Posts that come with no label land under \"other\" and want filing.",
+    inputSchema: { type: 'object', properties: { confirm: text } },
+    requests: ['importPublished'],
+  },
+  {
     name: 'vault_delete',
     description: 'Remove a post for good. Always takes two calls.',
     inputSchema: { type: 'object', properties: { key: which, confirm: text }, required: ['key'] },
@@ -230,6 +236,32 @@ export function createTools({ vault }) {
       }, async () => {
         await asking(() => vault.put({ ...post, visibility: to }, version));
         return saved(post.id);
+      });
+    },
+
+    async vault_mirror(args) {
+      // Looking changes nothing. What it finds is what the confirm value stands for, so if the
+      // person's PDS has changed by the second call, the first is shown again.
+      const looked = await asking(() => vault.mirror());
+      const found = {
+        from: looked.site, types: looked.types, records: looked.records, posts: looked.posts,
+        ...(looked.differs.length ? { wouldDifferFromWhatIsPublished: looked.differs } : {}),
+        ...(looked.lost.length ? { couldNotBeKept: looked.lost } : {}),
+        ...(looked.cannotBePublishedYet.length ? { cannotBePublishedYet: looked.cannotBePublishedYet } : {}),
+        ...(looked.skipped.length ? { skipped: looked.skipped } : {}),
+      };
+      return twoSteps(args, { tool: 'vault_mirror', found }, {
+        ...found,
+        note: 'Posts already in the vault and unchanged are left as they are. A post the person has changed in the vault since is never overwritten. Nothing is published.',
+      }, async () => {
+        const report = await asking(() => vault.mirror({ apply: true }));
+        return {
+          broughtIn: report.saved, alreadyThere: report.unchanged.length,
+          ...(report.changedThere.length ? { leftAloneBecauseChangedInTheVault: report.changedThere } : {}),
+          ...(report.refused.length ? { refused: report.refused } : {}),
+          ...(report.lost.length ? { couldNotBeKept: report.lost } : {}),
+          next: 'Look at vault_tree. Posts that came with no label are under "other": ask the person where each belongs before filing it.',
+        };
       });
     },
 

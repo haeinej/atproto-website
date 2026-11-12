@@ -12,7 +12,18 @@ import { testDatabase } from './d1.mjs';
 const did = 'did:web:pds.example.test';
 async function toolsOf() {
   const env = { DB: await testDatabase(), SERVICE_DID: 'did:web:vault.example.test' };
-  const service = createService({ whoIs: Object.assign(async () => did, { pdsFor: async () => 'https://pds.example.test' }), get: async () => Response.json({}) });
+  // What the person has published, as their own PDS lists it: a type of their own from before the
+  // shared one. A test changes `published` to change what is there.
+  const published = [['hello-world', { $type: 'com.example.post', body: 'Published long ago.', publishedAt: '2024-05-01T00:00:00.000Z', title: 'Hello, world', author: 'E. Example' }]];
+  const get = async url => {
+    const address = new URL(url);
+    if (address.pathname === '/xrpc/com.atproto.repo.describeRepo') return Response.json({ collections: ['com.example.post', 'app.bsky.feed.post'] });
+    if (address.pathname === '/xrpc/com.atproto.repo.listRecords' && address.searchParams.get('collection') === 'com.example.post') {
+      return Response.json({ records: published.map(([key, value]) => ({ uri: `at://${did}/com.example.post/${key}`, value })) });
+    }
+    return Response.json({ records: [] });
+  };
+  const service = createService({ whoIs: Object.assign(async () => did, { pdsFor: async () => 'https://pds.example.test' }), get });
   const asked = [];
   const ask = async (name, { query, body } = {}) => {
     asked.push(name);
@@ -25,12 +36,13 @@ async function toolsOf() {
     if (!response.ok) throw Object.assign(new Error(data.message), { status: response.status, code: data.error, extra: data });
     return data;
   };
-  // The same five calls the tools make through scripts/vault-client.mjs.
+  // The same six calls the tools make through scripts/vault-client.mjs.
   const vault = {
     tree: () => ask('getTree'), search: query => ask('searchPosts', { query }), get: id => ask('getPost', { query: { id } }),
     put: (post, replaces) => ask('putPost', { body: { post, ...(replaces ? { replaces } : {}) } }), remove: (id, replaces) => ask('deletePost', { body: { id, replaces } }),
+    mirror: ({ apply = false } = {}) => ask('importPublished', { body: { apply } }),
   };
-  return { tools: createTools({ vault }), vault, asked };
+  return { tools: createTools({ vault }), vault, asked, published };
 }
 
 test('an agent saves privately, finds the post again, and changes it from the version it read', async () => {
@@ -135,6 +147,41 @@ test('the tree and the list show the vault\'s structure, and bad requests say wh
   await assert.rejects(tools.call('vault_save', { key: 'draft2', version: second.version, slug: 'trap' }), /already has the slug "trap"/);
 });
 
+test('an agent brings in what the person has published: it looks first, and brings in only on the second call', async () => {
+  const { tools, published } = await toolsOf();
+  const looked = await tools.call('vault_mirror');
+  assert.equal(looked.done, false);
+  assert.deepEqual([looked.willHappen.types, looked.willHappen.records, looked.willHappen.posts], [['com.example.post', 'com.ohmmmm.post'], 1, 1]);
+  assert.match(looked.willHappen.note, /Nothing is published/);
+  // Looking brought nothing in.
+  assert.equal((await tools.call('vault_tree')).posts, 0);
+  await assert.rejects(tools.call('vault_mirror', { confirm: 'c0000000000000000' }), /has changed since it was shown/);
+
+  const done = await tools.call('vault_mirror', { confirm: looked.confirm });
+  assert.deepEqual([done.done, done.broughtIn, done.alreadyThere], [true, ['hello-world'], 0]);
+  assert.match(done.next, /under "other"/);
+  // It came in as it was published: for everyone, with no label, so it wants filing.
+  const tree = await tools.call('vault_tree');
+  assert.deepEqual(tree.labels.map(folder => [folder.label, folder.posts.map(post => [post.slug, post.visibility])]), [['other', [['hello-world', 'public']]]]);
+  const read = await tools.call('vault_read', { key: 'hello-world' });
+  assert.deepEqual([read.title, read.body, read.site], ['Hello, world', 'Published long ago.', { $type: 'com.example.postSite', author: 'E. Example' }]);
+
+  // A second mirror finds it already there. A post the person has changed here since is left alone.
+  const again = await tools.call('vault_mirror');
+  assert.deepEqual((await tools.call('vault_mirror', { confirm: again.confirm })).alreadyThere, 1);
+  const filed = await tools.call('vault_save', { key: 'hello-world', version: read.version, label: 'Writings' });
+  await tools.call('vault_save', { key: 'hello-world', version: read.version, label: 'Writings', confirm: filed.confirm });
+  const third = await tools.call('vault_mirror');
+  const kept = await tools.call('vault_mirror', { confirm: third.confirm });
+  assert.deepEqual([kept.broughtIn, kept.leftAloneBecauseChangedInTheVault], [[], ['hello-world']]);
+  assert.equal((await tools.call('vault_read', { key: 'hello-world' })).label, 'Writings');
+
+  // What was shown stands for what was there: if the PDS has more by the second call, it is shown again.
+  const before = await tools.call('vault_mirror');
+  published.push(['second', { $type: 'com.example.post', body: 'Newer.', publishedAt: '2025-01-01T00:00:00.000Z' }]);
+  await assert.rejects(tools.call('vault_mirror', { confirm: before.confirm }), /has changed since it was shown/);
+});
+
 test('each tool asks the vault service only for what it says it is made of', async () => {
   const { tools, asked } = await toolsOf();
   const made = await tools.call('vault_save', { key: 'hello', body: 'A first post.' });
@@ -142,6 +189,7 @@ test('each tool asks the vault service only for what it says it is made of', asy
     vault_tree: [{}], vault_list: [{}], vault_read: [{ key: 'hello' }], vault_search: [{ query: 'first' }],
     vault_save: [{ key: 'hello', version: made.version, body: 'A first post, again.' }, { key: 'another', body: 'x' }],
     vault_set_visibility: [{ key: 'hello', to: 'friends' }],
+    vault_mirror: [{}],
     vault_delete: [{ key: 'another' }],
   };
   for (const tool of TOOLS) {
@@ -170,7 +218,7 @@ test('the server speaks the protocol: it lists the tools, answers calls, and rep
 
   const listed = (await ask('tools/list')).result.tools;
   assert.deepEqual(listed.map(tool => tool.name),
-    ['vault_tree', 'vault_list', 'vault_read', 'vault_search', 'vault_save', 'vault_set_visibility', 'vault_delete']);
+    ['vault_tree', 'vault_list', 'vault_read', 'vault_search', 'vault_save', 'vault_set_visibility', 'vault_mirror', 'vault_delete']);
   // An agent is told a tool's name, what it does and what it takes, and nothing else.
   for (const tool of listed) assert.deepEqual([tool.inputSchema.type, Object.keys(tool).filter(key => !['name', 'description', 'inputSchema', 'annotations'].includes(key))], ['object', []]);
   // Only the tools that read are marked as changing nothing.
@@ -202,7 +250,7 @@ test('the server starts on its own and answers over standard input and output', 
   const lines = out.trim().split('\n').map(line => JSON.parse(line));
   assert.equal(code, 0);
   assert.deepEqual(lines.map(line => line.id), [1, 2, 3]);
-  assert.equal(lines[1].result.tools.length, 7);
+  assert.equal(lines[1].result.tools.length, 8);
   assert.equal(lines[2].result.isError, true);
   assert.match(lines[2].result.content[0].text, /No site configuration here/);
 });

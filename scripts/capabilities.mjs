@@ -112,7 +112,7 @@ export function capabilitiesPage() {
     'Three rules hold for every tool that changes something:',
     '',
     '1. A new post is always private.',
-    '2. Changing a post that is not private, changing who a post is for, and removing a post each take two calls. The first answers with what would happen and a `confirm` value; only a second call carrying that value does it.',
+    '2. Changing a post that is not private, changing who a post is for, bringing posts in from the PDS, and removing a post each take two calls. The first answers with what would happen and a `confirm` value; only a second call carrying that value does it.',
     '3. A post is changed from the version that was read. If it has changed since, the tool says so and nothing is saved.',
     '',
     '### Requests with no tool',
@@ -133,7 +133,6 @@ export function capabilitiesPage() {
 
 const NO_TOOL = {
   'com.ohmmmm.vault.listPosts': 'It is for keeping a copy in step: every post\'s version, and what changed since. The tools read the structure instead',
-  Mirror: 'It runs on its own when an account is first connected, and from the editor after that. Whether an agent should start one is not decided',
   Export: 'The command line and the editor write the vault out. An agent reads posts one at a time',
   Account: 'It rides on an ohm session, which an agent does not have',
   Identity: 'It is part of signing in',
