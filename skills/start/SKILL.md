@@ -25,6 +25,7 @@ Read `AGENTS.md` there before doing anything. It holds the ten rules, which the 
 | Who the owner is on AT Protocol | `docs/identity.md` |
 | Sections, addresses, and what kind of thing a post is | `docs/labels.md` |
 | A field the schema has no place for | `docs/schema-layers.md` |
+| Reading, saving, or changing the owner's notes, or who can see one | the `vault` skill |
 | Deciding the site's sections with the owner | the `suggest-labels` skill |
 | Moving a website and social posts in | the `migrate-site` skill |
 | Making the site's own pages build from records | the `build-renderer` skill |

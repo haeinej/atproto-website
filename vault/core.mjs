@@ -9,6 +9,14 @@ export const VISIBILITIES = ['public', 'friends', 'private'];
 export const SLUG = /^[a-z0-9]+(?:-[a-z0-9]+)*$/;
 export const isSlug = value => typeof value === 'string' && value.length <= 120 && SLUG.test(value);
 export const graphemes = text => [...new Intl.Segmenter().segment(text)].length;
+// The files a note can hold, by the ending of their name.
+export const FILE_TYPES = {
+  '.avif': 'image/avif', '.gif': 'image/gif', '.jpg': 'image/jpeg', '.jpeg': 'image/jpeg',
+  '.png': 'image/png', '.webp': 'image/webp', '.mp4': 'video/mp4', '.webm': 'video/webm',
+  '.m4a': 'audio/mp4', '.mp3': 'audio/mpeg', '.ogg': 'audio/ogg', '.wav': 'audio/wav',
+  '.pdf': 'application/pdf', '.epub': 'application/epub+zip', '.zip': 'application/zip', '.json': 'application/json',
+  '.txt': 'text/plain', '.csv': 'text/csv', '.md': 'text/markdown',
+};
 // An attachment is an image, a video, audio, or otherwise a file.
 export const kindOf = mime => ['image', 'video', 'audio'].find(kind => mime.startsWith(`${kind}/`)) ?? 'file';
 

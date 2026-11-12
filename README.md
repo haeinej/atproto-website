@@ -15,7 +15,7 @@ You can start from an existing website, from an export of your posts on another 
 
 ### With your coding agent
 
-This repository is a Claude Code plugin. It gives your agent four skills: `start` (what this project is for and its rules), `suggest-labels` (deciding your site's sections with you), `migrate-site` (moving a website and social posts in without loss), and `build-renderer` (making your site's own pages build from records).
+This repository is a Claude Code plugin. It gives your agent five skills: `start` (what this project is for and its rules), `vault` (working in your notes with the vault's tools), `suggest-labels` (deciding your site's sections with you), `migrate-site` (moving a website and social posts in without loss), and `build-renderer` (making your site's own pages build from records).
 
 ```
 /plugin install ohm-content-layer --marketplace haeinej/ohm-content-layer
@@ -98,6 +98,7 @@ Your picture, name, pronouns, verified handle, description, and links sit above 
 | `configure` | Prints a site configuration from `--site` and `--handle` or `--did` |
 | `lexicon` | Prints a schema: `--kind post` for the shared post schema, or `postSite`, `profile`, `profileLink`, `profileSite` for your own, under your domain |
 | `migrate` | Previews or copies posts from an older post type, such as `com.example.post`, to `com.ohmmmm.post` |
+| `mcp` | Serves the vault's tools to a coding agent |
 | `publish` | Previews or publishes a post |
 | `profile` | Previews or saves your profile |
 | `posts` | Lists every public post with its form, label, and opening lines |
@@ -167,6 +168,27 @@ Publish with `--friends` for a post meant for the people you follow who follow y
 ### One vault
 
 A post is public, for friends, or private, and that is decided by where it is stored. Its record is the same in all three places, so changing who can see it moves it without rewriting it. A slug is used once across all three: publishing a slug that is already in use at another visibility is refused. The rules for this are in [vault/](vault/), and the commands, and later the editor and the agent's tools, all write through them.
+
+## Give your agent the vault
+
+The plugin starts a small server on your own machine, `ohm-vault`, that gives your coding agent tools for your notes. It reads and writes your PDS and your own storage with your own credentials; nothing passes through anyone else's service.
+
+| Tool | Does |
+| --- | --- |
+| `vault_tree` | The structure: labels, sublabels, and each note with who can see it |
+| `vault_list`, `vault_read` | List notes, and read one in full |
+| `vault_search` | Search your notes at every visibility |
+| `vault_save` | Create a note, always private, or change one that was read |
+| `vault_set_visibility` | Move a note between public, friends, and private |
+| `vault_delete` | Remove a note |
+
+Reading is free. Anything that changes what other people can see, or removes a note, takes two calls: the first answers with exactly what would happen, and only a second call carrying the value it returned does it. So your agent shows you which note, who will be able to read it, and its address before anything changes.
+
+The server uses the same site configuration as the commands, found in the folder your agent is working in. Making a note public needs `ATPROTO_APP_PASSWORD`; private and friends-only notes need your site's own storage set up as above. An agent that does not load the plugin can start the server itself:
+
+```sh
+npx github:haeinej/ohm-content-layer mcp
+```
 
 ## Rebuild your own pages from records
 
@@ -298,11 +320,12 @@ Set `INCLUDE_BLUESKY_POSTS=true` in the Worker's configuration to list native Bl
 | [cirrus/](cirrus/) | The PDS: a Cloudflare Worker with a Durable Object for the repository and R2 for its media |
 | [feed/](feed/) | The site Worker: identity, forms, the feeds, post pages, and private posts |
 | [vault/](vault/) | The rules every note follows at any visibility, and the stores it is kept in: the PDS, and your own storage |
+| [mcp/](mcp/) | The vault's tools for a coding agent, and the server that offers them |
 | [site/](site/) | The posts page and its stylesheet |
 | [scripts/](scripts/) and [bin/](bin/) | The commands |
 | [lexicons/](lexicons/) | The shared post schema, [com/ohmmmm/post.json](lexicons/com/ohmmmm/post.json), and under [com/haeinjung/](lexicons/com/haeinjung/) the templates for a site's own schemas: the profile and the optional ones |
 | [importer/](importer/) | The X archive importer |
-| [skills/](skills/) and [AGENTS.md](AGENTS.md) | What a coding agent reads: the purpose, the rules, and the four skills |
+| [skills/](skills/) and [AGENTS.md](AGENTS.md) | What a coding agent reads: the purpose, the rules, and the five skills |
 | [docs/](docs/) | The guides linked above |
 | [test/](test/) | Tests. Run them with `npm test` |
 

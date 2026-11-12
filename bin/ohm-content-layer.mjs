@@ -5,6 +5,7 @@ const commands = {
   identity: ['identity.mjs', 'Show an identity and the repository it owns. Takes a handle or DID.'],
   configure: ['configure.mjs', 'Print a site configuration for --site and --handle or --did.'],
   lexicon: ['lexicon.mjs', 'Print a schema: --kind post for the shared post schema, or postSite, profile, profileLink, profileSite for your own.'],
+  mcp: ['mcp/server.mjs', "Serve the vault's tools to a coding agent over standard input and output."],
   migrate: ['migrate.mjs', 'Preview or copy posts from an older post type to com.ohmmmm.post: --from com.example.post.'],
   posts: ['posts.mjs', 'List every public post with its form, label, and opening lines.'],
   profile: ['profile.mjs', 'Preview or save your profile: --name, --description, --pronouns, --avatar, --link.'],
@@ -19,5 +20,5 @@ if (!Object.hasOwn(commands, name ?? '')) {
   console.log('\nCommands preview by default and change nothing until you pass --publish.');
   process.exitCode = name && !['help', '--help', '-h'].includes(name) ? 1 : 0;
 } else {
-  await import(new URL(`../scripts/${commands[name][0]}`, import.meta.url));
+  await import(new URL(commands[name][0].includes('/') ? `../${commands[name][0]}` : `../scripts/${commands[name][0]}`, import.meta.url));
 }

@@ -50,6 +50,27 @@ export function wranglerKv(configFile, where = ['--remote']) {
       const result = run('delete', [key]);
       if (result.status !== 0 && !absent(result)) failed(`Removing ${key}`, result);
     },
+    // Many notes in one call. Reading them one at a time starts Wrangler once for each, which
+    // makes listing a vault of any size too slow to use.
+    async getMany(keys) {
+      const found = new Map();
+      const folder = await mkdtemp(join(tmpdir(), 'kv-'));
+      try {
+        for (let start = 0; start < keys.length; start += 100) {
+          const path = join(folder, 'keys.json');
+          await writeFile(path, JSON.stringify(keys.slice(start, start + 100)));
+          const bulk = spawnSync(command, [
+            ...first, 'kv', 'bulk', 'get', path, '--config', resolve(configFile), '--binding', 'NOTES', ...where,
+          ], { encoding: 'utf8', maxBuffer: 256 * 1024 * 1024, stdio: ['ignore', 'pipe', 'pipe'] });
+          const answer = /^\{[\s\S]*^\}/m.exec(bulk.stdout ?? '')?.[0];
+          if (bulk.status !== 0 || !answer) failed('Reading your own store', bulk);
+          for (const [key, { value }] of Object.entries(JSON.parse(answer))) if (value !== null) found.set(key, value);
+        }
+      } finally {
+        await rm(folder, { recursive: true, force: true });
+      }
+      return found;
+    },
     async list({ prefix = '' } = {}) {
       const result = run('list', ['--prefix', prefix]);
       if (result.status !== 0) failed('Listing your own store', result);

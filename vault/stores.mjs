@@ -25,17 +25,21 @@ export function kvStore(kv, prefix) {
   return {
     get: read,
     async list() {
-      const notes = [];
+      const names = [];
       let cursor;
       do {
         const page = await kv.list({ prefix, cursor });
-        for (const { name } of page.keys) {
-          const key = name.slice(prefix.length);
-          const held = await read(key);
-          if (held) notes.push({ key, ...held });
-        }
+        names.push(...page.keys.map(({ name }) => name));
         cursor = page.list_complete ? undefined : page.cursor;
       } while (cursor);
+      // A store that can read many keys at once is asked once; otherwise each note is read in turn.
+      const texts = kv.getMany ? await kv.getMany(names) : null;
+      const notes = [];
+      for (const name of names) {
+        const key = name.slice(prefix.length);
+        const record = texts ? texts.has(name) && JSON.parse(texts.get(name)) : (await read(key))?.record;
+        if (record) notes.push({ key, record, version: await recordVersion(record) });
+      }
       return notes;
     },
     async put(key, record, { version } = {}) {

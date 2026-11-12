@@ -16,6 +16,8 @@
     "scripts",
     "feed",
     "vault",
+    "mcp",
+    ".mcp.json",
     "mirror",
     "lexicons",
     "site",

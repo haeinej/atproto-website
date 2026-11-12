@@ -5,7 +5,7 @@ import { parseArgs } from 'node:util';
 import { identifyForm, isPlayer } from '../feed/forms.mjs';
 import { pdsConfig, webUrl } from '../feed/pds.mjs';
 import { bodyFacts } from '../feed/render.mjs';
-import { assembleRecord, isSlug, kindOf } from '../vault/core.mjs';
+import { assembleRecord, FILE_TYPES, isSlug, kindOf } from '../vault/core.mjs';
 import { memoryKv, ownStores, pdsStore } from '../vault/stores.mjs';
 import { createVault } from '../vault/vault.mjs';
 import { configPath } from './config.mjs';
@@ -14,13 +14,7 @@ import { wranglerKv } from './kv.mjs';
 import { POST_FIELDS, POST_MATCHES, siteLayer } from './layers.mjs';
 import { signIn } from './rpc.mjs';
 
-const types = {
-  '.avif': 'image/avif', '.gif': 'image/gif', '.jpg': 'image/jpeg', '.jpeg': 'image/jpeg',
-  '.png': 'image/png', '.webp': 'image/webp', '.mp4': 'video/mp4', '.webm': 'video/webm',
-  '.m4a': 'audio/mp4', '.mp3': 'audio/mpeg', '.ogg': 'audio/ogg', '.wav': 'audio/wav',
-  '.pdf': 'application/pdf', '.epub': 'application/epub+zip', '.zip': 'application/zip', '.json': 'application/json',
-  '.txt': 'text/plain', '.csv': 'text/csv', '.md': 'text/markdown',
-};
+const types = FILE_TYPES;
 const fileType = url => types[extname(new URL(url).pathname).toLowerCase()];
 const aliases = {
   'image/jpg': 'image/jpeg', 'audio/mp3': 'audio/mpeg', 'audio/x-m4a': 'audio/mp4', 'audio/x-wav': 'audio/wav', 'audio/wave': 'audio/wav',
