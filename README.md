@@ -160,6 +160,14 @@ Open `https://example.com/notes/private/` to sign in. The posts list then includ
 
 A private post's record holds the address it would have if it were public, such as `https://example.com/posts/writings/hello`. It is served from the private area because of where it is stored, not because of anything written in it.
 
+### For friends
+
+Publish with `--friends` for a post meant for the people you follow who follow you back. It is stored like a private post, in your own storage and off the PDS. There is no network for friends to read through yet, so for now only you see it: it is listed beside your private posts, marked `friends`.
+
+### One vault
+
+A post is public, for friends, or private, and that is decided by where it is stored. Its record is the same in all three places, so changing who can see it moves it without rewriting it. A slug is used once across all three: publishing a slug that is already in use at another visibility is refused. The rules for this are in [vault/](vault/), and the commands, and later the editor and the agent's tools, all write through them.
+
 ## Rebuild your own pages from records
 
 Your own website can build its existing pages from the same records without its design changing. The site's source is the specification: the result must be the same bytes as before, with only the source of the content swapped.
@@ -289,6 +297,7 @@ Set `INCLUDE_BLUESKY_POSTS=true` in the Worker's configuration to list native Bl
 | --- | --- |
 | [cirrus/](cirrus/) | The PDS: a Cloudflare Worker with a Durable Object for the repository and R2 for its media |
 | [feed/](feed/) | The site Worker: identity, forms, the feeds, post pages, and private posts |
+| [vault/](vault/) | The rules every note follows at any visibility, and the stores it is kept in: the PDS, and your own storage |
 | [site/](site/) | The posts page and its stylesheet |
 | [scripts/](scripts/) and [bin/](bin/) | The commands |
 | [lexicons/](lexicons/) | The shared post schema, [com/ohmmmm/post.json](lexicons/com/ohmmmm/post.json), and under [com/haeinjung/](lexicons/com/haeinjung/) the templates for a site's own schemas: the profile and the optional ones |

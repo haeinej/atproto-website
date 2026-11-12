@@ -1,11 +1,13 @@
 // Private posts never reach the PDS, where every record is public. They live in the site's KV
 // namespace and are served only to a request that Cloudflare Access has signed in.
+import { FRIENDS_POST, OWN_BLOB as PRIVATE_BLOB, PRIVATE_POST } from '../vault/stores.mjs';
 import { isRecordKey, normalizeArchivePost, pdsConfig } from './pds.mjs';
 import { postPage, renderArchivePost } from './render.mjs';
 import { upgradePost } from './upgrade.mjs';
 
-export const PRIVATE_POST = 'private:';
-export const PRIVATE_BLOB = 'private-blob:';
+// The keys are the vault's: one prefix for each visibility that is not public, and one for files.
+export { PRIVATE_POST, OWN_BLOB as PRIVATE_BLOB } from '../vault/stores.mjs';
+const SPACES = [['private', PRIVATE_POST], ['friends', FRIENDS_POST]];
 const TEAM = /^[a-z0-9-]+\.cloudflareaccess\.com$/;
 const headers = {
   'Cache-Control': 'private, no-store',
@@ -41,40 +43,44 @@ export async function signedIn(request, env, get = fetch) {
 // A private post saved before the post schema was shared is read as the shared schema has it.
 const saved = (value, key, pds) => upgradePost(value, { did: pds.did, key, namespace: pds.namespace }).record;
 
-function privatePost(value, key, pds) {
+function privatePost(value, key, pds, visibility = 'private') {
   const post = normalizeArchivePost(saved(value, key, pds), key, {
     ...pds,
     mediaHref: id => `/notes/private/blob/${encodeURIComponent(key)}/${encodeURIComponent(id)}`,
   });
-  return post && renderArchivePost({ ...post, permalink: `/notes/private/posts/${encodeURIComponent(key)}`, visibility: 'private' }, pds);
+  return post && renderArchivePost({ ...post, permalink: `/notes/private/posts/${encodeURIComponent(key)}`, visibility }, pds);
 }
 
 // A private post uses the address it would have on the PDS, so links to it keep working if it is
 // published later.
 async function privateGraph(env, pds) {
   const graph = {};
-  let cursor;
-  do {
-    const page = await env.NOTES.list({ prefix: PRIVATE_POST, cursor });
-    for (const { name } of page.keys) {
-      const key = name.slice(PRIVATE_POST.length);
-      const post = isRecordKey(key) && privatePost(await env.NOTES.get(name, 'json'), key, pds);
-      if (!post) continue;
-      graph[`at://${pds.did}/${pds.collection}/${key}`] = {
-        href: post.permalink,
-        name: post.name || post.sublabel || post.label,
-        createdAt: post.createdAt,
-        platform: post.platform,
-        ...(post.form ? { form: post.form } : {}),
-        ...(post.label ? { label: post.label } : {}),
-        ...(post.sublabel ? { sublabel: post.sublabel } : {}),
-        visibility: 'private',
-        links: post.links ?? [],
-        branches: [],
-      };
-    }
-    cursor = page.list_complete ? undefined : page.cursor;
-  } while (cursor);
+  // Until there is a network for friends to read through, a friends-only post is the owner's alone,
+  // and is listed here with the private ones under its own name.
+  for (const [visibility, prefix] of SPACES) {
+    let cursor;
+    do {
+      const page = await env.NOTES.list({ prefix, cursor });
+      for (const { name } of page.keys) {
+        const key = name.slice(prefix.length);
+        const post = isRecordKey(key) && privatePost(await env.NOTES.get(name, 'json'), key, pds, visibility);
+        if (!post) continue;
+        graph[`at://${pds.did}/${pds.collection}/${key}`] = {
+          href: post.permalink,
+          name: post.name || post.sublabel || post.label,
+          createdAt: post.createdAt,
+          platform: post.platform,
+          ...(post.form ? { form: post.form } : {}),
+          ...(post.label ? { label: post.label } : {}),
+          ...(post.sublabel ? { sublabel: post.sublabel } : {}),
+          visibility,
+          links: post.links ?? [],
+          branches: [],
+        };
+      }
+      cursor = page.list_complete ? undefined : page.cursor;
+    } while (cursor);
+  }
   return graph;
 }
 
@@ -95,9 +101,12 @@ export async function servePrivate(request, env, pathname, get = fetch) {
   const pds = pdsConfig(env);
   if (section === 'graph.json' && parts.length === 1) return Response.json(await privateGraph(env, pds), { headers });
   if (!isRecordKey(key)) return missing();
-  const value = saved(await env.NOTES.get(PRIVATE_POST + key, 'json'), key, pds);
+  let visibility = 'private';
+  let held = await env.NOTES.get(PRIVATE_POST + key, 'json');
+  if (!held) [visibility, held] = ['friends', await env.NOTES.get(FRIENDS_POST + key, 'json')];
+  const value = saved(held, key, pds);
   if (section === 'posts' && parts.length === 2) {
-    const post = privatePost(value, key, pds);
+    const post = privatePost(value, key, pds, visibility);
     if (!post) return missing();
     return new Response(request.method === 'HEAD' ? null : postPage(post), {
       headers: { ...headers, 'Content-Type': 'text/html; charset=utf-8' },

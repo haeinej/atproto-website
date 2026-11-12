@@ -31,7 +31,7 @@ function row(post, by) {
   if (href) name.href = href;
   const meta = element('span', 'note-meta');
   if (by !== 'platform') meta.append(element('span', 'note-platform', post.platform));
-  if (by !== 'visibility' && post.visibility === 'private') meta.append(element('span', 'note-label', 'private'));
+  if (by !== 'visibility' && post.visibility !== 'public') meta.append(element('span', 'note-label', post.visibility));
   if (by !== 'label' && post.label) meta.append(element('span', 'note-label', post.label));
   const time = element('time', '', dateLabel.format(new Date(post.createdAt)));
   time.dateTime = post.createdAt;
@@ -191,7 +191,7 @@ async function loadNotes() {
       };
     };
     for (const [uri, post] of Object.entries(await response.json())) read(uri, post, 'public');
-    for (const [uri, post] of Object.entries(await privatePosts())) read(uri, post, 'private');
+    for (const [uri, post] of Object.entries(await privatePosts())) read(uri, post, post.visibility === 'friends' ? 'friends' : 'private');
     // At a folder's address, such as /posts/writings/, only that folder's posts are listed.
     const here = location.pathname.startsWith('/posts/') ? location.pathname : '';
     const inFolder = here.split('/').length - 3;
@@ -202,9 +202,9 @@ async function loadNotes() {
       if (heading && names.length) heading.textContent = names.at(-1);
       document.title = names.join(' · ') || document.title;
     }
-    // Visibility is only worth offering once something is private.
+    // Visibility is only worth offering once something is not public.
     const offered = Object.keys(views).filter(by =>
-      by !== 'visibility' || posts.some(post => post.visibility === 'private'));
+      by !== 'visibility' || posts.some(post => post.visibility !== 'public'));
     const switcher = element('nav', 'note-views');
     switcher.setAttribute('aria-label', 'Arrange posts');
     function show(by) {
