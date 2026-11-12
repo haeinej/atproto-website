@@ -1,0 +1,17 @@
+// docs.ohmmmm.com: static pages, no Worker script. Headers are in _headers.
+// Deploy from this folder: npx wrangler deploy
+{
+  "name": "ohm-docs",
+  "account_id": "bf82067932bd22931840d77dd338d57f",
+  "compatibility_date": "2026-10-30",
+  "workers_dev": false,
+  "preview_urls": false,
+  "assets": {
+    "directory": ".",
+    "html_handling": "drop-trailing-slash",
+    "not_found_handling": "404-page"
+  },
+  "routes": [
+    { "pattern": "docs.ohmmmm.com", "custom_domain": true }
+  ]
+}

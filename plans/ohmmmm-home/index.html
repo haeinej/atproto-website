@@ -54,10 +54,13 @@
   <body>
     <a class="skip" href="#content">Skip to content</a>
 
-    <!-- Site shell: identical on every page except aria-current in the directory.
-         Structure and where information goes: website/README.md -->
+    <!-- Site shell, the same on every page. The header is the ohm dot (home) and Docs, which is its own
+         site at docs.ohmmmm.com. The company directory is on the landing page only (the footer). -->
     <header class="site-header">
       <a class="site-mark" href="/"><img src="/assets/favicon.svg" alt="ohm" width="20" height="20"></a>
+      <nav class="site-sections" aria-label="Site">
+        <a href="https://docs.ohmmmm.com/">Docs</a>
+      </nav>
     </header>
 
     <main id="content">
@@ -78,20 +81,22 @@
 
         <section aria-labelledby="what-ohm-is">
           <h2 id="what-ohm-is">What ohm is</h2>
-          <p>ohm is an extension of your home on the web.</p>
-          <p>Your website shows what you have published. ohm adds <a href="https://atproto.com/guides/data-repos">what sits behind it</a>: a store of everything you write and make, including the notes and unfinished thinking that never reach the site. It belongs to you. It is not an account on our platform. It is kept on an open protocol, other applications can read it, and you can take it with you. ohm sets it up and looks after it with you.</p>
-          <p>You choose who sees each piece. Some are for everyone, some for your friends, some only for you. What is for everyone is your website.</p>
-          <p>Then the websites connect. You follow the people whose thinking you care about, and when they follow you back, you are friends.</p>
+          <p>ohm is your own workspace: one place for everything you make, an editor to work on it, and an agent that knows it. You decide what stays private, what your friends see, and what you publish.</p>
+          <p>A website shows what you have published. Your workspace holds <a href="https://atproto.com/guides/data-repos">what sits behind it</a> as well: the notes and unfinished thinking that never reach the site.</p>
+          <p>What is for everyone becomes your published layer: the part of your work that is out in the open, kept under your own account on an open protocol. Other applications can read it, you can move it, and your website is a view of it. Everything else can live in a folder of your own, on your computer or in the cloud storage you already use. Your workspace on ohm is a working copy of all of it, so you and your agent can work from anywhere. The originals stay with you.</p>
+          <p>Then people connect. You follow the people whose thinking you care about, and when they follow you back, you are friends.</p>
           <p>Each person has an agent. Yours reads what you have written, including what you have not shared with anyone, so it understands what you are working on and where you are stuck.</p>
+          <p>You can start with an ohm account, with the Bluesky account you already have, or with a server of your own.</p>
         </section>
 
         <section aria-labelledby="what-ohm-does">
           <h2 id="what-ohm-does">What ohm does</h2>
-          <p>ohm keeps your work in order. It brings in what you have already made, files what you add, and turns the public part into a website that looks and sounds like you.</p>
-          <p>ohm lets the people you trust see what you are really thinking about. You do not have to turn it into a post. You choose who can read a note you already wrote.</p>
-          <p>When you are stuck on something that needs another person, ohm helps you find that person. It might be advice from someone who has been there, an honest reaction to something you made, an introduction, or someone to build with. Your agent looks through what your friends have written, then further out, shows you who and why, and drafts the first email with you.</p>
-          <p>ohm has no messenger of its own. When it is time to reach out, it is an email from you, sent when you say so.</p>
-          <p>ohm also notices when you are the person someone else is looking for, and tells you.</p>
+          <p>Your work stays in order. What you have already made comes in, what you add is filed under labels of your own, and your folder and your workspace stay in step.</p>
+          <p>Nothing is published until you say so. Editing shares nothing. When you publish, you see what will become visible, and to whom, and the public part becomes a website that looks and sounds like you.</p>
+          <p>You can let the people you trust see what you are really thinking about. You do not have to turn it into a post. You choose who can read a note you already wrote.</p>
+          <p>When you are stuck on something that needs another person, your agent helps you find that person. It might be advice from someone who has been there, an honest reaction to something you made, an introduction, or someone to build with. It looks through what your friends have written, then further out, shows you who and why, and drafts the first email with you.</p>
+          <p>There is no messenger to learn. When it is time to reach out, it is an email from you, sent when you say so.</p>
+          <p>You also hear when you are the person someone else is looking for.</p>
           <p>What your agent can settle alone, it settles. For everything else, it takes you to a person.</p>
         </section>
 
