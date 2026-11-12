@@ -40,141 +40,152 @@ def doc(slug, title, intro, body, note=None, nav=None):
     PAGES[slug] = dict(title=title, nav=nav or title, intro=intro, note=note, body=body)
 
 
-PLANNED = "This describes ohm as it is planned. The workspace in the browser is not open yet. [What is built](/docs/limits#early)"
+# On every page: these pages are the plan, and ohm is still being made.
+ALERT = "This is the plan for ohm. ohm is still in production, and these pages are its architecture document: they describe how it is meant to work, not a finished product. [What is built today](/docs/limits#early)"
 
 doc("quick-start", "Quick start",
-    "Your first session in ohm: sign in, write a post, decide who sees it, and publish. Then connect a folder of your own and bring in your agent.",
-    note=PLANNED, body="""
+    "Your first session in ohm: sign in, say where your posts live, write a post, decide who sees it, and publish. Then connect a folder of your own and bring in your agent.",
+    body="""
 ## 1. Sign in {#sign-in}
-There are three ways in. Pick the one that matches what you already have.
-- **Get an ohm account.** Choose this if you are starting from nothing.
-- **Sign up with Bluesky.** Your posts and the people you follow come with you.
-- **Connect your own.** If your account lives on a server you run, enter your handle.
-Whichever you choose, the account is yours and can be moved later. [More about signing in](/docs/sign-in)
+Sign in or sign up with Google, Microsoft or Bluesky. That makes your ohm account. [More about signing in](/docs/sign-in)
 
-## 2. Look around your workspace {#workspace}
+## 2. Say where your posts live {#where}
+Your posts belong to an account on the open network, not to ohm. Once, you say which one.
+- **You have a server of your own.** Enter your handle and an app password from it.
+- **You have a website, and no server yet.** ohm shows you how to set one up beside your site, then you come back with your handle.
+- **You use Bluesky.** Enter your Bluesky handle. If you signed in with Bluesky, this step is already done.
+What you have already published there is brought into your workspace on its own.
+
+## 3. Look around your workspace {#workspace}
 The workspace has three parts.
-- **On the left, your labels.** They are the sections of your work, in your own words: Writings, Photographs, Things I make. A label can hold sublabels, such as a series or an album.
-- **In the middle, the post you have open.**
-- **On the right, what the post says about itself:** its title, its label, its address, and who can see it.
-If you signed up with Bluesky or connected your own account, what you have already published is here. [More about the workspace](/docs/workspace)
+- **A narrow rail on the left,** with you at the foot of it.
+- **Your repository beside it:** your labels as folders, with your posts inside them. Labels are the sections of your work, in your own words: Writings, Photographs, Things I make.
+- **The post you have open,** filling the rest.
+[More about the workspace](/docs/workspace)
 
-## 3. Write a post {#write}
+## 4. Write a post {#write}
 Start a new post and write. A post is Markdown, and it can be one sentence.
 You do not say what kind of thing it is. A post with a title is a writing, one without is a note, and one that only shows a photograph is an image. ohm reads that from the post.
-To add a picture, drop in a file or paste the address of one that is already on the web.
+To add a picture, paste the address of one that is already on the web.
 A new post is private. Nobody else can see it. [More about posts](/docs/posts)
 
-## 4. Decide who sees it {#who}
+## 5. Decide who sees it {#who}
 Every post is one of three things.
 - **Private.** Only you.
 - **Friends.** The people you follow who follow you back.
 - **Public.** Everyone, on your website and anywhere else your published layer is read.
-Changing this does not share anything yet. It marks the post, and the status line shows what is waiting to be published. [More about who sees a post](/docs/visibility)
+Changing this does not share anything yet. It marks the post, and a mark on the Publish button shows that something is waiting. [More about who sees a post](/docs/visibility)
 
-## 5. Publish {#publish}
-Press Publish. Before anything happens, you see exactly what will change: which posts will become visible, to whom, and at what address. Say yes, and it is done.
-A public post is now part of your published layer and on your website. Anything published is public for good: other services copy it the moment it is written. Taking it down later removes it from your site, not from every copy. [More about publishing](/docs/publish)
+## 6. Publish {#publish}
+Press Publish. Before anything happens, you see exactly what will change: which posts will be published for the first time, replaced, or taken down. Then you approve at your own server, and it is done.
+A public post is now part of your published layer. Anything published is public for good: other services copy it the moment it is written. Taking it down later removes it from your account, not from every copy. [More about publishing](/docs/publish)
 
-## 6. Connect a folder of your own {#folder}
-Connect a folder on your computer or in the cloud storage you already use, and press Sync. Each post appears there as a Markdown file, filed in a folder named for its label.
+## 7. Connect a folder of your own {#folder}
+Connect a folder on your computer and sync. Each post appears there as a Markdown file, filed in a folder named for its label.
 From then on your originals live with you, and ohm holds a working copy. Edit a file in the folder and sync, and the change arrives in your workspace. Syncing never publishes.
 Until you connect a folder, ohm holds the only copy of your private and friends-only posts. [More about syncing](/docs/sync)
 
-## 7. Bring in your agent {#agent}
+## 8. Bring in your agent {#agent}
 Connect the coding agent you already use, and it can read and write in your workspace. It reads your private posts too, which is how it knows what you are working on.
-It cannot publish or share for you. Anything that changes what other people see is shown to you first. [More about your agent](/docs/agent)
+Anything that changes what other people see is shown to you first, publishing included. [More about your agent](/docs/agent)
 
 ## Things to ask your agent first {#next}
 - "What have I written about this before?"
 - "Save this as a private note under Writings."
 - "Look at my posts and suggest how to label them."
-- "I'm stuck on this. Who among my friends has thought about it?"
+- "What is not published yet?"
 """)
 
 doc("sign-in", "Sign in",
-    "Every ohm account is an AT Protocol account, the same kind Bluesky uses. There is no separate ohm login and no password that only ohm holds.",
-    note="Today the one way in that works is connecting a server of your own. ohm accounts and signing up with Bluesky are being built.",
+    "You sign in to ohm with an ohm account, made with Google, Microsoft or Bluesky. Your posts belong to an account on the open network, the same kind Bluesky uses, and you say once which one is yours.",
     body="""
-## Three ways in {#ways}
-| Way in | Choose it when | What comes with you |
-| --- | --- | --- |
-| Get an ohm account | You are starting from nothing | Nothing yet. ohm hosts the account, and you can move it later |
-| Sign up with Bluesky | You already have a Bluesky account | Your posts and the people you follow |
-| Connect your own | Your account lives on a server you run | What you have already published there |
-All three give you the same workspace. They differ only in where your account is hosted.
+## Two steps {#steps}
+1. **Sign in or sign up.** With Google, Microsoft or Bluesky. This is your ohm account: it is who is at the keyboard.
+2. **Say where your posts live,** once. This is your account on the open network: it is where your published posts are kept, and it is yours whether or not you use ohm.
+If you sign in with Bluesky, the second step is already answered: your Bluesky account is where your posts live.
 
-## What happens when you sign in {#how}
-1. You enter your handle, such as `you.example.com` or `you.bsky.social`.
-2. ohm finds the server that holds your account and sends you to it.
-3. That server asks whether ohm may act for you. You approve there, with a passkey if you have one.
-4. You come back to your workspace, signed in.
-Your password never passes through ohm. If your server does not offer that approval step, you can sign in with an app password made for ohm instead.
-The sign-in is kept on the device you used. Sign in again on another device to work there.
+## Where your posts live {#where}
+| You have | What you do | What comes with you |
+| --- | --- | --- |
+| A server of your own | Enter your handle and an app password | What you have already published there |
+| A website, and no server yet | Set one up beside your site, then enter your handle | Nothing yet |
+| A Bluesky account | Enter your Bluesky handle and an app password | Your own posts. Replies and reposts are not brought in |
+All three give you the same workspace. They differ only in where your account is hosted.
+Someone with none of these cannot go further today. An account that ohm hosts for you is planned.
+
+## Proving the account is yours {#proof}
+ohm never takes your word for which account is yours. The server that holds the account says so.
+- **With an app password,** typed on ohm's own page. An app password is one you make for apps, and can take away at any time. It goes from the page straight to your own server and nowhere else: not to ohm.
+- **With a passkey,** at your server's own screen. You are sent there, approve, and are brought straight back.
+Either way the sign-in at your server is let go as soon as ohm knows the account is yours. What stays is your ohm session.
 
 ## Your handle and your identity {#identity}
-Your handle is your name on ohm and the address of your site. It can be a domain you own.
+Your handle is your name on the open network and the address of your site. It can be a domain you own.
 Behind the handle is a permanent identifier that does not change when the handle does. It names the server that hosts your account, so you can move the account to another host and keep your posts, your followers and your name.
 
 ## What you see the first time {#first}
-- **A new ohm account** starts empty.
-- **A Bluesky account** arrives with your own posts. Replies and reposts are not brought in.
-- **Your own server** arrives with every post you have published there, with its pictures and files.
+What you have already published is brought into your workspace on its own. Nothing has to be named: ohm finds your website from your handle, and reads every post you have published, including ones written before the shared post type.
 What comes in is already public, and it stays public. Nothing new is shared by signing in.
+A post that comes in with no label sits under `other` until you file it.
+
+## One account, one account {#one}
+An ohm account works in one account on the open network, and that account belongs to one ohm account. If you sign in with Bluesky after connecting the same Bluesky account another way, you arrive in the same place.
 
 ## Leaving {#leaving}
-You can take everything out and have ohm's copy deleted at any time. Your account and your published posts stay where they are hosted. [Export and leaving](/docs/export)
+You can take everything out and have ohm's copy deleted at any time. Your account on the open network and your published posts stay where they are hosted. [Export and leaving](/docs/export)
 """)
 
 doc("workspace", "The workspace",
-    "The workspace is one page: your labels on the left, the post you have open in the middle, and what that post says about itself on the right. A status line and two buttons, Publish and Sync, sit with them.",
-    note=PLANNED, body="""
-## Your labels, on the left {#tree}
-The left side lists everything you have, filed the way you filed it.
+    "The workspace is one page: a narrow rail, your repository beside it, and the post you have open filling the rest.",
+    body="""
+## Your repository, in the side panel {#tree}
+The side panel is everything you have, as folders that open and close.
 - A **label** is a section of your work, in your own words.
 - A **sublabel** is a group inside a label, such as a series or an album.
-- **Posts** sit inside those, private, friends-only and public together.
+- **Posts** sit inside those, private, friends-only and public together. A small mark beside each says who it is for.
 A post you have not filed sits under `other`. [Labels](/docs/labels)
 
-## The post, in the middle {#editor}
-The middle is where you write. A post is Markdown, so a heading, a list, a link and a picture are all written as text.
+## Three ways to look at it {#views}
+Pills at the top of the side panel choose what the folders are.
+| View | The folders are |
+| --- | --- |
+| Labels | Your own sections |
+| Platforms | Where each post first appeared: your website, or somewhere else such as Bluesky |
+| Visibility | Everyone, friends, only you |
+A filter beside them leaves out any label, platform or audience you do not want to see. Your choice is kept for next time.
+
+## The post, in the main screen {#editor}
+The main screen is where you write. A post is Markdown, so a heading, a list, a link and a picture are all written as text.
+Above the text are the title and what files the post: its label, sublabel, slug and date. Who can see it is beside Save.
 What you write is saved to your workspace. Saving shares nothing: a post reaches other people only when you publish it.
 
-## What the post says about itself, on the right {#properties}
+## What a post says about itself {#properties}
 | Property | What it is |
 | --- | --- |
 | Title | Optional. A post with a title is a writing; one without is a note |
-| Subtitle | Optional |
-| Date | When the post is from. An imported post keeps its original date |
+| Date | When the post is from. A post that was brought in keeps its original date |
 | Label and sublabel | Where the post is filed |
 | Slug | The last part of the post's address. You can change it |
 | Who can see it | Private, friends or public |
-| Connections | Other posts this one replies to or follows from |
 A post also has an ID that is given once and never changes. Renaming or refiling a post does not change which post it is.
 
-## The status line {#status}
-The status line says what is waiting.
-- **What Publish would do:** which posts would become visible, change or be removed.
-- **What Sync would do,** once a folder is connected: which posts would be written to your folder, and which files would come in.
-With no folder connected, it also tells you that ohm holds the only copy of your private and friends-only posts.
+## Publish {#buttons}
+The Publish button is at the top of the side panel. A mark on it means something is waiting: a post you marked public, a published post you edited, or one you made private or removed.
+Pressing it shows what would change, and changes nothing until you approve. [Publish](/docs/publish)
 
-## Publish and Sync {#buttons}
-| Button | What it does | What it never does |
-| --- | --- | --- |
-| Publish | Makes what other people see match your workspace, after showing you the changes | Touch your folder |
-| Sync | Brings your workspace and your folder into line, in both directions | Publish anything |
-Sync appears beside Publish once you connect a folder. [Publish](/docs/publish) · [Sync with a folder](/docs/sync)
+## Bringing in what is new {#mirror}
+The arrows beside Publish read your account on the open network again and bring in anything published there since. A post you have changed in your workspace is never overwritten by this.
 
 ## When two things edit the same post {#saving}
 You, your agent and a sync can all change a post. Every save says which version it replaces. If the post changed in the meantime, the save is refused and you are shown the current version, so nothing is silently overwritten.
 
-## Finding a post {#search}
-Search looks through all of your posts, private ones included. Only you see the results.
+## You {#you}
+Your picture is at the foot of the rail. Its menu takes your whole vault away as files, disconnects your account on the open network, and signs you out.
 """)
 
 doc("posts", "Posts",
     "Everything you keep in ohm is a post: an essay, a note to yourself, a photograph, a link. A post is a piece of Markdown with a date, and it can be one sentence.",
-    note=PLANNED, body="""
+    body="""
 ## What a post has {#parts}
 - **A body,** in Markdown.
 - **A date.**
@@ -203,11 +214,12 @@ ohm reads what kind of thing a post is from the post. It is not shown on your si
 So two posts under different labels can be the same kind, and one label can hold several kinds.
 
 ## Pictures and files {#attachments}
-Drop a file into the post, or paste the address of one that is already on the web.
-- **ohm fetches the file once and keeps a copy.** The post then no longer depends on the other site staying up.
+Paste the address of a picture or file that is already on the web.
+- **Your workspace keeps the address, not the file.** A post points at its pictures where they are.
+- **When you publish, a copy is sent to your own account.** The published post then no longer depends on the other site staying up.
 - **The original address is kept** with the copy, as its source.
-- **An address ohm cannot fetch is named** when you save: one that needs a sign-in, or a path on a machine ohm cannot see.
-- **A very large file is kept whole in your workspace.** A reduced copy is published, and it points to the full one.
+- **An address that cannot be fetched is named** when you publish: one that needs a sign-in, or a file larger than 25 MB.
+Dropping a file in from your computer, and ohm keeping its own copy of each file, are planned.
 An attachment is an image, a video, audio, or a file such as a PDF, EPUB, ZIP, CSV or text file.
 Describe a picture in its alt text. In a post with no words of its own, that description is also what names the post in lists.
 
@@ -243,7 +255,7 @@ Deleting a post that is published removes it from your site at the next Publish.
 
 doc("labels", "Labels",
     "Labels are the sections of your work, in your own words. Every post sits under one label, and the post's address comes from it.",
-    note=PLANNED, body="""
+    body="""
 ## Labels are your sections {#labels}
 A label is whatever you call a part of your work: `Writings`, `Photographs`, `Things I make`. Another person might have `Blog`, `Journal` and `Field recordings`.
 - A label can be any words, in any language, with any capitalisation.
@@ -282,7 +294,7 @@ Ask your agent: "Look at my posts and suggest how to label them." It starts from
 
 doc("visibility", "Who sees a post",
     "Every post is private, for friends, or public. You choose for each post, and you can change your mind in any direction.",
-    note=PLANNED, body="""
+    body="""
 ## The three choices {#three}
 | | Who can read it | Where it is published |
 | --- | --- | --- |
@@ -292,7 +304,7 @@ doc("visibility", "Who sees a post",
 A new post is private. A post that comes in from a folder is private unless its file says otherwise.
 
 ## Changing it only marks the post {#marks}
-Setting a post to friends or public does not share it. It marks the post, and the status line shows it as waiting. It reaches other people when you press Publish and say yes. [Publish](/docs/publish)
+Setting a post to friends or public does not share it. It marks the post, and the Publish button shows that something is waiting. A public post reaches other people when you press Publish and approve. [Publish](/docs/publish)
 
 ## Friends {#friends}
 A friend is someone you follow who follows you back. There is no separate request to approve: following back is the approval. [Friends](/docs/friends)
@@ -310,39 +322,50 @@ Private means private from other people. Two things still read a private post.
 
 doc("publish", "Publish",
     "Publish makes what other people see match your workspace. It is the only thing in ohm that shares anything, and it always shows you what will change first.",
-    note="Publishing from the workspace is not built yet.",
+    note="Publishing public posts is built. Serving friends-only posts to friends is not.",
     body="""
 ## Before you publish {#status}
-The status line lists what is waiting: posts you marked public or for friends, published posts you edited, and published posts you made private or deleted.
-You can preview a post as it will appear before it is published. Your workspace already holds the post and its files.
+A mark on the Publish button means something is waiting: posts you marked public, published posts you edited, and published posts you made private or removed.
 
-## The two steps {#steps}
-1. **You see the changes.** What will be created, what will be replaced, what will be removed, who will be able to read each post, and the address it will have.
-2. **You say yes.** Only then does anything change.
+## The steps {#steps}
+1. **You see the changes.** What will be published for the first time, what will be replaced and why, and what will be taken down.
+2. **You approve at your own server.** With an app password typed on ohm's page, or with a passkey at your server's own screen.
+3. **The changes are made,** all of them or none.
+
+## Who makes the changes {#who}
+You do. ohm works out what would change, and holds no standing permission to write to your account. The changes are made from your browser, or by your agent, signed in at your own server for as long as publishing takes and no longer.
 
 ## What Publish does to each post {#does}
 | Your workspace says | Published now | Publish does |
 | --- | --- | --- |
-| Public | Nothing, or an older version | Creates or replaces the post in your account, with its files |
-| Friends | Not shared yet, or an older version | Makes this version the one your friends are shown |
-| Private, or the post is deleted | A public post or a shared friends version | Removes it |
+| Public | Nothing | Publishes it to your account, with a copy of each picture it places |
+| Public | An older version | Replaces it |
+| Friends or private, or the post is removed | A public post | Takes it down |
 | The same as what is published | | Nothing |
+| Public, but something stops it | Anything | Nothing. The post is named with the reason, and what is published stays as it is |
 Editing a published post does not change what readers see. They see the last version you published until you publish again.
+
+## What Publish never touches {#safe}
+- **Anything that is not a post.** Only the shared post type in your account is ever written or removed.
+- **A published post your workspace does not know.** Something published from elsewhere is left where it is and named, so you can bring it in first.
+- **Your folder.** Sync does not publish, and Publish does not sync.
 
 ## Where a public post goes {#where}
 A public post is written to your own account on the AT Protocol, in the repository that belongs to your identity. It is not kept on a platform of ours.
-- **Your website shows it.** Your site is a view of what is in that repository.
+- **Your website can show it.** A site can be a view of what is in that repository.
 - **Other applications can read it.** Every public post has the same shape on every site, so other software can find and read it.
 - **You can move it.** The repository goes with your account to another host.
 
 ## Public is for good {#for-good}
-Other services copy a public post the moment it is written. Making it private later removes it from your account and your website. It does not remove it from every copy. The confirmation tells you this each time a public post is being removed.
+Other services copy a public post the moment it is written. Making it private later removes it from your account. It does not remove it from every copy. You are told this each time, before you approve.
 
 ## Addresses {#addresses}
-If you renamed or refiled a published post, Publish shows the new address before changing it. After a rename, the old address sends readers on to the new one.
+A post's record is kept under its permanent ID, so renaming or refiling a post changes its address without making it a different post. The old address sending readers on to the new one is planned.
 
-## What Publish does not do {#not}
-Publish does not touch your folder, and Sync does not publish. An edit that arrives from your folder is a change waiting to be published, like any other.
+## What is not built {#not}
+- **Friends.** A post marked for friends is not shown to anyone else yet. [Friends](/docs/friends)
+- **A preview** of a post as it will appear.
+- **Holding a copy of each file in your workspace.** Today a copy is made when you publish.
 """)
 
 doc("friends", "Friends",
@@ -374,7 +397,7 @@ Who follows whom is public, as it is on Bluesky. That is what lets an agent see 
 
 doc("sync", "Sync with a folder",
     "Connect a folder of your own and your posts live there as Markdown files. Sync brings the folder and your workspace into line, in both directions.",
-    note="Sync is still being made. A folder on your computer comes first, and cloud storage after it.",
+    note="Sync is built for a folder on your computer, from the command line. It is not in the workspace yet, and cloud storage comes after.",
     body="""
 ## Why connect a folder {#why}
 Your workspace is a working copy. With a folder connected, the originals of your private and friends-only posts are files you hold, on your own machine or in the cloud storage you already use.
@@ -423,7 +446,7 @@ Run it again. A sync can be repeated safely, and it picks up where things stand.
 
 doc("files", "Posts as files",
     "In your folder, each post is one Markdown file. A label is a folder, a sublabel is a folder inside it, and everything else about the post is written at the top of the file.",
-    note="Sync is still being made. The file format below is built.",
+    note="The file format below is built, and is what writing your vault out gives you.",
     body="""
 ## The folder {#folder}
 ```
@@ -478,7 +501,7 @@ A post written out as a file and read back is the same post. That holds for titl
 
 doc("export", "Export and leaving",
     "You can take everything out of ohm at any time, and have ohm's copy deleted.",
-    note=PLANNED, body="""
+    body="""
 ## What you get {#what}
 Every post, private, friends-only and public, and every picture and file ohm kept for them.
 
@@ -486,8 +509,11 @@ Every post, private, friends-only and public, and every picture and file ohm kep
 An export is the same folder of Markdown files that Sync uses. There is one format, not two. It opens in Obsidian or any other Markdown editor, and it can be connected and synced again later. [Posts as files](/docs/files)
 
 ## How to export {#how}
-- **Into a connected folder.** If you already sync, your folder is your export, as of the last sync.
-- **As one archive,** downloaded from the workspace.
+From the menu under your picture, at the foot of the rail.
+- **Into a folder,** on your computer. Chrome and Edge can do this.
+- **As one file,** downloaded.
+If you already sync, your folder is your export, as of the last sync.
+Deleting ohm's copy on request is not built yet: ask, and it is done by hand.
 
 ## Deleting ohm's copy {#deleting}
 You can ask for everything ohm holds for you to be deleted.
@@ -504,11 +530,12 @@ Sign in, connect the same folder, and sync. Every post comes back as it was.
 
 doc("agent", "Your agent",
     "Connect the coding agent you already use, and it can read and write in your workspace. It reads everything, private posts included, which is how it knows what you are working on.",
-    note="The agent's tools are built and not released yet.",
+    note="The agent's tools are built. They sign in with an app password from your own server.",
     nav="Connect your agent",
     body="""
 ## What it is {#what}
 ohm does not run an agent for you. Your agent is the one you already use, given a set of tools for your workspace. It works only while you are in a session with it.
+The tools work in the same workspace you see in the browser. A post your agent saves is there when you open it.
 
 ## What it can read {#reads}
 All of your posts: public, friends and private. That is the point. An agent that only saw what you published would know the polished part.
@@ -517,26 +544,49 @@ Whatever your agent reads is also seen by the company that runs the model it use
 ## What it can do, and what needs your yes {#does}
 | | Alone | Only after showing you |
 | --- | --- | --- |
-| Search and read your posts | Yes | |
+| Look at your repository, list and read your posts | Yes | |
+| Search your posts | Yes | |
+| Say what is not published yet | Yes | |
 | Save a new post, as private | Yes | |
-| Edit a post | Yes | |
-| Suggest labels for your posts | Yes | |
-| Sync with your folder | When you ask | |
-| Publish | | Yes: it shows what will change, and to whom, and waits |
-| Follow or unfollow someone | | Yes |
-| Draft an email to someone | | Yes: you read it and send it yourself |
-The rule behind the table: reading is free, and anything that changes what other people see is shown to you first. Your agent cannot publish or share for you.
+| Edit a private post | Yes | |
+| Edit a post that is not private | | Yes: it shows what changes |
+| Change who a post is for | | Yes |
+| Bring in what you have published | | Yes: it looks first, and says what it found |
+| Publish | | Yes: it shows what will change, and waits |
+| Remove a post | | Yes |
+The rule behind the table: reading is free, and anything that changes what other people see, or removes something, is shown to you first. The first answer says exactly what would happen. Only your yes to that exact answer does it.
+
+## The tools {#tools}
+| Tool | What it does |
+| --- | --- |
+| `vault_tree` | Your repository: labels, sublabels, and each post with who it is for |
+| `vault_list`, `vault_read` | List posts, and read one in full |
+| `vault_search` | Find posts by the words in them |
+| `vault_save` | Make a post, always private, or change one |
+| `vault_set_visibility` | Mark a post public, for friends, or private |
+| `vault_status` | What publishing would change |
+| `vault_publish` | Publish |
+| `vault_mirror` | Bring in what you have published |
+| `vault_delete` | Remove a post |
+A tool has no ability of its own. Each is a way of asking ohm for something the workspace can already do.
+
+## Signing in {#sign-in}
+Your agent signs in to your own server with an app password, and your server vouches for each thing it asks ohm. A key made only for an agent, which reaches your workspace and nothing else and can be taken away, is planned.
 
 ## Other people's writing is not trusted {#safety}
-The same agent reads your private posts and other people's posts. Someone could write a post meant to make an agent give something away. The protection is in the tools, not in the agent's judgement: no tool sends anything out without showing you the exact text and who will see it.
+The same agent reads your private posts and other people's posts. Someone could write a post meant to make an agent give something away. The protection is in the tools, not in the agent's judgement: no tool sends anything out without showing you first.
 
 ## Things to ask it {#ask}
 - "What have I written about this before?"
 - "Save this as a private note under Writings."
 - "Look at my posts and suggest how to label them."
+- "Bring in my posts." Then: "File the ones under other."
 - "Make that one public." Then: "Publish."
-- "Sync."
-- "I'm stuck on this. Who among my friends has thought about it?"
+- "What is not published yet?"
+
+## Not built yet {#not}
+- **Sync** from your agent. It runs from the command line.
+- **Following, and drafting an email to someone.** [Finding people](/docs/finding-people)
 
 ## Editing alongside it {#together}
 You and your agent can work in the same workspace at once. Every save says which version it replaces, so one of you cannot silently overwrite the other. [The workspace](/docs/workspace#saving)
@@ -588,7 +638,8 @@ doc("where-things-live", "Where your things live",
 ## Three places {#places}
 | | What is there | Whose it is |
 | --- | --- | --- |
-| Your account on the open network | Your public posts, and your identity | Yours. It can be hosted by ohm, by Bluesky, or on a server you run, and it can be moved |
+| Your account on the open network | Your public posts, and your identity | Yours. It is hosted by Bluesky or on a server you run, and it can be moved. Hosting by ohm is planned |
+| Your ohm account | Who you are when you sign in to ohm | Made with Google, Microsoft or Bluesky. It holds no posts |
 | Your folder | Every post that is not public, as Markdown files | Yours, on your machine or in your own cloud storage |
 | Your workspace on ohm | A working copy of all of it | ohm holds it for you |
 
@@ -619,15 +670,20 @@ doc("limits", "What to know first",
 ## It is early {#early}
 | Part | Where it stands |
 | --- | --- |
-| Signing in with a server of your own | Working, in testing |
-| Getting an ohm account | Not open yet |
-| Signing up with Bluesky | Being built |
-| The workspace in the browser | Not open yet |
-| Syncing with a folder on your computer | Built, in testing |
-| Syncing with cloud storage | Later |
-| Publishing from the workspace | Not built yet |
-| Your agent working in the workspace | Built, not released |
-| Friends reading each other's posts | Not built yet |
+| Signing in with Google, Microsoft or Bluesky | Built. One person has used it |
+| Saying where your posts live, with a server of your own | Built, and used |
+| The same, with a Bluesky account | Built. Nobody has finished one yet |
+| An account that ohm hosts for you | Not built yet |
+| Who is let in | One account, while it is tested |
+| The workspace in the browser | Built: your repository, three views and a filter, writing and filing posts |
+| Bringing in what you have published | Built. It runs on its own the first time |
+| Publishing public posts | Built, and tested against a stand-in server. Not yet run against a real account |
+| Showing friends-only posts to friends | Not built yet |
+| Pictures and files kept by ohm | Not built yet. A post points at them, and a copy is made when you publish |
+| Your agent working in the workspace | Built. Not yet run with a real sign-in |
+| Syncing with a folder on your computer | Built, from the command line |
+| Syncing from the workspace, and with cloud storage | Later |
+| Deleting everything ohm holds for you | By hand, on request |
 | Your agent finding people | Not built yet |
 
 ## Anything you publish is public for good {#for-good}
@@ -756,7 +812,8 @@ MENU = icon('<path d="M4 12h16"/>', '<path d="M4 6h16"/>', '<path d="M4 18h16"/>
 # ---------------------------------------------------------------- docs.ohmmmm.com
 
 def docs_sidebar(current):
-    out = ['    <nav class="site-sidebar" aria-label="Docs">']
+    here = ' aria-current="page"' if current == "index" else ""
+    out = ['    <nav class="site-sidebar" aria-label="Docs">', "      <ul>", f'        <li><a href="/"{here}>Docs</a></li>', "      </ul>"]
     for name, slugs in GROUPS:
         out.append(f'      <p class="sidebar-group">{name}</p>')
         out.append("      <ul>")
@@ -769,13 +826,12 @@ def docs_sidebar(current):
 
 
 def docs_shell(current):
-    here = ' aria-current="page"' if current == "index" else ""
-    return f"""    <!-- Docs shell, the same on every page except aria-current. The header is the ohm dot (ohmmmm.com)
-         and Docs (this site's first page). The sidebar lists every page in its group. Icons are Lucide. -->
+    return f"""    <!-- Docs shell, the same on every page except aria-current. The header is the ohm dot alone, as on
+         ohmmmm.com, where it leads. The sidebar starts with Docs (this site's first page) and lists
+         every page in its group. Icons are Lucide. -->
     <input class="menu-toggle" type="checkbox" id="menu">
     <header class="site-header">
       <a class="site-mark" href="{HOME_ORIGIN}/"><img src="/assets/favicon.svg" alt="ohm" width="20" height="20"></a>
-      <a class="site-name" href="/"{here}>Docs</a>
       <label class="menu-button" for="menu">{MENU}<span>Menu</span></label>
     </header>
 
@@ -849,7 +905,8 @@ def docs_page(slug):
         <header>
           <p class="group">{GROUP_OF[slug]}</p>
           <h1 id="title">{p['title']}</h1>
-          <p class="introduction">{inline_code_safe(p['intro'])}</p>{note}
+          <p class="introduction">{inline_code_safe(p['intro'])}</p>
+          <p class="alert" role="note">{inline_code_safe(ALERT)}</p>{note}
         </header>
 
 {body}
@@ -893,7 +950,7 @@ def docs_index():
         <header>
           <h1 id="title">Docs</h1>
           <p class="introduction">{INDEX_INTRO}</p>
-          <p class="note">{inline_code_safe(PLANNED)}</p>
+          <p class="alert" role="note">{inline_code_safe(ALERT)}</p>
         </header>
 
 {(chr(10) * 2).join(body)}

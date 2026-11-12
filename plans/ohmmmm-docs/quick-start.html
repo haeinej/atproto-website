@@ -4,12 +4,12 @@
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <meta name="theme-color" content="#fafaf9">
-    <meta name="description" content="Your first session in ohm: sign in, write a post, decide who sees it, and publish. Then connect a folder of your own and bring in your agent.">
+    <meta name="description" content="Your first session in ohm: sign in, say where your posts live, write a post, decide who sees it, and publish. Then connect a folder of your own and bring in your agent.">
     <link rel="canonical" href="https://docs.ohmmmm.com/quick-start">
     <meta property="og:type" content="website">
     <meta property="og:site_name" content="ohm">
     <meta property="og:title" content="Quick start · ohm docs">
-    <meta property="og:description" content="Your first session in ohm: sign in, write a post, decide who sees it, and publish. Then connect a folder of your own and bring in your agent.">
+    <meta property="og:description" content="Your first session in ohm: sign in, say where your posts live, write a post, decide who sees it, and publish. Then connect a folder of your own and bring in your agent.">
     <meta property="og:url" content="https://docs.ohmmmm.com/quick-start">
     <meta property="og:image" content="https://ohmmmm.com/assets/og-image.png">
     <meta property="og:image:width" content="1200">
@@ -26,16 +26,19 @@
   <body>
     <a class="skip" href="#content">Skip to content</a>
 
-    <!-- Docs shell, the same on every page except aria-current. The header is the ohm dot (ohmmmm.com)
-         and Docs (this site's first page). The sidebar lists every page in its group. Icons are Lucide. -->
+    <!-- Docs shell, the same on every page except aria-current. The header is the ohm dot alone, as on
+         ohmmmm.com, where it leads. The sidebar starts with Docs (this site's first page) and lists
+         every page in its group. Icons are Lucide. -->
     <input class="menu-toggle" type="checkbox" id="menu">
     <header class="site-header">
       <a class="site-mark" href="https://ohmmmm.com/"><img src="/assets/favicon.svg" alt="ohm" width="20" height="20"></a>
-      <a class="site-name" href="/">Docs</a>
       <label class="menu-button" for="menu"><svg class="icon" viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2.25" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 12h16"/><path d="M4 6h16"/><path d="M4 18h16"/></svg><span>Menu</span></label>
     </header>
 
     <nav class="site-sidebar" aria-label="Docs">
+      <ul>
+        <li><a href="/">Docs</a></li>
+      </ul>
       <p class="sidebar-group">Get started</p>
       <ul>
         <li><a href="/quick-start" aria-current="page">Quick start</a></li>
@@ -76,68 +79,73 @@
         <header>
           <p class="group">Get started</p>
           <h1 id="title">Quick start</h1>
-          <p class="introduction">Your first session in ohm: sign in, write a post, decide who sees it, and publish. Then connect a folder of your own and bring in your agent.</p>
-          <p class="note">This describes ohm as it is planned. The workspace in the browser is not open yet. <a href="/limits#early">What is built</a></p>
+          <p class="introduction">Your first session in ohm: sign in, say where your posts live, write a post, decide who sees it, and publish. Then connect a folder of your own and bring in your agent.</p>
+          <p class="alert" role="note">This is the plan for ohm. ohm is still in production, and these pages are its architecture document: they describe how it is meant to work, not a finished product. <a href="/limits#early">What is built today</a></p>
         </header>
 
         <section aria-labelledby="sign-in">
           <h2 id="sign-in">1. Sign in</h2>
-          <p>There are three ways in. Pick the one that matches what you already have.</p>
+          <p>Sign in or sign up with Google, Microsoft or Bluesky. That makes your ohm account. <a href="/sign-in">More about signing in</a></p>
+        </section>
+
+        <section aria-labelledby="where">
+          <h2 id="where">2. Say where your posts live</h2>
+          <p>Your posts belong to an account on the open network, not to ohm. Once, you say which one.</p>
           <ul>
-            <li><strong>Get an ohm account.</strong> Choose this if you are starting from nothing.</li>
-            <li><strong>Sign up with Bluesky.</strong> Your posts and the people you follow come with you.</li>
-            <li><strong>Connect your own.</strong> If your account lives on a server you run, enter your handle.</li>
+            <li><strong>You have a server of your own.</strong> Enter your handle and an app password from it.</li>
+            <li><strong>You have a website, and no server yet.</strong> ohm shows you how to set one up beside your site, then you come back with your handle.</li>
+            <li><strong>You use Bluesky.</strong> Enter your Bluesky handle. If you signed in with Bluesky, this step is already done.</li>
           </ul>
-          <p>Whichever you choose, the account is yours and can be moved later. <a href="/sign-in">More about signing in</a></p>
+          <p>What you have already published there is brought into your workspace on its own.</p>
         </section>
 
         <section aria-labelledby="workspace">
-          <h2 id="workspace">2. Look around your workspace</h2>
+          <h2 id="workspace">3. Look around your workspace</h2>
           <p>The workspace has three parts.</p>
           <ul>
-            <li><strong>On the left, your labels.</strong> They are the sections of your work, in your own words: Writings, Photographs, Things I make. A label can hold sublabels, such as a series or an album.</li>
-            <li><strong>In the middle, the post you have open.</strong></li>
-            <li><strong>On the right, what the post says about itself:</strong> its title, its label, its address, and who can see it.</li>
+            <li><strong>A narrow rail on the left,</strong> with you at the foot of it.</li>
+            <li><strong>Your repository beside it:</strong> your labels as folders, with your posts inside them. Labels are the sections of your work, in your own words: Writings, Photographs, Things I make.</li>
+            <li><strong>The post you have open,</strong> filling the rest.</li>
           </ul>
-          <p>If you signed up with Bluesky or connected your own account, what you have already published is here. <a href="/workspace">More about the workspace</a></p>
+          <p><a href="/workspace">More about the workspace</a></p>
         </section>
 
         <section aria-labelledby="write">
-          <h2 id="write">3. Write a post</h2>
+          <h2 id="write">4. Write a post</h2>
           <p>Start a new post and write. A post is Markdown, and it can be one sentence.</p>
           <p>You do not say what kind of thing it is. A post with a title is a writing, one without is a note, and one that only shows a photograph is an image. ohm reads that from the post.</p>
-          <p>To add a picture, drop in a file or paste the address of one that is already on the web.</p>
+          <p>To add a picture, paste the address of one that is already on the web.</p>
           <p>A new post is private. Nobody else can see it. <a href="/posts">More about posts</a></p>
         </section>
 
         <section aria-labelledby="who">
-          <h2 id="who">4. Decide who sees it</h2>
+          <h2 id="who">5. Decide who sees it</h2>
           <p>Every post is one of three things.</p>
           <ul>
             <li><strong>Private.</strong> Only you.</li>
             <li><strong>Friends.</strong> The people you follow who follow you back.</li>
             <li><strong>Public.</strong> Everyone, on your website and anywhere else your published layer is read.</li>
           </ul>
-          <p>Changing this does not share anything yet. It marks the post, and the status line shows what is waiting to be published. <a href="/visibility">More about who sees a post</a></p>
+          <p>Changing this does not share anything yet. It marks the post, and a mark on the Publish button shows that something is waiting. <a href="/visibility">More about who sees a post</a></p>
         </section>
 
         <section aria-labelledby="publish">
-          <h2 id="publish">5. Publish</h2>
-          <p>Press Publish. Before anything happens, you see exactly what will change: which posts will become visible, to whom, and at what address. Say yes, and it is done.</p>
-          <p>A public post is now part of your published layer and on your website. Anything published is public for good: other services copy it the moment it is written. Taking it down later removes it from your site, not from every copy. <a href="/publish">More about publishing</a></p>
+          <h2 id="publish">6. Publish</h2>
+          <p>Press Publish. Before anything happens, you see exactly what will change: which posts will be published for the first time, replaced, or taken down. Then you approve at your own server, and it is done.</p>
+          <p>A public post is now part of your published layer. Anything published is public for good: other services copy it the moment it is written. Taking it down later removes it from your account, not from every copy. <a href="/publish">More about publishing</a></p>
         </section>
 
         <section aria-labelledby="folder">
-          <h2 id="folder">6. Connect a folder of your own</h2>
-          <p>Connect a folder on your computer or in the cloud storage you already use, and press Sync. Each post appears there as a Markdown file, filed in a folder named for its label.</p>
+          <h2 id="folder">7. Connect a folder of your own</h2>
+          <p>Connect a folder on your computer and sync. Each post appears there as a Markdown file, filed in a folder named for its label.</p>
           <p>From then on your originals live with you, and ohm holds a working copy. Edit a file in the folder and sync, and the change arrives in your workspace. Syncing never publishes.</p>
           <p>Until you connect a folder, ohm holds the only copy of your private and friends-only posts. <a href="/sync">More about syncing</a></p>
         </section>
 
         <section aria-labelledby="agent">
-          <h2 id="agent">7. Bring in your agent</h2>
+          <h2 id="agent">8. Bring in your agent</h2>
           <p>Connect the coding agent you already use, and it can read and write in your workspace. It reads your private posts too, which is how it knows what you are working on.</p>
-          <p>It cannot publish or share for you. Anything that changes what other people see is shown to you first. <a href="/agent">More about your agent</a></p>
+          <p>Anything that changes what other people see is shown to you first, publishing included. <a href="/agent">More about your agent</a></p>
         </section>
 
         <section aria-labelledby="next">
@@ -146,7 +154,7 @@
             <li>"What have I written about this before?"</li>
             <li>"Save this as a private note under Writings."</li>
             <li>"Look at my posts and suggest how to label them."</li>
-            <li>"I'm stuck on this. Who among my friends has thought about it?"</li>
+            <li>"What is not published yet?"</li>
           </ul>
         </section>
 
@@ -161,12 +169,13 @@
       <p id="toc-title">On this page</p>
       <ul>
         <li><a href="#sign-in">1. Sign in</a></li>
-        <li><a href="#workspace">2. Look around your workspace</a></li>
-        <li><a href="#write">3. Write a post</a></li>
-        <li><a href="#who">4. Decide who sees it</a></li>
-        <li><a href="#publish">5. Publish</a></li>
-        <li><a href="#folder">6. Connect a folder of your own</a></li>
-        <li><a href="#agent">7. Bring in your agent</a></li>
+        <li><a href="#where">2. Say where your posts live</a></li>
+        <li><a href="#workspace">3. Look around your workspace</a></li>
+        <li><a href="#write">4. Write a post</a></li>
+        <li><a href="#who">5. Decide who sees it</a></li>
+        <li><a href="#publish">6. Publish</a></li>
+        <li><a href="#folder">7. Connect a folder of your own</a></li>
+        <li><a href="#agent">8. Bring in your agent</a></li>
         <li><a href="#next">Things to ask your agent first</a></li>
       </ul>
     </nav>

@@ -26,16 +26,19 @@
   <body>
     <a class="skip" href="#content">Skip to content</a>
 
-    <!-- Docs shell, the same on every page except aria-current. The header is the ohm dot (ohmmmm.com)
-         and Docs (this site's first page). The sidebar lists every page in its group. Icons are Lucide. -->
+    <!-- Docs shell, the same on every page except aria-current. The header is the ohm dot alone, as on
+         ohmmmm.com, where it leads. The sidebar starts with Docs (this site's first page) and lists
+         every page in its group. Icons are Lucide. -->
     <input class="menu-toggle" type="checkbox" id="menu">
     <header class="site-header">
       <a class="site-mark" href="https://ohmmmm.com/"><img src="/assets/favicon.svg" alt="ohm" width="20" height="20"></a>
-      <a class="site-name" href="/">Docs</a>
       <label class="menu-button" for="menu"><svg class="icon" viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2.25" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 12h16"/><path d="M4 6h16"/><path d="M4 18h16"/></svg><span>Menu</span></label>
     </header>
 
     <nav class="site-sidebar" aria-label="Docs">
+      <ul>
+        <li><a href="/">Docs</a></li>
+      </ul>
       <p class="sidebar-group">Get started</p>
       <ul>
         <li><a href="/quick-start">Quick start</a></li>
@@ -77,6 +80,7 @@
           <p class="group">Your agent</p>
           <h1 id="title">Finding people</h1>
           <p class="introduction">When you are stuck on something that needs another person, your agent helps you find that person. What it can settle alone, it settles. For everything else, it takes you to someone.</p>
+          <p class="alert" role="note">This is the plan for ohm. ohm is still in production, and these pages are its architecture document: they describe how it is meant to work, not a finished product. <a href="/limits#early">What is built today</a></p>
           <p class="note">Finding people is not built yet. This is how it is planned to work.</p>
         </header>
 

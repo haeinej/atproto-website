@@ -1,6 +1,6 @@
 # Build plan
 
-Written 12 November 2026 and reworked several times the same day. The states under "Where we are" and each milestone were last brought up to date that evening, after the editor, sign-in, the automatic mirror and the agent's tools were built and deployed. In this version ohm is an editor with agents: it keeps a complete working copy of each member's vault so they and their agent can work from anywhere, and the member's originals live with them. The decisions behind each rework were made by Haein, some in side conversations and passed on from there. They are listed under "What changed" so they can be checked. Background is in [the architecture plan](network-architecture.md), parts of which this version now contradicts; see "Wording that now needs changing".
+Written 12 November 2026 and reworked several times the same day. The states under "Where we are" and each milestone were last brought up to date on 13 November, after Publish was built. In this version ohm is an editor with agents: it keeps a complete working copy of each member's vault so they and their agent can work from anywhere, and the member's originals live with them. The decisions behind each rework were made by Haein, some in side conversations and passed on from there. They are listed under "What changed" so they can be checked. Background is in [the architecture plan](network-architecture.md), parts of which this version now contradicts; see "Wording that now needs changing".
 
 ## What phase one is
 
@@ -79,10 +79,10 @@ Everything below is on `main` and pushed unless it says otherwise.
 | ohm accounts | Built and deployed in the private `ohm` repository (`ohm-api`): Google, Microsoft, and an AT Protocol account (Bluesky or a PDS of one's own), which makes an ohm account the first time |
 | Onboarding | Built and live: sign in or up, then, once, where your posts live |
 | The mirror | Built and live. Runs on its own the first time a connected account's vault opens. Run reading only against haeinjung.com's PDS: 2 records, 2 posts, both identical to what is published |
-| The editor | Built and live at `app.ohmmmm.com/vault`: the repository as folders, viewed by labels, platforms or visibility, with a filter; one post in the main screen; who it is for; removing; writing the vault out. No status and no Publish |
-| The agent's tools | Built: eight tools, each made of requests to the vault service, signed in with an app password from the member's PDS. Tested against the service's own code. Not run with a real sign-in |
+| The editor | Built and live at `app.ohmmmm.com/vault`: the repository as folders, viewed by labels, platforms or visibility, with a filter; one post in the main screen; who it is for; removing; writing the vault out; a mark on Publish when something is waiting, and Publish itself |
+| The agent's tools | Built: ten tools, each made of requests to the vault service, signed in with an app password from the member's PDS. Tested against the service's own code. Not run with a real sign-in |
 | Folder sync | Built, for a folder on the member's machine. Not run against the deployed service |
-| Publish from the service | Not started |
+| Publish | Built, for public posts. The service works out what would change in the member's repository and writes nothing; the member makes the changes, signed in at their own PDS, from the editor or through their agent. Tested against the service's own code and a stand-in repository. Not run against a real PDS. Friends-only posts are not served to anyone yet |
 | Attachments held by the vault | Not started |
 | A PDS that ohm hosts | Not started |
 | haeinjung.com's own records | Still under the old post type, `com.haeinjung.post`. The mirror reads them as they are. Not migrated |
@@ -274,8 +274,10 @@ A service of ours, on Cloudflare by default. It is built in this repository, und
 
 ### 3. Publish
 
-- Status, and the two-step publish.
-- Writing to the member's PDS from our service, which needs their standing permission (see the decisions).
+- Status, and the two-step publish. Built: the service's Publish capability says what would be published for the first time, replaced and taken down, which posts cannot be published and why, and which published records the vault knows nothing about.
+- Writing to the member's PDS. Built the second way of the two under "Decisions to make": the member's own device does the writing, signed in at their PDS for as long as publishing takes, so ohm holds no standing permission to anyone's repository. The same code carries a plan out in the editor and in the agent's tools.
+- Three rules keep it safe beside other software that writes to the same repository: only the shared post type is touched; a record is removed only when it is known to be a post of this vault; and a post that cannot be published leaves what is published of it as it is.
+- A picture a post places is sent to the PDS when the post is published. One the PDS already holds is named, not sent again.
 
 ### 4. The editor
 
@@ -283,7 +285,7 @@ One web page, hosted by us, laid out as the app is: a rail of icons, a side pane
 
 ### 5. The agent's tools
 
-Built as a client of the vault service: each tool is made of the service's requests and nothing else, and reads and writes posts with the member's own token. There are eight: tree, list, read, search, save, set visibility, mirror, delete. Still to add: `vault_status` and `vault_publish`, which wait for Publish; the confirmation moves to `vault_publish` then. A key a member can hand to an agent and take away, in place of an app password, is not built. Because the service holds the vault, a remote version that needs nothing installed becomes possible later.
+Built as a client of the vault service: each tool is made of the service's requests and nothing else, and reads and writes posts with the member's own token. There are ten: tree, list, read, search, save, set visibility, status, publish, mirror, delete. Marking a post for everyone still takes its own confirmation, and so does `vault_publish`; whether the first should go, now that nothing is public until the second, is not decided. A key a member can hand to an agent and take away, in place of an app password, is not built. Because the service holds the vault, a remote version that needs nothing installed becomes possible later.
 
 ### 6. Sync with a folder
 
@@ -328,13 +330,15 @@ Piece 6, starting with a folder on the member's machine, and Export, which is th
 
 Piece 3.
 
+**State, 13 November 2026.** Built for public posts. In tests against the service's own code and a stand-in repository: Publish shows what would change; on a yes a public post's record appears under its ID with a copy of its picture; an edit stays unpublished until the next Publish; marking the post private and publishing again removes the record; a record something else published is never touched; and a yes given to one list does not publish another. The editor's Publish has been run in a browser both ways, with an app password and by approving at the PDS's own screen, against a stand-in PDS. Not run against a real PDS. Nothing is built for friends: a friends-only post is in the working copy and nowhere else.
+
 **Done when:** Publish shows what would change, and on a yes a public post's record appears on a test PDS under its ID, with its files; marking it private and publishing again removes the record; and a friends-only post's shared version changes only on Publish.
 
 ### 5. Your agent works in the vault
 
 Piece 5.
 
-**State, 12 November 2026.** The first three work in tests against the service's own code, and "bring in my posts" does too. None has been run with a real sign-in: that needs an app password from the member's PDS. "sync" and "publish" have no tool yet.
+**State, 13 November 2026.** All but "sync" work in tests against the service's own code, "bring in my posts" and "what is not published yet" too. None has been run with a real sign-in: that needs an app password from the member's PDS. "sync" has no tool yet.
 
 **Done when:** in your agent, "what have I written about X", "save this as a private note under writings", "make that one public", "sync" and "publish" all work, and the last one shows what will change before it does.
 
@@ -342,7 +346,7 @@ Piece 5.
 
 Piece 4.
 
-**State, 12 November 2026.** Live at https://app.ohmmmm.com/vault. Signing in, browsing the tree, writing a post, saving it privately and marking it public all work without a terminal. Not built: the status, Publish, and telling a member with no folder connected that ohm holds the only copy of their private and friends-only posts.
+**State, 13 November 2026.** Live at https://app.ohmmmm.com/vault. Signing in, browsing the tree, writing a post, saving it privately, marking it public, seeing that something is waiting and publishing all work without a terminal. Not built: telling a member with no folder connected that ohm holds the only copy of their private and friends-only posts.
 
 **Done when:** signed in to ohm in a browser, you browse the tree, write a post, save it privately, mark it public, see the status, and publish, without a terminal. A member with no folder connected is told that ohm holds the only copy of their private and friends-only posts.
 
@@ -374,7 +378,7 @@ Piece 4.
     - **Connections between posts** are written with IDs. Built: `postRecord` in `vault/file.mjs`.
 000. **What a post's body holds.** As its author wrote it, Obsidian's own `[[links]]` included, with the published form worked out at Publish. Or already in the published form. The first keeps the mapping exact and a member's writing as they wrote it, and is what is built. The second would change `[[links]]` in a member's file the first time a post came back from us.
 0000. **Where cached copies of attachments sit when a post is written out as files.** Beside the post, or together in one folder kept for them.
-1. **How Publish writes to the member's PDS.** For our service to publish, it needs the member's standing permission to write to their repository, granted once through AT Protocol sign-in and kept by us. That makes us a holder of write access to people's repositories, to be stored and guarded accordingly. The alternative is that the member's own device does the writing, which needs no standing permission but only works where they are signed in.
+1. **How Publish writes to the member's PDS.** For our service to publish, it needs the member's standing permission to write to their repository, granted once through AT Protocol sign-in and kept by us. That makes us a holder of write access to people's repositories, to be stored and guarded accordingly. The alternative is that the member's own device does the writing, which needs no standing permission but only works where they are signed in. Built the second way, on 13 November, so that it can be tried: it commits ohm to nothing, and the first way can still be added, since what would change is worked out the same either way. Not yet confirmed by Haein. What it costs: a member approves at their PDS every time they publish, and nothing can be published on a schedule.
 2. **Who on our side can read private notes, and when.** To be written down before any outside member joins.
 3. **Whether we may use private notes for matching.** Held to "no" until decided.
 4. **Which link and image syntax the folder's files use.** Settled: both. Standard Markdown and Obsidian's own `[[note]]` and `![[image.png]]` are read, and each file keeps whichever it was written in.
@@ -400,7 +404,7 @@ Each says or implies that our service cannot read private notes, or that the mem
 | Assumption | Why it matters | When |
 | --- | --- | --- |
 | A Worker can verify a PDS's token | It is how a member proves their DID | Done: it does, on the deployed service, for Haein's own PDS |
-| Our service can hold a member's permission to write to their PDS | Publish depends on it. Cirrus documents the sign-in that grants it; we have not run it | Before milestone 4 |
+| A member's own sign-in at their PDS can make the changes Publish lists | Publish depends on it. Cirrus accepts a batch of changes and a file from a signed-in member; we have run it against a stand-in only | Before anyone relies on Publish |
 | Sign-in from the browser works against Cirrus | The editor needs it | Done: Haein signed in and connected on the live service. Which of the two ways, an app password or the PDS's own screen, is not recorded |
 | Signing in with a Bluesky account works end to end | It is one of the three ways in. Bluesky's server accepts the start of it; nobody has finished one | Before anyone outside is let in |
 | The agent's tools work with a real sign-in | They are tested against the service's code only | Milestone 5 |

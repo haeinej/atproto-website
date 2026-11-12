@@ -26,16 +26,19 @@
   <body>
     <a class="skip" href="#content">Skip to content</a>
 
-    <!-- Docs shell, the same on every page except aria-current. The header is the ohm dot (ohmmmm.com)
-         and Docs (this site's first page). The sidebar lists every page in its group. Icons are Lucide. -->
+    <!-- Docs shell, the same on every page except aria-current. The header is the ohm dot alone, as on
+         ohmmmm.com, where it leads. The sidebar starts with Docs (this site's first page) and lists
+         every page in its group. Icons are Lucide. -->
     <input class="menu-toggle" type="checkbox" id="menu">
     <header class="site-header">
       <a class="site-mark" href="https://ohmmmm.com/"><img src="/assets/favicon.svg" alt="ohm" width="20" height="20"></a>
-      <a class="site-name" href="/">Docs</a>
       <label class="menu-button" for="menu"><svg class="icon" viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2.25" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 12h16"/><path d="M4 6h16"/><path d="M4 18h16"/></svg><span>Menu</span></label>
     </header>
 
     <nav class="site-sidebar" aria-label="Docs">
+      <ul>
+        <li><a href="/">Docs</a></li>
+      </ul>
       <p class="sidebar-group">Get started</p>
       <ul>
         <li><a href="/quick-start">Quick start</a></li>
@@ -77,6 +80,7 @@
           <p class="group">Before you rely on it</p>
           <h1 id="title">What to know first</h1>
           <p class="introduction">ohm is early. This page says what is built, what cannot be undone, and what ohm is not.</p>
+          <p class="alert" role="note">This is the plan for ohm. ohm is still in production, and these pages are its architecture document: they describe how it is meant to work, not a finished product. <a href="/limits#early">What is built today</a></p>
         </header>
 
         <section aria-labelledby="early">
@@ -87,15 +91,20 @@
                 <tr><th>Part</th><th>Where it stands</th></tr>
               </thead>
               <tbody>
-                <tr><th scope="row">Signing in with a server of your own</th><td>Working, in testing</td></tr>
-                <tr><th scope="row">Getting an ohm account</th><td>Not open yet</td></tr>
-                <tr><th scope="row">Signing up with Bluesky</th><td>Being built</td></tr>
-                <tr><th scope="row">The workspace in the browser</th><td>Not open yet</td></tr>
-                <tr><th scope="row">Syncing with a folder on your computer</th><td>Built, in testing</td></tr>
-                <tr><th scope="row">Syncing with cloud storage</th><td>Later</td></tr>
-                <tr><th scope="row">Publishing from the workspace</th><td>Not built yet</td></tr>
-                <tr><th scope="row">Your agent working in the workspace</th><td>Built, not released</td></tr>
-                <tr><th scope="row">Friends reading each other's posts</th><td>Not built yet</td></tr>
+                <tr><th scope="row">Signing in with Google, Microsoft or Bluesky</th><td>Built. One person has used it</td></tr>
+                <tr><th scope="row">Saying where your posts live, with a server of your own</th><td>Built, and used</td></tr>
+                <tr><th scope="row">The same, with a Bluesky account</th><td>Built. Nobody has finished one yet</td></tr>
+                <tr><th scope="row">An account that ohm hosts for you</th><td>Not built yet</td></tr>
+                <tr><th scope="row">Who is let in</th><td>One account, while it is tested</td></tr>
+                <tr><th scope="row">The workspace in the browser</th><td>Built: your repository, three views and a filter, writing and filing posts</td></tr>
+                <tr><th scope="row">Bringing in what you have published</th><td>Built. It runs on its own the first time</td></tr>
+                <tr><th scope="row">Publishing public posts</th><td>Built, and tested against a stand-in server. Not yet run against a real account</td></tr>
+                <tr><th scope="row">Showing friends-only posts to friends</th><td>Not built yet</td></tr>
+                <tr><th scope="row">Pictures and files kept by ohm</th><td>Not built yet. A post points at them, and a copy is made when you publish</td></tr>
+                <tr><th scope="row">Your agent working in the workspace</th><td>Built. Not yet run with a real sign-in</td></tr>
+                <tr><th scope="row">Syncing with a folder on your computer</th><td>Built, from the command line</td></tr>
+                <tr><th scope="row">Syncing from the workspace, and with cloud storage</th><td>Later</td></tr>
+                <tr><th scope="row">Deleting everything ohm holds for you</th><td>By hand, on request</td></tr>
                 <tr><th scope="row">Your agent finding people</th><td>Not built yet</td></tr>
               </tbody>
             </table>

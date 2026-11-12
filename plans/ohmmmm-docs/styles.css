@@ -317,6 +317,18 @@ main {
 .group,
 .note { color: var(--ohm-ink-quiet); }
 
+/* The notice on every page: these pages are the plan, and ohm is still being made. A tinted
+   block with the forest line the reader's rail uses, so it reads as said to you and not as text. */
+.alert {
+  margin-block: var(--ohm-top) 0;
+  padding: 14px 18px;
+  border-radius: 16px;
+  background: var(--ohm-tint);
+  box-shadow: inset 3px 0 0 var(--ohm-forest);
+  font-size: var(--ohm-size-small);
+}
+.alert + .note { margin-top: 12px; }
+
 /* The group a page is in, above its title. */
 article > header > .group {
   font-size: var(--ohm-size-small);

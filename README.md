@@ -187,7 +187,9 @@ What the service can do, request by request, is in [service/CAPABILITIES.md](ser
 
 Three things to know:
 
-- **Saving never publishes.** A post marked for everyone is in the vault, meant for everyone. Publishing from the vault is not built yet: `publish:post` is still how a post reaches your PDS.
+- **Saving never publishes.** A post marked for everyone is in the vault, meant for everyone. It reaches your PDS when you press Publish, which first shows exactly what would change: what would be published, replaced and taken down.
+- **You publish; ohm does not.** The service works out the changes and holds no permission to write to your repository. They are made from your browser, or by your agent, signed in at your own PDS for as long as it takes: with an app password typed on ohm's page, or a passkey at your PDS's own screen.
+- **Publish only touches posts.** It writes and removes records of the shared post type only, and never removes a record the vault knows nothing about.
 - **This is not the private area on your own site.** "Keep a post private", above, stores a post in your own site's storage. The vault is ohm's working copy. Nothing moves between the two yet.
 - **The vault at ohmmmm.com is not open to everyone yet.** An account that has not been let in is told so when it connects.
 
@@ -202,10 +204,12 @@ The plugin starts a small server on your own machine, `ohm-vault`, that gives yo
 | `vault_search` | Search your posts at every visibility |
 | `vault_save` | Create a post, always private, or change one that was read |
 | `vault_set_visibility` | Mark a post as public, for friends, or private |
+| `vault_status` | What publishing would change, without changing anything |
+| `vault_publish` | Publish: make what is published in your repository match your vault. It shows what would change first |
 | `vault_mirror` | Bring what you have already published on your PDS into the vault. It looks first and says what it found |
 | `vault_delete` | Remove a post |
 
-Reading is free. Changing a post that is not private, changing who a post is for, bringing posts in, and removing one each take two calls: the first answers with exactly what would happen, and only a second call carrying the value it returned does it. So your agent shows you which post and who it is for before anything changes. Saving never publishes: publishing is a step of its own.
+Reading is free. Changing a post that is not private, changing who a post is for, publishing, bringing posts in, and removing one each take two calls: the first answers with exactly what would happen, and only a second call carrying the value it returned does it. So your agent shows you which post and who it is for before anything changes. Saving never publishes: publishing is a step of its own, and it is public the moment it is done.
 
 A tool adds no ability of its own. Each is made of requests to the vault service and nothing else, and [service/CAPABILITIES.md](service/CAPABILITIES.md) lists which.
 
@@ -388,9 +392,10 @@ Tried for real:
 
 Not yet:
 
-- **Nothing is published from the vault.** Marking a post for everyone there changes only the working copy.
+- **Publishing from the vault has not been run against a real PDS.** It is tested against the service's own code and a stand-in repository, in the editor and through the agent's tools.
+- **Friends-only posts are not shown to friends.** Marking a post for friends changes only the working copy.
 - **The agent's tools have not been run with a real sign-in.** They are tested against the service's own code, and start and ask for an app password against a real site's settings.
-- **The vault holds no files.** A picture or file is placed in a post by its address.
+- **The vault holds no files.** A picture or file is placed in a post by its address, and a copy is sent to your PDS when the post is published.
 - **Syncing a folder has not been run against the deployed service.**
 - **Private posts and the profile command have not been run against Cloudflare.** Private posts are tested with stand-ins for Cloudflare Access and its storage.
 - **The X importer has changes that are not compiled.** It now saves each post's form and a single label, and writes `com.ohmmmm.post` records.
