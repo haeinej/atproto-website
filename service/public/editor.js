@@ -21,6 +21,8 @@ function say(text, { detail, problem = false } = {}) {
   $('log').prepend(item);
 }
 const failed = (doing, problem) => say(`${doing} did not work: ${problem.message}`, { problem: true });
+// An address typed without "https://" in front is given it.
+const address = typed => (/^https?:\/\//i.test(typed.trim()) || !typed.trim() ? typed.trim() : `https://${typed.trim()}`);
 
 // ---- Talking to the PDS and to the vault. ----
 async function pds(method, { query, body, auth = true } = {}) {
@@ -96,10 +98,10 @@ $('sign-in-form').addEventListener('submit', async event => {
   event.preventDefault();
   $('sign-in-problem').textContent = '';
   try {
-    const address = new URL($('pds').value.trim());
+    const home = new URL(address($('pds').value));
     // A PDS on this machine, for trying things out, is the one that may be reached without https.
-    if (address.protocol !== 'https:' && !['localhost', '127.0.0.1'].includes(address.hostname)) throw new Error('your PDS has an https address');
-    state.pds = address.origin;
+    if (home.protocol !== 'https:' && !['localhost', '127.0.0.1'].includes(home.hostname)) throw new Error('your PDS has an https address');
+    state.pds = home.origin;
     const signedIn = await pds('com.atproto.server.createSession', { auth: false, body: { identifier: $('identifier').value.trim(), password: $('password').value } });
     state.session = signedIn.accessJwt;
     state.ask = (method, query) => pds(method, { query });
@@ -244,7 +246,8 @@ $('delete').addEventListener('click', async () => {
 
 // ---- Bringing in what is already published. ----
 async function bringIn(apply) {
-  const site = $('site').value.trim();
+  const site = address($('site').value);
+  $('site').value = site;
   const from = $('older').value.trim();
   localStorage.setItem('ohm.site', site);
   localStorage.setItem('ohm.older', from);

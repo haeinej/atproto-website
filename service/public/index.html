@@ -33,7 +33,7 @@
         <summary>Use an app password instead</summary>
         <p class="quiet">For a PDS that cannot sign you in through the browser. The app password is sent to your PDS only, not to ohm, and is not kept: you sign in again each visit.</p>
         <form id="sign-in-form" autocomplete="off">
-          <label>Your PDS <input id="pds" type="url" placeholder="https://pds.example.com" required></label>
+          <label>Your PDS <input id="pds" type="text" placeholder="pds.example.com" required autocapitalize="none" spellcheck="false"></label>
           <label>Handle or DID <input id="identifier" type="text" placeholder="example.com" required autocapitalize="none" spellcheck="false"></label>
           <label>App password <input id="password" type="password" required autocomplete="off"></label>
           <button type="submit">Sign in</button>
@@ -85,7 +85,7 @@
         <h2 id="path-title">Test the path</h2>
 
         <h3>1. Bring in what you have published</h3>
-        <label>Your website <input id="site" type="url" placeholder="https://example.com"></label>
+        <label>Your website <input id="site" type="text" placeholder="example.com" autocapitalize="none" spellcheck="false"></label>
         <label>Older post type, if any <input id="older" type="text" placeholder="com.example.post" autocapitalize="none" spellcheck="false"></label>
         <div class="row">
           <button id="import-look" type="button">Look first</button>
