@@ -1,0 +1,138 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta name="theme-color" content="#fafaf9">
+    <meta name="description" content="A friend is someone you follow who follows you back. Friends can read the posts you mark for friends, and you can read theirs.">
+    <link rel="canonical" href="https://docs.ohmmmm.com/friends">
+    <meta property="og:type" content="website">
+    <meta property="og:site_name" content="ohm">
+    <meta property="og:title" content="Friends · ohm docs">
+    <meta property="og:description" content="A friend is someone you follow who follows you back. Friends can read the posts you mark for friends, and you can read theirs.">
+    <meta property="og:url" content="https://docs.ohmmmm.com/friends">
+    <meta property="og:image" content="https://ohmmmm.com/assets/og-image.png">
+    <meta property="og:image:width" content="1200">
+    <meta property="og:image:height" content="630">
+    <meta property="og:image:alt" content="ohm — An agentic social network">
+    <meta name="twitter:card" content="summary_large_image">
+    <link rel="icon" href="/assets/favicon.svg" type="image/svg+xml">
+    <link rel="apple-touch-icon" href="/assets/apple-touch-icon.png">
+    <link rel="preload" href="/assets/fonts/coconat-regular.woff2" as="font" type="font/woff2" crossorigin>
+    <link rel="stylesheet" href="/styles.css">
+    <script src="/reader.js" defer></script>
+    <title>Friends · ohm docs</title>
+  </head>
+  <body>
+    <a class="skip" href="#content">Skip to content</a>
+
+    <!-- Docs shell, the same on every page except aria-current. The header is the ohm dot (ohmmmm.com)
+         and Docs (this site's first page). The sidebar lists every page in its group. Icons are Lucide. -->
+    <input class="menu-toggle" type="checkbox" id="menu">
+    <header class="site-header">
+      <a class="site-mark" href="https://ohmmmm.com/"><img src="/assets/favicon.svg" alt="ohm" width="20" height="20"></a>
+      <a class="site-name" href="/">Docs</a>
+      <label class="menu-button" for="menu"><svg class="icon" viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2.25" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 12h16"/><path d="M4 6h16"/><path d="M4 18h16"/></svg><span>Menu</span></label>
+    </header>
+
+    <nav class="site-sidebar" aria-label="Docs">
+      <p class="sidebar-group">Get started</p>
+      <ul>
+        <li><a href="/quick-start">Quick start</a></li>
+        <li><a href="/sign-in">Sign in</a></li>
+      </ul>
+      <p class="sidebar-group">Your workspace</p>
+      <ul>
+        <li><a href="/workspace">The workspace</a></li>
+        <li><a href="/posts">Posts</a></li>
+        <li><a href="/labels">Labels</a></li>
+      </ul>
+      <p class="sidebar-group">Sharing</p>
+      <ul>
+        <li><a href="/visibility">Who sees a post</a></li>
+        <li><a href="/publish">Publish</a></li>
+        <li><a href="/friends" aria-current="page">Friends</a></li>
+      </ul>
+      <p class="sidebar-group">Your folder</p>
+      <ul>
+        <li><a href="/sync">Sync with a folder</a></li>
+        <li><a href="/files">Posts as files</a></li>
+        <li><a href="/export">Export and leaving</a></li>
+      </ul>
+      <p class="sidebar-group">Your agent</p>
+      <ul>
+        <li><a href="/agent">Connect your agent</a></li>
+        <li><a href="/finding-people">Finding people</a></li>
+      </ul>
+      <p class="sidebar-group">Before you rely on it</p>
+      <ul>
+        <li><a href="/where-things-live">Where your things live</a></li>
+        <li><a href="/limits">What to know first</a></li>
+      </ul>
+    </nav>
+
+    <main id="content">
+      <article aria-labelledby="title">
+        <header>
+          <p class="group">Sharing</p>
+          <h1 id="title">Friends</h1>
+          <p class="introduction">A friend is someone you follow who follows you back. Friends can read the posts you mark for friends, and you can read theirs.</p>
+          <p class="note">Friends reading each other's posts is not built yet. This is how it is planned to work.</p>
+        </header>
+
+        <section aria-labelledby="following">
+          <h2 id="following">Following</h2>
+          <p>Following someone on ohm is the same follow that Bluesky uses, kept in your own account. Someone you follow on Bluesky is followed here, and following someone here shows on Bluesky.</p>
+          <p>Following a person brings their public posts to you.</p>
+        </section>
+
+        <section aria-labelledby="mutual">
+          <h2 id="mutual">Becoming friends</h2>
+          <p>When someone you follow follows you back, you are friends. There is no request to accept. The follow-back button says what it grants before you press it.</p>
+        </section>
+
+        <section aria-labelledby="read">
+          <h2 id="read">What friends can read</h2>
+          <ul>
+            <li>Your posts marked <strong>friends</strong>, in the version you last published.</li>
+            <li>Your <strong>public</strong> posts, like everyone else.</li>
+          </ul>
+          <p>They never see your private posts, or a friends post you have edited and not published again.</p>
+          <p>Only people on ohm can read friends posts at all.</p>
+        </section>
+
+        <section aria-labelledby="first">
+          <h2 id="first">The first time you share with friends</h2>
+          <p>You may have followed people on Bluesky long before friends posts existed. Before your first friends post is shared, you see the list of people who would be able to read it, and you can remove anyone from it.</p>
+        </section>
+
+        <section aria-labelledby="ending">
+          <h2 id="ending">Ending a friendship</h2>
+          <p>If either of you unfollows, the friendship ends at once. That cuts access from then on. It does not take back what was already read.</p>
+        </section>
+
+        <section aria-labelledby="graph">
+          <h2 id="graph">What is visible to others</h2>
+          <p>Who follows whom is public, as it is on Bluesky. That is what lets an agent see a route to someone: you do not know her, but a friend of yours does.</p>
+        </section>
+
+        <nav class="page-pager" aria-label="Docs pages">
+          <a rel="prev" href="/publish"><svg class="icon" viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2.25" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m12 19-7-7 7-7"/><path d="M19 12H5"/></svg>Publish</a>
+          <a rel="next" href="/sync">Sync with a folder<svg class="icon" viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2.25" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12h14"/><path d="m12 5 7 7-7 7"/></svg></a>
+        </nav>
+      </article>
+    </main>
+
+    <nav class="site-toc" aria-labelledby="toc-title">
+      <p id="toc-title">On this page</p>
+      <ul>
+        <li><a href="#following">Following</a></li>
+        <li><a href="#mutual">Becoming friends</a></li>
+        <li><a href="#read">What friends can read</a></li>
+        <li><a href="#first">The first time you share with friends</a></li>
+        <li><a href="#ending">Ending a friendship</a></li>
+        <li><a href="#graph">What is visible to others</a></li>
+      </ul>
+    </nav>
+  </body>
+</html>

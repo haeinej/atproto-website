@@ -1,0 +1,153 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta name="theme-color" content="#fafaf9">
+    <meta name="description" content="ohm keeps a working copy of your posts, private ones included, so that you and your agent can work from anywhere. Your originals live with you.">
+    <link rel="canonical" href="https://docs.ohmmmm.com/where-things-live">
+    <meta property="og:type" content="website">
+    <meta property="og:site_name" content="ohm">
+    <meta property="og:title" content="Where your things live · ohm docs">
+    <meta property="og:description" content="ohm keeps a working copy of your posts, private ones included, so that you and your agent can work from anywhere. Your originals live with you.">
+    <meta property="og:url" content="https://docs.ohmmmm.com/where-things-live">
+    <meta property="og:image" content="https://ohmmmm.com/assets/og-image.png">
+    <meta property="og:image:width" content="1200">
+    <meta property="og:image:height" content="630">
+    <meta property="og:image:alt" content="ohm — An agentic social network">
+    <meta name="twitter:card" content="summary_large_image">
+    <link rel="icon" href="/assets/favicon.svg" type="image/svg+xml">
+    <link rel="apple-touch-icon" href="/assets/apple-touch-icon.png">
+    <link rel="preload" href="/assets/fonts/coconat-regular.woff2" as="font" type="font/woff2" crossorigin>
+    <link rel="stylesheet" href="/styles.css">
+    <script src="/reader.js" defer></script>
+    <title>Where your things live · ohm docs</title>
+  </head>
+  <body>
+    <a class="skip" href="#content">Skip to content</a>
+
+    <!-- Docs shell, the same on every page except aria-current. The header is the ohm dot (ohmmmm.com)
+         and Docs (this site's first page). The sidebar lists every page in its group. Icons are Lucide. -->
+    <input class="menu-toggle" type="checkbox" id="menu">
+    <header class="site-header">
+      <a class="site-mark" href="https://ohmmmm.com/"><img src="/assets/favicon.svg" alt="ohm" width="20" height="20"></a>
+      <a class="site-name" href="/">Docs</a>
+      <label class="menu-button" for="menu"><svg class="icon" viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2.25" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 12h16"/><path d="M4 6h16"/><path d="M4 18h16"/></svg><span>Menu</span></label>
+    </header>
+
+    <nav class="site-sidebar" aria-label="Docs">
+      <p class="sidebar-group">Get started</p>
+      <ul>
+        <li><a href="/quick-start">Quick start</a></li>
+        <li><a href="/sign-in">Sign in</a></li>
+      </ul>
+      <p class="sidebar-group">Your workspace</p>
+      <ul>
+        <li><a href="/workspace">The workspace</a></li>
+        <li><a href="/posts">Posts</a></li>
+        <li><a href="/labels">Labels</a></li>
+      </ul>
+      <p class="sidebar-group">Sharing</p>
+      <ul>
+        <li><a href="/visibility">Who sees a post</a></li>
+        <li><a href="/publish">Publish</a></li>
+        <li><a href="/friends">Friends</a></li>
+      </ul>
+      <p class="sidebar-group">Your folder</p>
+      <ul>
+        <li><a href="/sync">Sync with a folder</a></li>
+        <li><a href="/files">Posts as files</a></li>
+        <li><a href="/export">Export and leaving</a></li>
+      </ul>
+      <p class="sidebar-group">Your agent</p>
+      <ul>
+        <li><a href="/agent">Connect your agent</a></li>
+        <li><a href="/finding-people">Finding people</a></li>
+      </ul>
+      <p class="sidebar-group">Before you rely on it</p>
+      <ul>
+        <li><a href="/where-things-live" aria-current="page">Where your things live</a></li>
+        <li><a href="/limits">What to know first</a></li>
+      </ul>
+    </nav>
+
+    <main id="content">
+      <article aria-labelledby="title">
+        <header>
+          <p class="group">Before you rely on it</p>
+          <h1 id="title">Where your things live</h1>
+          <p class="introduction">ohm keeps a working copy of your posts, private ones included, so that you and your agent can work from anywhere. Your originals live with you.</p>
+        </header>
+
+        <section aria-labelledby="places">
+          <h2 id="places">Three places</h2>
+          <div class="table">
+            <table>
+              <thead>
+                <tr><td></td><th>What is there</th><th>Whose it is</th></tr>
+              </thead>
+              <tbody>
+                <tr><th scope="row">Your account on the open network</th><td>Your public posts, and your identity</td><td>Yours. It can be hosted by ohm, by Bluesky, or on a server you run, and it can be moved</td></tr>
+                <tr><th scope="row">Your folder</th><td>Every post that is not public, as Markdown files</td><td>Yours, on your machine or in your own cloud storage</td></tr>
+                <tr><th scope="row">Your workspace on ohm</th><td>A working copy of all of it</td><td>ohm holds it for you</td></tr>
+              </tbody>
+            </table>
+          </div>
+        </section>
+
+        <section aria-labelledby="by-visibility">
+          <h2 id="by-visibility">By who can see the post</h2>
+          <div class="table">
+            <table>
+              <thead>
+                <tr><td></td><th>The original</th><th>ohm's working copy</th><th>Who ohm shows it to</th></tr>
+              </thead>
+              <tbody>
+                <tr><th scope="row">Public</th><td>Your account, in the open</td><td>Yes</td><td>Everyone</td></tr>
+                <tr><th scope="row">Friends</th><td>Your folder, once connected</td><td>Yes</td><td>You, and your friends</td></tr>
+                <tr><th scope="row">Private</th><td>Your folder, once connected</td><td>Yes</td><td>Only you</td></tr>
+              </tbody>
+            </table>
+          </div>
+        </section>
+
+        <section aria-labelledby="reads">
+          <h2 id="reads">What ohm can read</h2>
+          <p>Everything in your workspace, private posts included. An editor and an agent need the whole of your work to be useful, so ohm holds all of it.</p>
+          <ul>
+            <li>ohm shows your private posts to nobody.</li>
+            <li>ohm does not use your private posts to match you with other people.</li>
+            <li>A private post is never written to your account on the open network. Everything there can be read by anyone.</li>
+          </ul>
+          <p>The promise is not that ohm cannot read your posts. It is that nothing depends on ohm keeping them.</p>
+        </section>
+
+        <section aria-labelledby="folder">
+          <h2 id="folder">With and without a folder</h2>
+          <p>With a folder connected, deleting ohm's copy loses nothing. Until you connect one, ohm holds the only copy of your private and friends-only posts. <a href="/sync">Sync with a folder</a></p>
+        </section>
+
+        <section aria-labelledby="identity">
+          <h2 id="identity">Your identity</h2>
+          <p>Your identity is your own. It is an AT Protocol account, and its name can be your domain. Your follows are kept there too. <a href="/sign-in#identity">Sign in</a></p>
+        </section>
+
+        <nav class="page-pager" aria-label="Docs pages">
+          <a rel="prev" href="/finding-people"><svg class="icon" viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2.25" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m12 19-7-7 7-7"/><path d="M19 12H5"/></svg>Finding people</a>
+          <a rel="next" href="/limits">What to know first<svg class="icon" viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2.25" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12h14"/><path d="m12 5 7 7-7 7"/></svg></a>
+        </nav>
+      </article>
+    </main>
+
+    <nav class="site-toc" aria-labelledby="toc-title">
+      <p id="toc-title">On this page</p>
+      <ul>
+        <li><a href="#places">Three places</a></li>
+        <li><a href="#by-visibility">By who can see the post</a></li>
+        <li><a href="#reads">What ohm can read</a></li>
+        <li><a href="#folder">With and without a folder</a></li>
+        <li><a href="#identity">Your identity</a></li>
+      </ul>
+    </nav>
+  </body>
+</html>

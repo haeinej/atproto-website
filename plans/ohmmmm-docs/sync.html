@@ -1,0 +1,182 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta name="theme-color" content="#fafaf9">
+    <meta name="description" content="Connect a folder of your own and your posts live there as Markdown files. Sync brings the folder and your workspace into line, in both directions.">
+    <link rel="canonical" href="https://docs.ohmmmm.com/sync">
+    <meta property="og:type" content="website">
+    <meta property="og:site_name" content="ohm">
+    <meta property="og:title" content="Sync with a folder · ohm docs">
+    <meta property="og:description" content="Connect a folder of your own and your posts live there as Markdown files. Sync brings the folder and your workspace into line, in both directions.">
+    <meta property="og:url" content="https://docs.ohmmmm.com/sync">
+    <meta property="og:image" content="https://ohmmmm.com/assets/og-image.png">
+    <meta property="og:image:width" content="1200">
+    <meta property="og:image:height" content="630">
+    <meta property="og:image:alt" content="ohm — An agentic social network">
+    <meta name="twitter:card" content="summary_large_image">
+    <link rel="icon" href="/assets/favicon.svg" type="image/svg+xml">
+    <link rel="apple-touch-icon" href="/assets/apple-touch-icon.png">
+    <link rel="preload" href="/assets/fonts/coconat-regular.woff2" as="font" type="font/woff2" crossorigin>
+    <link rel="stylesheet" href="/styles.css">
+    <script src="/reader.js" defer></script>
+    <title>Sync with a folder · ohm docs</title>
+  </head>
+  <body>
+    <a class="skip" href="#content">Skip to content</a>
+
+    <!-- Docs shell, the same on every page except aria-current. The header is the ohm dot (ohmmmm.com)
+         and Docs (this site's first page). The sidebar lists every page in its group. Icons are Lucide. -->
+    <input class="menu-toggle" type="checkbox" id="menu">
+    <header class="site-header">
+      <a class="site-mark" href="https://ohmmmm.com/"><img src="/assets/favicon.svg" alt="ohm" width="20" height="20"></a>
+      <a class="site-name" href="/">Docs</a>
+      <label class="menu-button" for="menu"><svg class="icon" viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2.25" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 12h16"/><path d="M4 6h16"/><path d="M4 18h16"/></svg><span>Menu</span></label>
+    </header>
+
+    <nav class="site-sidebar" aria-label="Docs">
+      <p class="sidebar-group">Get started</p>
+      <ul>
+        <li><a href="/quick-start">Quick start</a></li>
+        <li><a href="/sign-in">Sign in</a></li>
+      </ul>
+      <p class="sidebar-group">Your workspace</p>
+      <ul>
+        <li><a href="/workspace">The workspace</a></li>
+        <li><a href="/posts">Posts</a></li>
+        <li><a href="/labels">Labels</a></li>
+      </ul>
+      <p class="sidebar-group">Sharing</p>
+      <ul>
+        <li><a href="/visibility">Who sees a post</a></li>
+        <li><a href="/publish">Publish</a></li>
+        <li><a href="/friends">Friends</a></li>
+      </ul>
+      <p class="sidebar-group">Your folder</p>
+      <ul>
+        <li><a href="/sync" aria-current="page">Sync with a folder</a></li>
+        <li><a href="/files">Posts as files</a></li>
+        <li><a href="/export">Export and leaving</a></li>
+      </ul>
+      <p class="sidebar-group">Your agent</p>
+      <ul>
+        <li><a href="/agent">Connect your agent</a></li>
+        <li><a href="/finding-people">Finding people</a></li>
+      </ul>
+      <p class="sidebar-group">Before you rely on it</p>
+      <ul>
+        <li><a href="/where-things-live">Where your things live</a></li>
+        <li><a href="/limits">What to know first</a></li>
+      </ul>
+    </nav>
+
+    <main id="content">
+      <article aria-labelledby="title">
+        <header>
+          <p class="group">Your folder</p>
+          <h1 id="title">Sync with a folder</h1>
+          <p class="introduction">Connect a folder of your own and your posts live there as Markdown files. Sync brings the folder and your workspace into line, in both directions.</p>
+          <p class="note">Sync is still being made. A folder on your computer comes first, and cloud storage after it.</p>
+        </header>
+
+        <section aria-labelledby="why">
+          <h2 id="why">Why connect a folder</h2>
+          <p>Your workspace is a working copy. With a folder connected, the originals of your private and friends-only posts are files you hold, on your own machine or in the cloud storage you already use.</p>
+          <ul>
+            <li>You can open and edit them in any Markdown editor, such as Obsidian.</li>
+            <li>Deleting ohm's copy loses nothing: syncing from the folder brings every post back.</li>
+          </ul>
+          <p>Until you connect a folder, ohm holds the only copy of your private and friends-only posts, and the workspace says so.</p>
+        </section>
+
+        <section aria-labelledby="connect">
+          <h2 id="connect">Connect one</h2>
+          <p>Choose a folder, connect it, and press Sync. The first sync writes every post into it, filed in folders named for your labels. <a href="/files">How posts look as files</a></p>
+          <p>The folder can be on your computer, or in any cloud storage that keeps a folder in sync.</p>
+        </section>
+
+        <section aria-labelledby="does">
+          <h2 id="does">What Sync does</h2>
+          <p>Sync compares each post in your workspace with its file, and with what was there at the last sync.</p>
+          <div class="table">
+            <table>
+              <thead>
+                <tr><th>In your folder</th><th>In your workspace</th><th>Sync does</th></tr>
+              </thead>
+              <tbody>
+                <tr><th scope="row">A new or changed file</th><td>Unchanged since the last sync</td><td>Updates your workspace</td></tr>
+                <tr><th scope="row">Unchanged since the last sync</th><td>A new or changed post</td><td>Writes it to your folder</td></tr>
+                <tr><th scope="row">Changed</th><td>Changed differently</td><td>Overwrites neither. See below</td></tr>
+                <tr><th scope="row">A file removed</th><td>The post is still there</td><td>Asks you before removing the post</td></tr>
+              </tbody>
+            </table>
+          </div>
+        </section>
+
+        <section aria-labelledby="conflict">
+          <h2 id="conflict">When both sides changed</h2>
+          <p>If you edited a post in your folder and in your workspace since the last sync, neither version is overwritten. Sync puts ohm's version beside your file under a name that says so, reports it, and you choose which one stands.</p>
+        </section>
+
+        <section aria-labelledby="never">
+          <h2 id="never">Sync never publishes</h2>
+          <p>An edit you make to a public post's file arrives in your workspace as a change that is not published yet. Readers see it after you publish.</p>
+          <p>Writing <code>visibility: public</code> in a file only marks the post. It becomes public when you press Publish.</p>
+        </section>
+
+        <section aria-labelledby="obsidian">
+          <h2 id="obsidian">What you do in the folder, and what Sync makes of it</h2>
+          <div class="table">
+            <table>
+              <thead>
+                <tr><th>In your folder</th><th>Sync reads it as</th></tr>
+              </thead>
+              <tbody>
+                <tr><th scope="row">A new file</th><td>A new post. Its slug is the file name, and it is private unless the file says otherwise</td></tr>
+                <tr><th scope="row">A file moved to another folder</th><td>The post refiled under another label. For a published post this changes its address, which Publish shows first</td></tr>
+                <tr><th scope="row">A file renamed</th><td>The same post with a new slug. For a published post, the old address sends readers on</td></tr>
+                <tr><th scope="row">A file deleted</th><td>A post to ask you about</td></tr>
+                <tr><th scope="row"><code>[[another note]]</code> and <code>![[image.png]]</code></th><td>A link to that post, and a picture. They are kept in the file as you wrote them</td></tr>
+                <tr><th scope="row">Properties edited in Obsidian's own panel</th><td>The post's properties</td></tr>
+              </tbody>
+            </table>
+          </div>
+        </section>
+
+        <section aria-labelledby="leaves">
+          <h2 id="leaves">What Sync leaves alone</h2>
+          <ul>
+            <li><strong>Files that are not posts.</strong> Your editor's own settings and anything else in the folder stay yours and are not sent.</li>
+            <li><strong>How you formatted a file.</strong> Sync compares posts, not characters. A file you laid out differently is the same post, and it is rewritten only when the post itself changed in your workspace.</li>
+            <li><strong>A file that cannot be read as a post.</strong> It is reported to you by name, and nothing is sent.</li>
+          </ul>
+        </section>
+
+        <section aria-labelledby="interrupted">
+          <h2 id="interrupted">If a sync is interrupted</h2>
+          <p>Run it again. A sync can be repeated safely, and it picks up where things stand.</p>
+        </section>
+
+        <nav class="page-pager" aria-label="Docs pages">
+          <a rel="prev" href="/friends"><svg class="icon" viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2.25" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m12 19-7-7 7-7"/><path d="M19 12H5"/></svg>Friends</a>
+          <a rel="next" href="/files">Posts as files<svg class="icon" viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2.25" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12h14"/><path d="m12 5 7 7-7 7"/></svg></a>
+        </nav>
+      </article>
+    </main>
+
+    <nav class="site-toc" aria-labelledby="toc-title">
+      <p id="toc-title">On this page</p>
+      <ul>
+        <li><a href="#why">Why connect a folder</a></li>
+        <li><a href="#connect">Connect one</a></li>
+        <li><a href="#does">What Sync does</a></li>
+        <li><a href="#conflict">When both sides changed</a></li>
+        <li><a href="#never">Sync never publishes</a></li>
+        <li><a href="#obsidian">What you do in the folder, and what Sync makes of it</a></li>
+        <li><a href="#leaves">What Sync leaves alone</a></li>
+        <li><a href="#interrupted">If a sync is interrupted</a></li>
+      </ul>
+    </nav>
+  </body>
+</html>

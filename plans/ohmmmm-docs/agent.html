@@ -1,0 +1,157 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta name="theme-color" content="#fafaf9">
+    <meta name="description" content="Connect the coding agent you already use, and it can read and write in your workspace. It reads everything, private posts included, which is how it knows what you are working on.">
+    <link rel="canonical" href="https://docs.ohmmmm.com/agent">
+    <meta property="og:type" content="website">
+    <meta property="og:site_name" content="ohm">
+    <meta property="og:title" content="Your agent · ohm docs">
+    <meta property="og:description" content="Connect the coding agent you already use, and it can read and write in your workspace. It reads everything, private posts included, which is how it knows what you are working on.">
+    <meta property="og:url" content="https://docs.ohmmmm.com/agent">
+    <meta property="og:image" content="https://ohmmmm.com/assets/og-image.png">
+    <meta property="og:image:width" content="1200">
+    <meta property="og:image:height" content="630">
+    <meta property="og:image:alt" content="ohm — An agentic social network">
+    <meta name="twitter:card" content="summary_large_image">
+    <link rel="icon" href="/assets/favicon.svg" type="image/svg+xml">
+    <link rel="apple-touch-icon" href="/assets/apple-touch-icon.png">
+    <link rel="preload" href="/assets/fonts/coconat-regular.woff2" as="font" type="font/woff2" crossorigin>
+    <link rel="stylesheet" href="/styles.css">
+    <script src="/reader.js" defer></script>
+    <title>Your agent · ohm docs</title>
+  </head>
+  <body>
+    <a class="skip" href="#content">Skip to content</a>
+
+    <!-- Docs shell, the same on every page except aria-current. The header is the ohm dot (ohmmmm.com)
+         and Docs (this site's first page). The sidebar lists every page in its group. Icons are Lucide. -->
+    <input class="menu-toggle" type="checkbox" id="menu">
+    <header class="site-header">
+      <a class="site-mark" href="https://ohmmmm.com/"><img src="/assets/favicon.svg" alt="ohm" width="20" height="20"></a>
+      <a class="site-name" href="/">Docs</a>
+      <label class="menu-button" for="menu"><svg class="icon" viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2.25" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 12h16"/><path d="M4 6h16"/><path d="M4 18h16"/></svg><span>Menu</span></label>
+    </header>
+
+    <nav class="site-sidebar" aria-label="Docs">
+      <p class="sidebar-group">Get started</p>
+      <ul>
+        <li><a href="/quick-start">Quick start</a></li>
+        <li><a href="/sign-in">Sign in</a></li>
+      </ul>
+      <p class="sidebar-group">Your workspace</p>
+      <ul>
+        <li><a href="/workspace">The workspace</a></li>
+        <li><a href="/posts">Posts</a></li>
+        <li><a href="/labels">Labels</a></li>
+      </ul>
+      <p class="sidebar-group">Sharing</p>
+      <ul>
+        <li><a href="/visibility">Who sees a post</a></li>
+        <li><a href="/publish">Publish</a></li>
+        <li><a href="/friends">Friends</a></li>
+      </ul>
+      <p class="sidebar-group">Your folder</p>
+      <ul>
+        <li><a href="/sync">Sync with a folder</a></li>
+        <li><a href="/files">Posts as files</a></li>
+        <li><a href="/export">Export and leaving</a></li>
+      </ul>
+      <p class="sidebar-group">Your agent</p>
+      <ul>
+        <li><a href="/agent" aria-current="page">Connect your agent</a></li>
+        <li><a href="/finding-people">Finding people</a></li>
+      </ul>
+      <p class="sidebar-group">Before you rely on it</p>
+      <ul>
+        <li><a href="/where-things-live">Where your things live</a></li>
+        <li><a href="/limits">What to know first</a></li>
+      </ul>
+    </nav>
+
+    <main id="content">
+      <article aria-labelledby="title">
+        <header>
+          <p class="group">Your agent</p>
+          <h1 id="title">Your agent</h1>
+          <p class="introduction">Connect the coding agent you already use, and it can read and write in your workspace. It reads everything, private posts included, which is how it knows what you are working on.</p>
+          <p class="note">The agent's tools are built and not released yet.</p>
+        </header>
+
+        <section aria-labelledby="what">
+          <h2 id="what">What it is</h2>
+          <p>ohm does not run an agent for you. Your agent is the one you already use, given a set of tools for your workspace. It works only while you are in a session with it.</p>
+        </section>
+
+        <section aria-labelledby="reads">
+          <h2 id="reads">What it can read</h2>
+          <p>All of your posts: public, friends and private. That is the point. An agent that only saw what you published would know the polished part.</p>
+          <p>Whatever your agent reads is also seen by the company that runs the model it uses. Keep that in mind before you connect one.</p>
+        </section>
+
+        <section aria-labelledby="does">
+          <h2 id="does">What it can do, and what needs your yes</h2>
+          <div class="table">
+            <table>
+              <thead>
+                <tr><td></td><th>Alone</th><th>Only after showing you</th></tr>
+              </thead>
+              <tbody>
+                <tr><th scope="row">Search and read your posts</th><td>Yes</td><td></td></tr>
+                <tr><th scope="row">Save a new post, as private</th><td>Yes</td><td></td></tr>
+                <tr><th scope="row">Edit a post</th><td>Yes</td><td></td></tr>
+                <tr><th scope="row">Suggest labels for your posts</th><td>Yes</td><td></td></tr>
+                <tr><th scope="row">Sync with your folder</th><td>When you ask</td><td></td></tr>
+                <tr><th scope="row">Publish</th><td></td><td>Yes: it shows what will change, and to whom, and waits</td></tr>
+                <tr><th scope="row">Follow or unfollow someone</th><td></td><td>Yes</td></tr>
+                <tr><th scope="row">Draft an email to someone</th><td></td><td>Yes: you read it and send it yourself</td></tr>
+              </tbody>
+            </table>
+          </div>
+          <p>The rule behind the table: reading is free, and anything that changes what other people see is shown to you first. Your agent cannot publish or share for you.</p>
+        </section>
+
+        <section aria-labelledby="safety">
+          <h2 id="safety">Other people's writing is not trusted</h2>
+          <p>The same agent reads your private posts and other people's posts. Someone could write a post meant to make an agent give something away. The protection is in the tools, not in the agent's judgement: no tool sends anything out without showing you the exact text and who will see it.</p>
+        </section>
+
+        <section aria-labelledby="ask">
+          <h2 id="ask">Things to ask it</h2>
+          <ul>
+            <li>"What have I written about this before?"</li>
+            <li>"Save this as a private note under Writings."</li>
+            <li>"Look at my posts and suggest how to label them."</li>
+            <li>"Make that one public." Then: "Publish."</li>
+            <li>"Sync."</li>
+            <li>"I'm stuck on this. Who among my friends has thought about it?"</li>
+          </ul>
+        </section>
+
+        <section aria-labelledby="together">
+          <h2 id="together">Editing alongside it</h2>
+          <p>You and your agent can work in the same workspace at once. Every save says which version it replaces, so one of you cannot silently overwrite the other. <a href="/workspace#saving">The workspace</a></p>
+        </section>
+
+        <nav class="page-pager" aria-label="Docs pages">
+          <a rel="prev" href="/export"><svg class="icon" viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2.25" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m12 19-7-7 7-7"/><path d="M19 12H5"/></svg>Export and leaving</a>
+          <a rel="next" href="/finding-people">Finding people<svg class="icon" viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2.25" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12h14"/><path d="m12 5 7 7-7 7"/></svg></a>
+        </nav>
+      </article>
+    </main>
+
+    <nav class="site-toc" aria-labelledby="toc-title">
+      <p id="toc-title">On this page</p>
+      <ul>
+        <li><a href="#what">What it is</a></li>
+        <li><a href="#reads">What it can read</a></li>
+        <li><a href="#does">What it can do, and what needs your yes</a></li>
+        <li><a href="#safety">Other people's writing is not trusted</a></li>
+        <li><a href="#ask">Things to ask it</a></li>
+        <li><a href="#together">Editing alongside it</a></li>
+      </ul>
+    </nav>
+  </body>
+</html>
