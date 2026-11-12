@@ -1,0 +1,5 @@
+{
+  "@context": ["https://www.w3.org/ns/did/v1"],
+  "id": "did:web:vault.ohmmmm.com",
+  "service": [{ "id": "#ohm_vault", "type": "OhmVault", "serviceEndpoint": "https://vault.ohmmmm.com" }]
+}

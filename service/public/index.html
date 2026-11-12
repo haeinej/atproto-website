@@ -1,0 +1,101 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta name="theme-color" content="#fafaf9">
+    <meta name="robots" content="noindex">
+    <link rel="icon" href="/assets/favicon.svg" type="image/svg+xml">
+    <link rel="preload" href="/assets/coconat-regular.woff2" as="font" type="font/woff2" crossorigin>
+    <link rel="stylesheet" href="/editor.css">
+    <script src="/editor.js" type="module"></script>
+    <title>Vault · ohm</title>
+  </head>
+  <body>
+    <header class="top">
+      <a class="mark" href="/"><img src="/assets/favicon.svg" alt="ohm" width="20" height="20"></a>
+      <h1>vault</h1>
+      <p id="who" class="quiet">Not signed in</p>
+      <button id="sign-out" type="button" hidden>Sign out</button>
+    </header>
+
+    <!-- Signing in. The app password goes to your own PDS and nowhere else. -->
+    <section id="sign-in" aria-labelledby="sign-in-title">
+      <h2 id="sign-in-title">Sign in with your AT Protocol account</h2>
+      <p>This page asks your own PDS to sign you in, then asks it for a short-lived token each time it talks to the vault. Your app password is sent to your PDS only. It is not sent to ohm and not kept after you close this page.</p>
+      <form id="sign-in-form" autocomplete="off">
+        <label>Your PDS <input id="pds" type="url" placeholder="https://pds.example.com" required></label>
+        <label>Handle or DID <input id="identifier" type="text" placeholder="example.com" required autocapitalize="none" spellcheck="false"></label>
+        <label>App password <input id="password" type="password" required autocomplete="off"></label>
+        <button type="submit">Sign in</button>
+      </form>
+      <p id="sign-in-problem" role="alert"></p>
+    </section>
+
+    <main id="workspace" hidden>
+      <nav id="tree-pane" aria-label="Your vault">
+        <div class="row">
+          <button id="new-post" type="button">New post</button>
+          <button id="refresh" type="button">Refresh</button>
+        </div>
+        <p id="counts" class="quiet"></p>
+        <div id="tree"></div>
+      </nav>
+
+      <section id="post-pane" aria-labelledby="post-title">
+        <h2 id="post-title">Choose a post, or make a new one</h2>
+        <form id="post-form" hidden>
+          <label>Title <input id="title" type="text" maxlength="300"></label>
+          <div class="row">
+            <label>Label <input id="label" type="text" maxlength="100" placeholder="Writings"></label>
+            <label>Sublabel <input id="sublabel" type="text" maxlength="100"></label>
+          </div>
+          <div class="row">
+            <label>Slug <input id="slug" type="text" maxlength="120" required pattern="[a-z0-9]+(-[a-z0-9]+)*" autocapitalize="none" spellcheck="false"></label>
+            <label>Who can see it
+              <select id="visibility">
+                <option value="private">Only me</option>
+                <option value="friends">Friends</option>
+                <option value="public">Everyone</option>
+              </select>
+            </label>
+            <label>Date <input id="date" type="text" placeholder="2026-11-12"></label>
+          </div>
+          <label>Body <textarea id="body" rows="16" required spellcheck="true"></textarea></label>
+          <p id="post-facts" class="quiet"></p>
+          <ul id="post-problems"></ul>
+          <div class="row">
+            <button id="save" type="submit">Save</button>
+            <button id="delete" type="button">Delete</button>
+          </div>
+          <p class="quiet">Saving changes only ohm's working copy. Nothing on this page publishes: a post marked "Everyone" is not public until Publish exists and you press it.</p>
+        </form>
+      </section>
+
+      <aside id="path-pane" aria-labelledby="path-title">
+        <h2 id="path-title">Test the path</h2>
+
+        <h3>1. Bring in what you have published</h3>
+        <label>Your website <input id="site" type="url" placeholder="https://example.com"></label>
+        <label>Older post type, if any <input id="older" type="text" placeholder="com.example.post" autocapitalize="none" spellcheck="false"></label>
+        <div class="row">
+          <button id="import-look" type="button">Look first</button>
+          <button id="import-apply" type="button">Bring them in</button>
+        </div>
+
+        <h3>2. Write your vault out</h3>
+        <p class="quiet">Every post as a Markdown file, in folders by label. The same files open in Obsidian.</p>
+        <div class="row">
+          <button id="export-folder" type="button">Into a folder</button>
+          <button id="export-file" type="button">As one file</button>
+        </div>
+
+        <h3>3. Not here yet</h3>
+        <p class="quiet">Publish, attachments, and syncing a folder from this page. Sync works from the command line: <code>ohm-content-layer sync</code>.</p>
+
+        <h3>What happened</h3>
+        <ol id="log" reversed></ol>
+      </aside>
+    </main>
+  </body>
+</html>
