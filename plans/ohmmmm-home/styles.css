@@ -235,6 +235,11 @@ section ol { margin: 0; padding-left: 1.2em; }
 
   .site-header { height: var(--ohm-header); }
 
+  .site-sections a {
+    display: inline-block;
+    padding-block: 12px; /* 44px touch target */
+  }
+
   main { padding: 24px 0 56px; }
 
   .site-footer { padding-top: 0; }
