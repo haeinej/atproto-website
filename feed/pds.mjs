@@ -8,7 +8,7 @@ export const BSKY_POST = 'app.bsky.feed.post';
 export const POST = 'com.ohmmmm.post';
 export const BSKY_PROFILE = 'app.bsky.actor.profile';
 // The fixed fields of a post, the same on every site.
-export const POST_FIELDS = ['title', 'subtitle', 'body', 'publishedAt', 'updatedAt', 'canonicalUrl', 'form', 'label',
+export const POST_FIELDS = ['title', 'subtitle', 'body', 'publishedAt', 'updatedAt', 'canonicalUrl', 'slug', 'form', 'label',
   'sublabel', 'connect', 'link', 'source', 'media', 'site'];
 const DID = /^(?:did:plc:[a-z2-7]{24}|did:web:[a-zA-Z0-9.-]+)$/;
 const RECORD_KEY = /^[a-zA-Z0-9._:~-]{1,512}$/;
@@ -192,6 +192,7 @@ export function normalizeArchivePost(value, key, pds) {
   const canonicalUrl = webUrl(value.canonicalUrl);
   if (!Number.isFinite(time) || !canonicalUrl) return null;
   const { form, label, sublabel } = filing(value);
+  const slug = typeof value.slug === 'string' && /^[a-z0-9]+(?:-[a-z0-9]+)*$/.test(value.slug) && value.slug.length <= 120 ? value.slug : key;
   const self = `at://${pds.did}/${collection}/${key}`;
   const connect = [...new Set((Array.isArray(value.connect) ? value.connect : []).slice(0, 32).map(connectUri))]
     .filter(uri => uri && uri !== self);
@@ -234,7 +235,10 @@ export function normalizeArchivePost(value, key, pds) {
     subtitle: text(value.title, 300) ? text(value.subtitle, 300) : '',
     createdAt: new Date(time).toISOString(),
     canonicalUrl,
-    permalink: postPath({ label, sublabel }, key),
+    // A post's address ends in its slug. A record written before posts had slugs is kept under its
+    // slug, so its key is used.
+    slug,
+    permalink: postPath({ label, sublabel }, slug),
     sourceUrl: webUrl(value.source?.uri),
     // Where the post was first published. A post written for this site is from the website.
     platform: (typeof value.source?.platform === 'string' && value.source.platform.trim().slice(0, 40)) || 'website',

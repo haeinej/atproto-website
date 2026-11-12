@@ -41,6 +41,11 @@
             "format": "uri",
             "description": "The post's address on the author's public website. It is the same whoever can see the post: a post that is not public holds the address it would have if it were."
           },
+          "slug": {
+            "type": "string",
+            "maxLength": 120,
+            "description": "The last part of the post's address on the author's website: lowercase Latin letters and digits joined by single hyphens. It can be changed, and the record stays the same record. A record with no slug uses its own key."
+          },
           "form": {
             "type": "string",
             "description": "What kind of object this post is, identified from its format. A writing has a title and free-form content; a note has no title. An image, gallery, video, audio, file, or media post holds only attachments. A link, embed, quote, list, or code post holds only that. Other is anything else. The list can grow: treat a form you do not know as other, and show the title, body, and attachments.",

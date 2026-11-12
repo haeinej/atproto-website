@@ -508,7 +508,7 @@ test('the post schema is fixed, and a site adds its own fields only through its 
   // Adding a field here is a change to the shared schema for every site. A field one site needs
   // belongs in that site's optional schema instead.
   assert.deepEqual(Object.keys(schema.properties), [
-    'title', 'subtitle', 'body', 'publishedAt', 'updatedAt', 'canonicalUrl', 'form', 'label', 'sublabel', 'connect', 'link',
+    'title', 'subtitle', 'body', 'publishedAt', 'updatedAt', 'canonicalUrl', 'slug', 'form', 'label', 'sublabel', 'connect', 'link',
     'source', 'site', 'media',
   ]);
   assert.deepEqual(Object.keys(schema.properties).sort(), [...POST_FIELDS].sort());

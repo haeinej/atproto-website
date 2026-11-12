@@ -132,20 +132,48 @@ export async function refreshNotes(env, request = fetch, now = new Date()) {
   return snapshot;
 }
 
-export async function servePost(request, env, key, get = fetch) {
+// The key of the record whose address ends in this slug, from the list the site last built.
+async function keyForSlug(env, pds, slug) {
+  const graph = (await env.NOTES?.get(SNAPSHOT_KEY, 'json').catch(() => null))?.graph ?? {};
+  const prefix = `at://${pds.did}/${pds.collection}/`;
+  for (const [uri, post] of Object.entries(graph)) {
+    if (!uri.startsWith(prefix) || typeof post?.href !== 'string' || !post.href.startsWith('/posts/')) continue;
+    let last;
+    try {
+      last = decodeURIComponent(post.href.split('/').at(-1));
+    } catch {
+      continue;
+    }
+    if (last === slug) return uri.slice(prefix.length);
+  }
+  return null;
+}
+
+// `name` is the last step of the address asked for. It is a post's slug, or the key of its record:
+// the two are the same for a post published before posts had IDs, and the key still works as a
+// short address for any post.
+export async function servePost(request, env, name, get = fetch) {
   if (request.method !== 'GET' && request.method !== 'HEAD') {
     return new Response(null, { status: 405, headers: { Allow: 'GET, HEAD' } });
   }
-  if (!isRecordKey(key)) return new Response('Post not found', { status: 404 });
+  if (!isRecordKey(name)) return new Response('Post not found', { status: 404 });
   try {
     const pds = pdsConfig(env);
-    const url = new URL('/xrpc/com.atproto.repo.getRecord', pds.origin);
-    url.search = new URLSearchParams({ repo: pds.did, collection: pds.collection, rkey: key });
-    const response = await get(url, { redirect: 'manual', signal: AbortSignal.timeout(10_000) });
-    if (response.status === 404) return new Response('Post not found', { status: 404 });
-    const data = await response.json();
-    if (response.status === 400 && data.error === 'RecordNotFound') {
-      return new Response('Post not found', { status: 404 });
+    const read = async key => {
+      const url = new URL('/xrpc/com.atproto.repo.getRecord', pds.origin);
+      url.search = new URLSearchParams({ repo: pds.did, collection: pds.collection, rkey: key });
+      const response = await get(url, { redirect: 'manual', signal: AbortSignal.timeout(10_000) });
+      const data = response.status === 404 ? {} : await response.json();
+      return { response, data, missing: response.status === 404 || (response.status === 400 && data.error === 'RecordNotFound') };
+    };
+    let key = name;
+    let { response, data, missing } = await read(key);
+    if (missing) {
+      // No record is kept under that name, so it is looked for as a slug.
+      key = await keyForSlug(env, pds, name);
+      if (!key || !isRecordKey(key)) return new Response('Post not found', { status: 404 });
+      ({ response, data, missing } = await read(key));
+      if (missing) return new Response('Post not found', { status: 404 });
     }
     if (!response.ok) throw new Error(`PDS returned HTTP ${response.status}`);
     const post = data.uri === `at://${pds.did}/${pds.collection}/${key}` &&

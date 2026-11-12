@@ -92,6 +92,8 @@ export function assembleRecord(note, { did, site, collection = POST, name = fiel
     // The post's address on the public site, which follows its label and sublabel. It is the same
     // at every visibility, so changing who can see a note moves it without rewriting it.
     canonicalUrl: new URL(postPath({ label, sublabel }, note.slug), origin).href,
+    // The record says what its slug is, because it may be kept under a key that is not the slug.
+    slug: note.slug,
     ...(title ? { title } : {}),
     ...(subtitle ? { subtitle } : {}),
     form,
@@ -137,6 +139,7 @@ export function recordProblems(record, key, { collection = POST } = {}) {
   if (!Number.isFinite(Date.parse(record.publishedAt))) problems.push('publishedAt must be a valid date');
   if (record.updatedAt !== undefined && !Number.isFinite(Date.parse(record.updatedAt))) problems.push('updatedAt must be a valid date');
   if (!webUrl(record.canonicalUrl)) problems.push('canonicalUrl must be an HTTP(S) URL');
+  if (record.slug !== undefined && !isSlug(record.slug)) problems.push('slug is lowercase Latin letters and digits joined by single hyphens, at most 120 characters');
   const text = (field, most) => {
     if (record[field] === undefined) return;
     if (typeof record[field] !== 'string' || graphemes(record[field]) > most) problems.push(`${field} can be at most ${most} characters`);

@@ -4,7 +4,7 @@ A post and a profile each have two layers. One is the same on every site. The ot
 
 | | The fixed schema | Your optional layer |
 | --- | --- | --- |
-| What it holds | A post's title, subtitle, body, dates, address, form, label, sublabel, connections, link, source, attachments. A profile's name, description, pronouns, links, pictures | Anything only your site needs |
+| What it holds | A post's title, subtitle, body, dates, address, slug, form, label, sublabel, connections, link, source, attachments. A profile's name, description, pronouns, links, pictures | Anything only your site needs |
 | Who defines it | This project | You, in a schema under your domain |
 | Who understands it | Any software that reads AT Protocol posts of this kind | Your own website |
 | Where it appears | Your site, the shared pages, and other applications | Your own site only |
