@@ -414,7 +414,8 @@ function folder(key, name, children) {
 const VISIBILITY = { public: 'Everyone', friends: 'Friends', private: 'Only me' };
 // A post that first appeared somewhere else names the platform; one that did not is the member's own.
 const OWN = 'Your website';
-const platformName = name => (name ? ({ bluesky: 'Bluesky', x: 'X', twitter: 'X' }[name.toLowerCase()] ?? name) : OWN);
+// A platform is written as its name is: the ones known by another spelling, then a capital for the rest.
+const platformName = name => (name ? ({ x: 'X', twitter: 'X', youtube: 'YouTube', linkedin: 'LinkedIn', github: 'GitHub', tiktok: 'TikTok' }[name.toLowerCase()] ?? name.charAt(0).toUpperCase() + name.slice(1)) : OWN);
 // Names go in the order they are read in: the member's own website before other platforms, and
 // the widest audience first.
 const inOrder = first => (a, b) => (first.includes(a) ? first.indexOf(a) : first.length) - (first.includes(b) ? first.indexOf(b) : first.length) || a.localeCompare(b);
