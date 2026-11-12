@@ -2,8 +2,12 @@
 <html lang="en">
   <head>
     <meta charset="utf-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
     <meta name="theme-color" content="#fafaf9">
+    <meta name="mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-title" content="ohm">
+    <meta name="apple-mobile-web-app-status-bar-style" content="default">
     <meta name="description" content="The terms for using ohm.">
     <link rel="canonical" href="https://ohmmmm.com/terms">
     <meta property="og:type" content="website">
@@ -27,12 +31,19 @@
   <body>
     <a class="skip" href="#content">Skip to content</a>
 
-    <!-- Site shell, the same on every page. The header is the ohm dot (home) and Docs, which is its own
-         site at docs.ohmmmm.com. The company directory is on the landing page only (the footer). -->
+    <!-- Site shell, the same on every page except aria-current: a sidebar with the ohm dot (home), then
+         About and Docs (its own site, docs.ohmmmm.com). On phones: the dot and Menu, which opens the list
+         full screen (the checkbox holds it open; no script). -->
+    <input class="menu-toggle" type="checkbox" id="menu" aria-label="Menu">
     <header class="site-header">
       <a class="site-mark" href="/"><img src="/assets/favicon.svg" alt="ohm" width="20" height="20"></a>
+      <label class="menu-button" for="menu"><span class="menu-open">Menu</span><span class="menu-close">Close</span></label>
       <nav class="site-sections" aria-label="Site">
-        <a href="https://docs.ohmmmm.com/">Docs</a>
+        <ul>
+          <li class="menu-only"><a href="/">Home</a></li>
+          <li><a href="/about">About</a></li>
+          <li><a href="https://docs.ohmmmm.com/">Docs<svg class="icon" viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2.25" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M7 7h10v10"/><path d="M7 17 17 7"/></svg></a></li>
+        </ul>
       </nav>
     </header>
 
