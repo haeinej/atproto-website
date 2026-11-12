@@ -267,6 +267,15 @@ test('a member\'s vault over the four requests, with the structure read from the
   assert.match(shown.problems.join(' '), /must be a valid date/);
 });
 
+test('a post that first appeared somewhere else says where, and the tree carries the platform\'s name', async () => {
+  const { haein, ask } = await running();
+  const skeet = post('a-skeet', { label: 'Notes', body: 'Short.', source: { platform: 'bluesky', uri: 'https://bsky.app/profile/haein.test/post/3k' } });
+  const own = post('written-here', { label: 'Notes', body: 'Longer.' });
+  for (const each of [skeet, own]) assert.equal((await ask(haein, 'putPost', { body: { post: each } })).status, 200);
+  const rows = (await (await ask(haein, 'getTree')).json()).labels.find(folder => folder.label === 'Notes').posts;
+  assert.deepEqual(rows.map(row => [row.slug, row.platform]).sort(), [['a-skeet', 'bluesky'], ['written-here', undefined]]);
+});
+
 test('a post goes out to a folder and comes back the same post, through the service', async () => {
   const { haein, ask } = await running();
   const original = post('seoul', { label: '글', title: '서울: "첫" 번째 #글', date: '2026-03-01', visibility: 'friends', body: '서울에 대하여, with [[A Link]].', properties: { tags: ['a, b', '42'], pinned: true } });

@@ -180,6 +180,20 @@ a.button.primary { color: var(--ohm-on-accent); }
 .directory-scroll { flex: 1; min-height: 0; overflow: auto; overscroll-behavior: contain; padding: var(--ohm-space-1) 0 var(--ohm-space-4); scrollbar-width: thin; scrollbar-color: var(--ohm-line) transparent; }
 
 /* The tree: the repository as folders. A label is a folder, a sublabel a folder inside it, a post a row. */
+/* Pills: small choices in a row. The ones choosing the view are one-of; the filter's are each on or
+   off, and one that is off is filtered out. */
+.pills { display: flex; flex-wrap: wrap; gap: var(--ohm-space-1); margin: 0 var(--ohm-space-1) var(--ohm-space-3); }
+.pill {
+  height: var(--ohm-height-xs); padding: 0 var(--ohm-space-3); border: 0; border-radius: var(--ohm-radius-pill); background: transparent; color: var(--ohm-muted);
+  font: var(--ohm-type-control-weight) var(--ohm-type-small-size) / var(--ohm-type-small-leading) var(--ohm-font-sans); letter-spacing: var(--ohm-type-small-tracking);
+  white-space: nowrap; cursor: pointer; transition: background-color var(--ohm-duration-state) var(--ohm-ease-out);
+}
+.pill[aria-pressed="true"] { background: var(--ohm-wash); color: var(--ohm-ink); }
+.pill:focus-visible { outline: 2px solid var(--ohm-focus); outline-offset: 2px; }
+@media (hover: hover) and (pointer: fine) { .pill:hover { color: var(--ohm-ink); } }
+#filters .pill[aria-pressed="false"] { text-decoration: line-through; }
+#filters { margin-bottom: var(--ohm-space-2); }
+.filter-name { margin: 0 var(--ohm-space-2) var(--ohm-space-1); }
 #counts { margin: 0 var(--ohm-space-2) var(--ohm-space-3); }
 #tree { --tree-row: var(--ohm-height-sm); --tree-indent: var(--ohm-space-4); }
 #tree ul { list-style: none; margin: 0; padding: 0; }

@@ -381,8 +381,9 @@ function list(posts) {
   items.append(...posts.map(postButton));
   return items;
 }
-// The repository as a tree of folders: a label is a folder, a sublabel a folder inside it, and
-// each post a row. A folder opens and closes, and stays as it was left on the next visit.
+// The repository as a tree of folders. What the folders are is the member's choice of view:
+// their labels (a label is a folder, a sublabel a folder inside it), the platforms the posts
+// first appeared on, or who can see them. A folder opens and closes, and stays as it was left.
 const closed = new Set(JSON.parse(localStorage.getItem('ohm.tree.closed') ?? '[]'));
 function folder(key, name, children) {
   const row = document.createElement('button');
@@ -408,15 +409,90 @@ function folder(key, name, children) {
   box.append(row, inside);
   return box;
 }
-function showTree() {
-  const { posts, public: everyone, friends, private: mine, labels } = state.tree;
-  $('counts').textContent = posts ? `${plural(posts, 'post')}: ${mine} only me, ${friends} friends, ${everyone} everyone` : 'Your vault is empty.';
-  // Folders come before the posts beside them, as in a file tree.
-  $('tree').replaceChildren(...labels.map(each => folder(each.label, each.label, [
-    ...each.sublabels.map(group => folder(`${each.label}/${group.sublabel}`, group.sublabel, [list(group.posts)])),
-    ...(each.posts.length ? [list(each.posts)] : []),
-  ])));
+
+// The three things a post can be told apart by. Each is a view, and each can be filtered on.
+const VISIBILITY = { public: 'Everyone', friends: 'Friends', private: 'Only me' };
+// A post that first appeared somewhere else names the platform; one that did not is the member's own.
+const OWN = 'Your website';
+const platformName = name => (name ? ({ bluesky: 'Bluesky', x: 'X', twitter: 'X' }[name.toLowerCase()] ?? name) : OWN);
+// Names go in the order they are read in: the member's own website before other platforms, and
+// the widest audience first.
+const inOrder = first => (a, b) => (first.includes(a) ? first.indexOf(a) : first.length) - (first.includes(b) ? first.indexOf(b) : first.length) || a.localeCompare(b);
+const KINDS = {
+  label: { name: 'Labels', of: post => post.label, order: inOrder([]) },
+  platform: { name: 'Platforms', of: post => platformName(post.platform), order: inOrder([OWN]) },
+  visibility: { name: 'Visibility', of: post => VISIBILITY[post.visibility], order: inOrder(Object.values(VISIBILITY)) },
+};
+const view = { kind: KINDS[localStorage.getItem('ohm.tree.view')] ? localStorage.getItem('ohm.tree.view') : 'label', filtering: false };
+// What is filtered out: for each kind, the names not to show.
+const hidden = Object.fromEntries(Object.keys(KINDS).map(kind => [kind, new Set()]));
+try {
+  for (const [kind, names] of Object.entries(JSON.parse(localStorage.getItem('ohm.tree.hidden') ?? '{}'))) if (hidden[kind]) hidden[kind] = new Set(names);
+} catch {
+  // Nothing is filtered out.
 }
+const remember = () => {
+  localStorage.setItem('ohm.tree.view', view.kind);
+  localStorage.setItem('ohm.tree.hidden', JSON.stringify(Object.fromEntries(Object.entries(hidden).map(([kind, names]) => [kind, [...names]]))));
+};
+// Every post in the vault, each knowing its label and sublabel.
+const everyPost = () => (state.tree?.labels ?? []).flatMap(each => [
+  ...each.posts.map(post => ({ ...post, label: each.label, sublabel: '' })),
+  ...each.sublabels.flatMap(group => group.posts.map(post => ({ ...post, label: each.label, sublabel: group.sublabel }))),
+]);
+function pill(text, pressed, press) {
+  const button = Object.assign(document.createElement('button'), { type: 'button', className: 'pill', textContent: text });
+  button.setAttribute('aria-pressed', String(pressed));
+  button.addEventListener('click', press);
+  return button;
+}
+function showTree() {
+  const all = everyPost();
+  const shown = all.filter(post => Object.entries(KINDS).every(([kind, { of }]) => !hidden[kind].has(of(post))));
+  const out = all.length - shown.length;
+  const count = name => shown.filter(post => post.visibility === name).length;
+  $('counts').textContent = all.length
+    ? `${out ? `${shown.length} of ${plural(all.length, 'post')}` : plural(all.length, 'post')}: ${count('private')} only me, ${count('friends')} friends, ${count('public')} everyone`
+    : 'Your vault is empty.';
+
+  // The pills that choose the view.
+  $('views').replaceChildren(...Object.entries(KINDS).map(([kind, { name }]) => pill(name, view.kind === kind, () => { view.kind = kind; remember(); showTree(); })));
+  // The filter: for each kind, a pill for every name there is. A pill that is off is filtered out.
+  $('filter').setAttribute('aria-pressed', String(view.filtering || out > 0));
+  $('filter').title = out ? `${plural(out, 'post')} filtered out` : 'Filter';
+  $('filters').hidden = !view.filtering;
+  $('filters').replaceChildren(...Object.entries(KINDS).flatMap(([kind, { name, of, order }]) => {
+    const names = [...new Set([...all.map(of), ...hidden[kind]])].sort(order);
+    if (names.length < 2 && !hidden[kind].size) return [];
+    const row = document.createElement('div');
+    row.className = 'pills';
+    row.append(...names.map(each => pill(each, !hidden[kind].has(each), () => {
+      if (hidden[kind].has(each)) hidden[kind].delete(each); else hidden[kind].add(each);
+      remember();
+      showTree();
+    })));
+    return [Object.assign(document.createElement('p'), { className: 'filter-name small', textContent: name }), row];
+  }));
+
+  // The tree itself. Folders come before the posts beside them, as in a file tree.
+  const groups = new Map();
+  for (const post of shown) {
+    const name = KINDS[view.kind].of(post);
+    (groups.get(name) ?? groups.set(name, []).get(name)).push(post);
+  }
+  $('tree').replaceChildren(...[...groups].sort(([a], [b]) => KINDS[view.kind].order(a, b)).map(([name, posts]) => {
+    if (view.kind !== 'label') return folder(`${view.kind}:${name}`, name, [list(posts)]);
+    const inside = new Map();
+    for (const post of posts.filter(each => each.sublabel)) (inside.get(post.sublabel) ?? inside.set(post.sublabel, []).get(post.sublabel)).push(post);
+    const loose = posts.filter(each => !each.sublabel);
+    return folder(name, name, [
+      ...[...inside].map(([sublabel, under]) => folder(`${name}/${sublabel}`, sublabel, [list(under)])),
+      ...(loose.length ? [list(loose)] : []),
+    ]);
+  }));
+  if (all.length && !shown.length) $('tree').append(Object.assign(document.createElement('p'), { className: 'small filter-name', textContent: 'Everything is filtered out.' }));
+}
+$('filter').addEventListener('click', () => { view.filtering = !view.filtering; showTree(); });
 async function loadTree() {
   try {
     state.tree = await call('getTree');

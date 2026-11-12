@@ -116,7 +116,7 @@ export function postStore(db) {
     // The vault's structure: labels, the sublabels inside them, and each post with who may see it.
     async tree(did) {
       const { results } = await db.prepare(
-        `SELECT id, slug, label, sublabel, visibility, title, form, date, problems FROM posts
+        `SELECT id, slug, label, sublabel, visibility, title, form, date, problems, json_extract(post, '$.source.platform') AS platform FROM posts
          WHERE did = ?1 AND version IS NOT NULL ORDER BY label, sublabel, date DESC, slug`,
       ).bind(did).all();
       const labels = new Map();
@@ -131,6 +131,8 @@ export function postStore(db) {
         inside.posts.push({
           id: row.id, slug: row.slug, visibility: row.visibility,
           ...(row.title ? { title: row.title } : {}), ...(row.form ? { form: row.form } : {}), ...(row.date ? { date: row.date } : {}),
+          // Where it first appeared, when that was somewhere else.
+          ...(row.platform ? { platform: row.platform } : {}),
           // A post with problems is kept and shown, and is left out when the vault is published.
           ...(problems.length ? { problems } : {}),
         });
