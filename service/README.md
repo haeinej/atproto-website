@@ -27,7 +27,7 @@ A member's vault: their posts, reached with a handful of requests. Every request
 | `POST /xrpc/com.ohmmmm.vault.deletePost` | Removes one post: `{ "id": …, "replaces": version }` |
 | `GET /xrpc/com.ohmmmm.vault.getTree` | The vault's structure: labels, sublabels, and each post with who may see it, what kind of thing it is, and why it cannot be published, if it cannot |
 
-| `POST /xrpc/com.ohmmmm.vault.importPublished` | Brings in what the member has already published, read from the PDS their own DID document names: `{ "site": "https://example.com", "from": "com.example.post", "apply": true }`. Without `apply` it only reports |
+| `POST /xrpc/com.ohmmmm.vault.importPublished` | Mirrors what the member has already published, read from the PDS their own DID document names: `{ "apply": true }`. Nothing has to be told: the website is the one their handle names, and the types of post are the shared one and any of their own whose records read as posts (a body and a date). `site` and `from` say either outright. Without `apply` it only reports. It never changes a post the member has since changed in the vault |
 | `GET /xrpc/com.ohmmmm.vault.exportFiles` | The whole vault as files: each post's path in a folder, and its text |
 
 A request sent twice ends the same as sent once. Saving a post, whatever it says about who may see it, changes only this copy.
@@ -47,7 +47,9 @@ Either way the page then lets the sign-in at the PDS go: the ohm session, a cook
 
 Where ohm's sign-in does not take AT Protocol accounts yet (`/api/account/config` says whether it does), a Bluesky sign-in is kept in the browser instead, tied to a key that cannot be copied out of it, and the PDS issues a token for each request the page makes.
 
-**Once it is open, the app's screen.** A rail of icons (the vault, import and export, and you at the foot), a side panel that lists, and the main screen, laid out as the app lays out its own. The side panel is the vault's structure: labels, sublabels and posts, each with an icon for who can see it. The main screen is one post. On a phone the side panel is the screen, the rail is a bar at its foot, and opening a post makes the post the screen.
+**Once it is open, the app's screen.** A rail of icons (the vault, and you at the foot), a side panel that lists, and the main screen, laid out as the app lays out its own. The side panel is the repository, and is always its content: labels, sublabels and posts, each with an icon for who can see it. The main screen is one post.
+
+**A new account's vault fills itself.** The first time a connected account's vault opens, the page asks the service to mirror what the account has published on its PDS, and the posts appear in the side panel. The service remembers that it has been done (`mirrored` in `com.ohmmmm.account.get`). The arrows in the side panel's heading bring in whatever is new since. Taking the vault away as files is in the menu under your picture. On a phone the side panel is the screen, the rail is a bar at its foot, and opening a post makes the post the screen.
 
 The page's colours, sizes and radii all come from [public/vault/assets/tokens.css](public/vault/assets/tokens.css), a copy of the design system's token file. Its icons are Lucide's, the set the app uses.
 

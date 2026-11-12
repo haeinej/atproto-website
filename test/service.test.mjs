@@ -196,7 +196,11 @@ async function running() {
       return Response.json(user ? { session: { id: 's' }, user } : null);
     }
     if (documents[String(url)]) return Response.json(documents[String(url)]);
-    const records = repositories.get(`${url.origin}|${url.searchParams.get('collection')}`) ?? [];
+    // A member's own PDS, saying which types of record their repository holds.
+    if (url.pathname === '/xrpc/com.atproto.repo.describeRepo') {
+      return Response.json({ did: url.searchParams.get('repo'), collections: [...repositories.keys()].filter(key => key.startsWith(`${url.origin}|`)).map(key => key.slice(url.origin.length + 1)) });
+    }
+    const records = (repositories.get(`${url.origin}|${url.searchParams.get('collection')}`) ?? []).slice(0, Number(url.searchParams.get('limit')) || 100);
     return Response.json({ records: records.map(([key, value]) => ({ uri: `at://${url.searchParams.get('repo')}/${url.searchParams.get('collection')}/${key}`, value })) });
   };
   const service = createService({ whoIs, get });
@@ -362,6 +366,43 @@ test('a member brings in what they have published and writes their vault out, an
   assert.equal((await ask(haein, 'exportFiles', { token: null })).status, 401);
 });
 
+test('a new account is mirrored without being told anything: its own post types are found, and the first time is remembered', async () => {
+  const { haein, ask, repositories, sessions } = await running();
+  const record = (slug, extra = {}) => ({ $type: 'com.ohmmmm.post', body: 'Words.', publishedAt: '2026-01-01T00:00:00.000Z', title: slug, form: 'writing', label: 'Writings', ...extra });
+  const at = 'https://pds.haein.test';
+  repositories.set(`${at}|com.ohmmmm.post`, [['hello', record('hello')]]);
+  // A type of the member's own, from before the shared one: nobody names it, and it is found.
+  repositories.set(`${at}|com.haein.post`, [
+    ['older', { $type: 'com.haein.post', body: 'Older.', publishedAt: '2024-01-01T00:00:00.000Z', title: 'older', tags: ['Notes'], writtenIn: 'seoul' }],
+    ['hello', { $type: 'com.haein.post', body: 'An earlier hello.', publishedAt: '2023-01-01T00:00:00.000Z', title: 'hello' }],
+  ]);
+  // Types that are not posts in this form are never read in: Bluesky's own, and one with no body.
+  repositories.set(`${at}|app.bsky.feed.post`, [['3k', { $type: 'app.bsky.feed.post', text: 'A skeet.', createdAt: '2025-01-01T00:00:00.000Z' }]]);
+  repositories.set(`${at}|com.haein.bookmark`, [['one', { $type: 'com.haein.bookmark', url: 'https://example.test', publishedAt: '2025-01-01T00:00:00.000Z' }]]);
+
+  const mine = 'ohm.session_token=haein-session';
+  const ours = 'https://app.ohmmmm.test';
+  sessions.set(mine, { id: 'user-haein', name: 'Haein' });
+  await ask(haein, 'com.ohmmmm.account.connect', { cookie: mine, origin: ours, body: { token: await haein.token('com.ohmmmm.account.connect') } });
+  const account = async () => (await ask(haein, 'com.ohmmmm.account.get', { cookie: mine })).json();
+  assert.equal((await account()).mirrored, false);
+
+  // Looking first changes nothing and marks nothing.
+  const looked = await (await ask(haein, 'importPublished', { cookie: mine, origin: ours, body: {} })).json();
+  assert.deepEqual([looked.types, looked.records, looked.posts, looked.applied], [['com.haein.post', 'com.ohmmmm.post'], 2, 2, false]);
+  assert.equal((await account()).mirrored, false);
+
+  const done = await (await ask(haein, 'importPublished', { cookie: mine, origin: ours, body: { apply: true } })).json();
+  assert.deepEqual([done.saved.sort(), done.skipped, done.refused], [['hello', 'older'], [], []]);
+  assert.equal((await account()).mirrored, true);
+  // Where both types hold a post, the one in the shared type is the one kept; the older type's
+  // extra field went into the member's own layer, named for that type.
+  const files = Object.fromEntries((await (await ask(haein, 'exportFiles', { cookie: mine })).json()).files.map(file => [file.path, filePost(file.path, file.text).post]));
+  assert.deepEqual(Object.keys(files).sort(), ['Notes/older.md', 'Writings/hello.md']);
+  assert.equal(files['Writings/hello.md'].body, 'Words.');
+  assert.deepEqual(files['Notes/older.md'].site, { $type: 'com.haein.postSite', writtenIn: 'seoul' });
+});
+
 test('finding an account needs no sign-in, and says who its PDS should issue tokens for', async () => {
   const { haein, ask } = await running();
   for (const under of ['', '/vault']) {
@@ -397,7 +438,7 @@ test('an ohm account signs a member in, once their PDS has said which AT Protoco
   assert.deepEqual(await said(await ask(haein, 'com.ohmmmm.account.get', { token: null })), [401, 'SignInRequired']);
   assert.deepEqual(await said(await ask(haein, 'com.ohmmmm.account.get', { cookie: 'ohm.session_token=made-up' })), [401, 'SignInRequired']);
   // Signed in to ohm, but no AT Protocol account yet: the account says so, and no vault opens.
-  assert.deepEqual(await (await account('get')).json(), { user: { name: 'Haein' }, did: null, service: audience });
+  assert.deepEqual(await (await account('get')).json(), { user: { name: 'Haein' }, did: null, mirrored: false, service: audience });
   assert.deepEqual(await said(await ask(haein, 'getTree', { cookie: mine })), [409, 'NotConnected']);
 
   // Connecting takes a token the PDS issued for exactly that, and nothing less.
@@ -409,7 +450,7 @@ test('an ohm account signs a member in, once their PDS has said which AT Protoco
   assert.equal((await (await account('get')).json()).did, null);
   assert.deepEqual(await (await connect(await haein.token('com.ohmmmm.account.connect'))).json(), { did: haein.did });
   assert.deepEqual(await (await connect(await haein.token('com.ohmmmm.account.connect'))).json(), { did: haein.did, already: true });
-  assert.deepEqual(await (await account('get')).json(), { user: { name: 'Haein' }, did: haein.did, service: audience });
+  assert.deepEqual(await (await account('get')).json(), { user: { name: 'Haein' }, did: haein.did, mirrored: false, service: audience });
 
   // From then on the session alone opens that vault, and it is the same vault a token opens.
   const written = post('from-the-page');

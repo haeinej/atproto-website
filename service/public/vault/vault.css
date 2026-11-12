@@ -163,6 +163,7 @@ a.button.primary { color: var(--ohm-on-accent); }
 }
 .icon-button:active { transform: scale(var(--ohm-press-scale)); }
 .icon-button:focus-visible { outline: 2px solid var(--ohm-focus); outline-offset: 2px; }
+.icon-button:disabled { opacity: .5; cursor: default; }
 .icon-button[aria-pressed="true"] { background: var(--ohm-wash); color: var(--ohm-ink); }
 @media (hover: hover) and (pointer: fine) { .icon-button:hover { background: var(--ohm-wash); color: var(--ohm-ink); } }
 
@@ -178,26 +179,29 @@ a.button.primary { color: var(--ohm-on-accent); }
 .directory-actions .icon-button { width: var(--ohm-height-sm); height: var(--ohm-height-sm); }
 .directory-scroll { flex: 1; min-height: 0; overflow: auto; overscroll-behavior: contain; padding: var(--ohm-space-1) 0 var(--ohm-space-4); scrollbar-width: thin; scrollbar-color: var(--ohm-line) transparent; }
 
-/* The tree: a label heads a group, a sublabel a smaller one, and every post is a row. */
+/* The tree: the repository as folders. A label is a folder, a sublabel a folder inside it, a post a row. */
 #counts { margin: 0 var(--ohm-space-2) var(--ohm-space-3); }
-#tree .label, #tree .sublabel { margin: 0; padding: 0 var(--ohm-space-2); display: flex; align-items: center; min-height: var(--ohm-height-sm); color: var(--ohm-muted); }
-#tree .label { margin-top: var(--ohm-space-3); font: var(--ohm-type-h3-weight) var(--ohm-type-small-size) / var(--ohm-type-small-leading) var(--ohm-font-sans); letter-spacing: var(--ohm-type-small-tracking); }
-#tree .label:first-child { margin-top: 0; }
-#tree .sublabel { padding-left: var(--ohm-space-4); font: 400 var(--ohm-type-small-size) / var(--ohm-type-small-leading) var(--ohm-font-sans); }
+#tree { --tree-row: var(--ohm-height-sm); --tree-indent: var(--ohm-space-4); }
 #tree ul { list-style: none; margin: 0; padding: 0; }
-#tree .sublabel + ul button { padding-left: var(--ohm-space-6); }
-#tree li button {
-  display: flex; align-items: center; gap: var(--ohm-space-2); width: 100%; min-height: var(--directory-row-height);
-  padding: 0 var(--ohm-space-2) 0 var(--ohm-space-3); border: 0; border-radius: var(--directory-row-radius);
-  background: transparent; color: inherit; font: inherit; letter-spacing: inherit; text-align: left; cursor: pointer;
+/* A folder's row and a post's row are one kind of row: a height, a radius, a wash when it is the
+   one you are on or over. */
+#tree .folder-row, #tree li button {
+  display: flex; align-items: center; gap: var(--ohm-space-2); width: 100%; min-height: var(--tree-row);
+  padding: 0 var(--ohm-space-2); border: 0; border-radius: var(--directory-row-radius);
+  background: transparent; color: var(--ohm-ink); font: inherit; letter-spacing: inherit; text-align: left; cursor: pointer;
   transition: background-color var(--ohm-duration-state) var(--ohm-ease-out);
 }
-#tree li button[aria-current="true"] { background: var(--ohm-wash); }
-@media (hover: hover) and (pointer: fine) { #tree li button:hover { background: var(--ohm-wash); } }
-#tree li button:focus-visible { outline: 2px solid var(--ohm-focus); outline-offset: -2px; }
+#tree li button { padding-left: var(--ohm-space-3); color: var(--ohm-muted); }
+#tree li button[aria-current="true"] { background: var(--ohm-wash); color: var(--ohm-ink); }
+@media (hover: hover) and (pointer: fine) { #tree .folder-row:hover, #tree li button:hover { background: var(--ohm-wash); color: var(--ohm-ink); } }
+#tree .folder-row:focus-visible, #tree li button:focus-visible { outline: 2px solid var(--ohm-focus); outline-offset: -2px; }
 #tree .name { flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-#tree .icon { --icon-size: 14px; color: var(--ohm-muted); }
-#tree [data-visibility="public"] { color: var(--ohm-leaf); }
+/* What a folder holds sits under it, set in, beside a line that runs its height. */
+#tree .children { margin-left: calc(var(--ohm-space-2) + var(--icon-size) / 2); padding-left: calc(var(--tree-indent) - var(--icon-size) / 2); box-shadow: inset 1px 0 0 var(--ohm-line); }
+#tree .folder-row .icon { --icon-size: 16px; color: var(--ohm-muted); transition: transform var(--ohm-duration-state) var(--ohm-ease-out); }
+#tree .folder-row[aria-expanded="false"] .icon { transform: rotate(-90deg); }
+#tree li .icon { --icon-size: 14px; color: var(--ohm-muted); }
+#tree li [data-visibility="public"] { color: var(--ohm-leaf); }
 
 /* Import and export, in the side panel: each thing you can do is a group. */
 .group { padding: 0 var(--ohm-space-2) var(--ohm-space-6); }
@@ -236,13 +240,6 @@ a.button.primary { color: var(--ohm-on-accent); }
 }
 .pill-select select:focus-visible { outline: 2px solid var(--ohm-focus); outline-offset: 2px; }
 
-/* What happened reads from under its heading, not from the middle of the screen. */
-.screen[data-page="move"] .measure { margin: 0; }
-#log { margin: 0; padding-left: var(--ohm-space-4); }
-#log li { margin-bottom: var(--ohm-space-3); }
-#log li[data-kind="problem"] { color: var(--ohm-danger); }
-#log pre { margin: var(--ohm-space-1) 0 0; white-space: pre-wrap; word-break: break-word; font-family: var(--ohm-font-mono); }
-.measure:has(#log:not(:empty)) #log-empty { display: none; }
 
 /* You: a menu that opens beside the foot of the rail. */
 .menu {
@@ -257,6 +254,7 @@ a.button.primary { color: var(--ohm-on-accent); }
   border: 0; border-radius: var(--ohm-radius-row); background: transparent; color: inherit; font: inherit; letter-spacing: inherit; text-align: left; cursor: pointer;
 }
 .menu-item:hover { background: var(--ohm-wash); }
+.menu-item:disabled { opacity: .5; cursor: default; background: transparent; }
 .menu-item:focus-visible { outline: 2px solid var(--ohm-focus); outline-offset: -2px; }
 .menu-item .icon { color: var(--ohm-muted); }
 

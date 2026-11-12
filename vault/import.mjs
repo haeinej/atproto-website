@@ -122,7 +122,10 @@ export function importVault(records, { did, origin, site, namespace, collection 
   const read = [];
   const skipped = [];
   for (const { key, value } of records) {
-    const { record, left } = upgradePost(value, { did, key, namespace });
+    // A record of an older type keeps its extra fields in its own layer, named for its own type
+    // (com.example.post gives com.example) unless a namespace was given for all of them.
+    const type = typeof value?.$type === 'string' ? value.$type : '';
+    const { record, left } = upgradePost(value, { did, key, namespace: namespace ?? (type.includes('.') ? type.slice(0, type.lastIndexOf('.')) : undefined) });
     if (!isRecordKey(key) || !record || typeof record.body !== 'string' || !Number.isFinite(Date.parse(record.publishedAt))) {
       skipped.push({ key, why: 'it has no body or no date that can be read' });
       continue;

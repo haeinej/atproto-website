@@ -46,6 +46,26 @@ async function published(get, pds, did, collection) {
   }
   return records;
 }
+// The types of post in a member's repository other than the shared one: any type of their own
+// whose records read as posts, which is to say have a body and a date. Nobody has to name them.
+// Bluesky's and the protocol's own types are not posts in this form and are not looked at.
+const NOT_POSTS = /^(?:app\.bsky|chat\.bsky|com\.atproto|tools\.ozone)\./;
+async function olderPostTypes(get, pds, did) {
+  const url = new URL('/xrpc/com.atproto.repo.describeRepo', pds);
+  url.search = new URLSearchParams({ repo: did });
+  const response = await get(url, { redirect: 'manual', signal: AbortSignal.timeout(20_000) });
+  if (!response.ok) throw new Refused(502, 'RepositoryUnreachable', `Your PDS would not describe your repository (HTTP ${response.status})`);
+  const named = ((await response.json()).collections ?? []).filter(name => typeof name === 'string' && NSID.test(name) && name !== POST && !NOT_POSTS.test(name));
+  const found = [];
+  for (const collection of named.slice(0, 20)) {
+    const look = new URL('/xrpc/com.atproto.repo.listRecords', pds);
+    look.search = new URLSearchParams({ repo: did, collection, limit: '1' });
+    const listed = await get(look, { redirect: 'manual', signal: AbortSignal.timeout(20_000) });
+    const first = listed.ok ? (await listed.json()).records?.[0]?.value : null;
+    if (first && typeof first.body === 'string' && Number.isFinite(Date.parse(first.publishedAt))) found.push(collection);
+  }
+  return found;
+}
 const HEADERS = { 'Cache-Control': 'private, no-store', 'X-Content-Type-Options': 'nosniff' };
 const json = (body, status = 200) => Response.json(body, { status, headers: HEADERS });
 
@@ -95,7 +115,10 @@ export function createService({ whoIs, get = fetch } = {}) {
         const user = await ohmUser(request, env, get) ?? (() => { throw new Refused(401, 'SignInRequired', 'Sign in to ohm first'); })();
         fromOurPages(request, env);
         // `service` is who a PDS has to address its token to when the member connects.
-        if (method === 'com.ohmmmm.account.get') return json({ user: { name: user.name }, did: await linked.didOf(user.id), service: env.SERVICE_DID ?? null });
+        if (method === 'com.ohmmmm.account.get') {
+          const link = await linked.of(user.id);
+          return json({ user: { name: user.name }, did: link?.did ?? null, mirrored: link?.mirrored ?? false, service: env.SERVICE_DID ?? null });
+        }
         if (method === 'com.ohmmmm.account.disconnect') {
           await linked.disconnect(user.id);
           return json({ did: null });
@@ -116,10 +139,11 @@ export function createService({ whoIs, get = fetch } = {}) {
       // member's own PDS, as the command line and an agent's tools send, or rides on an ohm session,
       // as the page does; a session is worth exactly the one account it was connected to.
       let did;
+      let user = null;
       if (request.headers.has('Authorization')) {
         did = await identify(request, method);
       } else {
-        const user = await ohmUser(request, env, get) ?? (() => { throw new Refused(401, 'SignInRequired', 'Sign in to ohm first'); })();
+        user = await ohmUser(request, env, get) ?? (() => { throw new Refused(401, 'SignInRequired', 'Sign in to ohm first'); })();
         fromOurPages(request, env);
         did = await linked.didOf(user.id) ?? (() => { throw new Refused(409, 'NotConnected', 'Connect your AT Protocol account first'); })();
       }
@@ -141,27 +165,34 @@ export function createService({ whoIs, get = fetch } = {}) {
         return json({ files: (await posts.all(did)).map(postFile) });
       }
       if (method === 'com.ohmmmm.vault.importPublished') {
-        // Bring in what the member has already published. Their repository is read from the PDS
-        // their own DID document names, and nothing is saved unless they say `apply`.
+        // Bring in what the member has already published: a mirror of their repository, read from
+        // the PDS their own DID document names. Nothing is saved unless they say `apply`. Nothing
+        // has to be told: the website is the one their handle names, and the types of post are the
+        // shared one and any of their own that read as posts. Either can still be said outright.
         const { site, from, apply = false } = await sent(request);
-        const origin = webUrl(site);
-        if (!origin || !origin.startsWith('https://')) throw new Refused(400, 'InvalidRequest', 'Say where your website is, as an https address');
         if (from !== undefined && (typeof from !== 'string' || !NSID.test(from) || from === POST)) throw new Refused(400, 'InvalidRequest', 'An older post type is written like com.example.post');
         const pds = await identify.pdsFor?.(did);
         if (!pds) throw new Refused(400, 'NoRepository', 'Your DID document does not say where your repository is kept');
-        const found = new Map(from ? await published(get, pds, did, from) : []);
-        for (const [key, value] of await published(get, pds, did, POST)) found.set(key, value);
-        const { posts: read, skipped } = importVault([...found].map(([key, value]) => ({ key, value })),
-          { did, origin: pds, site: origin, ...(from ? { namespace: from.slice(0, from.lastIndexOf('.')) } : {}) });
+        const handle = site === undefined ? (await findAccount(did, { get }).catch(() => null))?.handle : null;
+        const origin = webUrl(site ?? (handle ? `https://${handle}` : pds));
+        if (!origin || !origin.startsWith('https://')) throw new Refused(400, 'InvalidRequest', 'Say where your website is, as an https address');
+        const types = from ? [from] : await olderPostTypes(get, pds, did);
+        // An older type is read first, so a post already in the shared type is the one kept.
+        const found = new Map();
+        for (const type of [...types, POST]) for (const [key, value] of await published(get, pds, did, type)) found.set(key, value);
+        const { posts: read, skipped } = importVault([...found].map(([key, value]) => ({ key, value })), { did, origin: pds, site: origin });
         const noted = name => read.filter(each => each[name].length).map(each => ({ key: each.key, slug: each.post.slug, [name]: each[name] }));
         const report = {
-          records: found.size, posts: read.length, sameAsPublished: read.filter(each => !each.differs.length).length,
+          site: origin, types: [...types, POST], records: found.size, posts: read.length, sameAsPublished: read.filter(each => !each.differs.length).length,
           differs: noted('differs'), lost: noted('lost'), cannotBePublishedYet: noted('problems'), skipped, applied: Boolean(apply),
         };
         if (!apply) return json(report);
         const send = post => posts.write(did, post).then(body => ({ status: 200, body }),
           problem => (problem instanceof Refused ? { status: problem.status, body: { error: problem.code, message: problem.message } } : Promise.reject(problem)));
-        return json({ ...report, ...await saveImported(read, send) });
+        const saved = await saveImported(read, send);
+        // The first time is remembered, so the page brings a new account's posts in once, on its own.
+        if (user) await linked.mirrored(user.id);
+        return json({ ...report, ...saved });
       }
       return json(await posts.tree(did));
     } catch (problem) {

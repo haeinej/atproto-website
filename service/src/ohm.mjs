@@ -46,6 +46,12 @@ export function fromOurPages(request, env) {
 export function links(db) {
   return {
     didOf: async user => (await db.prepare('SELECT did FROM links WHERE user_id = ?1').bind(user).first())?.did ?? null,
+    // The account an ohm account works in, and whether what it had published has been brought in.
+    of: async user => {
+      const row = await db.prepare('SELECT did, mirrored_at FROM links WHERE user_id = ?1').bind(user).first();
+      return row ? { did: row.did, mirrored: Boolean(row.mirrored_at) } : null;
+    },
+    mirrored: (user, now = new Date()) => db.prepare('UPDATE links SET mirrored_at = ?2 WHERE user_id = ?1 AND mirrored_at IS NULL').bind(user, now.toISOString()).run(),
     // One ohm account works in one AT Protocol account, and the other way round.
     async connect(user, did, now = new Date()) {
       const taken = await db.prepare('SELECT user_id, did FROM links WHERE user_id = ?1 OR did = ?2').bind(user, did).all();

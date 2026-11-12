@@ -29,5 +29,7 @@ CREATE UNIQUE INDEX IF NOT EXISTS posts_slug ON posts (did, slug) WHERE version 
 CREATE TABLE IF NOT EXISTS links (
   user_id TEXT PRIMARY KEY,
   did TEXT NOT NULL UNIQUE,
-  linked_at TEXT NOT NULL
+  linked_at TEXT NOT NULL,
+  -- When what the account had already published was first brought into the vault. Empty until then.
+  mirrored_at TEXT
 );

@@ -13,7 +13,7 @@ import { askPds, begin, beginWithPassword, finish, leave, restore } from './sign
 
 const $ = id => document.getElementById(id);
 const state = { mode: 'ohm', me: null, audience: '', did: '', tree: null, current: null, page: 'vault', signup: false, busy: false, step: 'where' };
-const PAGES = { vault: 'Vault', move: 'Import and export' };
+const PAGES = { vault: 'Vault' };
 function icon(name) {
   const svg = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
   svg.setAttribute('class', 'icon');
@@ -32,20 +32,9 @@ function notice(text, tone = 'info') {
   $('notices').append(pill);
   setTimeout(() => pill.remove(), tone === 'error' ? 7000 : 4000);
 }
-// What happened: every request this page makes, and how it went, kept for trying the path.
-function say(text, { detail, problem = false } = {}) {
-  const item = document.createElement('li');
-  item.dataset.kind = problem ? 'problem' : 'done';
-  item.append(`${new Date().toLocaleTimeString()} · ${text}`);
-  if (detail !== undefined) item.append(Object.assign(document.createElement('pre'), { textContent: typeof detail === 'string' ? detail : JSON.stringify(detail, null, 2) }));
-  $('log').prepend(item);
-}
 function failed(doing, problem) {
-  say(`${doing} did not work: ${problem.message}`, { problem: true });
   notice(`${doing} did not work: ${problem.message}`, 'error');
 }
-// An address typed without "https://" in front is given it.
-const address = typed => (/^https?:\/\//i.test(typed.trim()) || !typed.trim() ? typed.trim() : `https://${typed.trim()}`);
 
 // ---- One request to the vault. It rides on the ohm session the browser already holds, or, for
 // a member signed in with their AT Protocol account, carries a token their PDS issues for exactly
@@ -204,8 +193,6 @@ async function signOut() {
 $('sign-out').addEventListener('click', signOut);
 $('leave').addEventListener('click', signOut);
 
-$('site-address').value = localStorage.getItem('ohm.site') ?? '';
-$('older').value = localStorage.getItem('ohm.older') ?? '';
 // The handle as it was typed, tidied. A Bluesky name typed on its own is the handle Bluesky gives it.
 function typedHandle() {
   let handle = $('handle').value.trim().replace(/^@/, '');
@@ -315,11 +302,10 @@ async function open() {
       const connected = await call('com.ohmmmm.account.connect', { body: { token: await pdsToken(me.service, 'com.ohmmmm.account.connect') } });
       await leave();
       me = { ...me, did: connected.did };
-      if (!fresh) notice('Your account is connected');
     }
     if (me) {
       state.me = me;
-      if (me.did) return await enter({ name: me.user.name || 'You', did: me.did });
+      if (me.did) return await enter({ name: me.user.name || 'You', did: me.did, mirrored: me.mirrored });
       $('signed-in-as').textContent = me.user.name ? `Signed in as ${me.user.name}.` : 'Signed in.';
       return handleStep('where');
     }
@@ -344,7 +330,7 @@ async function open() {
   screen('sign-in');
 }
 // The vault opens. Reading it first means an account that is not let in never sees it empty.
-async function enter({ name, did }) {
+async function enter({ name, did, mirrored = true }) {
   state.tree = await call('getTree');
   state.did = did;
   $('who').textContent = name;
@@ -354,6 +340,8 @@ async function enter({ name, did }) {
   screen('vault');
   go('vault');
   showTree();
+  // A new account's vault is filled from its PDS without being asked.
+  if (!mirrored) await mirror({ first: true });
 }
 
 // ---- The app's screen: the rail picks a page; the side panel and the main screen follow it. ----
@@ -393,15 +381,41 @@ function list(posts) {
   items.append(...posts.map(postButton));
   return items;
 }
+// The repository as a tree of folders: a label is a folder, a sublabel a folder inside it, and
+// each post a row. A folder opens and closes, and stays as it was left on the next visit.
+const closed = new Set(JSON.parse(localStorage.getItem('ohm.tree.closed') ?? '[]'));
+function folder(key, name, children) {
+  const row = document.createElement('button');
+  row.type = 'button';
+  row.className = 'folder-row';
+  const inside = document.createElement('div');
+  inside.className = 'children';
+  inside.append(...children);
+  const set = open => {
+    row.setAttribute('aria-expanded', String(open));
+    inside.hidden = !open;
+  };
+  row.append(icon('chevron'), Object.assign(document.createElement('span'), { className: 'name', textContent: name }));
+  row.addEventListener('click', () => {
+    const open = row.getAttribute('aria-expanded') !== 'true';
+    if (open) closed.delete(key); else closed.add(key);
+    localStorage.setItem('ohm.tree.closed', JSON.stringify([...closed]));
+    set(open);
+  });
+  set(!closed.has(key));
+  const box = document.createElement('div');
+  box.className = 'folder';
+  box.append(row, inside);
+  return box;
+}
 function showTree() {
   const { posts, public: everyone, friends, private: mine, labels } = state.tree;
   $('counts').textContent = posts ? `${plural(posts, 'post')}: ${mine} only me, ${friends} friends, ${everyone} everyone` : 'Your vault is empty.';
-  const tree = $('tree');
-  tree.replaceChildren();
-  for (const folder of labels) {
-    tree.append(Object.assign(document.createElement('p'), { className: 'label', textContent: folder.label }), list(folder.posts));
-    for (const group of folder.sublabels) tree.append(Object.assign(document.createElement('p'), { className: 'sublabel', textContent: group.sublabel }), list(group.posts));
-  }
+  // Folders come before the posts beside them, as in a file tree.
+  $('tree').replaceChildren(...labels.map(each => folder(each.label, each.label, [
+    ...each.sublabels.map(group => folder(`${each.label}/${group.sublabel}`, group.sublabel, [list(group.posts)])),
+    ...(each.posts.length ? [list(each.posts)] : []),
+  ])));
 }
 async function loadTree() {
   try {
@@ -411,7 +425,8 @@ async function loadTree() {
     failed('Reading your vault', problem);
   }
 }
-$('refresh').addEventListener('click', async () => { await loadTree(); say('Read your vault again'); });
+// The arrows in the side panel's heading: bring in whatever is new on the PDS, and read the vault again.
+$('mirror').addEventListener('click', () => mirror());
 
 // ---- One post. ----
 const fields = { title: 'post-name', label: 'label', sublabel: 'sublabel', slug: 'slug', visibility: 'visibility', date: 'date', body: 'body' };
@@ -473,13 +488,11 @@ $('post-form').addEventListener('submit', async event => {
   }
   try {
     const saved = await call('putPost', { body: { post, ...(version ? { replaces: version } : {}) } });
-    const how = $('visibility').selectedOptions[0].textContent.toLowerCase();
-    say(saved.unchanged ? `Nothing to save in "${post.slug}"` : `Saved "${post.slug}" as ${how}`, { detail: saved });
     notice(saved.unchanged ? 'Nothing to save' : 'Saved');
     await openPost(post.id);
   } catch (problem) {
     failed(`Saving "${post.slug}"`, problem);
-    if (problem.code === 'Changed') say('It was changed somewhere else since you opened it. Open it again to see the newer version; what you typed is still in the form.', { problem: true });
+    if (problem.code === 'Changed') notice('It was changed somewhere else since you opened it. Open it again to see the newer version; what you typed is still in the form.', 'error');
   }
 });
 $('delete').addEventListener('click', async () => {
@@ -487,7 +500,6 @@ $('delete').addEventListener('click', async () => {
   if (!confirm(`Remove "${post.title || post.slug}" from your vault? This cannot be undone here.`)) return;
   try {
     await call('deletePost', { body: { id: post.id, replaces: version } });
-    say(`Removed "${post.slug}"`);
     closePost();
     await loadTree();
   } catch (problem) {
@@ -495,27 +507,30 @@ $('delete').addEventListener('click', async () => {
   }
 });
 
-// ---- Bringing in what is already published. ----
-async function bringIn(apply) {
-  const site = address($('site-address').value);
-  const from = $('older').value.trim();
-  $('site-address').value = site;
-  localStorage.setItem('ohm.site', site);
-  localStorage.setItem('ohm.older', from);
+// ---- The mirror: what the member has published on their PDS, brought into the vault. ----
+// Nothing has to be told: the service finds their website and their types of post itself. It runs
+// on its own the first time an account's vault opens, and again whenever the member asks. It only
+// reads the PDS, and never changes a post the member has since changed here.
+async function mirror({ first = false } = {}) {
+  if (state.busy) return;
+  state.busy = true;
+  $('mirror').disabled = true;
+  if (first) notice('Bringing in what you have published…');
   try {
-    const report = await call('importPublished', { body: { site, ...(from ? { from } : {}), apply } });
-    const text = apply
-      ? `Brought in ${plural(report.saved.length, 'post')}; ${report.unchanged.length} were already there; ${report.changedThere.length} have changed in your vault and were left alone`
-      : `Found ${plural(report.records, 'published record')}, which make ${plural(report.posts, 'post')}; ${report.sameAsPublished} of ${report.posts} would be published exactly as they are now. Nothing was changed.`;
-    say(text, { detail: report });
-    notice(apply ? `Brought in ${plural(report.saved.length, 'post')}` : `Found ${plural(report.posts, 'post')}. Nothing was changed.`);
-    if (apply) await loadTree();
+    const report = await call('importPublished', { body: { apply: true } });
+    state.tree = await call('getTree');
+    showTree();
+    const left = report.skipped.length + report.refused.length;
+    notice(report.saved.length
+      ? `Brought in ${plural(report.saved.length, 'post')} from your PDS${left ? `; ${left} could not be read` : ''}`
+      : first ? 'Nothing is published on your PDS yet' : 'Nothing new on your PDS');
   } catch (problem) {
     failed('Bringing in your published posts', problem);
+  } finally {
+    state.busy = false;
+    $('mirror').disabled = false;
   }
 }
-$('import-look').addEventListener('click', () => bringIn(false));
-$('import-apply').addEventListener('click', () => bringIn(true));
 
 // ---- Writing the vault out. ----
 $('export-folder').disabled = !window.showDirectoryPicker;
@@ -532,7 +547,6 @@ $('export-folder').addEventListener('click', async () => {
       await writing.write(text);
       await writing.close();
     }
-    say(`Wrote ${plural(files.length, 'post')} into the folder "${root.name}"`, { detail: files.map(file => file.path) });
     notice(`Wrote ${plural(files.length, 'post')} into "${root.name}"`);
   } catch (problem) {
     if (problem.name !== 'AbortError') failed('Writing your vault into a folder', problem);
@@ -546,7 +560,7 @@ $('export-file').addEventListener('click', async () => {
     });
     link.click();
     URL.revokeObjectURL(link.href);
-    say(`Downloaded ${plural(files.length, 'post')} as ohm-vault.json`);
+    notice(`Downloaded ${plural(files.length, 'post')}`);
   } catch (problem) {
     failed('Downloading your vault', problem);
   }
