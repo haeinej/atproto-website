@@ -1,8 +1,12 @@
 // The vault page. It signs the member in at their own PDS, asks that PDS for a short-lived token
 // before each request, and talks to the vault with it. Everything shown is put on the page as
 // text, never as markup.
+import { askPds, begin, finish, leave, restore } from './signin.js';
+
 const $ = id => document.getElementById(id);
-const state = { pds: '', did: '', session: '', audience: '', tree: null, current: null };
+// `ask` is how this visit talks to the member's PDS: through their browser sign-in, or with the
+// session an app password gave.
+const state = { pds: '', did: '', session: '', audience: '', ask: null, kept: false, tree: null, current: null };
 
 // ---- What happened: every request this page makes, and how it went. ----
 function say(text, { detail, problem = false } = {}) {
@@ -34,7 +38,7 @@ async function pds(method, { query, body, auth = true } = {}) {
 async function vault(name, { query, body } = {}) {
   const method = `com.ohmmmm.vault.${name}`;
   // A token is good for this one request to this one service, for a minute.
-  const { token } = await pds('com.atproto.server.getServiceAuth', { query: { aud: state.audience, lxm: method, exp: String(Math.floor(Date.now() / 1000) + 60) } });
+  const { token } = await state.ask('com.atproto.server.getServiceAuth', { aud: state.audience, lxm: method, exp: String(Math.floor(Date.now() / 1000) + 60) });
   const url = new URL(`/xrpc/${method}`, location.origin);
   if (query) url.search = new URLSearchParams(query);
   const response = await fetch(url, {
@@ -60,9 +64,34 @@ const slugOf = text => text.normalize('NFKD').replace(/[̀-ͯ]/g, '').toLowerCas
 // ---- Signing in and out. ----
 $('pds').value = localStorage.getItem('ohm.pds') ?? '';
 $('identifier').value = localStorage.getItem('ohm.identifier') ?? '';
+$('handle').value = localStorage.getItem('ohm.handle') ?? '';
 $('site').value = localStorage.getItem('ohm.site') ?? '';
 $('older').value = localStorage.getItem('ohm.older') ?? '';
 
+async function enter({ did, handle }, how) {
+  state.did = did;
+  state.audience ||= (await (await fetch('/.well-known/did.json')).json()).id;
+  $('who').textContent = handle ? `${handle} · ${did}` : did;
+  $('sign-in').hidden = true;
+  $('workspace').hidden = false;
+  $('sign-out').hidden = false;
+  say(how);
+  await loadTree();
+}
+
+// The usual way in: the member's handle, then their own PDS.
+$('handle-form').addEventListener('submit', async event => {
+  event.preventDefault();
+  $('sign-in-problem').textContent = 'Taking you to your PDS…';
+  try {
+    localStorage.setItem('ohm.handle', $('handle').value.trim());
+    await begin($('handle').value);
+  } catch (problem) {
+    $('sign-in-problem').textContent = `Signing in did not work: ${problem.message}`;
+  }
+});
+
+// The other way: an app password, for a PDS that cannot sign someone in through the browser.
 $('sign-in-form').addEventListener('submit', async event => {
   event.preventDefault();
   $('sign-in-problem').textContent = '';
@@ -71,24 +100,39 @@ $('sign-in-form').addEventListener('submit', async event => {
     // A PDS on this machine, for trying things out, is the one that may be reached without https.
     if (address.protocol !== 'https:' && !['localhost', '127.0.0.1'].includes(address.hostname)) throw new Error('your PDS has an https address');
     state.pds = address.origin;
-    state.audience ||= (await (await fetch('/.well-known/did.json')).json()).id;
     const signedIn = await pds('com.atproto.server.createSession', { auth: false, body: { identifier: $('identifier').value.trim(), password: $('password').value } });
-    Object.assign(state, { session: signedIn.accessJwt, did: signedIn.did });
+    state.session = signedIn.accessJwt;
+    state.ask = (method, query) => pds(method, { query });
     $('password').value = '';
     // Where to sign in is remembered for next time. The password and the session are not.
     localStorage.setItem('ohm.pds', state.pds);
     localStorage.setItem('ohm.identifier', $('identifier').value.trim());
-    $('who').textContent = `${signedIn.handle ?? ''} ${signedIn.did}`.trim();
-    $('sign-in').hidden = true;
-    $('workspace').hidden = false;
-    $('sign-out').hidden = false;
-    say(`Signed in at ${state.pds} as ${signedIn.did}`);
-    await loadTree();
+    await enter(signedIn, `Signed in at ${state.pds} as ${signedIn.did}, with an app password`);
   } catch (problem) {
     $('sign-in-problem').textContent = `Signing in did not work: ${problem.message}`;
   }
 });
-$('sign-out').addEventListener('click', () => location.reload());
+
+$('sign-out').addEventListener('click', async () => {
+  if (state.kept) await leave();
+  location.reload();
+});
+
+// On opening the page: finish a sign-in that is coming back from the PDS, or pick up the one kept
+// on this device, or ask.
+try {
+  const returning = await finish();
+  const account = returning ?? await restore();
+  if (account) {
+    Object.assign(state, { ask: askPds, kept: true });
+    await enter(account, returning ? `Signed in as ${account.did}, through ${account.pds}` : `Still signed in as ${account.did}, from an earlier visit`);
+  } else {
+    $('sign-in').hidden = false;
+  }
+} catch (problem) {
+  $('sign-in').hidden = false;
+  $('sign-in-problem').textContent = `Signing in did not work: ${problem.message}`;
+}
 
 // ---- The tree. ----
 function postButton(post) {

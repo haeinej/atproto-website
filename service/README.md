@@ -34,7 +34,15 @@ A request sent twice ends the same as sent once. Saving a post, whatever it says
 
 ## The page
 
-`/` is a page for working in a vault and trying the path end to end: sign in, see the tree, make and edit a post, change who can see it, bring in what is published, and write the vault out. It signs the member in at their own PDS with an app password, which is sent to that PDS and nowhere else, and asks the PDS for a token before each request. Its files are in [public/](public/). Signing in through the browser without an app password is not built.
+`/` is a page for working in a vault and trying the path end to end: sign in, see the tree, make and edit a post, change who can see it, bring in what is published, and write the vault out. Its files are in [public/](public/).
+
+**Signing in feels like signing in anywhere.** The member types their handle. The service finds the account (`GET /xrpc/com.ohmmmm.identity.findAccount?account=`, which needs no sign-in and answers only with what is public), and the page sends them to their own PDS to approve, with a passkey if they have one. They come back signed in, and the page never sees a password. This is AT Protocol's own sign-in for applications, so it works with any PDS that offers it: Cirrus, and Bluesky's. [public/client-metadata.json](public/client-metadata.json) is what a PDS reads to learn who is asking; its addresses have to be the ones the service is served at.
+
+**The sign-in is kept on the device.** It is tied to a key made in that browser that cannot be copied out of it, so the next visit is already signed in and what is kept is of no use anywhere else. Signing out tells the PDS the sign-in is over and forgets it.
+
+An app password is still offered, behind "Use an app password instead", for a PDS that cannot sign someone in through the browser. It is sent to the PDS only and is not kept.
+
+The page asks the PDS for a token before each request to the vault, whichever way the member signed in.
 
 ## A post as a file
 

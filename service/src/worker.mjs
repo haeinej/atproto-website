@@ -7,7 +7,7 @@
 import { POST, webUrl } from '../../feed/pds.mjs';
 import { postFile } from '../../vault/file.mjs';
 import { importVault, saveImported } from '../../vault/import.mjs';
-import { createIdentity } from './identity.mjs';
+import { createIdentity, findAccount } from './identity.mjs';
 import { postStore, Refused } from './store.mjs';
 
 const METHODS = {
@@ -61,6 +61,11 @@ export function createService({ whoIs, get = fetch } = {}) {
     try {
       const url = new URL(request.url);
       const method = /^\/xrpc\/([A-Za-z0-9.]+)$/.exec(url.pathname)?.[1];
+      // Finding an account from a handle needs no sign-in: it is the first step of signing in, and
+      // everything it answers with is already public.
+      if (method === 'com.ohmmmm.identity.findAccount' && request.method === 'GET') {
+        return json(await findAccount(url.searchParams.get('account'), { get }));
+      }
       if (!method || !Object.hasOwn(METHODS, method)) throw new Refused(404, 'MethodNotFound', 'There is no such request');
       if (request.method !== METHODS[method]) throw new Refused(405, 'WrongMethod', `${method} is a ${METHODS[method]} request`);
       // Who is asking comes first. Nothing about any vault is looked at until that is settled, and

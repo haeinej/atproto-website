@@ -19,17 +19,26 @@
       <button id="sign-out" type="button" hidden>Sign out</button>
     </header>
 
-    <!-- Signing in. The app password goes to your own PDS and nowhere else. -->
-    <section id="sign-in" aria-labelledby="sign-in-title">
-      <h2 id="sign-in-title">Sign in with your AT Protocol account</h2>
-      <p>This page asks your own PDS to sign you in, then asks it for a short-lived token each time it talks to the vault. Your app password is sent to your PDS only. It is not sent to ohm and not kept after you close this page.</p>
-      <form id="sign-in-form" autocomplete="off">
-        <label>Your PDS <input id="pds" type="url" placeholder="https://pds.example.com" required></label>
-        <label>Handle or DID <input id="identifier" type="text" placeholder="example.com" required autocapitalize="none" spellcheck="false"></label>
-        <label>App password <input id="password" type="password" required autocomplete="off"></label>
-        <button type="submit">Sign in</button>
+    <!-- Signing in, through the member's own PDS. -->
+    <section id="sign-in" aria-labelledby="sign-in-title" hidden>
+      <h2 id="sign-in-title">Sign in</h2>
+      <form id="handle-form">
+        <label>Your handle <input id="handle" type="text" placeholder="example.com" required autocapitalize="none" autocomplete="username" spellcheck="false"></label>
+        <button type="submit">Continue</button>
       </form>
+      <p class="quiet">You will be taken to your own PDS to approve, with your passkey if you have one, and brought back here. This page never sees a password. The sign-in is then kept on this device, so next time you are already in.</p>
       <p id="sign-in-problem" role="alert"></p>
+
+      <details id="other-way">
+        <summary>Use an app password instead</summary>
+        <p class="quiet">For a PDS that cannot sign you in through the browser. The app password is sent to your PDS only, not to ohm, and is not kept: you sign in again each visit.</p>
+        <form id="sign-in-form" autocomplete="off">
+          <label>Your PDS <input id="pds" type="url" placeholder="https://pds.example.com" required></label>
+          <label>Handle or DID <input id="identifier" type="text" placeholder="example.com" required autocapitalize="none" spellcheck="false"></label>
+          <label>App password <input id="password" type="password" required autocomplete="off"></label>
+          <button type="submit">Sign in</button>
+        </form>
+      </details>
     </section>
 
     <main id="workspace" hidden>

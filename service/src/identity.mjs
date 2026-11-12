@@ -62,6 +62,53 @@ export function documentAddress(did, directory = 'https://plc.directory') {
   return `https://${decodeURIComponent(host)}/${path.length ? `${path.join('/')}/did.json` : '.well-known/did.json'}`;
 }
 
+const HANDLE = /^(?=.{3,253}$)(?:[a-z0-9](?:[a-z0-9-]{0,61}[a-z0-9])?\.)+[a-z][a-z0-9-]{0,61}[a-z0-9]$/;
+
+// Find an account from what a person types to sign in: their handle, which is a domain name, or
+// their DID. Answers with the DID, the handle, and the PDS the account's own DID document names.
+// A handle is looked up the two ways AT Protocol allows, a DNS record and a file on the domain,
+// and is believed only if the DID's document names the handle back.
+export async function findAccount(typed, { get = fetch, directory } = {}) {
+  const input = String(typed ?? '').trim().replace(/^@/, '').toLowerCase();
+  const refuse = message => { throw new Refused(404, 'AccountNotFound', message); };
+  let did = DID.test(String(typed ?? '').trim()) ? String(typed).trim() : null;
+  const handle = did ? null : HANDLE.test(input) ? input : refuse('A handle is a domain name, such as example.com');
+  const options = { redirect: 'error', signal: AbortSignal.timeout(8_000) };
+  if (handle) {
+    try {
+      const url = new URL('https://cloudflare-dns.com/dns-query');
+      url.search = new URLSearchParams({ name: `_atproto.${handle}`, type: 'TXT' });
+      const answer = await (await get(url, { ...options, headers: { Accept: 'application/dns-json' } })).json();
+      const found = (answer.Answer ?? []).map(each => String(each.data).replaceAll('"', '')).filter(text => text.startsWith('did='));
+      if (found.length === 1 && DID.test(found[0].slice(4))) did = found[0].slice(4);
+    } catch {
+      // The file on the domain is tried next.
+    }
+    if (!did) {
+      try {
+        const response = await get(`https://${handle}/.well-known/atproto-did`, options);
+        const text = response.ok ? (await response.text()).trim() : '';
+        if (DID.test(text)) did = text;
+      } catch {
+        // Said below.
+      }
+    }
+    if (!did) refuse(`No AT Protocol account was found for ${handle}`);
+  }
+  let document;
+  try {
+    const response = await get(documentAddress(did, directory), { ...options, headers: { Accept: 'application/json' } });
+    document = response.ok ? await response.json() : null;
+  } catch {
+    document = null;
+  }
+  const pds = document?.id === did ? pdsOf(document) : null;
+  if (!pds) refuse(`The account ${did} does not say where its repository is kept`);
+  const named = (document.alsoKnownAs ?? []).filter(each => typeof each === 'string' && each.startsWith('at://')).map(each => each.slice(5).toLowerCase());
+  if (handle && !named.includes(handle)) refuse(`${handle} points to ${did}, but that account does not name ${handle} as its handle`);
+  return { did, handle: handle ?? named[0] ?? null, pds };
+}
+
 // `members` is the DIDs allowed in, or '*' for anyone. It is checked before anything is fetched,
 // so a token cannot make the service go and read an address of the sender's choosing.
 export function createIdentity({ audience, members, get = fetch, directory, now = () => Date.now() }) {

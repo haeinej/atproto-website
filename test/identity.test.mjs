@@ -2,7 +2,7 @@ import assert from 'node:assert/strict';
 import test from 'node:test';
 import { p256 } from '../service/node_modules/@noble/curves/p256.js';
 import { secp256k1 } from '../service/node_modules/@noble/curves/secp256k1.js';
-import { createIdentity, documentAddress, signingKey } from '../service/src/identity.mjs';
+import { createIdentity, documentAddress, findAccount, signingKey } from '../service/src/identity.mjs';
 
 const audience = 'did:web:vault.ohmmmm.test';
 const method = 'com.ohmmmm.vault.listFiles';
@@ -116,4 +116,37 @@ test('a DID\'s document is looked for where the DID says', () => {
   assert.equal(documentAddress('did:web:example.com:users:haein'), 'https://example.com/users/haein/did.json');
   assert.equal(documentAddress('did:web:localhost%3A8787'), 'https://localhost:8787/.well-known/did.json');
   assert.equal(documentAddress('did:plc:abcdefghijklmnopqrstuvwx'), 'https://plc.directory/did:plc:abcdefghijklmnopqrstuvwx');
+});
+
+test('an account is found from the handle a person types, and a handle is believed only if the account names it back', async () => {
+  const did = 'did:web:pds.haein.test';
+  const document = { id: did, alsoKnownAs: ['at://haein.test'], service: [{ id: '#atproto_pds', type: 'AtprotoPersonalDataServer', serviceEndpoint: 'https://pds.haein.test' }] };
+  const asked = [];
+  const world = routes => async url => {
+    asked.push(String(url));
+    const found = routes[String(url).split('?')[0]] ?? routes[String(url)];
+    return found === undefined ? new Response('Not found', { status: 404 }) : typeof found === 'string' ? new Response(found) : Response.json(found);
+  };
+  const dns = 'https://cloudflare-dns.com/dns-query';
+  const docs = { 'https://pds.haein.test/.well-known/did.json': document };
+
+  // By the DNS record, which is how a handle on a site of its own is usually set.
+  const byDns = world({ [dns]: { Answer: [{ data: '"did=did:web:pds.haein.test"' }] }, ...docs });
+  assert.deepEqual(await findAccount(' @Haein.Test ', { get: byDns }), { did, handle: 'haein.test', pds: 'https://pds.haein.test' });
+  assert.match(asked[0], /name=_atproto\.haein\.test&type=TXT/);
+  // By the file on the domain, when there is no record.
+  const byFile = world({ [dns]: { Answer: [] }, 'https://haein.test/.well-known/atproto-did': 'did:web:pds.haein.test\n', ...docs });
+  assert.equal((await findAccount('haein.test', { get: byFile })).did, did);
+  // By the DID itself.
+  assert.deepEqual(await findAccount(did, { get: world(docs) }), { did, handle: 'haein.test', pds: 'https://pds.haein.test' });
+
+  const refused = words => problem => problem.code === 'AccountNotFound' && words.test(problem.message);
+  // Someone else's domain pointing at this account is not this account's handle.
+  const squatter = world({ [dns]: { Answer: [{ data: 'did=did:web:pds.haein.test' }] }, ...docs });
+  await assert.rejects(findAccount('not-haein.test', { get: squatter }), refused(/does not name not-haein\.test as its handle/));
+  await assert.rejects(findAccount('nobody.test', { get: world({ [dns]: { Answer: [] } }) }), refused(/No AT Protocol account was found/));
+  await assert.rejects(findAccount(did, { get: world({ 'https://pds.haein.test/.well-known/did.json': { id: did } }) }), refused(/does not say where its repository is kept/));
+  for (const typed of ['', 'localhost', 'haein', '10.0.0.1', 'https://haein.test', 'a b.test', 'x'.repeat(260) + '.test']) {
+    await assert.rejects(findAccount(typed, { get: world({}) }), refused(/A handle is a domain name/), typed);
+  }
 });
