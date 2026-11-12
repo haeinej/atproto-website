@@ -1,2 +1,4 @@
 wrangler.jsonc
 .assetsignore
+.wrangler
+.gitignore
