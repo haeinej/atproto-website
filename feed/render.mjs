@@ -142,7 +142,7 @@ export function postPage(post) {
     ? `<a class="note-platform" href="${escape(post.sourceUrl)}">${escape(post.platform)}</a>`
     : `<span class="note-platform">${escape(post.platform)}</span>`;
   const label = post.label ? `<span>${escape([post.label, post.sublabel].filter(Boolean).join(' · '))}</span>` : '';
-  const hidden = post.visibility === 'private';
+  const hidden = ['private', 'friends'].includes(post.visibility);
   const { link } = post;
   const card = link ? `<a class="link-card" href="${escape(link.uri)}">${
     link.image ? `<img src="${escape(link.image)}" alt="" loading="lazy" decoding="async">` : ''}<span class="link-text">${
@@ -168,7 +168,7 @@ export function postPage(post) {
         <time datetime="${escape(post.createdAt)}">${date}</time>
         ${platform}
         ${label}
-        ${hidden ? '<span>private</span>' : ''}
+        ${hidden ? `<span>${post.visibility}</span>` : ''}
       </div>
       <div class="post-body">${post.bodyHtml}</div>
       ${card}

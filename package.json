@@ -15,6 +15,7 @@
     "bin",
     "scripts",
     "feed",
+    "vault",
     "mirror",
     "lexicons",
     "site",
