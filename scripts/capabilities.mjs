@@ -17,7 +17,7 @@ const ASKS = {
   member: ['The member', 'Such a token from their own PDS, as the command line and an agent\'s tools send; or their ohm session, as the editor sends, which is worth exactly the one account it was connected to'],
   ohm: ['The member, signed in to ohm', 'Their ohm session only. A request that changes something must also come from ohm\'s own pages'],
 };
-const FILES = { Posts: 'posts', Structure: 'structure', Search: 'search', Mirror: 'mirror', Export: 'export', Account: 'account', Identity: 'identity' };
+const FILES = { Posts: 'posts', Structure: 'structure', Search: 'search', Mirror: 'mirror', Publish: 'publish', Export: 'export', Account: 'account', Identity: 'identity' };
 
 // Every way the service says no. The same words go to a person in the editor and to an agent.
 export const REFUSALS = {
@@ -37,7 +37,8 @@ export const REFUSALS = {
   NotFound: [404, 'There is no such post'],
   Changed: [409, 'The post has changed since the version the request names. The answer carries the current version'],
   SlugTaken: [409, 'Another post in the vault already has that slug'],
-  TooLarge: [413, 'The post is more than 600 KB of text'],
+  TooLarge: [413, 'The post is more than 600 KB of text, or a file it places is empty or larger than 25 MB'],
+  FileUnreachable: [502, 'A file a post places could not be fetched from where the post says it is'],
   AccountNotFound: [404, 'No AT Protocol account answers to that handle or DID'],
   NoRepository: [400, 'The account\'s DID document does not say where its repository is kept'],
   RepositoryUnreachable: [502, 'The account\'s PDS would not answer'],
@@ -65,7 +66,7 @@ export function capabilitiesPage() {
     '| --- | --- | --- | --- |',
     ...CAPABILITIES.map(capability => `| **${capability.name}** | ${cell(capability.about)} | ${Object.keys(capability.requests).map(name => `\`${short(name)}\``).join(', ')} | [${FILES[capability.name]}.mjs](src/capabilities/${FILES[capability.name]}.mjs) |`),
     '',
-    'Nothing here publishes. Saving a post, whatever it says about who may see it, changes only the vault\'s own copy.',
+    'The service never writes to anyone\'s repository. Saving a post, whatever it says about who may see it, changes only the vault\'s own copy. Publishing is worked out here and carried out by the member, signed in at their own PDS ([public/vault/publish.js](public/vault/publish.js)).',
     '',
     '## Asking',
     '',
@@ -112,7 +113,7 @@ export function capabilitiesPage() {
     'Three rules hold for every tool that changes something:',
     '',
     '1. A new post is always private.',
-    '2. Changing a post that is not private, changing who a post is for, bringing posts in from the PDS, and removing a post each take two calls. The first answers with what would happen and a `confirm` value; only a second call carrying that value does it.',
+    '2. Changing a post that is not private, changing who a post is for, publishing, bringing posts in from the PDS, and removing a post each take two calls. The first answers with what would happen and a `confirm` value; only a second call carrying that value does it.',
     '3. A post is changed from the version that was read. If it has changed since, the tool says so and nothing is saved.',
     '',
     '### Requests with no tool',
@@ -125,7 +126,7 @@ export function capabilitiesPage() {
     '',
     '## Not here yet',
     '',
-    'Publishing from the vault, attachments held by the vault, earlier versions of a post and bringing a removed one back, and a key a person can give an agent and take away again. Until there is such a key, an agent signs in with an app password from the person\'s PDS.',
+    'Attachments held by the vault, serving friends-only posts to friends, earlier versions of a post and bringing a removed one back, and a key a person can give an agent and take away again. Until there is such a key, an agent signs in with an app password from the person\'s PDS.',
     '',
   );
   return lines.join('\n');

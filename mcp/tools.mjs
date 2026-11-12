@@ -7,6 +7,7 @@
 // only a second call carrying that value does it. The person sees the first answer before the
 // second is made.
 import { createHash } from 'node:crypto';
+import { carryOut } from '../service/public/vault/publish.js';
 import { VISIBILITIES, VaultProblem } from '../vault/core.mjs';
 import { newPostId } from '../vault/file.mjs';
 
@@ -73,6 +74,19 @@ export const TOOLS = [
     description: 'Change who a post is for: public (everyone), friends, or private (only the person). The post itself does not change. Always takes two calls.',
     inputSchema: { type: 'object', properties: { key: which, to: { type: 'string', enum: VISIBILITIES }, confirm: text }, required: ['key', 'to'] },
     requests: ['getTree', 'getPost', 'putPost'],
+  },
+  {
+    name: 'vault_status',
+    description: "What publishing would change, without changing anything: the posts that would be published for the first time, replaced or taken down, the ones that cannot be published and why, and published records the vault knows nothing about. Use it to answer \"what is not published yet?\".",
+    inputSchema: { type: 'object', properties: {} },
+    annotations: { readOnlyHint: true },
+    requests: ['getPublishPlan'],
+  },
+  {
+    name: 'vault_publish',
+    description: "Publish: make what is published in the person's own repository match their vault. Posts marked public are published or replaced, and published posts that are no longer public are taken down. Always takes two calls: the first says exactly what would change; the second, with the confirm value, changes it. Publishing is public the moment it is done, and taking a post down does not recall copies others already made.",
+    inputSchema: { type: 'object', properties: { confirm: text } },
+    requests: ['getPublishPlan', 'getAttachment'],
   },
   {
     name: 'vault_mirror',
@@ -236,6 +250,30 @@ export function createTools({ vault }) {
       }, async () => {
         await asking(() => vault.put({ ...post, visibility: to }, version));
         return saved(post.id);
+      });
+    },
+
+    async vault_status() {
+      const { writes, plan, ...status } = await asking(() => vault.publishPlan());
+      return { ...status, ...(status.changes ? {} : { note: 'What is published matches the vault.' }) };
+    },
+
+    async vault_publish(args) {
+      // What would change is worked out afresh on each call, and the confirm value stands for
+      // exactly that list: if the vault or the repository changed in between, it is shown again.
+      const plan = await asking(() => vault.publishPlan({ prepare: true }));
+      const { writes, plan: name, ...status } = plan;
+      if (!status.changes) return { done: true, nothingToPublish: true, ...status, note: 'What is published matches the vault. Nothing to publish.' };
+      return twoSteps(args, { tool: 'vault_publish', plan: name }, {
+        ...status,
+        note: 'These changes are made in the person\'s own repository. A published post is public at once. Taking one down does not recall copies others already made.',
+      }, async () => {
+        if (plan.repository !== vault.repository) refuse('The vault is one account\'s and the sign-in at the PDS is another\'s. Nothing was published.');
+        const made = await asking(() => carryOut(plan, {
+          attachment: (write, item) => vault.attachment(write.rkey, item.id),
+          upload: vault.upload, apply: vault.apply,
+        }));
+        return { published: made, ...(status.cannot.length ? { stillCannotBePublished: status.cannot } : {}) };
       });
     },
 

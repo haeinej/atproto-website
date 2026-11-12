@@ -197,6 +197,9 @@ async function running() {
       return Response.json(user ? { session: { id: 's' }, user } : null);
     }
     if (documents[String(url)]) return Response.json(documents[String(url)]);
+    // A file a member's PDS holds, asked about without being fetched; and a picture on another website.
+    if (url.pathname === '/xrpc/com.atproto.sync.getBlob') return new Response(null, { headers: { 'Content-Type': 'image/png', 'Content-Length': '7' } });
+    if (url.origin === 'https://photos.haein.test') return url.pathname.endsWith('.jpg') ? new Response(new Uint8Array([1, 2, 3]), { headers: { 'Content-Type': 'image/jpeg' } }) : new Response('gone', { status: 404 });
     // A member's own PDS, saying which types of record their repository holds.
     if (url.pathname === '/xrpc/com.atproto.repo.describeRepo') {
       return Response.json({ did: url.searchParams.get('repo'), collections: [...repositories.keys()].filter(key => key.startsWith(`${url.origin}|`)).map(key => key.slice(url.origin.length + 1)) });
@@ -300,8 +303,58 @@ test('posts are found by the words in them, a member\'s own and nobody else\'s',
   assert.equal((await ask(haein, 'searchPosts', { query: { q: 'rain' }, token: null })).status, 401);
 });
 
+test('what publishing would change is worked out for a member\'s own vault, with the files a record needs', async () => {
+  const { haein, jun, ask, repositories } = await running();
+  const at = 'https://pds.haein.test';
+  const held = cid => `${at}/xrpc/com.atproto.sync.getBlob?did=${encodeURIComponent(haein.did)}&cid=${cid}`;
+  const pictures = post('pictures', {
+    label: 'Photographs', visibility: 'public', title: 'Pictures', date: '2026-01-01T00:00:00.000Z',
+    body: `![Kept](${held('bafkept')}#kept.png)\n\n![New to the record](${held('bafnew')}#fresh.png)\n\n![From elsewhere](https://photos.haein.test/hill.jpg)`,
+  });
+  const quiet = post('quiet', { body: 'Only mine.' });
+  for (const each of [pictures, quiet]) assert.equal((await ask(haein, 'putPost', { body: { post: each } })).status, 200);
+  // What is published of it now: an older version, whose one picture the PDS says more about.
+  repositories.set(`${at}|com.ohmmmm.post`, [[pictures.id, {
+    $type: 'com.ohmmmm.post', slug: 'pictures', title: 'Pictures', label: 'Photographs', form: 'gallery', publishedAt: '2026-01-01T00:00:00.000Z',
+    canonicalUrl: 'https://pds.haein.test/posts/photographs/pictures', body: '![Kept](media:kept)',
+    media: [{ $type: 'com.ohmmmm.post#image', id: 'kept', file: { $type: 'blob', ref: { $link: 'bafkept' }, mimeType: 'image/png', size: 900 }, width: 1200, height: 800 }],
+  }]]);
+
+  const looked = await (await ask(haein, 'getPublishPlan')).json();
+  assert.deepEqual([looked.repository, looked.pds, looked.collection, looked.changes, looked.replace.map(each => each.slug), looked.writes, looked.plan],
+    [haein.did, at, 'com.ohmmmm.post', 1, ['pictures'], undefined, undefined]);
+
+  const ready = await (await ask(haein, 'getPublishPlan', { query: { prepare: '1' } })).json();
+  assert.equal(ready.writes.length, 1);
+  const [write] = ready.writes;
+  assert.deepEqual([write.action, write.rkey, write.before, write.attachments], ['update', pictures.id, undefined, undefined]);
+  // A file published already keeps what the record said of it. One the PDS holds but the record
+  // did not name is described by the PDS. One from another website is left for the member to send.
+  assert.deepEqual(write.record.media, [
+    { $type: 'com.ohmmmm.post#image', id: 'kept', file: { $type: 'blob', ref: { $link: 'bafkept' }, mimeType: 'image/png', size: 900 }, width: 1200, height: 800, alt: 'Kept' },
+    { $type: 'com.ohmmmm.post#image', id: 'fresh', file: { $type: 'blob', ref: { $link: 'bafnew' }, mimeType: 'image/png', size: 7 }, alt: 'New to the record' },
+  ]);
+  assert.deepEqual(write.upload, [{ id: 'hill', address: 'https://photos.haein.test/hill.jpg', alt: 'From elsewhere' }]);
+  // The name stands for exactly these changes: the same again, and another once the vault changes.
+  assert.equal((await (await ask(haein, 'getPublishPlan', { query: { prepare: '1' } })).json()).plan, ready.plan);
+  const version = (await (await ask(haein, 'getPost', { query: { id: quiet.id } })).json()).version;
+  await ask(haein, 'putPost', { body: { post: { ...quiet, visibility: 'public' }, replaces: version } });
+  assert.notEqual((await (await ask(haein, 'getPublishPlan', { query: { prepare: '1' } })).json()).plan, ready.plan);
+
+  // The file from another website is fetched for the member who places it, and for nobody else.
+  const file = await ask(haein, 'getAttachment', { query: { id: pictures.id, attachment: 'hill' } });
+  assert.deepEqual([file.status, file.headers.get('Content-Type'), [...new Uint8Array(await file.arrayBuffer())]], [200, 'image/jpeg', [1, 2, 3]]);
+  assert.equal((await ask(haein, 'getAttachment', { query: { id: pictures.id, attachment: 'no-such' } })).status, 404);
+  assert.equal((await ask(jun, 'getAttachment', { query: { id: pictures.id, attachment: 'hill' } })).status, 404);
+  assert.equal((await ask(haein, 'getAttachment', { query: { id: pictures.id, attachment: 'hill' }, token: null })).status, 401);
+  // Jun's plan is Jun's: nothing of Haein's vault or repository is in it.
+  const juns = await (await ask(jun, 'getPublishPlan', { query: { prepare: '1' } })).json();
+  assert.deepEqual([juns.repository, juns.changes, juns.writes, juns.notInVault], [jun.did, 0, [], []]);
+  assert.equal((await ask(haein, 'getPublishPlan', { token: null })).status, 401);
+});
+
 test('every request belongs to one capability, and says what it is, who may ask, and whether it changes anything', () => {
-  assert.deepEqual(CAPABILITIES.map(capability => capability.name), ['Posts', 'Structure', 'Search', 'Mirror', 'Export', 'Account', 'Identity']);
+  assert.deepEqual(CAPABILITIES.map(capability => capability.name), ['Posts', 'Structure', 'Search', 'Mirror', 'Publish', 'Export', 'Account', 'Identity']);
   const names = CAPABILITIES.flatMap(capability => Object.keys(capability.requests));
   assert.equal(new Set(names).size, names.length, 'a request has one home');
   assert.deepEqual(Object.keys(REQUESTS).sort(), [...names].sort());

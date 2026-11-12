@@ -19,9 +19,11 @@ A member's vault: their posts, reached with a handful of requests. Every request
 
 ## What it can do
 
-The service does seven things, each kept apart in a file of its own under [src/capabilities/](src/capabilities/): posts, structure, search, mirror, export, account and identity. **[CAPABILITIES.md](CAPABILITIES.md) is the reference**: every request, what it takes and gives, who may ask it, every way the service says no, and which requests each of an agent's tools is made of. That page is written from the same tables the service runs on (`npm run capabilities`), and a test fails if the two differ.
+The service does eight things, each kept apart in a file of its own under [src/capabilities/](src/capabilities/): posts, structure, search, mirror, publish, export, account and identity. **[CAPABILITIES.md](CAPABILITIES.md) is the reference**: every request, what it takes and gives, who may ask it, every way the service says no, and which requests each of an agent's tools is made of. That page is written from the same tables the service runs on (`npm run capabilities`), and a test fails if the two differ.
 
 A request sent twice ends the same as sent once. Saving a post, whatever it says about who may see it, changes only this copy.
+
+**Publishing is worked out here and done by the member.** The Publish capability says what would have to change in the member's own repository for what is published to match their vault, and writes nothing: the service holds no permission to write to anyone's repository. The member, signed in at their own PDS, makes the changes from that list. [public/vault/publish.js](public/vault/publish.js) is the code that does, and it is the same code in the editor and in an agent's tools. The rules that keep it safe beside other software writing to the same repository are in [../vault/publish.mjs](../vault/publish.mjs).
 
 ## The page
 
@@ -39,6 +41,8 @@ Either way the page then lets the sign-in at the PDS go: the ohm session, a cook
 Where ohm's sign-in does not take AT Protocol accounts yet (`/api/account/config` says whether it does), a Bluesky sign-in is kept in the browser instead, tied to a key that cannot be copied out of it, and the PDS issues a token for each request the page makes.
 
 **Once it is open, the app's screen.** A rail of icons (the vault, and you at the foot), a side panel that lists, and the main screen, laid out as the app lays out its own. The side panel is the repository, and is always its content, drawn as folders that open and close with the posts under them, each with an icon for who can see it. Pills at its top choose what the folders are: the member's labels, the platforms the posts first appeared on, or who can see them. The filter beside them leaves out any label, platform or audience. The main screen is one post.
+
+**Publish is a button above the tree.** A mark on it says something is waiting. Pressing it shows what would be published for the first time, replaced and taken down, and nothing changes until the member approves at their own PDS: with an app password typed on the page, or a passkey at the PDS's own screen. The sign-in made for it is let go when it is done.
 
 **A new account's vault fills itself.** The first time a connected account's vault opens, the page asks the service to mirror what the account has published on its PDS, and the posts appear in the side panel. The service remembers that it has been done (`mirrored` in `com.ohmmmm.account.get`). The arrows in the side panel's heading bring in whatever is new since. Taking the vault away as files is in the menu under your picture. On a phone the side panel is the screen, the rail is a bar at its foot, and opening a post makes the post the screen.
 
@@ -90,4 +94,4 @@ The service is served at two addresses: its own, which is what its DID names and
 
 ## Not here yet
 
-Attachments and their cached copies, publishing, the endpoints for public and friends-only posts, earlier versions of a post, and holding a removed post so it can be brought back.
+Attachments and their cached copies, the endpoints for public and friends-only posts, serving a friends-only post to friends, earlier versions of a post, and holding a removed post so it can be brought back.

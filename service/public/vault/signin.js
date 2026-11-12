@@ -205,6 +205,41 @@ export async function askPds(method, query) {
   }
 }
 
+// One change sent to the member's own PDS, as the member: a file to keep, or a batch of changes to
+// their repository. Publishing is the only thing that uses it. `sent` is `{ json }` or
+// `{ bytes, mime }`.
+export async function sendPds(method, sent) {
+  const body = sent.json !== undefined ? JSON.stringify(sent.json) : sent.bytes;
+  const type = sent.json !== undefined ? 'application/json' : sent.mime;
+  if (brief) {
+    const url = new URL(`/xrpc/${method}`, brief.account.pds);
+    return readJson(await fetch(url, { method: 'POST', headers: { Authorization: `Bearer ${brief.accessJwt}`, 'Content-Type': type }, body }), 'Your PDS');
+  }
+  let session = await kept('session');
+  if (!session) throw new Error('You are not signed in at your PDS');
+  for (let renewed = false, again = false; ;) {
+    session = await fresh(session);
+    const url = new URL(`/xrpc/${method}`, session.account.pds);
+    const before = nonces.get(url.origin);
+    const response = await fetch(url, {
+      method: 'POST', body,
+      headers: { Authorization: `DPoP ${session.accessToken}`, DPoP: await proof(session.keys, 'POST', url, session.accessToken), 'Content-Type': type },
+    });
+    // A PDS that wanted a fresh value in the proof has just given it: ask once more with it.
+    const given = noted(url, response);
+    if (response.status === 401 && given && given !== before && !again) {
+      again = true;
+      continue;
+    }
+    if (response.status === 401 && !renewed && session.refreshToken) {
+      renewed = true;
+      session = { ...session, expiresAt: 0 };
+      continue;
+    }
+    return readJson(response, 'Your PDS');
+  }
+}
+
 // Sign out: tell the PDS the sign-in is over, and forget it here.
 export async function leave() {
   if (brief) {

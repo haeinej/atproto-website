@@ -9,10 +9,11 @@
 // After that the ohm session alone opens their vault, in the app's screen: a rail, a side panel,
 // the post.
 // Everything shown is put on the page as text, never as markup.
-import { askPds, begin, beginWithPassword, finish, leave, restore } from './signin.js';
+import { carryOut } from './publish.js';
+import { askPds, begin, beginWithPassword, finish, leave, restore, sendPds } from './signin.js';
 
 const $ = id => document.getElementById(id);
-const state = { mode: 'ohm', me: null, audience: '', did: '', tree: null, current: null, page: 'vault', signup: false, busy: false, step: 'where' };
+const state = { mode: 'ohm', me: null, audience: '', did: '', tree: null, current: null, publishing: false, plan: null, page: 'vault', signup: false, busy: false, step: 'where' };
 const PAGES = { vault: 'Vault' };
 function icon(name) {
   const svg = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
@@ -305,7 +306,7 @@ async function open() {
     }
     if (me) {
       state.me = me;
-      if (me.did) return await enter({ name: me.user.name || 'You', did: me.did, mirrored: me.mirrored });
+      if (me.did) return await enter({ name: me.user.name || 'You', did: me.did, mirrored: me.mirrored, approvedAtPds: pds?.purpose === 'publish' && pds.did === me.did });
       $('signed-in-as').textContent = me.user.name ? `Signed in as ${me.user.name}.` : 'Signed in.';
       return handleStep('where');
     }
@@ -330,7 +331,7 @@ async function open() {
   screen('sign-in');
 }
 // The vault opens. Reading it first means an account that is not let in never sees it empty.
-async function enter({ name, did, mirrored = true }) {
+async function enter({ name, did, mirrored = true, approvedAtPds = false }) {
   state.tree = await call('getTree');
   state.did = did;
   $('who').textContent = name;
@@ -342,6 +343,9 @@ async function enter({ name, did, mirrored = true }) {
   showTree();
   // A new account's vault is filled from its PDS without being asked.
   if (!mirrored) await mirror({ first: true });
+  // Back from approving at the PDS's own screen: the changes are shown again, ready to be made.
+  if (approvedAtPds) await openPublish();
+  else refreshStatus();
 }
 
 // ---- The app's screen: the rail picks a page; the side panel and the main screen follow it. ----
@@ -356,7 +360,14 @@ function go(page) {
 }
 // On a phone the side panel is the screen until a post is open.
 function narrow() {
-  $('app').classList.toggle('mobile-directory', !(state.page === 'vault' && state.current));
+  $('app').classList.toggle('mobile-directory', !(state.page === 'vault' && (state.current || state.publishing)));
+}
+// The main screen shows one of three things: a post, what publishing would change, or nothing yet.
+function mainScreen() {
+  $('publish-view').hidden = !state.publishing;
+  $('post-form').hidden = state.publishing || !state.current;
+  $('post-empty').hidden = state.publishing || Boolean(state.current);
+  narrow();
 }
 for (const button of document.querySelectorAll('[data-go]')) button.addEventListener('click', () => go(button.dataset.go));
 
@@ -507,9 +518,8 @@ $('mirror').addEventListener('click', () => mirror());
 const fields = { title: 'post-name', label: 'label', sublabel: 'sublabel', slug: 'slug', visibility: 'visibility', date: 'date', body: 'body' };
 function show(post, version) {
   state.current = { post, version };
-  $('post-form').hidden = false;
-  $('post-empty').hidden = true;
-  narrow();
+  state.publishing = false;
+  mainScreen();
   $('post-title').textContent = version ? (post.title || post.slug) : 'A new post';
   for (const [name, id] of Object.entries(fields)) $(id).value = post[name] ?? '';
   $('delete').hidden = !version;
@@ -540,9 +550,7 @@ $('new-post-here').addEventListener('click', newPost);
 // Leaving a post: the main screen is empty again, and on a phone the side panel is back.
 function closePost() {
   state.current = null;
-  $('post-form').hidden = true;
-  $('post-empty').hidden = false;
-  narrow();
+  mainScreen();
 }
 $('back').addEventListener('click', async () => { closePost(); await loadTree(); });
 // A new post's slug follows its title until the slug is typed by hand.
@@ -565,6 +573,7 @@ $('post-form').addEventListener('submit', async event => {
     const saved = await call('putPost', { body: { post, ...(version ? { replaces: version } : {}) } });
     notice(saved.unchanged ? 'Nothing to save' : 'Saved');
     await openPost(post.id);
+    refreshStatus();
   } catch (problem) {
     failed(`Saving "${post.slug}"`, problem);
     if (problem.code === 'Changed') notice('It was changed somewhere else since you opened it. Open it again to see the newer version; what you typed is still in the form.', 'error');
@@ -577,6 +586,7 @@ $('delete').addEventListener('click', async () => {
     await call('deletePost', { body: { id: post.id, replaces: version } });
     closePost();
     await loadTree();
+    refreshStatus();
   } catch (problem) {
     failed(`Removing "${post.slug}"`, problem);
   }
@@ -599,6 +609,7 @@ async function mirror({ first = false } = {}) {
     notice(report.saved.length
       ? `Brought in ${plural(report.saved.length, 'post')} from your PDS${left ? `; ${left} could not be read` : ''}`
       : first ? 'Nothing is published on your PDS yet' : 'Nothing new on your PDS');
+    refreshStatus();
   } catch (problem) {
     failed('Bringing in your published posts', problem);
   } finally {
@@ -606,6 +617,128 @@ async function mirror({ first = false } = {}) {
     $('mirror').disabled = false;
   }
 }
+
+// ---- Publish: making what is published in the member's own repository match the vault. ----
+// The service works out what would change and writes nothing. The changes are made from this
+// page, by the member, signed in at their own PDS for as long as it takes and no longer.
+// The mark on the Publish button says there is something to publish.
+async function refreshStatus() {
+  try {
+    const { changes } = await call('getPublishPlan');
+    $('publish-open').dataset.changes = String(changes);
+    $('publish-open').title = changes ? `Publish: ${plural(changes, 'change')}` : 'Publish: nothing to publish';
+  } catch {
+    // The mark is a convenience. The Publish screen says what is wrong, when it is opened.
+  }
+}
+function planList(title, rows) {
+  if (!rows.length) return [];
+  const list = document.createElement('ul');
+  list.append(...rows.map(([name, detail]) => {
+    const item = document.createElement('li');
+    item.append(Object.assign(document.createElement('span'), { className: 'name', textContent: name }));
+    if (detail) item.append(Object.assign(document.createElement('span'), { className: 'small', textContent: detail }));
+    return item;
+  }));
+  return [Object.assign(document.createElement('h3'), { textContent: title }), list];
+}
+function showPlan(plan, approved) {
+  state.plan = plan;
+  const name = each => each.title || each.slug || each.key;
+  $('publish-summary').textContent = plan.changes
+    ? `Publishing would make ${plural(plan.changes, 'change')} in your repository${plan.unchanged ? `, and leave ${plural(plan.unchanged, 'post')} as ${plan.unchanged === 1 ? 'it is' : 'they are'}` : ''}.`
+    : plan.unchanged ? `What is published matches your vault: ${plural(plan.unchanged, 'post')}. Nothing to publish.` : 'Nothing in your vault is marked for everyone yet, so there is nothing to publish.';
+  $('publish-lists').replaceChildren(
+    ...planList('Published for the first time', plan.create.map(each => [name(each), each.address])),
+    ...planList('Replaced', plan.replace.map(each => [name(each), each.changes.join(', ')])),
+    ...planList('Taken down', plan.remove.map(each => [name(each), each.why])),
+    ...planList('Cannot be published yet', plan.cannot.map(each => [name(each), [...each.problems, each.stays].filter(Boolean).join(' ')])),
+    ...planList('On your PDS, and not in your vault', plan.notInVault.map(each => [name(each), 'Left as it is. Bring it in with the arrows above the tree to work on it here.'])),
+  );
+  $('publish-form').hidden = !plan.changes;
+  // Approved at the PDS's own screen already: no password is asked for.
+  for (const id of ['publish-password-label', 'publish-password-note', 'publish-ways']) $(id).hidden = approved;
+}
+async function openPublish() {
+  state.publishing = true;
+  mainScreen();
+  $('publish-summary').textContent = 'Working out what would change…';
+  $('publish-lists').replaceChildren();
+  $('publish-form').hidden = true;
+  try {
+    const signedIn = await restore();
+    showPlan(await call('getPublishPlan', { query: { prepare: '1' } }), Boolean(signedIn && signedIn.did === state.did));
+  } catch (problem) {
+    $('publish-summary').textContent = `What would change could not be worked out: ${problem.message}`;
+  }
+}
+// Leaving the Publish screen lets go of any sign-in at the PDS that was made for it.
+async function closePublish() {
+  state.publishing = false;
+  $('publish-password').value = '';
+  mainScreen();
+  await leave().catch(() => {});
+}
+$('publish-open').addEventListener('click', openPublish);
+$('publish-close').addEventListener('click', closePublish);
+$('publish-back').addEventListener('click', closePublish);
+$('publish-passkey').addEventListener('click', async () => {
+  try {
+    notice('Taking you to your PDS…');
+    await begin(state.did, 'publish');
+  } catch (problem) {
+    notice(`Signing in at your PDS did not work: ${problem.message}`, 'error');
+  }
+});
+$('publish-form').addEventListener('submit', async event => {
+  event.preventDefault();
+  if (state.busy) return;
+  state.busy = true;
+  $('publish-go').disabled = true;
+  try {
+    // Signed in at the PDS for this, with the app password, unless its own screen approved already.
+    let signedIn = await restore();
+    if (!signedIn || signedIn.did !== state.did) {
+      const password = $('publish-password').value;
+      if (!password) {
+        $('publish-password').focus();
+        throw new Error('type an app password, or use a passkey at your PDS');
+      }
+      signedIn = await beginWithPassword(state.did, password, 'publish');
+      $('publish-password').value = '';
+    }
+    // The yes is for the changes that were shown. If they are no longer the changes, they are shown again.
+    const plan = await call('getPublishPlan', { query: { prepare: '1' } });
+    if (plan.plan !== state.plan?.plan) {
+      showPlan(plan, true);
+      notice('What would change is different now. Look again, then publish.');
+      return;
+    }
+    if (plan.repository !== signedIn.did) throw new Error('the sign-in at your PDS is for another account');
+    notice('Publishing…');
+    const done = await carryOut(plan, {
+      async attachment(write, item) {
+        const url = new URL('./xrpc/com.ohmmmm.vault.getAttachment', document.baseURI);
+        url.search = new URLSearchParams({ id: write.rkey, attachment: item.id });
+        const response = await fetch(url, { credentials: 'same-origin' });
+        if (!response.ok) throw new Error((await response.json().catch(() => ({}))).message || `the file "${item.id}" could not be fetched`);
+        return { bytes: new Uint8Array(await response.arrayBuffer()), mime: (response.headers.get('Content-Type') ?? 'application/octet-stream').split(';')[0].trim() };
+      },
+      upload: async (bytes, mime) => (await sendPds('com.atproto.repo.uploadBlob', { bytes, mime })).blob,
+      apply: writes => sendPds('com.atproto.repo.applyWrites', { json: { repo: plan.repository, writes } }),
+    });
+    await leave().catch(() => {});
+    const said = [done.created && `${done.created} published`, done.replaced && `${done.replaced} replaced`, done.removed && `${done.removed} taken down`].filter(Boolean).join(', ');
+    notice(`Published: ${said}`);
+    showPlan(await call('getPublishPlan', { query: { prepare: '1' } }), false);
+    refreshStatus();
+  } catch (problem) {
+    notice(`Publishing did not work: ${problem.message}`, 'error');
+  } finally {
+    state.busy = false;
+    $('publish-go').disabled = false;
+  }
+});
 
 // ---- Writing the vault out. ----
 $('export-folder').disabled = !window.showDirectoryPicker;

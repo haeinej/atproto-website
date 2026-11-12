@@ -236,6 +236,19 @@ a.button.primary { color: var(--ohm-on-accent); }
 .empty p { margin: 0; }
 .mobile-only { display: none; }
 
+/* Publish: what would change, as short lists, and under them the one action. */
+.plan h3 { margin: var(--ohm-space-6) 0 var(--ohm-space-2); font: var(--ohm-type-h3-weight) var(--ohm-type-small-size) / var(--ohm-type-small-leading) var(--ohm-font-sans); letter-spacing: var(--ohm-type-small-tracking); color: var(--ohm-muted); }
+.plan ul { list-style: none; margin: 0; padding: 0; }
+.plan li { display: grid; gap: 2px; padding: var(--ohm-space-2) var(--ohm-space-3); border-radius: var(--ohm-radius-row); }
+.plan li:nth-child(odd) { background: var(--ohm-wash); }
+.plan li .small { overflow-wrap: anywhere; }
+#publish-form { max-width: 360px; margin-top: var(--ohm-space-8); }
+#publish-form .ways { justify-items: start; }
+/* The mark on the Publish button: there is something to publish. */
+#publish-open { position: relative; }
+#publish-open[data-changes]:not([data-changes="0"]) { color: var(--ohm-ink); }
+#publish-open[data-changes]:not([data-changes="0"])::after { content: ""; position: absolute; top: 5px; right: 5px; width: 7px; height: 7px; border-radius: 50%; background: var(--ohm-accent-fill); }
+
 /* One post. The title and the body are the page itself; what files the post is a row of fields. */
 .title-input, .body-input { display: block; width: 100%; padding: 0; border: 0; background: transparent; color: var(--ohm-ink); outline: none; }
 .title-input { margin-bottom: var(--ohm-space-6); font: 400 var(--ohm-type-h1-size) / var(--ohm-type-h1-leading) var(--ohm-font-serif); letter-spacing: var(--ohm-type-h1-tracking); }

@@ -8,7 +8,9 @@
 // The site configuration is the one the commands use: named with --config or OHM_CONTENT_LAYER_CONFIG,
 // or found in the folder the agent is working in. It says which account is the person's. The vault
 // is ohm's unless the configuration (OHM_VAULT_URL, OHM_VAULT_DID) or a flag names another.
-// Needs ATPROTO_APP_PASSWORD, to sign in to the person's PDS.
+// Needs ATPROTO_APP_PASSWORD, to sign in to the person's PDS. That sign-in is also what publishes:
+// the vault service works out what would change, and the tools make the changes in the person's
+// own repository.
 import { parseArgs } from 'node:util';
 import { pdsConfig, webUrl } from '../feed/pds.mjs';
 import { siteVars } from '../scripts/config.mjs';

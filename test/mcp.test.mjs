@@ -21,8 +21,16 @@ async function toolsOf() {
     if (address.pathname === '/xrpc/com.atproto.repo.listRecords' && address.searchParams.get('collection') === 'com.example.post') {
       return Response.json({ records: published.map(([key, value]) => ({ uri: `at://${did}/com.example.post/${key}`, value })) });
     }
+    // The person's repository, as far as the shared post type goes: what publishing writes to.
+    if (address.pathname === '/xrpc/com.atproto.repo.listRecords' && address.searchParams.get('collection') === 'com.ohmmmm.post') {
+      return Response.json({ records: [...repository].map(([key, value]) => ({ uri: `at://${did}/com.ohmmmm.post/${key}`, value })) });
+    }
+    // A picture on some other website, which a post places by its address.
+    if (address.origin === 'https://photos.example.test') return new Response(new Uint8Array([137, 80, 78, 71, 1, 2, 3]), { headers: { 'Content-Type': 'image/png' } });
     return Response.json({ records: [] });
   };
+  const repository = new Map();
+  const uploads = [];
   const service = createService({ whoIs: Object.assign(async () => did, { pdsFor: async () => 'https://pds.example.test' }), get });
   const asked = [];
   const ask = async (name, { query, body } = {}) => {
@@ -41,8 +49,29 @@ async function toolsOf() {
     tree: () => ask('getTree'), search: query => ask('searchPosts', { query }), get: id => ask('getPost', { query: { id } }),
     put: (post, replaces) => ask('putPost', { body: { post, ...(replaces ? { replaces } : {}) } }), remove: (id, replaces) => ask('deletePost', { body: { id, replaces } }),
     mirror: ({ apply = false } = {}) => ask('importPublished', { body: { apply } }),
+    publishPlan: ({ prepare = false } = {}) => ask('getPublishPlan', prepare ? { query: { prepare: '1' } } : {}),
+    async attachment(id, attachment) {
+      asked.push('getAttachment');
+      const url = new URL('https://vault.example.test/xrpc/com.ohmmmm.vault.getAttachment');
+      url.search = new URLSearchParams({ id, attachment });
+      const response = await service(new Request(url, { headers: { Authorization: 'Bearer stand-in' } }), env);
+      if (!response.ok) throw Object.assign(new Error((await response.json()).message), { code: 'FileUnreachable' });
+      return { bytes: new Uint8Array(await response.arrayBuffer()), mime: response.headers.get('Content-Type') };
+    },
+    // The person's own PDS, written to as the person: a file sent, and a batch of changes made.
+    repository: did,
+    async upload(bytes, mime) {
+      uploads.push({ size: bytes.length, mime });
+      return { $type: 'blob', ref: { $link: `bafkreitest${uploads.length}` }, mimeType: mime, size: bytes.length };
+    },
+    async apply(writes) {
+      for (const write of writes) {
+        assert.equal(write.collection, 'com.ohmmmm.post', 'publishing writes only the shared post type');
+        if (write.$type.endsWith('#delete')) repository.delete(write.rkey); else repository.set(write.rkey, write.value);
+      }
+    },
   };
-  return { tools: createTools({ vault }), vault, asked, published };
+  return { tools: createTools({ vault }), vault, asked, published, repository, uploads };
 }
 
 test('an agent saves privately, finds the post again, and changes it from the version it read', async () => {
@@ -182,6 +211,62 @@ test('an agent brings in what the person has published: it looks first, and brin
   await assert.rejects(tools.call('vault_mirror', { confirm: before.confirm }), /has changed since it was shown/);
 });
 
+test('an agent publishes: it shows what would change first, and the repository changes only on the second call', async () => {
+  const { tools, repository, uploads } = await toolsOf();
+  const confirmed = async (name, args) => tools.call(name, { ...args, confirm: (await tools.call(name, args)).confirm });
+  const made = await tools.call('vault_save', { key: 'the-hill', title: 'The hill', label: 'Photographs', date: '2026-02-01', body: 'Up early.\n\n![The hill at dawn](https://photos.example.test/hill.png)' });
+  await tools.call('vault_save', { key: 'mine', body: 'Only for me.' });
+  // A record something else published, which the vault knows nothing about.
+  repository.set('from-elsewhere', { $type: 'com.ohmmmm.post', title: 'From elsewhere', body: 'x', publishedAt: '2025-01-01T00:00:00.000Z' });
+
+  // Nothing is for everyone yet, so there is nothing to publish.
+  assert.deepEqual([(await tools.call('vault_status')).changes, (await tools.call('vault_publish')).nothingToPublish], [0, true]);
+  await confirmed('vault_set_visibility', { key: 'the-hill', to: 'public' });
+  // Marking it for everyone published nothing.
+  assert.equal(repository.size, 1);
+  const status = await tools.call('vault_status');
+  assert.deepEqual([status.changes, status.create.map(each => each.slug), status.notInVault], [1, ['the-hill'], [{ key: 'from-elsewhere', title: 'From elsewhere' }]]);
+  assert.equal(status.writes, undefined);
+
+  const shown = await tools.call('vault_publish');
+  assert.deepEqual([shown.done, shown.willHappen.create.map(each => each.address)], [false, ['https://pds.example.test/posts/photographs/the-hill']]);
+  assert.match(shown.willHappen.note, /public at once/);
+  assert.equal(repository.size, 1);
+  await assert.rejects(tools.call('vault_publish', { confirm: 'c0000000000000000' }), /has changed since it was shown/);
+  const done = await tools.call('vault_publish', { confirm: shown.confirm });
+  assert.deepEqual([done.done, done.published], [true, { created: 1, replaced: 0, removed: 0, files: 1 }]);
+  // The record is under the post's ID, and carries a copy of the picture with where it came from.
+  const record = repository.get(made.id);
+  assert.deepEqual([record.$type, record.slug, record.title, record.form], ['com.ohmmmm.post', 'the-hill', 'The hill', 'writing']);
+  assert.match(record.body, /!\[The hill at dawn\]\(media:hill\)/);
+  assert.deepEqual(record.media, [{ $type: 'com.ohmmmm.post#image', id: 'hill', file: { $type: 'blob', ref: { $link: 'bafkreitest1' }, mimeType: 'image/png', size: 7 }, sourceUrl: 'https://photos.example.test/hill.png', alt: 'The hill at dawn' }]);
+  assert.deepEqual(uploads, [{ size: 7, mime: 'image/png' }]);
+  // What something else published is still there, and the private post never left the vault.
+  assert.deepEqual([...repository.keys()].sort(), [made.id, 'from-elsewhere'].sort());
+  assert.deepEqual([(await tools.call('vault_status')).changes, (await tools.call('vault_status')).unchanged], [0, 1]);
+
+  // An edit is in the vault only, until it is published.
+  const read = await tools.call('vault_read', { key: 'the-hill' });
+  await confirmed('vault_save', { key: 'the-hill', version: read.version, title: 'The hill, again' });
+  assert.equal(repository.get(made.id).title, 'The hill');
+  assert.deepEqual((await tools.call('vault_status')).replace, [{ id: made.id, slug: 'the-hill', title: 'The hill, again', changes: ['title'] }]);
+  // A yes to one list is not a yes to another: the vault changed after this was shown.
+  const stale = await tools.call('vault_publish');
+  const again = await tools.call('vault_read', { key: 'the-hill' });
+  await confirmed('vault_save', { key: 'the-hill', version: again.version, subtitle: 'At dawn' });
+  await assert.rejects(tools.call('vault_publish', { confirm: stale.confirm }), /has changed since it was shown/);
+  assert.deepEqual((await confirmed('vault_publish', {})).published, { created: 0, replaced: 1, removed: 0, files: 1 });
+  assert.deepEqual([repository.get(made.id).title, repository.get(made.id).subtitle], ['The hill, again', 'At dawn']);
+
+  // Making it private again takes it down, on publish and not before.
+  await confirmed('vault_set_visibility', { key: 'the-hill', to: 'private' });
+  assert.ok(repository.has(made.id));
+  const down = await tools.call('vault_publish');
+  assert.deepEqual(down.willHappen.remove.map(each => [each.slug, each.why]), [['the-hill', 'It is now only for you.']]);
+  assert.deepEqual((await tools.call('vault_publish', { confirm: down.confirm })).published, { created: 0, replaced: 0, removed: 1, files: 0 });
+  assert.deepEqual([...repository.keys()], ['from-elsewhere']);
+});
+
 test('each tool asks the vault service only for what it says it is made of', async () => {
   const { tools, asked } = await toolsOf();
   const made = await tools.call('vault_save', { key: 'hello', body: 'A first post.' });
@@ -189,6 +274,8 @@ test('each tool asks the vault service only for what it says it is made of', asy
     vault_tree: [{}], vault_list: [{}], vault_read: [{ key: 'hello' }], vault_search: [{ query: 'first' }],
     vault_save: [{ key: 'hello', version: made.version, body: 'A first post, again.' }, { key: 'another', body: 'x' }],
     vault_set_visibility: [{ key: 'hello', to: 'friends' }],
+    vault_status: [{}],
+    vault_publish: [{}],
     vault_mirror: [{}],
     vault_delete: [{ key: 'another' }],
   };
@@ -218,11 +305,11 @@ test('the server speaks the protocol: it lists the tools, answers calls, and rep
 
   const listed = (await ask('tools/list')).result.tools;
   assert.deepEqual(listed.map(tool => tool.name),
-    ['vault_tree', 'vault_list', 'vault_read', 'vault_search', 'vault_save', 'vault_set_visibility', 'vault_mirror', 'vault_delete']);
+    ['vault_tree', 'vault_list', 'vault_read', 'vault_search', 'vault_save', 'vault_set_visibility', 'vault_status', 'vault_publish', 'vault_mirror', 'vault_delete']);
   // An agent is told a tool's name, what it does and what it takes, and nothing else.
   for (const tool of listed) assert.deepEqual([tool.inputSchema.type, Object.keys(tool).filter(key => !['name', 'description', 'inputSchema', 'annotations'].includes(key))], ['object', []]);
   // Only the tools that read are marked as changing nothing.
-  assert.deepEqual(listed.filter(tool => tool.annotations?.readOnlyHint).map(tool => tool.name), ['vault_tree', 'vault_list', 'vault_read', 'vault_search']);
+  assert.deepEqual(listed.filter(tool => tool.annotations?.readOnlyHint).map(tool => tool.name), ['vault_tree', 'vault_list', 'vault_read', 'vault_search', 'vault_status']);
 
   const saved = await ask('tools/call', { name: 'vault_save', arguments: { key: 'hello', body: 'A first post.' } });
   assert.equal(JSON.parse(saved.result.content[0].text).visibility, 'private');
@@ -250,7 +337,7 @@ test('the server starts on its own and answers over standard input and output', 
   const lines = out.trim().split('\n').map(line => JSON.parse(line));
   assert.equal(code, 0);
   assert.deepEqual(lines.map(line => line.id), [1, 2, 3]);
-  assert.equal(lines[1].result.tools.length, 8);
+  assert.equal(lines[1].result.tools.length, 10);
   assert.equal(lines[2].result.isError, true);
   assert.match(lines[2].result.content[0].text, /No site configuration here/);
 });

@@ -7,8 +7,8 @@ export const INSTRUCTIONS = [
   'Every post is marked public (for everyone), for friends, or private. Private posts are theirs alone:',
   'use what they say to help the person, and never put any of it into something other people can see.',
   'New posts are saved private. A tool that would change a post that is not private, change who a post',
-  'is for, bring posts in from their PDS, or remove one, first answers with what would happen and a confirm value: show that to the',
-  'person and call again only when they agree. Saving never publishes: publishing is a step of its own.',
+  'is for, publish, bring posts in from their PDS, or remove one, first answers with what would happen and a confirm value: show that to the',
+  'person and call again only when they agree. Saving never publishes: publishing is a step of its own, public the moment it is done.',
 ].join(' ');
 
 // `tools` is ready-made, or a function that makes them the first time a tool is used, so that

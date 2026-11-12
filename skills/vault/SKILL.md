@@ -17,13 +17,13 @@ A vault is everything a person has written and made, in one structure: labels (t
 
 The post is the same post at every visibility. Changing visibility marks it; it does not rewrite it.
 
-**Saving never publishes.** A post marked `public` is in the vault, meant for everyone. It reaches the person's website and other applications only when they publish, which is a step of its own and not one of these tools. Do not tell the person something is live because it is marked public.
+**Saving never publishes.** A post marked `public` is in the vault, meant for everyone. It reaches the person's own repository, and from there their website and other applications, only when they publish. Do not tell the person something is live because it is marked public: `vault_status` says what is and is not published.
 
 ## The rules
 
 1. **Private posts are the person's alone.** You can read them, and they are often the best guide to what the person is thinking. Never put anything from a private post into something other people can see, such as a public post, a message, or a commit, unless the person tells you to use that passage.
 2. **New posts are private.** `vault_save` always creates a private post. Marking it for anyone else is a separate step the person asks for.
-3. **Two calls for anything other people are meant to see, and for bringing posts in.** `vault_set_visibility`, `vault_delete`, `vault_mirror`, and `vault_save` on a post that is not private first answer with what would happen and a `confirm` value. Show the person that answer in plain words: which post, and who it is for. Call again with the `confirm` value only when they agree.
+3. **Two calls for anything other people are meant to see, and for bringing posts in.** `vault_set_visibility`, `vault_publish`, `vault_delete`, `vault_mirror`, and `vault_save` on a post that is not private first answer with what would happen and a `confirm` value. Show the person that answer in plain words: which post, and who it is for. Call again with the `confirm` value only when they agree.
 4. **Read before you change.** `vault_read` gives a post's version, and `vault_save` needs it to change the post. If the save is refused because the post changed, read it again and redo the change on the new text; do not retry with the old text.
 5. **Use the person's own labels.** Look at `vault_tree` before filing a new post, and file it under a label they already use. Ask before inventing a new label.
 6. **Never choose a form.** What kind of thing a post is, is identified from its content.
@@ -33,6 +33,21 @@ The post is the same post at every visibility. Changing visibility marks it; it 
 A post is named by its slug, which is the last part of its address, or by its ID. The ID never changes; the slug is an ordinary field, and `vault_save` with `slug` gives a post a new one. A picture or a file is placed in the body by its address, `![description](https://…)`: the vault holds no files of its own.
 
 A post that first appeared somewhere else says where, as its `platform`. `vault_list` with `platform` lists those, and with `platform: "own"` the ones that first appeared nowhere else.
+
+## Publishing
+
+`vault_status` says what publishing would change and changes nothing: use it for "what is not published yet?". `vault_publish` makes the changes, in the person's own repository, signed in as them.
+
+1. Call `vault_publish`. Tell the person, in plain words, each post that would be published for the first time, replaced, and taken down, and anything under `cannot` with its reason.
+2. Call again with the `confirm` value only when they agree to that list. If the vault or the repository changed in between, the list is shown again.
+
+Three things to say when they apply:
+
+- **Publishing is public at once and for good.** Other services copy a post the moment it is written. Taking one down removes it from the person's repository, not from every copy.
+- **A post that cannot be published stays as it is.** Fix what its reason names, usually with `vault_save`, and publish again.
+- **`notInVault` is not a problem.** Those are records something else published. They are never removed. `vault_mirror` brings them in if the person wants to work on them here.
+
+Marking a post `public` and publishing are two steps, and each is the person's decision. Do not publish because a post was marked public; publish when they ask.
 
 ## Bringing in what is already published
 
@@ -54,7 +69,9 @@ A mirror copies each post as it was published. It does not file, and it does not
 | "Change that post" | `vault_read`, then `vault_save` with the version and only the fields that change |
 | "File this under Y" | `vault_read`, then `vault_save` with the version and the new `label` or `sublabel` |
 | "Make it public" | `vault_set_visibility` to `public`: show what it answers, then confirm. Say that it is marked for everyone and not yet published |
-| "Take that down" | `vault_set_visibility` to `private` |
+| "Publish" | `vault_publish`: say what would change, then confirm |
+| "What is not published yet?" | `vault_status` |
+| "Take that down" | `vault_set_visibility` to `private`, then `vault_publish`. Tell them copies others already made stay where they are |
 | "Bring in my posts" / "sync from my site" | `vault_mirror`: say what it found, then confirm. Then file what landed under `other` |
 
 ## Setting up

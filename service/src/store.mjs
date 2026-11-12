@@ -107,6 +107,12 @@ export function postStore(db) {
       return { id, removed: true };
     },
 
+    // The IDs of posts the member has removed. A removed post keeps its ID and nothing else.
+    async removed(did) {
+      const { results } = await db.prepare('SELECT id FROM posts WHERE did = ?1 AND version IS NULL').bind(did).all();
+      return results.map(row => row.id);
+    },
+
     // Every post in full, for writing the whole vault out.
     async all(did) {
       const { results } = await db.prepare('SELECT post FROM posts WHERE did = ?1 AND version IS NOT NULL ORDER BY label, sublabel, slug').bind(did).all();

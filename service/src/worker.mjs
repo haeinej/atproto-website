@@ -64,11 +64,13 @@ export function createService({ whoIs, get = fetch } = {}) {
         }
       }
 
-      return json(await asked.run({
+      const answer = await asked.run({
         name, request, url, env, get, identify, linked, did, user,
         posts: postStore(env.DB),
         body: () => sent(request),
-      }));
+      });
+      // Nearly every answer is JSON. A request that hands over a file answers with the file itself.
+      return answer instanceof Response ? answer : json(answer);
     } catch (problem) {
       if (problem instanceof Refused) return json({ error: problem.code, message: problem.message, ...problem.extra }, problem.status);
       console.error(problem);
