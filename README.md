@@ -75,7 +75,7 @@ The post schema is fixed and identical on every site, and it has one name everyw
 | `/posts/writings/collisions/trap-of-independency` | A post |
 | `at://did:web:pds.example.com/com.ohmmmm.post/trap-of-independency` | The same post's record |
 
-Because the address comes from the label, every post has one; a post published without a label is filed under `other`. An address always ends in the post's own key, so the short `/posts/trap-of-independency` and the address a post had before it was refiled both redirect to the current one.
+Because the address comes from the label, every post has one; a post published without a label is filed under `other`. An address always ends in the post's slug. The slug can be changed, and the post's record stays the same record, kept under an ID that never changes. The short `/posts/trap-of-independency`, the address a post had before it was refiled, and `/posts/` followed by the record's own key all redirect to the current address. A post published before posts had IDs is kept under its slug, and works as before.
 
 ### The posts page
 
@@ -96,6 +96,8 @@ Your picture, name, pronouns, verified handle, description, and links sit above 
 | --- | --- |
 | `identity` | Shows an identity and the record types in its repository. Takes a handle or DID |
 | `configure` | Prints a site configuration from `--site` and `--handle` or `--did` |
+| `import` | Previews or brings the posts you have published into your vault, each compared with the record it came from |
+| `sync` | Says what syncing your own folder with your vault would do, in both directions. With `--apply`, does it. Never publishes |
 | `lexicon` | Prints a schema: `--kind post` for the shared post schema, or `postSite`, `profile`, `profileLink`, `profileSite` for your own, under your domain |
 | `migrate` | Previews or copies posts from an older post type, such as `com.example.post`, to `com.ohmmmm.post` |
 | `mcp` | Serves the vault's tools to a coding agent |
@@ -189,6 +191,25 @@ The server uses the same site configuration as the commands, found in the folder
 ```sh
 npx github:haeinej/ohm-content-layer mcp
 ```
+
+## Keep your vault in a folder of your own
+
+Your vault can live as a folder of Markdown files on your machine, or in a folder that a cloud keeps in sync. A label is a folder, a sublabel a folder inside it, a post a file, and the post's title, date and who may see it are properties at the top of the file. The same folder opens in Obsidian.
+
+```sh
+ohm-content-layer sync --folder ~/Vault --vault https://vault.example.com --vault-did did:web:vault.example.com
+```
+
+That looks at the folder and at ohm's working copy and says what a sync would do. Add `--apply` to do it. It needs `ATPROTO_APP_PASSWORD`, to ask your PDS for tokens that prove to the vault who you are.
+
+- **It goes both ways.** A post edited in the folder reaches the working copy, and one edited there reaches the folder.
+- **It never publishes.** Writing `visibility: public` in a file marks the post; nothing is public until you publish.
+- **It will not decide three things for you.** A post changed in both places is left as it is on both sides, with the other version put beside your file as `name.md.from-ohm`; settle it with `--take ID=folder` or `--take ID=ohm`. A file that has gone missing does not remove its post, and a post removed in ohm does not remove your file; say so with `--take ID=remove`.
+- **A file laid out your own way is left alone.** Reordered properties, your own comments and blank lines are the same post, and nothing is rewritten.
+- **A file you move or rename is still the same post,** known by the `id` property sync writes into it the first time.
+- **The folder is enough to bring everything back.** If ohm's copy is gone, syncing from the folder restores every post.
+
+What sync remembers between runs is kept in the folder, under `.ohm/`.
 
 ## Rebuild your own pages from records
 

@@ -32,13 +32,15 @@
   "scripts": {
     "configure": "node scripts/configure.mjs",
     "lexicon": "node scripts/lexicon.mjs",
+    "import": "node scripts/import.mjs",
+    "sync": "node scripts/sync.mjs",
     "migrate": "node scripts/migrate.mjs",
     "publish:post": "node scripts/publish.mjs",
     "identity": "node scripts/identity.mjs",
     "posts": "node scripts/posts.mjs",
     "profile": "node scripts/profile.mjs",
     "snapshot": "node scripts/snapshot.mjs",
-    "test": "node --test",
+    "test": "node --experimental-sqlite --test",
     "render": "node scripts/render.mjs"
   },
   "dependencies": {

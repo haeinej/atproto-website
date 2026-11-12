@@ -1,0 +1,17 @@
+{
+  // The vault service. Before deploying: create the database, put its ID here, load
+  // schema.sql into the database, and set SERVICE_DID to the DID tokens must be issued for.
+  "name": "ohm-vault",
+  "main": "src/worker.mjs",
+  "compatibility_date": "2026-10-30",
+  "workers_dev": false,
+  // The page at / and its files. A request for anything else, such as /xrpc/…, goes to the Worker.
+  "assets": { "directory": "./public" },
+  "preview_urls": false,
+  "d1_databases": [{ "binding": "DB", "database_name": "ohm-vault", "database_id": "" }],
+  "vars": {
+    "SERVICE_DID": "did:web:vault.ohmmmm.com",
+    // The DIDs let in, separated by commas. "*" lets anyone in.
+    "MEMBERS": ""
+  }
+}

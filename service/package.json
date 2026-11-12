@@ -1,0 +1,10 @@
+{
+  "name": "ohm-vault-service",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "description": "The vault service: a member's posts, the four sync requests, and the check on who is asking.",
+  "dependencies": {
+    "@noble/curves": "1.9.7"
+  }
+}
