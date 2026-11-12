@@ -70,9 +70,10 @@ export function createService({ whoIs, get = fetch } = {}) {
       // sign-in, where a member's browser carries their ohm session.
       const method = /^(?:\/vault)?\/xrpc\/([A-Za-z0-9.]+)$/.exec(url.pathname)?.[1];
       // Finding an account from a handle needs no sign-in: it is the first step of signing in, and
-      // everything it answers with is already public.
+      // everything it answers with is already public. It also names this service, which is who a
+      // member's PDS has to issue their tokens for.
       if (method === 'com.ohmmmm.identity.findAccount' && request.method === 'GET') {
-        return json(await findAccount(url.searchParams.get('account'), { get }));
+        return json({ ...await findAccount(url.searchParams.get('account'), { get }), service: env.SERVICE_DID ?? null });
       }
       const identify = whoIs ?? (made ??= createIdentity({ audience: env.SERVICE_DID, members: env.MEMBERS }));
       const linked = links(env.DB);

@@ -195,6 +195,7 @@ async function running() {
       const user = sessions.get(options.headers.Cookie);
       return Response.json(user ? { session: { id: 's' }, user } : null);
     }
+    if (documents[String(url)]) return Response.json(documents[String(url)]);
     const records = repositories.get(`${url.origin}|${url.searchParams.get('collection')}`) ?? [];
     return Response.json({ records: records.map(([key, value]) => ({ uri: `at://${url.searchParams.get('repo')}/${url.searchParams.get('collection')}/${key}`, value })) });
   };
@@ -359,6 +360,14 @@ test('a member brings in what they have published and writes their vault out, an
   }
   assert.equal((await ask(haein, 'importPublished', { body: { site: 'https://haein.test' }, token: null })).status, 401);
   assert.equal((await ask(haein, 'exportFiles', { token: null })).status, 401);
+});
+
+test('finding an account needs no sign-in, and says who its PDS should issue tokens for', async () => {
+  const { haein, ask } = await running();
+  for (const under of ['', '/vault']) {
+    const found = await ask(haein, 'com.ohmmmm.identity.findAccount', { query: { account: haein.did }, token: null, under });
+    assert.deepEqual([found.status, await found.json()], [200, { did: haein.did, handle: null, pds: 'https://pds.haein.test', service: audience }]);
+  }
 });
 
 test('an ohm account signs a member in, once their PDS has said which AT Protocol account is theirs', async () => {

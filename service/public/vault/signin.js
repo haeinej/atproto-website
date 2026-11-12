@@ -35,11 +35,20 @@ async function kept(name, value) {
 }
 
 // ---- The proof sent with each request, signed by this browser's key. ----
+// Some servers, Bluesky's among them, hand out a value that the next proof has to carry. The
+// latest one each server gave is kept here and sent back.
+const nonces = new Map();
+function noted(address, response) {
+  const nonce = response.headers.get('DPoP-Nonce');
+  if (nonce) nonces.set(new URL(address).origin, nonce);
+  return nonce;
+}
 async function proof(keys, method, address, accessToken) {
   const { kty, crv, x, y } = await crypto.subtle.exportKey('jwk', keys.publicKey);
   const url = new URL(address);
   const signed = `${text({ typ: 'dpop+jwt', alg: 'ES256', jwk: { kty, crv, x, y } })}.${text({
     jti: random(16), htm: method, htu: `${url.origin}${url.pathname}`, iat: Math.floor(Date.now() / 1000),
+    ...(nonces.has(url.origin) ? { nonce: nonces.get(url.origin) } : {}),
     ...(accessToken ? { ath: await sha256(accessToken) } : {}),
   })}`;
   const signature = await crypto.subtle.sign({ name: 'ECDSA', hash: 'SHA-256' }, keys.privateKey, new TextEncoder().encode(signed));
@@ -52,16 +61,22 @@ async function readJson(response, doing) {
   return data;
 }
 async function form(keys, address, fields) {
-  const response = await fetch(address, {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/x-www-form-urlencoded', DPoP: await proof(keys, 'POST', address) },
-    body: new URLSearchParams(fields),
-  });
-  return response;
+  for (let attempt = 0; ; attempt++) {
+    const response = await fetch(address, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/x-www-form-urlencoded', DPoP: await proof(keys, 'POST', address) },
+      body: new URLSearchParams(fields),
+    });
+    // A server that wanted a fresh value in the proof has just given it: ask once more with it.
+    const fresh = noted(address, response);
+    if (attempt === 0 && fresh && response.status === 400 && (await response.clone().json().catch(() => ({}))).error === 'use_dpop_nonce') continue;
+    return response;
+  }
 }
 
 // Step one: find the account, ask its PDS to start a sign-in, and send the member there.
-export async function begin(typed) {
+// `purpose` is what the sign-in is for, and comes back with the account when it is done.
+export async function begin(typed, purpose = 'sign-in') {
   const account = await readJson(await fetch(new URL(`./xrpc/com.ohmmmm.identity.findAccount?${new URLSearchParams({ account: typed })}`, document.baseURI)), 'Finding your account');
   const resource = await readJson(await fetch(`${account.pds}/.well-known/oauth-protected-resource`), 'Asking your PDS how to sign in');
   const issuer = resource.authorization_servers?.[0];
@@ -78,7 +93,7 @@ export async function begin(typed) {
     client_id: clientId(), redirect_uri: redirectUri(), response_type: 'code', scope: SCOPE, state,
     code_challenge: await sha256(verifier), code_challenge_method: 'S256', login_hint: account.handle ?? account.did,
   }), 'Starting the sign-in at your PDS');
-  await kept('pending', { state, verifier, keys, issuer, tokenEndpoint: server.token_endpoint, revocationEndpoint: server.revocation_endpoint ?? null, account });
+  await kept('pending', { state, verifier, keys, issuer, tokenEndpoint: server.token_endpoint, revocationEndpoint: server.revocation_endpoint ?? null, account, purpose });
   const next = new URL(server.authorization_endpoint);
   next.search = new URLSearchParams({ client_id: clientId(), request_uri: pushed.request_uri });
   location.assign(next);
@@ -86,7 +101,7 @@ export async function begin(typed) {
 
 function save(pending, tokens) {
   return kept('session', {
-    account: pending.account, keys: pending.keys, issuer: pending.issuer, tokenEndpoint: pending.tokenEndpoint, revocationEndpoint: pending.revocationEndpoint,
+    account: pending.account, purpose: pending.purpose, keys: pending.keys, issuer: pending.issuer, tokenEndpoint: pending.tokenEndpoint, revocationEndpoint: pending.revocationEndpoint,
     accessToken: tokens.access_token, refreshToken: tokens.refresh_token ?? null, expiresAt: Date.now() + (tokens.expires_in ?? 300) * 1000,
   });
 }
@@ -110,12 +125,13 @@ export async function finish() {
   // DID document named this PDS; anything else is refused.
   if (tokens.sub !== pending.account.did) throw new Error('Your PDS signed in a different account than the one you typed');
   await save(pending, tokens);
-  return pending.account;
+  return { ...pending.account, purpose: pending.purpose };
 }
 
 // A sign-in kept from an earlier visit, if there is one.
 export async function restore() {
-  return (await kept('session'))?.account ?? null;
+  const session = await kept('session');
+  return session ? { ...session.account, purpose: session.purpose } : null;
 }
 
 // A sign-in is renewed a little before it runs out. Each renewal replaces the one before, so two
@@ -138,15 +154,23 @@ async function fresh(session) {
 export async function askPds(method, query) {
   let session = await kept('session');
   if (!session) throw new Error('You are not signed in');
-  for (let attempt = 0; ; attempt++) {
+  for (let renewed = false, again = false; ;) {
     session = await fresh(session);
     const url = new URL(`/xrpc/${method}`, session.account.pds);
     if (query) url.search = new URLSearchParams(query);
+    const sent = nonces.get(url.origin);
     const response = await fetch(url, {
       headers: { Authorization: `DPoP ${session.accessToken}`, DPoP: await proof(session.keys, 'GET', url, session.accessToken) },
     });
+    // A PDS that wanted a fresh value in the proof has just given it: ask once more with it.
+    const given = noted(url, response);
+    if (response.status === 401 && given && given !== sent && !again) {
+      again = true;
+      continue;
+    }
     // A sign-in the PDS no longer accepts is renewed once, then given up on.
-    if (response.status === 401 && attempt === 0 && session.refreshToken) {
+    if (response.status === 401 && !renewed && session.refreshToken) {
+      renewed = true;
       session = { ...session, expiresAt: 0 };
       continue;
     }

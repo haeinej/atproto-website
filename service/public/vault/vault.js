@@ -1,11 +1,16 @@
-// The vault page. A member signs in or signs up with their ohm account, in one panel in the middle
-// of the page; the first time, their own PDS says which AT Protocol account is theirs. After that
-// the ohm session alone opens their vault, in the app's screen: a rail, a side panel, the post.
+// The vault page. A member signs in or signs up in one panel in the middle of the page, one of two ways:
+//
+// - With an ohm account (Google or Microsoft). The first time, their own PDS says which AT Protocol
+//   account is theirs; after that the ohm session alone opens their vault.
+// - With the AT Protocol account itself: Bluesky, or a PDS of their own. Their PDS signs them in to
+//   this browser, and issues a token for each request the page makes to the vault.
+//
+// Then the vault opens in the app's screen: a rail, a side panel, the post.
 // Everything shown is put on the page as text, never as markup.
 import { askPds, begin, finish, leave, restore } from './signin.js';
 
 const $ = id => document.getElementById(id);
-const state = { did: '', tree: null, current: null, page: 'vault', signup: false, busy: false };
+const state = { mode: 'ohm', audience: '', did: '', tree: null, current: null, page: 'vault', signup: false, busy: false, step: 'connect' };
 const PAGES = { vault: 'Vault', move: 'Import and export' };
 function icon(name) {
   const svg = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
@@ -40,13 +45,20 @@ function failed(doing, problem) {
 // An address typed without "https://" in front is given it.
 const address = typed => (/^https?:\/\//i.test(typed.trim()) || !typed.trim() ? typed.trim() : `https://${typed.trim()}`);
 
-// ---- One request to the vault, riding on the ohm session the browser already holds. ----
+// ---- One request to the vault. It rides on the ohm session the browser already holds, or, for
+// a member signed in with their AT Protocol account, carries a token their PDS issues for exactly
+// this request. ----
 async function call(name, { query, body } = {}) {
-  const url = new URL(`./xrpc/${name.includes('.') ? name : `com.ohmmmm.vault.${name}`}`, document.baseURI);
+  const method = name.includes('.') ? name : `com.ohmmmm.vault.${name}`;
+  const url = new URL(`./xrpc/${method}`, document.baseURI);
   if (query) url.search = new URLSearchParams(query);
+  const headers = body ? { 'Content-Type': 'application/json' } : {};
+  if (state.mode === 'pds') {
+    const { token } = await askPds('com.atproto.server.getServiceAuth', { aud: state.audience, lxm: method, exp: String(Math.floor(Date.now() / 1000) + 60) });
+    headers.Authorization = `Bearer ${token}`;
+  }
   const response = await fetch(url, {
-    method: body ? 'POST' : 'GET', credentials: 'same-origin',
-    headers: body ? { 'Content-Type': 'application/json' } : {},
+    method: body ? 'POST' : 'GET', credentials: 'same-origin', headers,
     ...(body ? { body: JSON.stringify(body) } : {}),
   });
   const data = await response.json().catch(() => ({}));
@@ -64,8 +76,8 @@ function newPostId() {
 }
 const slugOf = text => text.normalize('NFKD').replace(/[̀-ͯ]/g, '').toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '').slice(0, 120);
 
-// ---- Onboarding, step one: the ohm account. The same panel signs in and signs up. ----
-// ohm's own sign-in does the work (Better Auth, on this origin); this panel is its buttons.
+// ---- Onboarding. The same panel signs in and signs up, with an ohm account or an AT Protocol one. ----
+// For Google and Microsoft, ohm's own sign-in does the work (Better Auth, on this origin).
 const OAUTH_ERRORS = {
   account_not_linked: 'This email already has an ohm account with another sign-in. Sign in with that one.',
   account_already_linked_to_different_user: 'That account belongs to another ohm account. It hasn’t been moved.',
@@ -74,23 +86,15 @@ const OAUTH_ERRORS = {
 };
 const PROVIDERS = { google: 'Google', microsoft: 'Microsoft' };
 let options = null;
-// Which ways in are set up. An account is made only by signing up with Google or Microsoft;
-// a passkey added to it later signs in, and cannot sign up.
+// Which ways in are set up. An ohm account is made by signing up with Google or Microsoft.
+// Bluesky and a PDS of your own need no account made here: the AT Protocol account is the account.
 function showSignIn() {
   const { signup } = state;
   $('onboarding-title').textContent = signup ? 'Sign up to ohm' : 'Sign in to ohm';
   $('switch-text').textContent = signup ? 'Already have an account?' : 'Don’t have an account?';
   $('switch-mode').textContent = signup ? 'Sign in' : 'Sign up';
   const offered = Object.keys(PROVIDERS).filter(name => options?.providers?.[name]);
-  for (const name of Object.keys(PROVIDERS)) {
-    const button = $(name);
-    button.hidden = !offered.includes(name);
-    // Signing up, the first way offered is the one filled action.
-    const first = signup && offered[0] === name;
-    button.classList.toggle('primary', first);
-    button.classList.toggle('secondary', !first);
-  }
-  $('passkey').hidden = signup || !options?.passkey;
+  for (const name of Object.keys(PROVIDERS)) $(name).hidden = !offered.includes(name);
 }
 $('switch-mode').addEventListener('click', () => { state.signup = !state.signup; showSignIn(); });
 
@@ -133,31 +137,41 @@ async function social(provider) {
 }
 for (const name of Object.keys(PROVIDERS)) $(name).addEventListener('click', () => social(name));
 
-// A passkey, asked for here and checked by ohm's own sign-in, the way the app does it.
-$('passkey').addEventListener('click', async () => {
-  if (state.busy) return;
-  state.busy = true;
-  const label = $('passkey').querySelector('span');
-  label.textContent = 'Waiting for your passkey…';
-  try {
-    if (!window.PublicKeyCredential?.parseRequestOptionsFromJSON) throw new Error('This browser cannot use a passkey here. Continue with your mailbox.');
-    const asked = await fetch('/api/auth/passkey/generate-authenticate-options', { credentials: 'same-origin' });
-    if (!asked.ok) throw new Error('That passkey didn’t work. Try again or continue with your mailbox.');
-    const credential = await navigator.credentials.get({ publicKey: PublicKeyCredential.parseRequestOptionsFromJSON(await asked.json()) });
-    const { clientExtensionResults, ...response } = credential.toJSON();
-    const checked = await fetch('/api/auth/passkey/verify-authentication', {
-      method: 'POST', credentials: 'same-origin', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ response }),
-    });
-    if (!checked.ok) throw new Error((await checked.json().catch(() => ({}))).message || 'That passkey didn’t work. Try again or continue with your mailbox.');
-    state.busy = false;
-    await open();
-  } catch (problem) {
-    if (problem.name !== 'NotAllowedError') notice(problem.message, 'error');
-  } finally {
-    label.textContent = 'Sign in with a passkey';
-    state.busy = false;
-  }
-});
+// Bluesky, or a PDS of your own: the same step, which asks for the handle and sends the member to
+// the server that holds their account. It is also how an ohm account is connected to one.
+const STEPS = {
+  bluesky: {
+    title: 'Bluesky', label: 'Your Bluesky handle', placeholder: 'name.bsky.social',
+    text: 'Bluesky will ask you to confirm, and bring you straight back. Your password is never typed here.',
+  },
+  own: {
+    title: 'Your own PDS', label: 'Your handle', placeholder: 'example.com',
+    text: 'Your handle is your own domain. Your PDS, Cirrus or any other, will ask you to confirm, with your passkey there if you have one, and bring you straight back.',
+  },
+  connect: {
+    title: 'Connect your account', label: 'Your handle', placeholder: 'example.com',
+    text: 'Your posts belong to your AT Protocol account: on Bluesky, or on a PDS of your own. Say which one is yours, and the server that holds it will ask you to confirm. You do this once.',
+  },
+};
+function handleStep(step, who = '') {
+  state.step = step;
+  const { title, label, placeholder, text } = STEPS[step];
+  $('handle-title').textContent = title;
+  $('handle-text').textContent = text;
+  $('handle-label').textContent = label;
+  $('handle').placeholder = placeholder;
+  $('handle').value = localStorage.getItem(`ohm.handle.${step === 'bluesky' ? 'bluesky' : 'own'}`) ?? '';
+  // Connecting, the way out is signing out of ohm; otherwise it is back to the ways in.
+  $('signed-in-as').textContent = step === 'connect' ? (who ? `Signed in as ${who}.` : 'Signed in.') : '';
+  $('leave').textContent = step === 'connect' ? 'Sign out' : 'Back';
+  // Someone without a PDS is shown where to get one. A Bluesky account already has its own.
+  $('cirrus-help').hidden = step === 'bluesky';
+  screen('connect');
+  $('handle').focus();
+}
+$('bluesky').addEventListener('click', () => handleStep('bluesky'));
+$('own-pds').addEventListener('click', () => handleStep('own'));
+
 // Coming back from Google or Microsoft with a problem, the address says which.
 function returnedProblem() {
   const query = new URLSearchParams(location.search);
@@ -169,26 +183,30 @@ function returnedProblem() {
   notice(OAUTH_ERRORS[problem] ?? 'Sign-in didn’t finish. Please try again.', 'error');
 }
 
+// Signing out ends whichever sign-in this is: the PDS is told its one is over, and ohm its own.
 async function signOut() {
   await leave().catch(() => {});
-  await fetch('/api/auth/sign-out', { method: 'POST', credentials: 'same-origin', headers: { 'Content-Type': 'application/json' }, body: '{}' }).catch(() => {});
+  if (state.mode === 'ohm') await fetch('/api/auth/sign-out', { method: 'POST', credentials: 'same-origin', headers: { 'Content-Type': 'application/json' }, body: '{}' }).catch(() => {});
   location.reload();
 }
 $('sign-out').addEventListener('click', signOut);
-$('leave').addEventListener('click', signOut);
+$('leave').addEventListener('click', () => (state.step === 'connect' ? signOut() : screen('sign-in')));
 
 // ---- Onboarding, step two, once: which AT Protocol account this ohm account works in. ----
-$('handle').value = localStorage.getItem('ohm.handle') ?? '';
 $('site-address').value = localStorage.getItem('ohm.site') ?? '';
 $('older').value = localStorage.getItem('ohm.older') ?? '';
 $('handle-form').addEventListener('submit', async event => {
   event.preventDefault();
   try {
-    localStorage.setItem('ohm.handle', $('handle').value.trim());
-    notice('Taking you to your PDS…');
-    await begin($('handle').value);
+    // A Bluesky name typed on its own is the handle Bluesky gives it.
+    let handle = $('handle').value.trim().replace(/^@/, '');
+    if (state.step === 'bluesky' && handle && !handle.includes('.') && !handle.includes(':')) handle = `${handle}.bsky.social`;
+    $('handle').value = handle;
+    localStorage.setItem(`ohm.handle.${state.step === 'bluesky' ? 'bluesky' : 'own'}`, handle);
+    notice(state.step === 'bluesky' ? 'Taking you to Bluesky…' : 'Taking you to your PDS…');
+    await begin(handle, state.step === 'connect' ? 'connect' : 'sign-in');
   } catch (problem) {
-    notice(`Connecting did not work: ${problem.message}`, 'error');
+    notice(`${state.step === 'connect' ? 'Connecting' : 'Signing in'} did not work: ${problem.message}`, 'error');
   }
 });
 $('disconnect').addEventListener('click', async () => {
@@ -211,46 +229,57 @@ function screen(name) {
 // Opening the page, and every time the sign-in may have changed: find out who is here and show
 // the step they are at.
 async function open() {
-  let me;
+  state.mode = 'ohm';
+  let me = null;
+  let pds = null;
   try {
     // Coming back from the PDS, this is the moment its answer is in the address.
-    const returning = await finish().catch(problem => { notice(`Connecting did not work: ${problem.message}`, 'error'); return null; });
+    pds = await finish().catch(problem => { notice(`Signing in did not work: ${problem.message}`, 'error'); return null; }) ?? await restore();
     try {
       me = await call('com.ohmmmm.account.get');
     } catch (problem) {
       if (problem.code !== 'SignInRequired') throw problem;
-      returnedProblem();
-      screen('sign-in');
-      await loadOptions();
-      return;
     }
-    // The PDS has signed the member in to this browser. One token from it, issued for exactly
-    // this, ties their AT Protocol account to their ohm account; then that sign-in is let go.
-    if (!me.did && (returning ?? await restore())) {
+    // Connecting: the PDS has signed the member in to this browser. One token from it, issued for
+    // exactly this, ties their AT Protocol account to their ohm account; then that sign-in is let go.
+    if (me && !me.did && pds?.purpose === 'connect') {
       const { token } = await askPds('com.atproto.server.getServiceAuth', { aud: me.service, lxm: 'com.ohmmmm.account.connect', exp: String(Math.floor(Date.now() / 1000) + 60) });
       const connected = await call('com.ohmmmm.account.connect', { body: { token } });
       await leave();
       me = { ...me, did: connected.did };
       notice('Your account is connected');
     }
+    if (me) {
+      if (!me.did) return handleStep('connect', me.user.name);
+      return await enter({ name: me.user.name || 'You', did: me.did });
+    }
+    // No ohm account: the AT Protocol account is the sign-in, and its PDS vouches for each request.
+    if (pds) {
+      state.mode = 'pds';
+      state.audience = pds.service;
+      return await enter({ name: pds.handle || 'You', did: pds.did });
+    }
   } catch (problem) {
-    notice(`${problem.message}`, 'error');
-    await leave().catch(() => {});
-    if (!me) { screen('sign-in'); await loadOptions(); return; }
+    notice(problem.code === 'NotAMember' ? 'ohm is not open to this account yet.' : `${problem.message}`, 'error');
+    if (state.mode === 'pds' || !me) await leave().catch(() => {});
+    if (me && !me.did) return handleStep('connect', me.user.name);
+    state.mode = 'ohm';
   }
-  if (!me.did) {
-    $('signed-in-as').textContent = me.user.name ? `Signed in as ${me.user.name}.` : 'Signed in.';
-    screen('connect');
-    $('handle').focus();
-    return;
-  }
-  state.did = me.did;
-  $('who').textContent = me.user.name || 'You';
-  $('who-did').textContent = me.did;
-  for (const avatar of document.querySelectorAll('[data-avatar]')) avatar.textContent = (me.user.name || me.did.split(':').at(-1)).slice(0, 1).toUpperCase();
+  returnedProblem();
+  screen('sign-in');
+  await loadOptions();
+}
+// The vault opens. Reading it first means an account that is not let in never sees it empty.
+async function enter({ name, did }) {
+  state.tree = await call('getTree');
+  state.did = did;
+  $('who').textContent = name;
+  $('who-did').textContent = did;
+  $('disconnect').hidden = state.mode === 'pds';
+  for (const avatar of document.querySelectorAll('[data-avatar]')) avatar.textContent = name.slice(0, 1).toUpperCase();
   screen('vault');
   go('vault');
-  await loadTree();
+  showTree();
 }
 
 // ---- The app's screen: the rail picks a page; the side panel and the main screen follow it. ----
@@ -290,17 +319,20 @@ function list(posts) {
   items.append(...posts.map(postButton));
   return items;
 }
+function showTree() {
+  const { posts, public: everyone, friends, private: mine, labels } = state.tree;
+  $('counts').textContent = posts ? `${plural(posts, 'post')}: ${mine} only me, ${friends} friends, ${everyone} everyone` : 'Your vault is empty.';
+  const tree = $('tree');
+  tree.replaceChildren();
+  for (const folder of labels) {
+    tree.append(Object.assign(document.createElement('p'), { className: 'label', textContent: folder.label }), list(folder.posts));
+    for (const group of folder.sublabels) tree.append(Object.assign(document.createElement('p'), { className: 'sublabel', textContent: group.sublabel }), list(group.posts));
+  }
+}
 async function loadTree() {
   try {
     state.tree = await call('getTree');
-    const { posts, public: everyone, friends, private: mine, labels } = state.tree;
-    $('counts').textContent = posts ? `${plural(posts, 'post')}: ${mine} only me, ${friends} friends, ${everyone} everyone` : 'Your vault is empty.';
-    const tree = $('tree');
-    tree.replaceChildren();
-    for (const folder of labels) {
-      tree.append(Object.assign(document.createElement('p'), { className: 'label', textContent: folder.label }), list(folder.posts));
-      for (const group of folder.sublabels) tree.append(Object.assign(document.createElement('p'), { className: 'sublabel', textContent: group.sublabel }), list(group.posts));
-    }
+    showTree();
   } catch (problem) {
     failed('Reading your vault', problem);
   }

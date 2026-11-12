@@ -36,10 +36,12 @@ A request sent twice ends the same as sent once. Saving a post, whatever it says
 
 `/vault/` is the page for working in a vault and trying the path end to end. It is served on the app's own address (`app.ohmmmm.com/vault/`), because that is where an ohm sign-in lives. Its files are in [public/vault/](public/vault/).
 
-**Before the vault opens, one panel in the middle of the page.** It sits in the website's shell (the dot at the top of the rail, the company links at its foot) and has two steps:
+**Before the vault opens, one panel in the middle of the page.** It sits in the website's shell (the dot at the top of the rail, the company links at its foot) and signs a member in or up one of two ways:
 
-1. *Sign in or sign up.* The same buttons as the app's own sign-in screen: Google, Microsoft, and a passkey for an account that has one. An account is made only by signing up with Google or Microsoft. ohm's own sign-in (Better Auth, in the `ohm` repository, at `/api/auth/` on the same address) does the work; the page only calls it, and holds nothing but the session cookie the browser keeps.
-2. *Connect your account*, once. The member types their handle, the service finds the account (`GET /xrpc/com.ohmmmm.identity.findAccount?account=`, which needs no sign-in and answers only with what is public), and the page sends them to their own PDS to approve, with a passkey there if they have one. This is AT Protocol's own sign-in for applications, so it works with any PDS that offers it: Cirrus, and Bluesky's. The PDS then issues one token for exactly this, the service ties the AT Protocol account to the ohm account, and the page lets the PDS sign-in go. [public/vault/client-metadata.json](public/vault/client-metadata.json) is what a PDS reads to learn who is asking; its addresses have to be the ones the page is served at.
+- *With the AT Protocol account the posts belong to*: a PDS of your own, which is the filled button, or Bluesky. The member types their handle, the service finds the account (`GET /xrpc/com.ohmmmm.identity.findAccount?account=`, which needs no sign-in and answers only with what is public, and with this service's own DID), and the page sends them to the server that holds the account to approve, with a passkey there if they have one. This is AT Protocol's own sign-in for applications, so it works with any PDS that offers it. No account is made here: the sign-in is kept in the browser, tied to a key that cannot be copied out of it, and the PDS issues a token for each request the page makes. Someone with no PDS yet is pointed to Cirrus to set one up.
+- *With an ohm account*: Google or Microsoft, the same buttons as the app's own sign-in screen. ohm's own sign-in (Better Auth, in the `ohm` repository, at `/api/auth/` on the same address) does the work; the page only calls it, and holds nothing but the session cookie the browser keeps. The first time, the member connects their AT Protocol account, by the step above: its PDS issues one token for exactly this, the service ties the two accounts together, and the page lets the PDS sign-in go.
+
+[public/vault/client-metadata.json](public/vault/client-metadata.json) is what a PDS reads to learn who is asking; its addresses have to be the ones the page is served at.
 
 **Once it is open, the app's screen.** A rail of icons (the vault, import and export, and you at the foot), a side panel that lists, and the main screen, laid out as the app lays out its own. The side panel is the vault's structure: labels, sublabels and posts, each with an icon for who can see it. The main screen is one post. On a phone the side panel is the screen, the rail is a bar at its foot, and opening a post makes the post the screen.
 
@@ -53,7 +55,7 @@ The service never deals in files, folders or paths. A connector for a local fold
 
 There are two ways to say, and the service takes whichever a request carries.
 
-**An ohm sign-in**, which is what the page uses. A request with no `Authorization` header is checked against ohm's sign-in: the service asks it whose session the request's cookie is (`/api/auth/get-session`, through the `AUTH` binding), and looks up the AT Protocol account that member connected. A request that changes anything must also come from the page's own address (`OHM_APP_ORIGIN`). Three requests manage the connection:
+**An ohm sign-in**, which is what the page uses for a member who signed in with Google or Microsoft. A request with no `Authorization` header is checked against ohm's sign-in: the service asks it whose session the request's cookie is (`/api/auth/get-session`, through the `AUTH` binding), and looks up the AT Protocol account that member connected. A request that changes anything must also come from the page's own address (`OHM_APP_ORIGIN`). Three requests manage the connection:
 
 | Request | Does |
 | --- | --- |
@@ -63,7 +65,7 @@ There are two ways to say, and the service takes whichever a request carries.
 
 One ohm account works in one AT Protocol account, and one AT Protocol account belongs to one ohm account.
 
-**A token from the member's PDS**, which is what the command line and an agent use. The `Authorization` header carries an AT Protocol service token: issued by the member's PDS (`com.atproto.server.getServiceAuth`), for this service's DID as its audience and for the one request being made as its `lxm`, and valid for at most an hour. The signature is checked against the key the member's DID document names.
+**A token from the member's PDS**, which is what the command line and an agent use, and the page too for a member who signed in with their own PDS or Bluesky. The `Authorization` header carries an AT Protocol service token: issued by the member's PDS (`com.atproto.server.getServiceAuth`), for this service's DID as its audience and for the one request being made as its `lxm`, and valid for at most an hour. The signature is checked against the key the member's DID document names.
 
 Either way, `MEMBERS` lists the DIDs let in and is checked before any document is fetched; `*` lets anyone in.
 
