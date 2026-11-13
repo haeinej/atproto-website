@@ -34,6 +34,10 @@ Newest first.
 
 | Decision | What it replaces |
 | --- | --- |
+| One cortex is shared by every coding agent a member uses. Claude Code and Codex each get an adapter on their own hooks, which fetches the memories that fit before each prompt and hands the turn off after it, and any other agent gets the MCP server ("i want to share one memory service backend across coding agents. an mcp fallback, and native adapter for both codex and claudecode") | A cortex reached only through tools the model has to choose to call |
+| Memory is written without asking the member. The agent notes what it sees while it works, and each time the cortex is opened again it rewrites memory from those notes, deciding itself whether an earlier memory still stands ("dont review with me, just write onto memory and let agent identify ... whether previous memory decision should be overwrite or not"; "everytime reopen rewrite memory") | A step where the member looked over what the agent had written, proposed an hour earlier and never built |
+| Every cortex starts with the same three memories: who the member is, a map of their vault, and how they want work done ("memory should include indexing of the vault and a summary of the identity (whether it is a company or personal) and interactively agent should compose the style of the workflow") | A cortex that starts empty |
+| What an agent knows and can do is kept apart from what the member made, as the cortex: memory, skills and tools ("we could maybe group (memory, skill, tools) and vault (content)"; "cortex is good") | One store, the vault, holding only posts. What an agent learned about a member was kept nowhere, or in that agent's own files on one machine |
 | The API comes first, each capability kept apart, and the agent's tools are chosen from it ("i should buiild api first to expose capabilities and decide what tool we need in clean manner"; "isolate each capabilities and make it clean") | Tools that held abilities of their own, such as search, and worked in stores the editor never showed |
 | Connecting a PDS mirrors what is published on it, on its own, and the side panel is always the repository ("in the pds log in screen should be auto mirror on inital setting"; "the side pane section ... is the repo section so it should expose what is done as content") | A form that asked for the website and the name of an older post type before bringing anything in |
 | The repository can be viewed by labels, platforms or visibility, with a filter ("you can choose the view - platforms / labels / visbiility ... make like pills to choose and filter to filter out") | One tree, by label only |
@@ -87,6 +91,7 @@ Everything below is on `main` and pushed unless it says otherwise.
 | A PDS that ohm hosts | Not started |
 | haeinjung.com's own records | Still under the old post type, `com.haeinjung.post`. The mirror reads them as they are. Not migrated |
 | The approval screen of haeinjung.com's own PDS | Restyled in ohm's design and deployed. Its source is in a folder that is not in any repository |
+| The cortex: an agent's memory, skills and tools | Designed, under "The cortex". Not started |
 
 A real person has been through it: on 12 November Haein signed in, connected `haeinjung.com`, and opened the editor on the live service.
 
@@ -254,6 +259,304 @@ The body, in Markdown.
 | A property the site's own schema declares | The site's own layer |
 | Any other property | Kept, and never published |
 
+## The cortex
+
+Designed 13 November 2026. Nothing in this section is built.
+
+A member has two things on ohm, kept apart. The **vault** is what they made: posts, under labels. The **cortex** is what an agent working for them knows and can do: memory, skills and tools. The name is the part of the brain where long-term memory is kept, where a practised skill is laid down, and which moves the hands.
+
+```
+a member
+├── vault/                       what they made
+│   └── label / sublabel / post
+└── cortex/                      what their agent knows and can do
+    ├── memory/                  what it has learned about them, one thing to a file
+    │   ├── MEMORY.md            the index: one line for each memory. Made by the service, never written
+    │   ├── about-me.md
+    │   ├── prefers-short-titles.md
+    │   └── collisions-is-a-series.md
+    ├── skills/                  how to do something they do again and again
+    │   ├── publish-an-essay/
+    │   │   └── SKILL.md
+    │   └── file-a-photograph/
+    │       └── SKILL.md
+    └── tools/                   what the agent is able to do
+        ├── vault.json           ohm's own tools, each on or off
+        └── calendar.json        a server of someone else's that the member connected
+```
+
+| | The vault | The cortex |
+| --- | --- | --- |
+| Holds | Posts | Memories, skills, tools |
+| Written by | The member | Mostly the agent, and the member can change all of it |
+| Who may see it | Public, friends or private, post by post | The member only, always |
+| Published | Public posts, to the member's PDS | Never. Publish does not read it |
+| Found by | Label, sublabel, search | A name and one line saying what it is for |
+| Read | When asked for | The index at the start of every session, the rest when it is needed |
+| Kept | For good, under a permanent ID | Until it is corrected, joined with another, or forgotten |
+
+### What is in it
+
+**A memory** is one thing the agent has learned, in a file of its own.
+
+```markdown
+---
+name: prefers-short-titles
+description: Titles are a few plain words, never a question or a pun
+kind: preference
+from: 3kabc2defgh4j
+written by: claude
+---
+
+Haein rewrote three suggested titles to shorter ones on 12 November. Offer the plain one first.
+See [[collisions-is-a-series]].
+```
+
+| Field | What it is |
+| --- | --- |
+| `name` | Its name, and what it is kept under. Lowercase words joined with hyphens, used once in a cortex |
+| `description` | One line, 200 characters at most. It is all an agent reads until it decides it needs the rest |
+| `kind` | `person` (who the member is), `preference` (how they want things done), `project` (what is going on), or `reference` (where something is) |
+| `always` | Optional. A memory marked so is given in full at the start of every session. It is how standing instructions are kept, such as `about-me` |
+| `stated` | Whether the member said it in so many words, or the agent worked it out from what they did. Set when it is written |
+| `seen` | How many times it has been seen, and when last. Kept by the service as notes are settled |
+| `from` | Optional. The ID of the post it was learned from, or an address |
+| `project` | Optional. The repository it was learned in and is about. A memory with none is about the member, whatever they are working on |
+| `written by` | The member, or the name of the agent that wrote it. Set by the service from who asked, never by the request |
+| The body | Markdown, 8 KB at most. `[[another-memory]]` links to one |
+
+**A skill** is how to do one thing, in the form coding agents already read: a folder with a `SKILL.md` whose properties are `name` and `description`, and any text files it needs beside it. A skill written out of the cortex works as it is in an agent that reads that form, and one written for such an agent can be brought in.
+
+**A tool** is one thing the agent can do. The cortex keeps the list: ohm's own tools, each switched on or off, and servers of someone else's the member has connected, each with a name, an address and a line saying what it is for. No password or key is kept here (see the decisions).
+
+### What every cortex starts with
+
+Three memories, each marked `always`, so an agent has them in full at the start of every session.
+
+| Memory | What it holds | How it is written |
+| --- | --- | --- |
+| `identity` | Whether this is a person or a company, what they do, and how they sound | Composed by the agent with the member in the first session, from what they say and what their vault and profile already show. Rewritten as it learns more |
+| `vault-map` | The labels and sublabels, a line on what each one is, how much is in it, and what is recent | The structure and the counts are made by the service from the vault, so they are never out of date. The line on what each label is, the agent writes |
+| `working-style` | How the member wants work done: whether to show the working or only the answer, tables or prose, which language to explain in, what to ask before doing | Built up by the agent across sessions, from what the member says and what they correct |
+
+### How memory is written
+
+The member is not asked to look anything over. There are two ways in, by how the thing was learned.
+
+| | The member said it | The agent worked it out |
+| --- | --- | --- |
+| Example | "Always explain the steps to me" | They asked "why was that one rejected?" three sessions running |
+| When it is written | At once, as a memory, with `stated` set | As a note, while working. It becomes memory the next time the cortex is opened |
+| With | `cortex_remember` | `cortex_note`, then the rewrite below |
+
+**A note** is one line saying what was seen, when, and in which session. Writing one decides nothing and changes no memory, so an agent writes them freely.
+
+**Each time the cortex is opened, memory is rewritten from the notes.** `cortex_start` answers with the notes not yet settled. Before anything else, the agent settles each of them against the memories there are, and says what it did with each:
+
+| The note | What the agent does |
+| --- | --- |
+| Says something no memory covers | Leaves it as a note until it has been seen again. One sighting is not a memory |
+| Has now been seen in more than one session | Writes a new memory, with `stated` not set |
+| Agrees with a memory | Counts it on that memory's `seen`. The memory is not rewritten |
+| Sharpens a memory, or adds a case to it | Rewrites that memory to say both |
+| Goes against a memory the agent worked out | Rewrites the memory to what is now seen, if the new way has been seen more than once |
+| Goes against a memory the member stated | Keeps the memory. What the member said stands until they say otherwise, or until they have done the other thing often enough that it is plainly no longer true, and then the rewrite says so |
+| Is about one session only | Drops it |
+
+Whether an earlier memory still stands is the agent's judgement. The table is how it is told to judge, in a skill that comes with every cortex and cannot be changed by an agent. The service checks only what can be checked: that every note was settled one way or another, and that each rewrite names the version it replaces.
+
+**Every rewrite keeps what it replaced.** With nobody looking a rewrite over, a wrong one is found late, when the agent does something the member did not want. So the earlier version of a memory is kept, the member can read what it said and put it back, and a memory records which notes it was rewritten from.
+
+### What becomes a skill, and what becomes a tool
+
+The rewrite is also where a memory is moved up.
+
+| It is | When | From the actuator selector |
+| --- | --- | --- |
+| A note | Seen once | "Asked why AS210 was rejected" |
+| A memory | Said by the member, or seen in more than one session. About the member, and true whatever the task | "Wants the working shown, not only the answer" |
+| A skill | About one kind of task. It has steps, or an order. It has been done the same way at least three times, or the member said "always do it like this" | "Selecting an actuator: the margin, the four torque points, the combinations that failed and why, then the price" |
+| A tool | A step inside a skill that must give the same answer every time: arithmetic, looking something up, or reaching another system | The torque and price calculation |
+
+Three questions settle which, asked in this order:
+
+1. **Would a wrong answer be unacceptable, or is it a number, a lookup or another system?** It is a tool. An agent cannot make one. It writes down what the tool would take and give, and that waits for someone to build it.
+2. **Is it about one kind of task, with more than one step?** It is a skill. It is read only when that task comes up, so it can be long.
+3. **Otherwise** it is a memory: one or two lines, about the member, read by its description in every session.
+
+A skill is not written from one session. What was done once is a note, and a skill made from one occasion fixes in place whatever happened to be done that day.
+
+### The rules
+
+Enforced in one place, as the vault's are.
+
+1. **Everything in the cortex is for the member only.** There is no visibility to set, and Publish, the mirror and the public endpoints never read it.
+2. **The cortex and the vault are separate stores.** A memory can point at a post by its ID. A post never points at a memory.
+3. **Every memory and skill has a name and a one-line description,** and the description is what is read first.
+4. **The index is made by the service** from the descriptions, so it cannot disagree with them.
+5. **A save names the version it replaces,** as a post's does.
+6. **Every save records who made it:** the member, or which agent.
+7. **The member can see, change and remove everything in it,** in the editor and as files.
+8. **An agent cannot give itself a tool,** or switch one on. Only the member changes the list.
+9. **A skill written by an agent is not used until the member has said yes.** A skill changes what the agent does in every later session, so something it read in a post or on a web page must not be able to turn itself into one.
+10. **Nothing in the cortex is used for matching or shown to anyone,** as with private posts. Held to "no" until decided.
+11. **Memory is written without asking the member.** They can read and change all of it (rule 7), and nothing waits for them.
+12. **What the member said outranks what the agent worked out.** Every memory says which it is.
+13. **Every rewrite of a memory keeps what it replaced,** and says which notes it came from.
+
+### The requests
+
+One capability to a file, beside the vault's, under `/xrpc/com.ohmmmm.cortex.`. Reading is a `GET`, changing is a `POST`, every answer is JSON, and a refusal is one of the vault's own errors, with `InvalidMemory`, `InvalidSkill` and `NameTaken` added.
+
+| Capability | What it is for | Requests |
+| --- | --- | --- |
+| **Context** | What an agent needs at the start of a session, in one answer small enough to read every time, and the few memories that fit one prompt | `getContext`, `recall` |
+| **Memory** | Read and change what the agent has learned, one memory at a time | `listMemories`, `getMemory`, `putMemory`, `deleteMemory`, `searchMemories` |
+| **Skills** | Read and change the skills | `listSkills`, `getSkill`, `putSkill`, `deleteSkill`, `approveSkill` |
+| **Notes** | What an agent saw while working, kept until memory is rewritten from it | `addNote`, `listNotes`, `settleNotes` |
+| **Turns** | What was said in a turn, handed off by an adapter and kept only until it has been read | `addTurns`, `listTurns`, `settleTurns` |
+| **Tools** | The list of what the agent can do, and what it has asked to have built | `listTools`, `putTool`, `deleteTool`, `proposeTool` |
+| **Export** | The whole cortex as files, in the structure above | `exportFiles` |
+
+| Request | Reads or changes | Who may ask | Takes | Gives |
+| --- | --- | --- | --- | --- |
+| `getContext` | Reads | The member, or their agent | Nothing | `always` (the memories marked so, in full), `memories` (name, description, kind), `skills` (name, description), `tools` (name, description), `notes` (the ones not yet settled), `turns` (how many are waiting), and `version`, which changes when any of them does |
+| `recall` | Reads | The member, or their agent | `q`: the prompt<br>`project`: optional<br>`budget`: optional, how many characters, 1,500 unless said | `memories` (name, description, passage) and `skills` (name, description) that fit, best first, within the budget. Nothing when nothing fits. An adapter asks this of its own copy first, and of the service only to bring that copy up to date |
+| `listMemories` | Reads | The member, or their agent | `since`: optional, the `cursor` of an earlier list<br>`kind`: optional | `memories` (name, version, description, kind, written by, when), `cursor`, and removals when `since` is given |
+| `getMemory` | Reads | The member, or their agent | `name` | `memory`, `version` |
+| `searchMemories` | Reads | The member, or their agent | `q`, and `limit`: optional, 10 unless said | `memories` (name, description, kind, passage), best first. A description counts for more than the body |
+| `putMemory` | Changes | The member, or their agent | `memory`: the whole memory<br>`replaces`: optional, the version it replaces | `name`, `version`, and `unchanged` when nothing differed. Sent twice, it ends the same as sent once |
+| `deleteMemory` | Changes | The member, or their agent | `name`, `replaces` | `name`, `removed` |
+| `addNote` | Changes | The member, or their agent | `note`: one line, 500 characters at most<br>`session`: a name for the session it was seen in | `id`. Sent twice with the same `id`, it is kept once |
+| `listNotes` | Reads | The member, or their agent | `settled`: optional, to read the ones already settled too | `notes` (id, text, when, session, written by, and what became of it if settled) |
+| `settleNotes` | Changes | The member, or their agent | `notes`: each note's `id` with what became of it: `kept`, `dropped`, or the `name` of the memory it went into | `settled`. A note is settled once. Naming a memory that does not exist is refused |
+| `addTurns` | Changes | The member, or their agent | `turns`: up to 50, each with an `id` made where it happened, the `session`, the `agent`, the `project` if there is one, the `prompt` and the `answer`, 2,000 characters each at most | `kept`: the IDs it now has. One sent twice is kept once |
+| `listTurns` | Reads | The member, or their agent | `limit`: optional, 40 unless said | `turns` not yet settled, oldest first, and `waiting`: how many there are |
+| `settleTurns` | Changes | The member, or their agent | `turns`: each turn's `id` with what became of it: `dropped`, or the `id` of the note or `name` of the memory it went into | `settled`. A settled turn is removed |
+| `listSkills` | Reads | The member, or their agent | Nothing | `skills` (name, version, description, written by, approved) |
+| `getSkill` | Reads | The member, or their agent | `name` | `skill` (the text of `SKILL.md`, and `files` beside it as path and text), `version`. A skill not yet approved is refused to an agent |
+| `putSkill` | Changes | The member, or their agent | `skill`, and `replaces`: optional | `name`, `version`, `approved`. Saved by an agent, it waits for the member |
+| `approveSkill` | Changes | The member, signed in to ohm | `name`, `version` | `name`, `approved`. It approves that version and no later one |
+| `deleteSkill` | Changes | The member | `name`, `replaces` | `name`, `removed` |
+| `listTools` | Reads | The member, or their agent | Nothing | `tools` (name, description, on, and for a server of someone else's its address) |
+| `putTool` | Changes | The member, signed in to ohm | `tool`, and `replaces`: optional | `name`, `version` |
+| `deleteTool` | Changes | The member, signed in to ohm | `name`, `replaces` | `name`, `removed` |
+| `proposeTool` | Changes | The member, or their agent | `tool`: a name, a line on what it is for, what it would take and what it would give | `name`, `proposed`. It does nothing and cannot be switched on until it has been built |
+| `exportFiles` | Reads | The member | Nothing | `files` (path, text) |
+
+"Their agent" is the agent's own key, limited to what the member allowed: reading the vault, changing it, reading the cortex, changing it. Until that key exists (it is under "Decisions to make" already), an agent asks as the member, with a token from their PDS, and the requests marked "signed in to ohm" are what it still cannot reach.
+
+### The tools an agent gets
+
+Each is made of the requests beside it and nothing else, as the vault's tools are.
+
+| Tool | Reads or changes | Made of | What it does |
+| --- | --- | --- | --- |
+| `cortex_start` | Reads | `getContext` | Call first, in every session. Who the person is, a map of their vault and how they want things done, a line for each other memory, a line for each skill, what the agent is able to do, and the notes not yet settled. If there are any, memory is rewritten from them before anything else |
+| `cortex_note` | Changes | `addNote` | Write down, in one line, something seen about the person while working. It changes no memory |
+| `cortex_settle` | Changes | `listNotes`, `getMemory`, `putMemory`, `settleNotes` | Rewrite memory from the notes, and say what became of each note |
+| `cortex_recall` | Reads | `searchMemories`, `getMemory` | Read a memory in full by its name, or find the ones that mention some words |
+| `cortex_remember` | Changes | `getMemory`, `putMemory` | Save something learned about the person, or correct a memory that was read. One call: a memory is private and can be changed back |
+| `cortex_forget` | Changes | `getMemory`, `deleteMemory` | Remove a memory. Two calls, as removing a post is |
+| `cortex_skill` | Reads | `getSkill` | Load one skill in full, when its description fits what is being asked |
+| `cortex_propose_skill` | Changes | `getSkill`, `putSkill` | Write a skill down, or change one. It waits for the person's yes in the editor and is not used before |
+| `cortex_propose_tool` | Changes | `proposeTool` | Write down a tool that ought to exist: what it is for, what it would take and give. It waits to be built |
+
+There is no tool for the list of tools: an agent reads it in `cortex_start` and cannot change it.
+
+### A session, from the agent's side
+
+1. **It starts with `cortex_start`.** It now knows who it is working for, what their vault holds, how they want work done, what else it has learned before by name, which skills there are, and which tools it has.
+2. **If notes are waiting, it rewrites memory from them first** (`cortex_settle`), so this session works from what the last one learned.
+3. **It reads more only when the work calls for it:** a memory whose description fits (`cortex_recall`), a skill whose description fits (`cortex_skill`), and the vault itself through the vault's tools.
+4. **What the person says about how they want things, it writes as a memory at once** (`cortex_remember`). **What it only notices, it notes** (`cortex_note`) and carries on.
+5. **Nobody is asked to look anything over.** The editor shows the cortex beside the vault, with who wrote each thing, what it replaced and which notes it came from, for when the person wants to read or change it.
+
+A session that ends without warning loses nothing: what was said is already memory, and what was noticed is already a note, waiting for the next time the cortex is opened.
+
+### One cortex for every coding agent
+
+Designed 13 November 2026. Not built. One service holds the cortex, and every coding agent a member uses reaches the same one. There are three ways in, and they differ only in what happens without the model choosing to do it.
+
+```
+                         ┌────────────────────────────────────────────┐
+                         │  the cortex service                        │
+                         │  /xrpc/com.ohmmmm.cortex.*                 │
+                         └───────▲───────────────▲──────────────▲─────┘
+                                 │               │              │
+              ┌──────────────────┴───┐   ┌───────┴────────┐   ┌─┴───────────────────┐
+              │ the adapter           │   │ the MCP server │   │ a client of ours     │
+              │ `ohm cortex hook …`   │   │ the cortex's   │   │ that speaks ACP      │
+              │ one program, run by   │   │ own tools      │   │ and drives the agent │
+              │ each agent's hooks    │   │                │   │                      │
+              └───▲──────────────▲────┘   └───────▲────────┘   └──────────▲───────────┘
+                  │              │                │                       │
+            Claude Code        Codex         any agent that          later, if at all
+                                              speaks MCP
+```
+
+| Way in | Before each prompt | After each turn | Who decides it happens |
+| --- | --- | --- | --- |
+| **The adapter,** on an agent's own lifecycle hooks | The memories that fit the prompt are put in front of the model | What happened in the turn is handed off | The hooks. The model is not asked |
+| **The MCP server,** for any agent | Nothing, unless the model calls `cortex_start` or `cortex_recall` | Nothing, unless the model calls `cortex_note` or `cortex_remember` | The model, told to by the server's instructions and a skill |
+| **A client of ours,** speaking the Agent Client Protocol | The same as the adapter, for every agent the client can drive | The same | Our client. It sees every prompt and every answer because it carries them |
+
+The adapter and the MCP server are installed together. Where an agent has hooks, the adapter does the fetching and the handing off and the tools are for everything else: reading a memory in full, saving what the member said, loading a skill. Where it has none, the tools are all there is.
+
+#### The adapter
+
+One program, `ohm cortex hook <moment>`, the same for both agents. An agent's hook runs it with a JSON object on standard input, and Claude Code's and Codex's objects are close enough that one program reads both.
+
+| Moment | Claude Code | Codex | What the adapter does |
+| --- | --- | --- | --- |
+| A session starts | `SessionStart` | `SessionStart` | Answers with the memories marked `always` and a line for each other memory and skill, from its own copy. Then, without being waited for, brings that copy up to date and sends anything still waiting to be sent |
+| The member sends a prompt | `UserPromptSubmit` | `UserPromptSubmit` | Finds the few memories that fit the prompt and answers with them, 1,500 characters at most, as `additionalContext`. With nothing that fits it answers with nothing |
+| A turn ends | `Stop` | `Stop` | Writes one line to a file on the member's machine: the session, the turn, the folder, the prompt and the last thing the agent said. It reaches no network, and returns at once |
+| A session ends | `SessionEnd` | `SessionEnd`, on the desktop build only | Sends what is waiting. Nothing depends on this running |
+
+Four rules keep it from getting in the way of the work:
+
+1. **Nothing on the way to the model waits on the network.** The adapter answers from a copy of the cortex it keeps on the member's machine. With the service slow, down, or the machine offline, the member gets what the copy held, and the prompt is not held up.
+2. **Handing off a turn is one line written to a file.** A separate step sends the lines later: at the next session's start, at a session's end where that exists, and whenever the adapter next runs. A line is removed only once the service has said it has it.
+3. **Every line has an ID made on the member's machine,** from the session and the turn, so one sent twice is kept once.
+4. **A hook that fails says nothing and lets the work go on.** It never stops a prompt, and never makes a turn run again.
+
+What Codex's hooks give was checked on Haein's own machine on 13 November 2026 (`codex` 0.142.4, and the desktop app's 0.167.0-alpha.3.2): both builds ran `SessionStart` and `UserPromptSubmit` and took their output in as context; `SessionEnd` ran on the desktop build only. Claude Code's are from its documentation and have not been run for this. A hook is handed a path to the transcript, not the transcript, and Codex says its file is not a format to rely on, so the adapter takes only what the hook's own object holds.
+
+#### From a turn to a memory
+
+A turn that was handed off is not a note and not a memory. It is the prompt and the answer, cut to 2,000 characters each, waiting to be read.
+
+- **Turns are settled as notes are, by the member's own agent,** under the same table in "How memory is written". Most turns say nothing about the member and are dropped. One where they corrected the agent, or said how they want something done, becomes a note or a memory.
+- **They are settled apart from the work,** by the adapter running the member's agent on its own with no window (`claude -p`, `codex exec`) when a session has ended, forty turns at a time at most. Where that cannot be done, they wait for the next `cortex_start`, which answers with how many there are and settles a few.
+- **ohm reads no turn with a model of its own.** It holds them until they are settled, and then removes them.
+
+#### What a coding agent needs that a writing agent did not
+
+- **A memory can be about one project.** An optional `project` on a memory, a note and a turn names the repository it was learned in: the address of its remote, or the folder's name when it has none. Fetching for a prompt gives that project's memories and the ones about the member, and never another project's.
+- **What is put in front of the model is said to be what was learned before, and not an instruction.** It arrives where an agent's own instructions do, so a wrong memory there does more harm than one the model went and read.
+- **A turn can hold what should never leave the machine.** The adapter sends the prompt and the last answer only: no tool's output, no file, no diff. A project can be switched off, by a file in it or in the adapter's own settings, and then nothing from it is handed off or fetched.
+
+#### The MCP server, and what goes in the plugin
+
+- **The server is the one in `mcp/`,** with the cortex's tools beside the vault's. It runs on the member's machine, over standard input and output, as now. One that ohm hosts, reached at an address, needs the agent's own key first.
+- **Its instructions, given when an agent connects, say in their first 512 characters** to call `cortex_start` before anything else, to note what is noticed and to remember what is said. For an agent with no hooks, that paragraph and the skill are the whole of how memory gets used.
+- **The plugin holds what is the same for every agent:** the MCP server's settings and the skills, laid out as the [Agent Plugins standard](https://agent-plugins.org/specification) says. Hooks are not in the standard, so each agent gets its own small file of them beside it, both running the same program.
+- **In Codex, a plugin with hooks cannot go in the public directory,** has to be installed by hand, and its hooks run only once the member has looked them over and trusted them. Codex's own memory cannot be replaced by another, so it and the cortex run side by side.
+
+#### A client of ours
+
+Hooks cover Claude Code and Codex, and not every moment of either: a session that is killed hands off nothing for its last turn, and an agent with no hooks hands off nothing at all. If "your agent remembers every turn, in whichever agent" is what members are promised, hooks do not keep that promise. A client of ours that speaks the Agent Client Protocol does, for the agents it can drive, because every prompt and answer passes through it. It is a product of its own, and it means members work in our window in place of the agent's. Not planned. It is here so that the promise is not made before it is.
+
+### What holding a cortex commits us to
+
+- **It is a description of a person, written by software.** That is more sensitive than a private post, and nothing in it was written by the member. They are told it exists, shown all of it, and can remove any of it.
+- **A wrong memory keeps being acted on.** So every memory says who wrote it and where it came from, and correcting one is as easy as editing a post.
+- **Nobody checks a memory before it is used.** That was chosen. What stands in for the check is that what the member said is never overwritten by a guess, that every rewrite keeps what it replaced, and that the member can read all of it.
+- **It is a way in for instructions the member never gave.** Text in a post or a web page can ask an agent to remember something or write a skill. Rules 8 and 9 are the answer for tools and skills. For memory, the answer is that `written by` and `from` are always kept and the member can see every one.
+- **Turns from a coding agent hold code, and sometimes a key or a password someone pasted.** ohm holds them until they are settled. So they are cut short, sent without any tool's output, removed once read, and a project can be kept out altogether.
+- **Leaving covers it too.** Export writes the cortex out with the vault, and deletion on request removes it.
+
 ## The pieces to build
 
 ### 1. The vault service
@@ -297,6 +600,52 @@ Built as a client of the vault service: each tool is made of the service's reque
 ### 7. Your own pages follow
 
 When a public note changes, the page of the member's own design that shows it changes too. The public endpoints make this possible for a site on any host. Designed after the rest.
+
+### 8. The cortex
+
+Designed under "The cortex". In the order to build:
+
+- **Storage and the access check,** in the vault service, in tables of their own. A cortex is the same member's as the vault beside it.
+- **Memory and Context** first: the five memory requests and `getContext`, then `cortex_start`, `cortex_recall`, `cortex_remember` and `cortex_forget`, and the three memories every cortex starts with. This is the part an agent cannot work well without.
+- **Notes, and rewriting memory from them:** the three note requests, `cortex_note` and `cortex_settle`, the earlier version of a memory kept, and the skill that says how to judge.
+- **The adapter,** for Claude Code first and then Codex: `recall`, the copy kept on the member's machine, the file of turns waiting to be sent, the three turn requests, and settling turns with the member's own agent. It needs the agent's own key, so that no password from a PDS sits in a hook's settings.
+- **The cortex in the editor:** what the agent has written, newest first, with who wrote it, to change or remove.
+- **Export and Sync:** the cortex written out as files, and kept in step with a folder as the vault is.
+- **Skills,** with the member's yes before one an agent wrote is used, and moving a memory up to one.
+- **Tools:** the list, switching ohm's own on and off, and an agent's requests for one to be built. Connecting a server of someone else's comes last.
+
+#### The cortex, as work for agents
+
+Planned 13 November 2026. Nothing has been handed out. The work is cut so that each agent has files of its own and no two write the same one. Three files are shared by everything, so one agent lays them down first and the others do not touch them: `service/schema.sql`, `service/src/capabilities/index.mjs`, and `mcp/tools.mjs`.
+
+| Agent | What it builds | Its own files | Waits for | Done when |
+| --- | --- | --- | --- | --- |
+| **0. Probe** | Nothing. It runs the checks under "What to check before relying on it": Claude Code's hooks with a hook that only writes down what it was handed, Codex's `Stop`, an agent run with no window, and the Agent Plugins specification. It changes no file but this plan | None | Nothing. It can start now, beside agent 1 | Each of those rows says what was found, on which build |
+| **1. Foundation** | Every cortex table. Every cortex capability named in the index, each answering "not built yet". The rules for a memory, as the vault's rules for a post are kept: its fields, its limits, its version. Then Memory and Context whole: the five memory requests, `getContext`, the three memories a cortex starts with, and the earlier version of a memory kept | `cortex/` (new, beside `vault/`), `service/src/capabilities/memory.mjs` and `context.mjs`, the three shared files, `test/cortex.test.mjs` | Nothing | Another member's token gets nothing from a cortex; a save naming a stale version is refused; a memory written as a file reads back the same; Publish, with a cortex full, lists no change |
+| **2. Notes** | The three note requests, and the skill that says how to judge | `service/src/capabilities/notes.mjs`, `skills/cortex/`, `test/notes.test.mjs` | 1 | A note sent twice is kept once; every note is settled one way or another; settling into a memory that does not exist is refused |
+| **3. Tools for the agent** | The nine `cortex_` tools in the MCP server, and the server's instructions | `mcp/cortex-tools.mjs` (new; agent 1 leaves the one line in `mcp/tools.mjs` that brings it in), `test/cortex-mcp.test.mjs` | 1, and 2 for `cortex_note` and `cortex_settle` | Milestone 8's checks that name a tool pass against the service's own code |
+| **4. The agent's key** | A key ohm issues for an agent, limited to reading or changing the vault or the cortex, and taken away at will | `service/src/key.mjs` (new), `service/src/member.mjs`, `test/key.test.mjs` | Nothing in the cortex. It waits for the decision "What an agent signs in with" | A key for the cortex only reads no post; a key taken away is refused at once |
+| **5. The adapter** | `ohm cortex hook`, the copy kept on the member's machine, the file of turns, `recall`, the three turn requests, the hooks file for Claude Code, then the one for Codex | `adapter/` (new), `service/src/capabilities/turns.mjs`, `hooks/`, `test/adapter.test.mjs` | 1, 4, and what 0 found | The first four checks of milestone 8 |
+| **6. The cortex in the editor** | A panel beside the vault: what was written, by whom, what it replaced, to change or remove. A skill's yes | `service/public/vault/cortex.js` and `cortex.css` (new) | 1, and 2 to show notes | In a browser, a memory an agent wrote is read, changed and removed, and the agent no longer has it |
+| **7. Out and back** | The cortex written out as files, and kept in step with a folder | `cortex/file.mjs`, `scripts/cortex-sync.mjs`, `service/src/capabilities/cortex-export.mjs`, `test/cortex-sync.test.mjs` | 1, and the decision on where the cortex's folder sits | With ohm's copy removed, a sync from the folder brings every memory and skill back |
+| **8. Skills and the list of tools** | The skill requests with the member's yes, the tool requests, `proposeTool` | `service/src/capabilities/skills.mjs` and `tools.mjs` | 1 | A skill an agent wrote is refused to an agent until approved; an agent's request to switch a tool on is refused |
+
+```
+0 Probe ────────────────────────────────────┐
+                                             ▼
+1 Foundation ──┬── 2 Notes ──┬── 3 Tools for the agent
+               │             └── 6 The editor
+               ├── 7 Out and back
+               ├── 8 Skills and the list of tools
+               └──────────────────── 5 The adapter
+4 The agent's key ───────────────────────────┘
+```
+
+- **At most four at once.** Agents 0, 1 and 4 can start together. Once 1 is in, agents 2, 7 and 8 can run side by side, and then 3 and 6.
+- **Each agent works on a branch of its own** and is brought into `main` one at a time, in the order of the table, with every test passing first.
+- **The reference is written from the code** (`node scripts/capabilities.mjs --write`), so no agent edits `service/CAPABILITIES.md` by hand. It is run once after each agent is brought in.
+- **Nothing is deployed by an agent.** The live service changes when Haein says so.
+- **Each agent is told the decisions it rests on.** Four are open and would change what is built: who reads a turn (5), whether a memory can be about one project (1 and 5), whether what nobody looked over is put in front of the model (5), and where the cortex's folder sits (7). Agents 1, 2, 3, 6 and 8 can be built whichever way those go, if agent 1 keeps `project` as a field that may be empty.
 
 ## Milestones
 
@@ -352,6 +701,14 @@ Piece 4.
 
 ### 7. Other storage, and your own pages
 
+### 8. Your agent remembers
+
+Piece 8.
+
+**State, 13 November 2026.** Designed. Not started.
+
+**Done when:** something said to Claude Code about how the member wants work done is in front of Codex the next time a prompt it fits is sent, with neither model having called a tool; with the service unreachable, a prompt is answered as quickly as with it, from the copy, and the turns of that session arrive once it is back, each once; a memory about one project is never given in another; a project switched off hands off nothing; an agent in a new session, on another machine, calls `cortex_start` and knows who it is working for and what it learned before; it knows whether it is working for a person or a company, and what each label in their vault is for; told once how a title should read, it does not need telling again in the next session; something it only noticed, in two sessions, is a memory in the third, with nobody having been asked; a note that goes against what the member said does not overwrite it; a memory that was rewritten can be put back to what it said before; a session cut off part way loses no note; everything it wrote is listed in the editor with who wrote it, and removing a memory there means the agent no longer has it; a skill an agent wrote is not used until it has been approved; an agent's request to add a tool or switch one on is refused; another member's token gets nothing from a cortex; Publish, with a cortex full, lists no change; and the cortex written out as files reads back as the same cortex.
+
 ## Decisions to make
 
 - **Which version stands when a post was changed in both places.** The plan said ours is the reference and the folder's version is kept beside it. With the member's copy as the original, that may be the wrong way round. Proposed: neither is treated as the reference. Both are kept, the working copy is left as it was, and the member chooses. Not yet decided. Built this way, so that it can be tried: sync leaves both as they are, puts ohm's version beside the member's file, and takes the member's choice.
@@ -367,6 +724,20 @@ Piece 4.
 - **Whether the mirror keeps running.** It runs once on its own, and then when asked. A post published later, from elsewhere, is not seen until then. Not decided.
 - **Which tools an agent gets next.** The API is laid out first so this can be chosen from it. [The reference](../service/CAPABILITIES.md) lists the requests that have no tool, and why.
 - **Where the vault service's code lives.** It is in this public repository, with a copy of ohm's design tokens. The first plan put it in the private `ohm` repository. Not decided.
+- **Where the cortex sits when a vault is synced to a folder.** A folder connected today is the vault itself, and "only posts are synced". Proposed: the cortex is a second folder beside it, `cortex/`, connected and synced on its own, so that a vault opened in Obsidian is still only the member's writing. The other way is a folder inside the vault that sync treats apart. Not decided. Until one is built, ohm holds the only copy of a cortex.
+- **Whether every agent shares one cortex.** A member may use more than one agent. Proposed: one cortex, read by all of them, with each save saying which agent made it. The other way is a cortex to an agent, which keeps one agent's mistakes from another and means teaching each of them the same thing. Not decided.
+- **Whether an agent may write to memory without asking.** Settled: yes, and nothing waits for the member ("dont review with me, just write onto memory"). What they said is written at once; what the agent noticed is noted, and becomes memory the next time the cortex is opened.
+- **Whether a skill an agent wrote still waits for the member's yes.** It does in this design (rule 9), and "dont review with me" was said of memory. A skill changes what the agent does in every later session, and text in a post or a web page can ask for one to be written. The other way is that a skill is used as soon as it is written, as a memory is. Not decided.
+- **How many times is enough.** The design says a thing noticed becomes a memory once it has been seen in more than one session, and a skill once it has been done the same way three times. Both numbers are guesses, to be changed once it has been used.
+- **What happens to notes when the cortex is not opened again for a long time.** They wait. Whether ohm's own agent should settle them in the meantime is the same question as whether it reads the cortex at all, below.
+- **Who reads a turn and decides what it says about the member.** Designed so that the member's own agent does, run with no window by the adapter when a session ends, and that ohm reads none with a model of its own. That spends the member's own usage on something they did not ask for and cannot see. The other ways are that ohm reads them, which costs ohm a model's time for every turn of every member and has ohm reading what was said over someone's code; or that turns are not kept at all and only what the agent chose to note is. Not decided.
+- **Whether a memory can be about one project.** Designed so that it can, with `project`. It goes against "about the member, and true whatever the task" in the table of what becomes a memory, which was written for someone writing, not someone coding. The other way is that what is true of one repository stays in that repository's own files, such as `AGENTS.md`, and the cortex holds only what is true of the member. Not decided.
+- **Where the fitting memories are found, on the machine or on the service.** Designed so that the adapter finds them in its own copy, by the words in the prompt, so that no prompt waits on the network. Finding them by meaning and not only by words is better and would have to be done on the service, with a time after which the adapter gives up and uses its copy. Not decided.
+- **Whether a memory nobody looked over is put in front of the model unasked.** With hooks it is, before every prompt, where an agent's own instructions go. That is what makes memory work without the model choosing, and it is also the shortest way from a wrong or planted memory to something the agent does. The stricter way gives unasked only the memories the member stated, and leaves what the agent worked out to be read through a tool. Not decided.
+- **Whether a client of ours is built.** Only if every turn, in every agent, is what members are promised. See "A client of ours".
+- **Whether the cortex keeps the keys to servers of someone else's.** Designed so that it does not: it keeps the name and address, and the key stays in the agent's own settings on the member's machine. Keeping them would let a tool follow the member to any agent, and would make ohm a holder of keys to other services. Not decided.
+- **Whether ohm's own agent reads the cortex.** The publicist in the private `ohm` repository works for the same member. Whether it reads and writes this cortex, or keeps what it knows apart, is not decided.
+- **What happens to a memory that is removed.** For a memory that is rewritten, settled: the version before is kept. How many versions back, for how long, and whether something removed can be brought back, is the same question as for a post, under 0 below.
 
 0. **What protects a member from a client that deletes or overwrites by mistake.** The interface leaves conflicts and deletions to the client. That is fine for clients we write, which ask first. It is not enough for an Obsidian plugin we did not write, which could remove or replace every file in one run. Proposed: the service keeps earlier versions of each file and holds removed files for a period, so anything a client does can be undone. Not yet decided.
 00. **Whether a post has a name that never changes, apart from its slug.** Settled: it has an ID, given once when it is made, and the slug is an ordinary field. Whoever makes the post makes the ID, so a request to create it can be repeated safely, and a connector keeps it in the post's file as one more property. The record on the PDS is kept under the ID, not the slug (Haein, directly), so a renamed post keeps its record and everything that points at it.
@@ -411,6 +782,11 @@ Each says or implies that our service cannot read private notes, or that the mem
 | What storing every member's notes and files costs | We now hold everything, not only what is published | Estimate in milestone 1 |
 | Obsidian reads the folder as planned and leaves unknown properties alone | Milestone 3 | Milestone 3, with the real vault |
 | Sync apps and two-way sync do not lose a note | A sync app resolves its own conflicts by making a second copy of a file. Ours has to notice such a copy and say so | Milestone 3 |
+| Claude Code's hooks hand over what the adapter needs: the prompt at `UserPromptSubmit`, and the last answer at `Stop` | The adapter is written once for both agents. Codex's were run on Haein's machine; Claude Code's are from its documentation only | Before the adapter is written |
+| A hook that answers from a file on the machine adds no wait a member notices | It runs before every prompt | With the adapter's first version |
+| Codex's `Stop` hook hands over the turn as documented | Both builds recognise it; it was not run | Before the Codex half |
+| An agent run with no window can settle turns, and what that costs a member in usage | It is how a turn becomes a memory | Before turns are handed off at all |
+| The Agent Plugins standard holds the MCP settings and skills in a form both agents read | One plugin for both depends on it. The specification has not been read for this plan | Before the plugin is laid out |
 
 ## Later
 
