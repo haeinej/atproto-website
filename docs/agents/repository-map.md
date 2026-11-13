@@ -143,12 +143,13 @@ npm run home:check
 npm exec -- wrangler deploy --config public/docs/wrangler.jsonc --dry-run
 npm exec -- wrangler deploy --config feed/wrangler.jsonc --dry-run
 npm exec -- wrangler deploy --config mirror/wrangler.jsonc --dry-run
-npm --prefix cirrus ci
-npm --prefix cirrus run build
+pnpm --dir cirrus install --frozen-lockfile
+pnpm --dir cirrus run build
 mvn -f importer/pom.xml package
 java -jar importer/target/x-archive-importer.jar --help
 ```
 
+The Cirrus commands need pnpm; its lock is separate from the root npm lock.
 The Java commands need JDK21/Maven; they are not root test prerequisites. Java
 path fixtures compare ICU4J78.3/Unicode17 with Node24.22.2/ICU78.3/Unicode17.
 The Java tool pins its tables; JavaScript uses its runtime's Unicode tables.

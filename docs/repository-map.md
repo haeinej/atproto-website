@@ -96,8 +96,8 @@ run its own tests. Jackson reads the archive; ICU4J supplies Unicode normalizati
 letter categories and contextual lowercase so addresses do not depend on the
 JDK's older character tables. The Unicode data adds about 14.45 MiB before shading
 and is confined to the Java tool. [Build and preview instructions](../README.md#import-an-x-archive)
-show the actual command. Cirrus similarly needs its own `npm ci` and build only
-when you work on the PDS component.
+show the actual command. Cirrus uses its own pnpm lock: it needs pnpm, a frozen
+install and a build only when you work on the PDS component.
 
 ## Understand a refusal before retrying
 
