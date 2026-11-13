@@ -60,7 +60,8 @@ const cell = text => String(text).replaceAll('|', '\\|');
 
 export function capabilitiesPage() {
   const used = new Set(TOOLS.flatMap(tool => tool.requests));
-  const without = Object.values(REQUESTS).filter(request => !(request.name.startsWith('com.ohmmmm.vault.') && used.has(short(request.name))));
+  const without = Object.values(REQUESTS).filter(request => !used.has(request.name)
+    && !(request.name.startsWith('com.ohmmmm.vault.') && used.has(short(request.name))));
   const lines = [
     '# What the vault can do',
     '',

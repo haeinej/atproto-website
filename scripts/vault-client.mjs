@@ -8,8 +8,8 @@ export function vaultClient({ pds, session, renew, vault, audience, get = fetch 
   const token = method => rpc(pds.origin, 'com.atproto.server.getServiceAuth', {
     query: { aud: audience, lxm: method, exp: String(Math.floor(Date.now() / 1000) + 60) }, token: session,
   });
-  async function ask(name, { query, body } = {}) {
-    const method = `com.ohmmmm.vault.${name}`;
+  async function ask(name, { query, body } = {}, namespace = 'vault') {
+    const method = `com.ohmmmm.${namespace}.${name}`;
     let issued = await token(method);
     if (!issued.response.ok && renew && [400, 401].includes(issued.response.status)) {
       session = await renew();
@@ -58,6 +58,14 @@ export function vaultClient({ pds, session, renew, vault, audience, get = fetch 
   }
   return {
     repository: pds.did,
+    // Cortex requests need their own method-bound service token. Reuse the sign-in and renewal,
+    // while keeping the member's private cortex separate from every vault/PDS publishing call.
+    cortex: {
+      call(name, options) {
+        if (typeof name !== 'string' || !/^[a-z][a-zA-Z]*$/.test(name)) throw new Error('Name one cortex request');
+        return ask(name, options, 'cortex');
+      },
+    },
     upload: async (bytes, mime) => (await toPds('com.atproto.repo.uploadBlob', { body: bytes, mime })).blob,
     apply: writes => toPds('com.atproto.repo.applyWrites', { body: { repo: pds.did, writes } }),
     // Every post and every removal, a page at a time.
