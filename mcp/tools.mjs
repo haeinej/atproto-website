@@ -157,12 +157,12 @@ export function createTools(options) {
     return summary(line, version);
   };
   // What the vault service refuses is said to the agent in the service's own words.
-  const asking = async act => {
+  const asking = async (act, changed = 'The post has changed since it was read. Read it again before saving.') => {
     try {
       return await act();
     } catch (problem) {
       if (problem instanceof VaultProblem || !problem?.code) throw problem;
-      if (problem.code === 'Changed') refuse('The post has changed since it was read. Read it again before saving.');
+      if (problem.code === 'Changed') refuse(changed);
       refuse(problem.message);
     }
   };
@@ -290,8 +290,8 @@ export function createTools(options) {
     },
 
     async vault_mirror(args) {
-      // Looking changes nothing. What it finds is what the confirm value stands for, so if the
-      // person's PDS has changed by the second call, the first is shown again.
+      // Approval covers this displayed summary of the current repository. Clean content changes
+      // with the same counts/caveats remain allowed; the apply checks its own read's summary.
       const looked = await asking(() => vault.mirror());
       const found = {
         from: looked.site, types: looked.types, records: looked.records, posts: looked.posts,
@@ -304,7 +304,7 @@ export function createTools(options) {
         ...found,
         note: 'Posts already in the vault and unchanged are left as they are. A post the person has changed in the vault since is never overwritten. Nothing is published.',
       }, async () => {
-        const report = await asking(() => vault.mirror({ apply: true }));
+        const report = await asking(() => vault.mirror({ apply: true, expectedSummary: looked.summary }), 'What would be brought in changed. Call vault_mirror again without confirm to preview, then confirm the new summary.');
         return {
           broughtIn: report.saved, alreadyThere: report.unchanged.length,
           ...(report.changedThere.length ? { leftAloneBecauseChangedInTheVault: report.changedThere } : {}),

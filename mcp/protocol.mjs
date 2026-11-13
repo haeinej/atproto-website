@@ -26,6 +26,7 @@ export function createServer({ tools, list, name = 'ohm-vault', version = '0.1.0
     const { id, method, params = {} } = message;
     // A notification has no ID and gets no answer.
     if (id === undefined) return undefined;
+    if (!params || typeof params !== 'object' || Array.isArray(params)) return failure(id, -32602, 'Params must be an object');
     if (method === 'initialize') {
       return answer(id, {
         protocolVersion: VERSIONS.includes(params.protocolVersion) ? params.protocolVersion : VERSIONS[0],
@@ -37,6 +38,7 @@ export function createServer({ tools, list, name = 'ohm-vault', version = '0.1.0
     if (method === 'ping') return answer(id, {});
     if (method === 'tools/list') return answer(id, { tools: list });
     if (method === 'tools/call') {
+      if (typeof params.name !== 'string' || (params.arguments !== undefined && (!params.arguments || typeof params.arguments !== 'object' || Array.isArray(params.arguments)))) return failure(id, -32602, 'A tool call needs a name and an arguments object');
       // A tool that cannot do what was asked says why in its result, so the agent can read it.
       try {
         const result = await (await made()).call(params.name, params.arguments ?? {});
@@ -69,7 +71,12 @@ export async function serve(handle, input, output) {
         } catch {
           return send({ jsonrpc: '2.0', id: null, error: { code: -32700, message: 'Not JSON' } });
         }
-        const response = await handle(message);
+        let response;
+        try {
+          response = await handle(message);
+        } catch {
+          if (message?.id !== undefined) response = { jsonrpc: '2.0', id: message.id, error: { code: -32603, message: 'Internal error' } };
+        }
         if (response) send(response);
       });
     }

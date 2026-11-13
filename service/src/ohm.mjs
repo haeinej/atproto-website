@@ -51,7 +51,10 @@ export function links(db) {
       const row = await db.prepare('SELECT did, mirrored_at FROM links WHERE user_id = ?1').bind(user).first();
       return row ? { did: row.did, mirrored: Boolean(row.mirrored_at) } : null;
     },
-    mirrored: (user, now = new Date()) => db.prepare('UPDATE links SET mirrored_at = ?2 WHERE user_id = ?1 AND mirrored_at IS NULL').bind(user, now.toISOString()).run(),
+    async mirrored(user, did, now = new Date()) {
+      const result = await db.prepare('UPDATE links SET mirrored_at = COALESCE(mirrored_at, ?3) WHERE user_id = ?1 AND did = ?2').bind(user, did, now.toISOString()).run();
+      if (!result.meta.changes) throw new Refused(409, 'AccountChanged', 'The connected account changed while bringing posts in');
+    },
     // One ohm account works in one AT Protocol account, and the other way round.
     async connect(user, did, now = new Date()) {
       const taken = await db.prepare('SELECT user_id, did FROM links WHERE user_id = ?1 OR did = ?2').bind(user, did).all();
@@ -63,6 +66,8 @@ export function links(db) {
       await db.prepare('INSERT INTO links (user_id, did, linked_at) VALUES (?1, ?2, ?3)').bind(user, did, now.toISOString()).run();
       return { did };
     },
-    disconnect: user => db.prepare('DELETE FROM links WHERE user_id = ?1').bind(user).run(),
+    disconnect: (user, did) => did === undefined
+      ? db.prepare('DELETE FROM links WHERE user_id = ?1').bind(user).run()
+      : db.prepare('DELETE FROM links WHERE user_id = ?1 AND did IS ?2').bind(user, did).run(),
   };
 }

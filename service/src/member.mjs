@@ -1,5 +1,5 @@
 // Where a member's things are: the PDS their own DID document names, and their website.
-import { webUrl } from '../../feed/pds.mjs';
+import { isRecordKey, webUrl } from '../../feed/pds.mjs';
 import { findAccount } from './identity.mjs';
 import { Refused } from './store.mjs';
 
@@ -20,17 +20,25 @@ export async function published(get, pds, did, collection) {
   const records = new Map();
   const prefix = `at://${did}/${collection}/`;
   let cursor;
+  const cursors = new Set();
+  const incomplete = () => { throw new Refused(502, 'RepositoryUnreachable', 'Your PDS did not return a complete, valid repository listing'); };
   for (let page = 0; page < 50; page++) {
     const url = new URL('/xrpc/com.atproto.repo.listRecords', pds);
     url.search = new URLSearchParams({ repo: did, collection, limit: '100', ...(cursor ? { cursor } : {}) });
     // A redirect is not followed: the answer has to come from the address that was asked.
     const response = await get(url, { redirect: 'manual', signal: AbortSignal.timeout(20_000) });
     if (!response.ok) throw new Refused(502, 'RepositoryUnreachable', `Your PDS would not list ${collection} (HTTP ${response.status})`);
-    const data = await response.json();
-    for (const record of data.records ?? []) {
-      if (String(record.uri).startsWith(prefix)) records.set(record.uri.slice(prefix.length), record.value);
+    const data = await response.json().catch(incomplete);
+    if (!data || !Array.isArray(data.records)) incomplete();
+    for (const record of data.records) {
+      if (!record || typeof record.uri !== 'string' || !record.uri.startsWith(prefix) || !isRecordKey(record.uri.slice(prefix.length)) || !record.value || typeof record.value !== 'object' || Array.isArray(record.value)) incomplete();
+      const key = record.uri.slice(prefix.length);
+      if (records.has(key)) incomplete();
+      records.set(key, record.value);
     }
-    if (!data.cursor || data.cursor === cursor || !(data.records ?? []).length) break;
+    if (data.cursor === undefined || data.cursor === null || data.cursor === '') return records;
+    if (typeof data.cursor !== 'string' || cursors.has(data.cursor) || !data.records.length || page === 49) incomplete();
+    cursors.add(data.cursor);
     cursor = data.cursor;
   }
   return records;

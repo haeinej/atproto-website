@@ -5,7 +5,7 @@
 // A member's posts are served to that member and nobody else. Nothing here publishes anything:
 // saving a post, whatever it says about who may see it, changes only this copy.
 import { REQUESTS } from './capabilities/index.mjs';
-import { createIdentity } from './identity.mjs';
+import { admitMember, createIdentity } from './identity.mjs';
 import { fromOurPages, links, ohmUser } from './ohm.mjs';
 import { postStore, Refused } from './store.mjs';
 
@@ -49,10 +49,13 @@ export function createService({ whoIs, get = fetch } = {}) {
       // a request is given that one account and no other.
       let did = null;
       let user = null;
+      let link = null;
       if (asked.asks === 'token') {
         did = await identify(request, name);
       } else if (asked.asks === 'ohm') {
         user = await session();
+        link = await linked.of(user.id);
+        did = link?.did ?? null;
       } else if (asked.asks === 'member') {
         // A token from the member's own PDS, as the command line and an agent's tools send, or an
         // ohm session, as the page does. A session is worth exactly the one account it was connected to.
@@ -60,7 +63,8 @@ export function createService({ whoIs, get = fetch } = {}) {
           did = await identify(request, name);
         } else {
           user = await session();
-          did = await linked.didOf(user.id) ?? (() => { throw new Refused(409, 'NotConnected', 'Connect your AT Protocol account first'); })();
+          link = await linked.of(user.id);
+          did = link?.did ?? (() => { throw new Refused(409, 'NotConnected', 'Connect your AT Protocol account first'); })();
         }
       }
 
@@ -69,12 +73,15 @@ export function createService({ whoIs, get = fetch } = {}) {
       // Check before the capability can read data or apply a stale draft.
       const expected = request.headers.get('X-Ohm-Did');
       if (expected !== null && asked.asks !== 'nobody') {
-        const actual = did ?? (user ? await linked.didOf(user.id) : null);
-        if (actual !== expected) throw new Refused(409, 'AccountChanged', 'The signed-in account changed; reopen the vault before continuing');
+        if (did !== expected) throw new Refused(409, 'AccountChanged', 'The signed-in account changed; reopen the vault before continuing');
       }
 
+      // Account discovery/disconnection must work even after membership is revoked.
+      // Private data and keyboard mutations use the same admission rule as PDS tokens.
+      if (user && did && !['com.ohmmmm.account.get', 'com.ohmmmm.account.connect', 'com.ohmmmm.account.disconnect'].includes(name)) admitMember(did, env.MEMBERS);
+
       const answer = await asked.run({
-        name, request, url, env, get, identify, linked, did, user,
+        name, request, url, env, get, identify, linked, link, did, user,
         posts: postStore(env.DB),
         body: () => sent(request),
       });

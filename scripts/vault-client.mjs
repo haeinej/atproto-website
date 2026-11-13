@@ -86,7 +86,7 @@ export function vaultClient({ pds, session, renew, vault, audience, get = fetch 
     publishPlan: ({ prepare = false } = {}) => ask('getPublishPlan', prepare ? { query: { prepare: '1' } } : {}),
     attachment: (id, attachment) => file('getAttachment', { id, attachment }),
     // What the member has published on their PDS, looked at or, with `apply`, brought in.
-    mirror: ({ apply = false } = {}) => ask('importPublished', { body: { apply } }),
+    mirror: ({ apply = false, expectedSummary } = {}) => ask('importPublished', { body: { apply, ...(expectedSummary === undefined ? {} : { expectedSummary }) } }),
     get: id => ask('getPost', { query: { id } }),
     put: (post, replaces) => ask('putPost', { body: { post, ...(replaces ? { replaces } : {}) } }),
     remove: (id, replaces) => ask('deletePost', { body: { id, replaces } }),

@@ -218,7 +218,7 @@ async function running() {
     throw new Error(`Unexpected request: ${url}`);
   };
   const whoIs = createIdentity({ audience, members: `${me},${other}`, get });
-  const env = { DB: db, OHM_APP_ORIGIN: 'https://app.test', SERVICE_DID: audience };
+  const env = { DB: db, MEMBERS: '*', OHM_APP_ORIGIN: 'https://app.test', SERVICE_DID: audience };
   const service = createService({ whoIs, get });
   const ask = async (as, short, { query = {}, body, token, cookie, origin, verb, under = '' } = {}) => {
     const name = short.includes('.') ? short : `com.ohmmmm.cortex.${short}`;

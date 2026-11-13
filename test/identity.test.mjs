@@ -54,6 +54,17 @@ function service(members = `${haein.did}, ${jun.did}`, documents = { [haein.did]
 }
 const refused = (code, words) => problem => problem.code === code && (!words || words.test(problem.message));
 
+test('non-object JWT headers and claims are authentication refusals before any DID fetch', async () => {
+  const { ask, fetched } = service();
+  for (const shape of [null, [], 'text', 1, true]) {
+    for (const [header, claims] of [[shape, { iss: haein.did }], [{ alg: 'ES256K' }, shape]]) {
+      const token = `${Buffer.from(JSON.stringify(header)).toString('base64url')}.${Buffer.from(JSON.stringify(claims)).toString('base64url')}.${Buffer.alloc(64).toString('base64url')}`;
+      await assert.rejects(ask(token), refused('AuthRequired'));
+    }
+  }
+  assert.deepEqual(fetched, []);
+});
+
 test('a token from a member\'s own PDS says who is asking, for either kind of key', async () => {
   const { ask, fetched } = service();
   assert.equal(await ask(await haein.token()), haein.did);

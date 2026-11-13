@@ -113,8 +113,11 @@ export async function findAccount(typed, { get = fetch, directory } = {}) {
 
 // `members` is the DIDs allowed in, or '*' for anyone. It is checked before anything is fetched,
 // so a token cannot make the service go and read an address of the sender's choosing.
+export function admitMember(did, members) {
+  if (members !== '*' && !String(members ?? '').split(/[\s,]+/).includes(did)) throw new Refused(403, 'NotAMember', 'This account has not been let in yet');
+}
+
 export function createIdentity({ audience, members, get = fetch, directory, now = () => Date.now() }) {
-  const allowed = members === '*' ? null : new Set(String(members ?? '').split(/[\s,]+/).filter(Boolean));
   const documents = new Map();
 
   async function keyFor(did) {
@@ -147,13 +150,14 @@ export function createIdentity({ audience, members, get = fetch, directory, now 
       header = JSON.parse(new TextDecoder().decode(fromBase64Url(parts[0])));
       claims = JSON.parse(new TextDecoder().decode(fromBase64Url(parts[1])));
       signature = fromBase64Url(parts[2]);
+      if (!header || typeof header !== 'object' || Array.isArray(header) || !claims || typeof claims !== 'object' || Array.isArray(claims)) throw new Error('Not token objects');
     } catch {
       refuse('The token could not be read');
     }
     const did = claims.iss;
     const seconds = now() / 1000;
     if (typeof did !== 'string' || !DID.test(did)) refuse('The token does not say who it is from');
-    if (allowed && !allowed.has(did)) throw new Refused(403, 'NotAMember', 'This account has not been let in yet');
+    admitMember(did, members);
     if (claims.aud !== audience) refuse('The token was issued for another service');
     if (claims.lxm !== method) refuse('The token was issued for another request');
     if (typeof claims.exp !== 'number' || claims.exp <= seconds || claims.exp > seconds + 3600) refuse('The token has expired, or lasts longer than an hour');

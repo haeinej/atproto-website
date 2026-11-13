@@ -10,8 +10,7 @@ export default {
       about: 'Who is signed in, the AT Protocol account they connected if they have, and whether what it had published has been brought in.',
       takes: {},
       gives: '`user` (name), `did`, `mirrored`, and `service`: who a PDS has to address its token to when the member connects',
-      run: async ({ user, linked, env }) => {
-        const link = await linked.of(user.id);
+      run: async ({ user, link, env }) => {
         return { user: { name: user.name }, did: link?.did ?? null, mirrored: link?.mirrored ?? false, service: env.SERVICE_DID ?? null };
       },
     },
@@ -35,8 +34,8 @@ export default {
       about: 'Unties the AT Protocol account. The vault is kept, and opens again when the account is connected.',
       takes: {},
       gives: '`did`, now empty',
-      run: async ({ user, linked }) => {
-        await linked.disconnect(user.id);
+      run: async ({ user, did, linked }) => {
+        await linked.disconnect(user.id, did);
         return { did: null };
       },
     },

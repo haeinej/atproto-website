@@ -53,3 +53,14 @@ test('cortex transport renews an expired PDS sign-in and preserves service refus
   assert.ok(grants.every(item => item.method === 'com.ohmmmm.cortex.getMemory'));
   assert.throws(() => client.cortex.call('../vault.publish'), /Name one cortex request/);
 });
+
+test('mirror transport preserves the optional approved summary and existing direct apply calls', async t => {
+  const { client, grants, requests } = await fixture(t);
+  const summary = 'a'.repeat(64);
+  await client.mirror();
+  await client.mirror({ apply: true, expectedSummary: summary });
+  await client.mirror({ apply: true });
+  assert.deepEqual(requests.map(request => JSON.parse(request.body)), [{ apply: false }, { apply: true, expectedSummary: summary }, { apply: true }]);
+  assert.ok(grants.every(grant => grant.method === 'com.ohmmmm.vault.importPublished'));
+  assert.ok(requests.every(request => request.headers.Authorization === 'Bearer synthetic-method-token'));
+});
