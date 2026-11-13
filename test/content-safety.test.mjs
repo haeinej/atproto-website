@@ -120,7 +120,7 @@ test('partial visibility moves preserve both copies and require direct-store ver
   const instance = createVault({ stores: { private: source, friends: empty, public: target } });
   await assert.rejects(instance.setVisibility(id, 'public', { version: 'old' }), /Both copies were preserved.*operator access.*current version/);
   assert.deepEqual((await source.get()).record, copied.record);
-  await assert.rejects(instance.find(id), /stored as public and private/);
+  await assert.rejects(instance.find(id), /stored as public and private.*operator access.*current version.*cannot reconcile duplicate keys/);
 });
 
 test('prepared publication keeps retained blob metadata but clears an intentionally removed alt', async () => {

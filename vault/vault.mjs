@@ -26,7 +26,7 @@ export function createVault({ stores, collection = POST, now = () => new Date() 
       if (held) found.push({ key, visibility, ...held });
     }
     if (found.length > 1) {
-      refuse(`"${key}" is stored as ${found.map(note => note.visibility).join(' and ')}. Remove one before going on.`);
+      refuse(`"${key}" is stored as ${found.map(note => note.visibility).join(' and ')}. Both copies are preserved. Use operator access to compare the stores and remove only the unwanted copy using its current version; normal vault operations cannot reconcile duplicate keys.`);
     }
     return found[0] ?? null;
   }
