@@ -18,9 +18,14 @@ import search from './search.mjs';
 import structure from './structure.mjs';
 import memory from './memory.mjs';
 import context from './context.mjs';
+import notes from './notes.mjs';
+import skills from './skills.mjs';
+import tools from './tools.mjs';
 import { pendingCapabilities } from '../../../cortex/pending.mjs';
 
-export const CAPABILITIES = [posts, structure, search, mirror, publish, exporting, account, identity, context, memory, ...pendingCapabilities];
+const implementations = { Notes: notes, Skills: skills, Tools: tools };
+export const CAPABILITIES = [posts, structure, search, mirror, publish, exporting, account, identity, context, memory,
+  ...pendingCapabilities.map(capability => implementations[capability.name] ?? capability)];
 
 // Every request by its name, with the capability it belongs to.
 export const REQUESTS = Object.fromEntries(CAPABILITIES.flatMap(capability =>

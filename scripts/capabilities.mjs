@@ -19,9 +19,9 @@ const ASKS = {
 };
 const FILES = Object.fromEntries(Object.entries({
   Posts: 'posts', Structure: 'structure', Search: 'search', Mirror: 'mirror', Publish: 'publish', Export: 'export', Account: 'account', Identity: 'identity',
-  Context: 'context', Memory: 'memory',
+  Context: 'context', Memory: 'memory', Notes: 'notes', Skills: 'skills', Tools: 'tools',
 }).map(([name, file]) => [name, `src/capabilities/${file}.mjs`]));
-for (const name of ['Notes', 'Turns', 'Skills', 'Tools', 'Cortex Export']) FILES[name] = '../cortex/pending.mjs';
+for (const name of ['Turns', 'Cortex Export']) FILES[name] = '../cortex/pending.mjs';
 
 // Every way the service says no. The same words go to a person in the editor and to an agent.
 export const REFUSALS = {

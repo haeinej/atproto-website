@@ -20,10 +20,10 @@ This page is the whole list. It is written from the same tables the service and 
 | **Identity** | The first steps of signing in: finding an account from its handle, and saying who a token from a PDS names. Neither touches a vault. | `findAccount`, `whoAmI` | [identity.mjs](src/capabilities/identity.mjs) |
 | **Context** | The private cortex at session start: always memories in full, an index of the rest, approved skills, enabled tools and work waiting to be settled. | `getContext`, `recall` | [context.mjs](src/capabilities/context.mjs) |
 | **Memory** | Private memories for the authenticated member. Every rewrite names the version it replaces and preserves that earlier version. | `listMemories`, `getMemory`, `putMemory`, `deleteMemory`, `searchMemories` | [memory.mjs](src/capabilities/memory.mjs) |
-| **Notes** | Private cortex notes. Not built yet. | `addNote`, `listNotes`, `settleNotes` | [pending.mjs](../cortex/pending.mjs) |
+| **Notes** | Private cortex notes. Not built yet. | `addNote`, `listNotes`, `settleNotes` | [notes.mjs](src/capabilities/notes.mjs) |
 | **Turns** | Private cortex turns. Not built yet. | `addTurns`, `listTurns`, `settleTurns` | [pending.mjs](../cortex/pending.mjs) |
-| **Skills** | Private cortex skills. Not built yet. | `listSkills`, `getSkill`, `putSkill`, `approveSkill`, `deleteSkill` | [pending.mjs](../cortex/pending.mjs) |
-| **Tools** | Private cortex tools. Not built yet. | `listTools`, `putTool`, `deleteTool`, `proposeTool` | [pending.mjs](../cortex/pending.mjs) |
+| **Skills** | Private cortex skills. Not built yet. | `listSkills`, `getSkill`, `putSkill`, `approveSkill`, `deleteSkill` | [skills.mjs](src/capabilities/skills.mjs) |
+| **Tools** | Private cortex tools. Not built yet. | `listTools`, `putTool`, `deleteTool`, `proposeTool` | [tools.mjs](src/capabilities/tools.mjs) |
 | **Cortex Export** | Private cortex cortex export. Not built yet. | `exportFiles` | [pending.mjs](../cortex/pending.mjs) |
 
 The service never writes to anyone's repository. Saving a post, whatever it says about who may see it, changes only the vault's own copy. Publishing is worked out here and carried out by the member, signed in at their own PDS ([public/vault/publish.js](public/vault/publish.js)).
