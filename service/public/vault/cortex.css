@@ -1,0 +1,43 @@
+/* Cortex uses the vault's surfaces, pills, controls and reading measure. */
+.cortex-directory-top { display: grid; justify-items: start; gap: var(--ohm-space-2); padding-inline: var(--ohm-space-2); }
+.cortex-directory-top .pills { margin: 0; }
+.cortex-status { margin: var(--ohm-space-3) var(--ohm-space-2); overflow-wrap: anywhere; }
+.cortex-list, .cortex-history { list-style: none; margin: 0; padding: 0; }
+.cortex-item {
+  display: grid; gap: var(--ohm-space-1); width: 100%; min-height: var(--directory-row-height);
+  padding: var(--ohm-space-3) var(--ohm-space-2); border: 0; border-radius: var(--directory-row-radius);
+  background: transparent; color: var(--ohm-ink); font: inherit; letter-spacing: inherit; text-align: left;
+  cursor: pointer; overflow-wrap: anywhere;
+  transition: background-color var(--ohm-duration-state) var(--ohm-ease-out);
+}
+.cortex-item[aria-current="true"] { background: var(--ohm-wash); }
+.cortex-item-title { font-weight: var(--ohm-type-control-weight); }
+.cortex-item:focus-visible { outline: var(--ohm-space-1) solid var(--ohm-focus); outline-offset: calc(-1 * var(--ohm-space-1)); }
+@media (hover: hover) and (pointer: fine) { .cortex-item:hover { background: var(--ohm-wash); } }
+.cortex-content { overflow-wrap: anywhere; }
+.cortex-content h3 { margin: var(--ohm-space-6) 0 var(--ohm-space-3); font: var(--ohm-type-h3-weight) var(--ohm-type-h3-size) / var(--ohm-type-h3-leading) var(--ohm-font-sans); letter-spacing: var(--ohm-type-h3-tracking); }
+.cortex-description { font: 400 var(--ohm-input-size) / var(--ohm-input-leading) var(--ohm-font-sans); }
+.cortex-facts { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 3fr); gap: var(--ohm-space-2) var(--ohm-space-4); margin: var(--ohm-space-6) 0; }
+.cortex-facts dt { color: var(--ohm-muted); }
+.cortex-facts dd { margin: 0; white-space: pre-wrap; }
+.cortex-text { white-space: pre-wrap; overflow-wrap: anywhere; margin: var(--ohm-space-6) 0; font: inherit; }
+.cortex-code { font-family: var(--ohm-font-mono); padding: var(--ohm-space-4); background: var(--ohm-wash); border-radius: var(--ohm-radius-row); }
+.cortex-history li { padding-block: var(--ohm-space-2); }
+.cortex-history .button { max-width: 100%; height: auto; min-height: var(--ohm-height-md); white-space: normal; text-align: left; overflow-wrap: anywhere; }
+.cortex-history p { margin: var(--ohm-space-2) 0 0; }
+.cortex-past { margin-top: var(--ohm-space-6); padding: var(--ohm-space-4); border-radius: var(--ohm-radius-card); background: var(--ohm-menu); }
+.cortex-problem { color: var(--ohm-danger); white-space: pre-wrap; }
+.cortex-problem:empty { display: none; }
+.cortex-editor { display: grid; gap: var(--ohm-space-3); }
+.cortex-editor .field-label { margin: 0; }
+.cortex-editor textarea { min-height: calc(var(--ohm-space-16) * 3); height: auto; resize: vertical; }
+.cortex-check { display: flex; align-items: center; gap: var(--ohm-space-2); min-height: var(--ohm-touch-min); }
+.cortex-check input { accent-color: var(--ohm-accent); }
+.cortex-check input:focus-visible { outline: var(--ohm-space-1) solid var(--ohm-focus); outline-offset: var(--ohm-space-1); }
+.cortex-sources { padding-left: var(--ohm-space-4); }
+.cortex-sources li { margin-bottom: var(--ohm-space-2); white-space: pre-wrap; }
+.cortex-version { overflow-wrap: anywhere; }
+@media (max-width: 760px) {
+  .cortex-facts { grid-template-columns: minmax(0, 1fr); gap: var(--ohm-space-1); }
+  .cortex-facts dd { margin-bottom: var(--ohm-space-3); }
+}
