@@ -21,10 +21,16 @@ test('public docs use unique IDs and every in-page link has one target', async (
   const directory = new URL('../public/docs/', import.meta.url);
   for (const file of (await readdir(directory)).filter(name => name.endsWith('.html'))) {
     const html = await readFile(new URL(file, directory), 'utf8');
+    assert.doesNotMatch(html, /<header class="site-header"/, `${file} must not restore the removed top header`);
     const ids = [...html.matchAll(/\sid="([^"]+)"/g)].map(match => match[1]);
     assert.equal(new Set(ids).size, ids.length, `${file} has duplicate IDs that can misdirect navigation`);
     for (const [, anchor] of html.matchAll(/href="#([^"]+)"/g)) {
       assert.ok(ids.includes(anchor), `${file} links to missing #${anchor}`);
     }
   }
+});
+
+test('public docs preserve the published Architecture index bookmark', async () => {
+  const index = await readFile(new URL('../public/docs/index.html', import.meta.url), 'utf8');
+  assert.match(index, /\sid="architecture"/, 'existing links to /#architecture must keep a target');
 });

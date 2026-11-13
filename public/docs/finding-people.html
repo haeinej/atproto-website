@@ -27,16 +27,12 @@
   <body>
     <a class="skip" href="#content">Skip to content</a>
 
-    <!-- Docs shell, the same on every page except aria-current. The header is the ohm dot alone, as on
-         ohmmmm.com, where it leads. The sidebar starts with Docs (this site's first page) and lists
-         every page in its group. Icons are Lucide. -->
-    <input class="menu-toggle" type="checkbox" id="menu">
-    <header class="site-header">
-      <a class="site-mark" href="https://ohmmmm.com/"><img src="/assets/favicon.svg" alt="ohm" width="20" height="20"></a>
-      <label class="menu-button" for="menu"><svg class="icon" viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2.25" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 12h16"/><path d="M4 6h16"/><path d="M4 18h16"/></svg><span>Menu</span></label>
-    </header>
+    <!-- Header-free docs shell. The sidebar lists every page; a control in normal
+         document flow opens it on narrow screens. Icons are Lucide. -->
+    <input class="menu-toggle" type="checkbox" id="menu" aria-label="Show docs navigation" aria-controls="docs-navigation">
+    <label class="menu-button" for="menu"><svg class="icon" viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2.25" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 12h16"/><path d="M4 6h16"/><path d="M4 18h16"/></svg><span>Menu</span></label>
 
-    <nav class="site-sidebar" aria-label="Docs">
+    <nav class="site-sidebar" id="docs-navigation" aria-label="Docs">
       <ul>
         <li><a href="/">Docs</a></li>
       </ul>
@@ -74,8 +70,9 @@
         <li><a href="/agent">Connect your agent</a></li>
         <li><a href="/finding-people" aria-current="page">Finding people</a></li>
       </ul>
-      <p class="sidebar-group">Architecture</p>
+      <p class="sidebar-group">For agents</p>
       <ul>
+        <li><a href="/agent-guide">Start here as an agent</a></li>
         <li><a href="/architecture">Overview</a></li>
         <li><a href="/identity">Identity and access</a></li>
         <li><a href="/data-model">Data model</a></li>
@@ -163,7 +160,7 @@
 
         <nav class="page-pager" aria-label="Docs pages">
           <a rel="prev" href="/agent"><svg class="icon" viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2.25" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m12 19-7-7 7-7"/><path d="M19 12H5"/></svg>Your agent</a>
-          <a rel="next" href="/architecture">System overview<svg class="icon" viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2.25" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12h14"/><path d="m12 5 7 7-7 7"/></svg></a>
+          <a rel="next" href="/agent-guide">Agent working guide<svg class="icon" viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2.25" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12h14"/><path d="m12 5 7 7-7 7"/></svg></a>
         </nav>
       </article>
     </main>

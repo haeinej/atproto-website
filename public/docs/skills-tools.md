@@ -19,6 +19,14 @@ Approval names the exact saved version. If an agent later edits it, that revisio
 
 Context lists only skills whose current version is approved. `cortex_skill` reads an approved skill in full. Agents have no tool to approve their own proposals. A member-authored save through the linked ohm session is approved as that member's edit.
 
+## Why approval and installation are separate
+
+A repeated task needs both a method and a way to act. A skill supplies the method, such as how to edit an essay. A tool supplies an operation, such as reading a post. Instructions alone cannot make an unavailable operation work.
+
+Use a connected agent to propose a skill, then sign in to the browser with your linked ohm account to review it. Those are separate permissions so the proposer cannot approve itself. The task's actual tools must also be available in your agent; approving instructions does not install software or grant credentials.
+
+The useful result is a reviewed method your agent can read again. If the task still cannot run, check whether its required tool is actually connected rather than approving the same instructions again.
+
 ## Tool settings
 
 The service stores a tool's name, description, on/off setting and optional HTTPS server address. Only your linked ohm session can save, switch or remove a tool setting. Context includes only tools that are on and are not proposals.

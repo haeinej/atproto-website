@@ -11,27 +11,11 @@ Everything you make in the vault is a post: an essay, a note to yourself, a phot
 - **Who can see it.** A new post is private. [Who sees a post](https://docs.ohmmmm.com/visibility.md)
 - **Pictures and files** placed in the body.
 
-## You do not choose what kind it is
+## Start with what you want to keep
 
-ohm reads what kind of thing a post is from the post. It is not shown on your site. It tells other software what it is looking at, whatever you called the section it sits in.
+Write a sentence, add a picture's address, or paste a link. Add a title if it helps and a label that tells you where to find it. You can keep a short thought and a long essay in the same section without choosing a different editor or setup.
 
-| What the post contains | Read as |
-| --- | --- |
-| A title, with text and anything placed in the text | writing |
-| No title: a thought, a caption with a photo | note |
-| Only one image | image |
-| Only images, more than one | gallery |
-| Only video | video |
-| Only audio | audio |
-| Only files, such as a PDF | file |
-| Only attachments, of more than one kind | media |
-| No title, and a link on a line of its own | link |
-| The same, when the link plays something, such as a video page | embed |
-| No title, a quoted passage, and a link to its source | quote |
-| Nothing but a list | list |
-| Nothing but code blocks | code |
-
-So two posts under different labels can be the same kind, and one label can hold several kinds.
+Choose Save, then reopen the post to check your words are there. A new post stays private. Marking it Everyone prepares it for sharing; Publish is the separate step that puts it on the open network. [Publish](https://docs.ohmmmm.com/publish.md)
 
 ## Pictures and files
 

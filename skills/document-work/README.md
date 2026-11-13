@@ -70,6 +70,6 @@ If a guide describes a button or result you cannot find, ask the agent to check 
 against the actual implementation and deployment rather than guess at a workaround.
 
 For the precise completion contract and file locations, see
-[the agent reference](agents/document-work.md). To change how the explanations
-are written, edit [the skill](../skills/document-work/SKILL.md) and its
-[human writing guide](../skills/document-work/human-guide.md).
+[the agent reference](contract.md). To change how the explanations
+are written, edit [the skill](SKILL.md) and its
+[human writing guide](human-guide.md).

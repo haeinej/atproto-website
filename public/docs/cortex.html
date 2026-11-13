@@ -4,12 +4,12 @@
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <meta name="theme-color" content="#fafaf9">
-    <meta name="description" content="Your vault holds what you make. Your cortex holds what your agent remembers and the skills and tools available to it. The cortex belongs to your connected account and stays private.">
+    <meta name="description" content="Give your agent a place to keep what it learns about your work, so you do not have to explain the same preferences every session. You can inspect and correct that knowledge without making it a post.">
     <link rel="canonical" href="https://docs.ohmmmm.com/cortex">
     <meta property="og:type" content="website">
     <meta property="og:site_name" content="ohm">
     <meta property="og:title" content="Your cortex · ohm docs">
-    <meta property="og:description" content="Your vault holds what you make. Your cortex holds what your agent remembers and the skills and tools available to it. The cortex belongs to your connected account and stays private.">
+    <meta property="og:description" content="Give your agent a place to keep what it learns about your work, so you do not have to explain the same preferences every session. You can inspect and correct that knowledge without making it a post.">
     <meta property="og:url" content="https://docs.ohmmmm.com/cortex">
     <meta property="og:image" content="https://ohmmmm.com/assets/og-image.png">
     <meta property="og:image:width" content="1200">
@@ -27,16 +27,12 @@
   <body>
     <a class="skip" href="#content">Skip to content</a>
 
-    <!-- Docs shell, the same on every page except aria-current. The header is the ohm dot alone, as on
-         ohmmmm.com, where it leads. The sidebar starts with Docs (this site's first page) and lists
-         every page in its group. Icons are Lucide. -->
-    <input class="menu-toggle" type="checkbox" id="menu">
-    <header class="site-header">
-      <a class="site-mark" href="https://ohmmmm.com/"><img src="/assets/favicon.svg" alt="ohm" width="20" height="20"></a>
-      <label class="menu-button" for="menu"><svg class="icon" viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2.25" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 12h16"/><path d="M4 6h16"/><path d="M4 18h16"/></svg><span>Menu</span></label>
-    </header>
+    <!-- Header-free docs shell. The sidebar lists every page; a control in normal
+         document flow opens it on narrow screens. Icons are Lucide. -->
+    <input class="menu-toggle" type="checkbox" id="menu" aria-label="Show docs navigation" aria-controls="docs-navigation">
+    <label class="menu-button" for="menu"><svg class="icon" viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2.25" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 12h16"/><path d="M4 6h16"/><path d="M4 18h16"/></svg><span>Menu</span></label>
 
-    <nav class="site-sidebar" aria-label="Docs">
+    <nav class="site-sidebar" id="docs-navigation" aria-label="Docs">
       <ul>
         <li><a href="/">Docs</a></li>
       </ul>
@@ -74,8 +70,9 @@
         <li><a href="/agent">Connect your agent</a></li>
         <li><a href="/finding-people">Finding people</a></li>
       </ul>
-      <p class="sidebar-group">Architecture</p>
+      <p class="sidebar-group">For agents</p>
       <ul>
+        <li><a href="/agent-guide">Start here as an agent</a></li>
         <li><a href="/architecture">Overview</a></li>
         <li><a href="/identity">Identity and access</a></li>
         <li><a href="/data-model">Data model</a></li>
@@ -95,7 +92,7 @@
         <header>
           <p class="group">Cortex</p>
           <h1 id="title">Your cortex</h1>
-          <p class="introduction">Your vault holds what you make. Your cortex holds what your agent remembers and the skills and tools available to it. The cortex belongs to your connected account and stays private.</p>
+          <p class="introduction">Give your agent a place to keep what it learns about your work, so you do not have to explain the same preferences every session. You can inspect and correct that knowledge without making it a post.</p>
           <p class="alert" role="note">ohm is in development. These docs cover the implementation and the work still planned. Built does not mean verified on the live service; see Status and limits.</p>
         </header>
 
@@ -128,6 +125,23 @@
             <li><strong>Skills</strong> show the instructions and supporting files. Sign in with your linked ohm account to review an agent's proposal and approve exactly the version you read.</li>
           </ul>
           <p>Tool settings are currently available through the service API. There is no tool-settings panel in this view.</p>
+        </section>
+
+        <section aria-labelledby="need">
+          <h2 id="need">What you need, and why</h2>
+          <p>Your connected account identifies whose private knowledge this is. Your agent needs the ohm MCP connection to read or save it; opening a new chat alone does not bring that knowledge into the conversation. <a href="/agent">Connect your agent</a></p>
+          <p>The browser is where you inspect the result and review proposed skills. To approve a skill, use your linked ohm sign-in: the agent's credentials intentionally cannot approve its own instructions.</p>
+        </section>
+
+        <section aria-labelledby="first-use">
+          <h2 id="first-use">Try one preference</h2>
+          <ol>
+            <li>Connect your agent and ask it to start with your cortex. The first Context request creates three starting memories without guessing your identity or preferences.</li>
+            <li>Tell it: "Remember that I prefer a short first draft before polished prose." This is an example; use a preference that is true for you.</li>
+            <li>Open Cortex, choose Memories, and read the saved preference. Check that it says what you meant. You can edit the text if it does not.</li>
+            <li>In a later session, ask the agent to start with your cortex and read the relevant memory before drafting.</li>
+          </ol>
+          <p>The visible result is a memory you can inspect and reuse. Whether a later draft follows it also depends on the agent reading it and following your current request. Automatic recall into every prompt is not built.</p>
         </section>
 
         <section aria-labelledby="context">
@@ -173,6 +187,8 @@
       <ul>
         <li><a href="#beside">Beside your posts</a></li>
         <li><a href="#workspace">Open it in the workspace</a></li>
+        <li><a href="#need">What you need, and why</a></li>
+        <li><a href="#first-use">Try one preference</a></li>
         <li><a href="#context">What a session starts with</a></li>
         <li><a href="#privacy">Yours, and private</a></li>
         <li><a href="#copy">Keeping a copy</a></li>

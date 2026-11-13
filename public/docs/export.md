@@ -10,14 +10,16 @@ Memories, memory history, observations, skills and tool settings are separate co
 
 ## The format
 
-An export is the same folder of Markdown files that Sync uses. There is one format, not two. It opens in Obsidian or any other Markdown editor, and it can be connected and synced again later. [Posts as files](https://docs.ohmmmm.com/files.md)
+The post contents use the same Markdown format as command-line Sync. A folder export opens directly in Obsidian or another Markdown editor. The single-file download is a JSON container of file paths and Markdown text, rather than a ZIP archive or one combined Markdown document. [Posts as files](https://docs.ohmmmm.com/files.md)
 
 ## How to export
 
 From the menu under your picture, at the foot of the rail.
 
-- **Into a folder,** on your computer. Chrome and Edge can do this.
-- **As one file,** downloaded.
+- **Into a folder,** on your computer. Chrome and Edge can do this. Choose it when you want readable Markdown files immediately.
+- **As one file,** downloaded as `ohm-vault.json`. Choose it when your browser cannot write into a folder, or you want to keep the whole response in one file.
+
+Open the chosen folder or download to check that your posts are present before deleting anything. Neither choice includes your cortex.
 
 If you already sync, your folder is your export, as of the last sync.
 
@@ -36,7 +38,7 @@ Export first if you have not connected a folder. Until you do one or the other, 
 
 ## Coming back
 
-Sign in, connect the same folder, and sync. Every post comes back as it was.
+Use command-line Sync with your exported Markdown folder and connected account to bring posts back. Browser folder sync and an import wizard for the JSON download are not built. This restores posts, not cortex knowledge. [Sync with a folder](https://docs.ohmmmm.com/sync.md)
 
 ---
 ohm is in development. These docs cover the implementation and the work still planned. Built does not mean verified on the live service; see Status and limits.

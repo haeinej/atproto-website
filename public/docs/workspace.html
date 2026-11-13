@@ -27,16 +27,12 @@
   <body>
     <a class="skip" href="#content">Skip to content</a>
 
-    <!-- Docs shell, the same on every page except aria-current. The header is the ohm dot alone, as on
-         ohmmmm.com, where it leads. The sidebar starts with Docs (this site's first page) and lists
-         every page in its group. Icons are Lucide. -->
-    <input class="menu-toggle" type="checkbox" id="menu">
-    <header class="site-header">
-      <a class="site-mark" href="https://ohmmmm.com/"><img src="/assets/favicon.svg" alt="ohm" width="20" height="20"></a>
-      <label class="menu-button" for="menu"><svg class="icon" viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2.25" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 12h16"/><path d="M4 6h16"/><path d="M4 18h16"/></svg><span>Menu</span></label>
-    </header>
+    <!-- Header-free docs shell. The sidebar lists every page; a control in normal
+         document flow opens it on narrow screens. Icons are Lucide. -->
+    <input class="menu-toggle" type="checkbox" id="menu" aria-label="Show docs navigation" aria-controls="docs-navigation">
+    <label class="menu-button" for="menu"><svg class="icon" viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2.25" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 12h16"/><path d="M4 6h16"/><path d="M4 18h16"/></svg><span>Menu</span></label>
 
-    <nav class="site-sidebar" aria-label="Docs">
+    <nav class="site-sidebar" id="docs-navigation" aria-label="Docs">
       <ul>
         <li><a href="/">Docs</a></li>
       </ul>
@@ -74,8 +70,9 @@
         <li><a href="/agent">Connect your agent</a></li>
         <li><a href="/finding-people">Finding people</a></li>
       </ul>
-      <p class="sidebar-group">Architecture</p>
+      <p class="sidebar-group">For agents</p>
       <ul>
+        <li><a href="/agent-guide">Start here as an agent</a></li>
         <li><a href="/architecture">Overview</a></li>
         <li><a href="/identity">Identity and access</a></li>
         <li><a href="/data-model">Data model</a></li>
@@ -98,6 +95,12 @@
           <p class="introduction">Use the rail to switch between your vault of posts and your private cortex. Each has a list beside it and the item you open filling the rest.</p>
           <p class="alert" role="note">ohm is in development. These docs cover the implementation and the work still planned. Built does not mean verified on the live service; see Status and limits.</p>
         </header>
+
+        <section aria-labelledby="why">
+          <h2 id="why">Why there are two places to work</h2>
+          <p>Choose Vault when you want to make or edit something: a draft, a photograph's caption, or a post you may publish. Choose Cortex when you want to inspect what your agent remembers or review a skill. They stay separate so working knowledge is not accidentally treated as public writing.</p>
+          <p>For a first visit, save one private post and reopen it. You do not need an agent or a public website to use the editor. <a href="/quick-start">Quick start</a></p>
+        </section>
 
         <section aria-labelledby="tree">
           <h2 id="tree">Your repository, in the side panel</h2>
@@ -143,7 +146,7 @@
                 <tr><th>Property</th><th>What it is</th></tr>
               </thead>
               <tbody>
-                <tr><th scope="row">Title</th><td>Optional. A post with a title is a writing; one without is a note</td></tr>
+                <tr><th scope="row">Title</th><td>Optional. A name that helps you recognize the post</td></tr>
                 <tr><th scope="row">Date</th><td>When the post is from. A post that was brought in keeps its original date</td></tr>
                 <tr><th scope="row">Label and sublabel</th><td>Where the post is filed</td></tr>
                 <tr><th scope="row">Slug</th><td>The last part of the post's address. You can change it</td></tr>
@@ -191,6 +194,7 @@
     <nav class="site-toc" aria-labelledby="toc-title">
       <p id="toc-title">On this page</p>
       <ul>
+        <li><a href="#why">Why there are two places to work</a></li>
         <li><a href="#tree">Your repository, in the side panel</a></li>
         <li><a href="#views">Three ways to look at it</a></li>
         <li><a href="#editor">The post, in the main screen</a></li>

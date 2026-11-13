@@ -1,9 +1,16 @@
 # Completed-work documentation contract
 
-Use [the document-work skill](../../skills/document-work/SKILL.md) before finishing
+Use [the document-work skill](SKILL.md) before finishing
 a coherent implementation or workflow outcome. It produces distinct human and
 agent documentation, maintained with the work. The
-[human guide](../document-work.md) explains the resulting experience.
+[human guide](README.md) explains the resulting experience.
+
+This skill is one folder: `SKILL.md`, both writing outlines, `README.md` for
+people and this `contract.md` for agents. Keep its resources together when
+bundling it. The product uses its own canonical pair: ohm's
+[human quick start](../../public/docs/quick-start.md) and
+[agent working guide](../../public/docs/agent-guide.md), both generated from the
+authored public-docs source.
 
 ## Entry points and flow
 
@@ -76,8 +83,8 @@ review the generated HTML, Markdown and LLM copies. The generated files are not
 the authoring source.
 
 The skill's authored sources are
-[SKILL.md](../../skills/document-work/SKILL.md),
-[the agent outline](../../skills/document-work/agent-guide.md) and
-[the human outline](../../skills/document-work/human-guide.md).
+[SKILL.md](SKILL.md),
+[the agent outline](agent-guide.md) and
+[the human outline](human-guide.md).
 Keep their contract, the completion rule, startup routing, README discovery and
 both example guides consistent when changing this workflow.

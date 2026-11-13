@@ -4,10 +4,11 @@
 
 ohm is in development. These docs cover the implementation and the work still planned. Built does not mean verified on the live service; see Status and limits.
 
-For the big picture, read [System overview](https://docs.ohmmmm.com/architecture.md) first. An agent that will work in a vault should then read [Agent integration](https://docs.ohmmmm.com/mcp.md). Everything in one file: [https://docs.ohmmmm.com/llms-full.txt](https://docs.ohmmmm.com/llms-full.txt)
+Start with [Agent working guide](https://docs.ohmmmm.com/agent-guide.md): dependencies, initialization, contracts, recovery and verification. For the member's experience, read [Quick start](https://docs.ohmmmm.com/quick-start.md). Everything in one file: [https://docs.ohmmmm.com/llms-full.txt](https://docs.ohmmmm.com/llms-full.txt)
 
-## Architecture
+## For agents
 
+- [Agent working guide](https://docs.ohmmmm.com/agent-guide.md): The entry contract for an agent working in ohm.
 - [System overview](https://docs.ohmmmm.com/architecture.md): ohm keeps a vault of posts and a private cortex for agent knowledge.
 - [Identity and access](https://docs.ohmmmm.com/identity.md): A member has two identities.
 - [Data model](https://docs.ohmmmm.com/data-model.md): Posts and cortex knowledge are separate data.
@@ -17,7 +18,7 @@ For the big picture, read [System overview](https://docs.ohmmmm.com/architecture
 
 ## Get started
 
-- [Quick start](https://docs.ohmmmm.com/quick-start.md): Start with your posts, then open the private cortex your agent uses to remember your work.
+- [Quick start](https://docs.ohmmmm.com/quick-start.md): Keep your drafts, published work and agent knowledge connected, while choosing what becomes public.
 - [Sign in](https://docs.ohmmmm.com/sign-in.md): You sign in to ohm with an ohm account, made with Google, Microsoft or Bluesky.
 
 ## Workspace
@@ -40,13 +41,13 @@ For the big picture, read [System overview](https://docs.ohmmmm.com/architecture
 
 ## Cortex
 
-- [Your cortex](https://docs.ohmmmm.com/cortex.md): Your vault holds what you make.
-- [Memory and notes](https://docs.ohmmmm.com/memory.md): A memory is something worth carrying forward.
+- [Your cortex](https://docs.ohmmmm.com/cortex.md): Give your agent a place to keep what it learns about your work, so you do not have to explain the same preferences every session.
+- [Memory and notes](https://docs.ohmmmm.com/memory.md): Keep useful knowledge without turning every passing observation into a fact about you.
 - [Skills and tools](https://docs.ohmmmm.com/skills-tools.md): A skill tells an agent how to do a task.
 
 ## Agent
 
-- [Your agent](https://docs.ohmmmm.com/agent.md): Connect the coding agent you already use to your vault and cortex.
+- [Your agent](https://docs.ohmmmm.com/agent.md): Let the coding agent you already use help with your actual drafts and preferences.
 - [Finding people](https://docs.ohmmmm.com/finding-people.md): Finding people is planned.
 
 ## Reference

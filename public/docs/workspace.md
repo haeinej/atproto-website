@@ -2,6 +2,12 @@
 
 Use the rail to switch between your vault of posts and your private cortex. Each has a list beside it and the item you open filling the rest.
 
+## Why there are two places to work
+
+Choose Vault when you want to make or edit something: a draft, a photograph's caption, or a post you may publish. Choose Cortex when you want to inspect what your agent remembers or review a skill. They stay separate so working knowledge is not accidentally treated as public writing.
+
+For a first visit, save one private post and reopen it. You do not need an agent or a public website to use the editor. [Quick start](https://docs.ohmmmm.com/quick-start.md)
+
 ## Your repository, in the side panel
 
 The side panel is everything you have, as folders that open and close.
@@ -36,7 +42,7 @@ What you write is saved to your workspace. Saving shares nothing: a post reaches
 
 | Property | What it is |
 | --- | --- |
-| Title | Optional. A post with a title is a writing; one without is a note |
+| Title | Optional. A name that helps you recognize the post |
 | Date | When the post is from. A post that was brought in keeps its original date |
 | Label and sublabel | Where the post is filed |
 | Slug | The last part of the post's address. You can change it |

@@ -2,6 +2,12 @@
 
 You sign in to ohm with an ohm account, made with Google, Microsoft or Bluesky. Your posts belong to an account on the open network, the same kind Bluesky uses, and you say once which one is yours.
 
+## Why there are two accounts
+
+Your ohm sign-in answers who is using the workspace. Your AT Protocol account answers whose public records and private working copy it should open. Connecting them lets you return with a familiar sign-in while keeping your identity and published posts with the host you chose.
+
+You need to prove that you control the connected account because its name alone is public: anyone could type it. An app password or approval at your server supplies that proof. Signing in with Bluesky can answer both questions in one flow.
+
 ## Two steps
 
 1. **Sign in or sign up.** With Google, Microsoft or Bluesky. This is your ohm account: it is who is at the keyboard.

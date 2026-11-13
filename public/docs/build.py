@@ -34,7 +34,7 @@ GROUPS = [
     ("Folder", ["sync", "files", "export"]),
     ("Cortex", ["cortex", "memory", "skills-tools"]),
     ("Agent", ["agent", "finding-people"]),
-    ("Architecture", ["architecture", "identity", "data-model", "protocols", "mcp", "api"]),
+    ("For agents", ["agent-guide", "architecture", "identity", "data-model", "protocols", "mcp", "api"]),
     ("Reference", ["where-things-live", "limits"]),
 ]
 
@@ -49,17 +49,32 @@ def doc(slug, title, intro, body, nav=None):
 ALERT = "ohm is in development. These docs cover the implementation and the work still planned. Built does not mean verified on the live service; see Status and limits."
 
 doc("quick-start", "Quick start",
-    "Start with your posts, then open the private cortex your agent uses to remember your work. Publishing, folder sync and connecting an agent are separate steps.",
+    "Keep your drafts, published work and agent knowledge connected, while choosing what becomes public. Start by saving one private post; add publishing and an agent when you need them.",
     body="""
+## Why the pieces are separate {#why}
+An idea can become a draft, then a public post. You need somewhere to work on it before it is ready, and a way to publish it without making every draft public. Your vault is that working space. Your own account on the open network holds what you publish.
+Your agent also learns how you work. That knowledge belongs in a private cortex beside your posts, so a preference about editing does not become part of your website. [Your cortex](/docs/cortex)
+
+## What you need, and why {#need}
+An AT Protocol account is your identity on the open network. A Personal Data Server, or PDS, is the server that holds that account's public records. Bluesky hosts accounts too; you can connect one instead of running a server yourself.
+| You need | Why | Who sets it up |
+| --- | --- | --- |
+| An ohm sign-in | Lets the workspace recognize you when you return | You sign in with a supported provider |
+| A connected AT Protocol account | Proves which vault and cortex are yours and identifies where public posts belong | You connect your existing account; if you have none, create one first |
+| A website | Gives public records a page with your own design | Optional for saving private work; connecting its content is separate work |
+| A coding agent | Uses your work as context and carries learning between sessions | Optional; the browser editor works without one |
+| A local folder | Gives you a separate copy of your posts | Optional; export or command-line sync when you want one |
+Access is restricted while ohm is being tested. These steps describe the implemented workspace; check [Status and limits](/docs/limits) for what remains unverified or unavailable.
+
 ## 1. Sign in {#sign-in}
-Sign in or sign up with Google, Microsoft or Bluesky. That makes your ohm account. [More about signing in](/docs/sign-in)
+Open the workspace and sign in with Google, Microsoft or Bluesky. This identifies you to ohm; it does not share a draft or publish anything. [Sign in](/docs/sign-in)
 
 ## 2. Say where your posts live {#where}
-Your posts belong to an account on the open network, not to ohm. Once, you say which one.
+Connect the account whose posts you want to work on. This connection lets ohm keep the right private workspace behind your sign-in.
 - **You have a server of your own.** Enter your handle and an app password from it.
 - **You have a website, and no server yet.** ohm shows you how to set one up beside your site, then you come back with your handle.
 - **You use Bluesky.** Enter your Bluesky handle. If you signed in with Bluesky, this step is already done.
-What you have already published there is brought into your workspace on its own.
+Supported posts you have already published are brought into your workspace. They stay public; connecting an account does not make a new private post public.
 
 ## 3. Look around your workspace {#workspace}
 The workspace has three parts.
@@ -70,9 +85,9 @@ The workspace has three parts.
 
 ## 4. Write a post {#write}
 Start a new post and write. A post is Markdown, and it can be one sentence.
-You do not say what kind of thing it is. A post with a title is a writing, one without is a note, and one that only shows a photograph is an image. ohm reads that from the post.
+Give it a label so you can find it again, and choose Save. You can add a title when it helps; a short thought is enough.
 To add a picture, paste the address of one that is already on the web.
-A new post is private. Nobody else can see it. [More about posts](/docs/posts)
+A new post is private. Open another post, then return to your draft: seeing your saved words again is the first useful result. You can stop here and keep working privately. [More about posts](/docs/posts)
 
 ## 5. Decide who sees it {#who}
 Every post is one of three things.
@@ -81,7 +96,7 @@ Every post is one of three things.
 - **Public.** Everyone, on your website and anywhere else your published layer is read.
 Changing this does not share anything yet. It marks the post, and a mark on the Publish button shows that something is waiting. [More about who sees a post](/docs/visibility)
 
-## 6. Publish {#publish}
+## 6. Publish when you want to share {#publish}
 Press Publish. Before anything happens, you see exactly what will change: which posts will be published for the first time, replaced, or taken down. Then you approve at your own server, and it is done.
 A public post is now part of your published layer. Anything published is public for good: other services copy it the moment it is written. Taking it down later removes it from your account, not from every copy. [More about publishing](/docs/publish)
 
@@ -108,6 +123,10 @@ Your cortex stays private. Publish does not read it. [Your cortex](/docs/cortex)
 doc("sign-in", "Sign in",
     "You sign in to ohm with an ohm account, made with Google, Microsoft or Bluesky. Your posts belong to an account on the open network, the same kind Bluesky uses, and you say once which one is yours.",
     body="""
+## Why there are two accounts {#why}
+Your ohm sign-in answers who is using the workspace. Your AT Protocol account answers whose public records and private working copy it should open. Connecting them lets you return with a familiar sign-in while keeping your identity and published posts with the host you chose.
+You need to prove that you control the connected account because its name alone is public: anyone could type it. An app password or approval at your server supplies that proof. Signing in with Bluesky can answer both questions in one flow.
+
 ## Two steps {#steps}
 1. **Sign in or sign up.** With Google, Microsoft or Bluesky. This is your ohm account: it is who is at the keyboard.
 2. **Say where your posts live,** once. This is your account on the open network: it is where your published posts are kept, and it is yours whether or not you use ohm.
@@ -146,6 +165,10 @@ You can export your posts and ask for ohm's copy to be deleted. Cortex data is n
 doc("workspace", "The workspace",
     "Use the rail to switch between your vault of posts and your private cortex. Each has a list beside it and the item you open filling the rest.",
     body="""
+## Why there are two places to work {#why}
+Choose Vault when you want to make or edit something: a draft, a photograph's caption, or a post you may publish. Choose Cortex when you want to inspect what your agent remembers or review a skill. They stay separate so working knowledge is not accidentally treated as public writing.
+For a first visit, save one private post and reopen it. You do not need an agent or a public website to use the editor. [Quick start](/docs/quick-start)
+
 ## Your repository, in the side panel {#tree}
 The side panel is everything you have, as folders that open and close.
 - A **label** is a section of your work, in your own words.
@@ -170,7 +193,7 @@ What you write is saved to your workspace. Saving shares nothing: a post reaches
 ## What a post says about itself {#properties}
 | Property | What it is |
 | --- | --- |
-| Title | Optional. A post with a title is a writing; one without is a note |
+| Title | Optional. A name that helps you recognize the post |
 | Date | When the post is from. A post that was brought in keeps its original date |
 | Label and sublabel | Where the post is filed |
 | Slug | The last part of the post's address. You can change it |
@@ -206,24 +229,9 @@ doc("posts", "Posts",
 - **Who can see it.** A new post is private. [Who sees a post](/docs/visibility)
 - **Pictures and files** placed in the body.
 
-## You do not choose what kind it is {#forms}
-ohm reads what kind of thing a post is from the post. It is not shown on your site. It tells other software what it is looking at, whatever you called the section it sits in.
-| What the post contains | Read as |
-| --- | --- |
-| A title, with text and anything placed in the text | writing |
-| No title: a thought, a caption with a photo | note |
-| Only one image | image |
-| Only images, more than one | gallery |
-| Only video | video |
-| Only audio | audio |
-| Only files, such as a PDF | file |
-| Only attachments, of more than one kind | media |
-| No title, and a link on a line of its own | link |
-| The same, when the link plays something, such as a video page | embed |
-| No title, a quoted passage, and a link to its source | quote |
-| Nothing but a list | list |
-| Nothing but code blocks | code |
-So two posts under different labels can be the same kind, and one label can hold several kinds.
+## Start with what you want to keep {#forms}
+Write a sentence, add a picture's address, or paste a link. Add a title if it helps and a label that tells you where to find it. You can keep a short thought and a long essay in the same section without choosing a different editor or setup.
+Choose Save, then reopen the post to check your words are there. A new post stays private. Marking it Everyone prepares it for sharing; Publish is the separate step that puts it on the open network. [Publish](/docs/publish)
 
 ## Pictures and files {#attachments}
 Paste the address of a picture or file that is already on the web.
@@ -509,12 +517,13 @@ Every post: private, friends-only and public. Attachments remain references to t
 Memories, memory history, observations, skills and tool settings are separate cortex data and are not included. Keep that distinction in mind before deleting anything. [Your cortex](/docs/cortex)
 
 ## The format {#format}
-An export is the same folder of Markdown files that Sync uses. There is one format, not two. It opens in Obsidian or any other Markdown editor, and it can be connected and synced again later. [Posts as files](/docs/files)
+The post contents use the same Markdown format as command-line Sync. A folder export opens directly in Obsidian or another Markdown editor. The single-file download is a JSON container of file paths and Markdown text, rather than a ZIP archive or one combined Markdown document. [Posts as files](/docs/files)
 
 ## How to export {#how}
 From the menu under your picture, at the foot of the rail.
-- **Into a folder,** on your computer. Chrome and Edge can do this.
-- **As one file,** downloaded.
+- **Into a folder,** on your computer. Chrome and Edge can do this. Choose it when you want readable Markdown files immediately.
+- **As one file,** downloaded as `ohm-vault.json`. Choose it when your browser cannot write into a folder, or you want to keep the whole response in one file.
+Open the chosen folder or download to check that your posts are present before deleting anything. Neither choice includes your cortex.
 If you already sync, your folder is your export, as of the last sync.
 
 ## Deleting ohm's copy {#deleting}
@@ -528,11 +537,11 @@ You can ask for everything ohm holds for you to be deleted. This is a manual req
 Export first if you have not connected a folder. Until you do one or the other, ohm holds the only copy of your private and friends-only posts.
 
 ## Coming back {#back}
-Sign in, connect the same folder, and sync. Every post comes back as it was.
+Use command-line Sync with your exported Markdown folder and connected account to bring posts back. Browser folder sync and an import wizard for the JSON download are not built. This restores posts, not cortex knowledge. [Sync with a folder](/docs/sync)
 """)
 
 doc("cortex", "Your cortex",
-    "Your vault holds what you make. Your cortex holds what your agent remembers and the skills and tools available to it. The cortex belongs to your connected account and stays private.",
+    "Give your agent a place to keep what it learns about your work, so you do not have to explain the same preferences every session. You can inspect and correct that knowledge without making it a post.",
     body="""
 ## Beside your posts {#beside}
 A memory about how you work is not a post. Neither is a skill that tells an agent how to help you. They live in the cortex so that your working knowledge can carry between agent sessions without becoming part of your published work.
@@ -551,6 +560,17 @@ Choose Cortex in the rail, then Memories, Notes or Skills.
 - **Notes** show the observation, who recorded it, when, its originating session and any settlement outcome.
 - **Skills** show the instructions and supporting files. Sign in with your linked ohm account to review an agent's proposal and approve exactly the version you read.
 Tool settings are currently available through the service API. There is no tool-settings panel in this view.
+
+## What you need, and why {#need}
+Your connected account identifies whose private knowledge this is. Your agent needs the ohm MCP connection to read or save it; opening a new chat alone does not bring that knowledge into the conversation. [Connect your agent](/docs/agent)
+The browser is where you inspect the result and review proposed skills. To approve a skill, use your linked ohm sign-in: the agent's credentials intentionally cannot approve its own instructions.
+
+## Try one preference {#first-use}
+1. Connect your agent and ask it to start with your cortex. The first Context request creates three starting memories without guessing your identity or preferences.
+2. Tell it: "Remember that I prefer a short first draft before polished prose." This is an example; use a preference that is true for you.
+3. Open Cortex, choose Memories, and read the saved preference. Check that it says what you meant. You can edit the text if it does not.
+4. In a later session, ask the agent to start with your cortex and read the relevant memory before drafting.
+The visible result is a memory you can inspect and reuse. Whether a later draft follows it also depends on the agent reading it and following your current request. Automatic recall into every prompt is not built.
 
 ## What a session starts with {#context}
 The agent calls `cortex_start`. Context includes full memories marked `always`, descriptions of the other memories, approved skill descriptions, enabled tool descriptions and pending notes. The agent reads the full memory or approved skill when its description fits the task.
@@ -572,21 +592,23 @@ See [Memory and notes](/docs/memory), [Skills and tools](/docs/skills-tools) and
 """)
 
 doc("memory", "Memory and notes",
-    "A memory is something worth carrying forward. A note is an observation to consider before changing that memory. Both are private, with sources that you can inspect.",
+    "Keep useful knowledge without turning every passing observation into a fact about you. Memories carry learning forward; notes give an agent somewhere to put an uncertain observation until there is enough reason to use it.",
     body="""
 ## A memory {#memory}
 Every memory has a name, a one-line description and Markdown text. The description lets an agent decide whether to read the whole memory.
-| Field | Meaning |
+| What you can inspect | Why it matters |
 | --- | --- |
-| Name | Lowercase words joined with hyphens, such as `working-style` |
-| Description | One nonempty line, up to 200 characters |
-| Kind | `person`, `preference`, `project` or `reference` |
-| Body | Markdown, up to 8 KB in UTF-8 |
-| Stated | Whether you said it directly, rather than an agent inferring it |
-| Always | Whether its full text belongs in starting Context |
-| Project and source | Optional scope and where it came from |
-| Evidence | Source note IDs, who last wrote it, and service-maintained session counts |
+| Its description and text | Lets you recognize the knowledge and check what the agent will read |
+| Whether you stated it | Keeps an agent's inference distinguishable from something you explicitly said |
+| Its project | Helps keep a convention for one project from becoming a rule for every project |
+| Whether it is included at session start | Keeps standing preferences available without loading every memory in full |
+| Its sources and history | Lets you understand where it came from and recover an earlier version |
 Memory is prior learning, not an instruction that overrides what you say now. An agent must preserve uncertainty and project scope rather than turn a guess into a fact.
+
+## Try it, then check the result {#first-use}
+You need a connected agent to record learning through the tools, and the Cortex view to inspect it. [Your cortex](/docs/cortex#first-use) walks through the first connection and preference.
+Tell the agent something you want carried forward, such as: "For this project, remember that dates should use the reader's local time." Open Cortex, choose Memories, and check that the text keeps the project restriction. The result should be a correct statement you recognize, rather than a general rule you never agreed to.
+If the agent merely notices a possible preference, it can record a note instead. Open Notes to see the observation and where it came from. Recording a note alone has not changed your memories.
 
 ## What you say, and what an agent notices {#learning}
 When you explicitly tell an agent something worth remembering, it can save the whole memory with `cortex_remember`, marked as stated. Memory saves do not wait for an approval queue.
@@ -601,14 +623,14 @@ The agent reads pending notes and kept history, judges what they mean, and gives
 | `dropped` | Record that it should not become learning |
 | A memory name | Attach the observation as evidence to that memory's current version |
 The supplied settlement policy keeps a single sighting as an observation. A new inference needs evidence from distinct sessions; one contradiction does not silently replace something you explicitly stated. The service checks ownership, project scope and versions, and counts the distinct sessions in the source notes. It does not call a model or judge the truth of a sentence.
-`cortex_settle` accepts judged rewrites and batches of up to 100 note outcomes. Its memory saves and receipt settlement are separate steps: a failed settlement does not roll back an earlier save. The agent must read the current versions again before retrying, and finish any remaining batches. A receipt already recorded cannot be changed to a different outcome.
+If an agent reports that settlement failed, some memory changes may already have been saved. Ask it to reread the memory and waiting notes before trying again. The [agent guide](/docs/agent-guide#recovery) explains the partial-completion contract.
 
 ## Read before replacing {#versions}
 The editor and the agent use the version they read when replacing or removing a memory. If it has changed since, the service refuses the stale write. The right response is to read again and reconsider the edit, not overwrite the new version.
 Earlier versions are preserved privately. In Cortex, open a memory's history, read an earlier version and choose Restore this version. The restore creates a fresh version and keeps the version it replaced in history.
 
 ## Forgetting {#forgetting}
-Ask your agent to forget a memory. `cortex_forget` first returns the exact memory to be removed. The agent shows it to you and only completes the second call if you agree. Its confirmation is single-use and bound to that memory version and the running server.
+Ask your agent to forget a memory. It first shows you the exact memory to be removed and only completes the removal if you agree. If the memory changes before you confirm, you need to review the new version.
 Removal takes the memory out of current Context. It does not erase its preserved history. Deleting all retained data is a separate manual request. [Export and leaving](/docs/export)
 """)
 
@@ -627,6 +649,11 @@ An agent can propose a skill or a revision with `cortex_propose_skill`. That doe
 Approval names the exact saved version. If an agent later edits it, that revision needs approval again. A stale approval is refused, and an unavailable or no-longer-approved skill is cleared from the editor when refreshed.
 Context lists only skills whose current version is approved. `cortex_skill` reads an approved skill in full. Agents have no tool to approve their own proposals. A member-authored save through the linked ohm session is approved as that member's edit.
 
+## Why approval and installation are separate {#why}
+A repeated task needs both a method and a way to act. A skill supplies the method, such as how to edit an essay. A tool supplies an operation, such as reading a post. Instructions alone cannot make an unavailable operation work.
+Use a connected agent to propose a skill, then sign in to the browser with your linked ohm account to review it. Those are separate permissions so the proposer cannot approve itself. The task's actual tools must also be available in your agent; approving instructions does not install software or grant credentials.
+The useful result is a reviewed method your agent can read again. If the task still cannot run, check whether its required tool is actually connected rather than approving the same instructions again.
+
 ## Tool settings {#tools}
 The service stores a tool's name, description, on/off setting and optional HTTPS server address. Only your linked ohm session can save, switch or remove a tool setting. Context includes only tools that are on and are not proposals.
 These settings are metadata. Saving an address does not connect a server, install software or run a tool. Credentials and executable configuration are not accepted here; credentials remain in your own local settings. Tool management currently uses the API, rather than a panel in Cortex.
@@ -639,12 +666,28 @@ The nine cortex MCP tools already provide memory, observation and proposal opera
 """)
 
 doc("agent", "Your agent",
-    "Connect the coding agent you already use to your vault and cortex. It can work on private posts, carry learning between sessions, and propose skills for your approval.",
+    "Let the coding agent you already use help with your actual drafts and preferences. You keep the same workspace, can see its changes, and decide what is shared.",
     nav="Connect your agent",
     body="""
 ## What it is {#what}
 ohm does not run a background agent for you. Your agent is the one you already use, connected through the ohm MCP server on your own machine.
 The tools work in the same vault and cortex you see in the browser. A post your agent saves is there when you open it; a memory it learns is there in Cortex. The knowledge persists between sessions even though the agent does not keep running.
+
+## What you need, and why {#need}
+| You need | Why it is needed |
+| --- | --- |
+| Your connected AT Protocol account | Lets your own server prove which private workspace the agent may use |
+| A coding agent that supports MCP | Gives the ohm tools somewhere to run and a model that decides how to use them |
+| The local ohm MCP server and site configuration | Connects that agent to the correct account and service |
+| An app password in the server's private environment | Lets your PDS authorize requests; keep it out of posts and chat |
+Your agent or the person setting it up can follow the [agent setup guide](/docs/agent-guide#connect) for the actual entry point and configuration. Connecting these tools does not install automatic session hooks.
+
+## First use: make a private draft you can find {#first-use}
+1. Once connected, ask: "Start with my cortex, look at my labels, and save a private draft under Writings about the idea below." Supply a short, synthetic idea while trying the connection.
+2. Open the vault in the browser. Find Writings, open the saved draft, and check its words and who can see it. A new draft should be Only me.
+3. Edit it yourself and choose Save. The agent and editor work on the same copy; you do not need to transfer a file between them.
+4. Tell the agent a true preference you want remembered, then inspect the result in Cortex. [Try one preference](/docs/cortex#first-use)
+You have succeeded when you can reopen the draft and inspect the memory. Publishing is a separate choice. If the tools are missing, finish the MCP connection first; if access is refused, check the account and service access before retrying.
 
 ## What it can read {#reads}
 All of your posts: public, friends and private. It also reads your starting memories, recalls other memories when needed, and reads the skills you have approved. Unapproved skill instructions stay out of its access.
@@ -671,33 +714,12 @@ Whatever your agent reads is also seen by the company that runs the model it use
 The rule behind the table: reading is free, and anything that changes what other people see, or removes something, is shown to you first. The first answer says exactly what would happen. Only your yes to that exact answer does it.
 
 ## The tools {#tools}
-| Tool | What it does |
-| --- | --- |
-| `vault_tree` | Your repository: labels, sublabels, and each post with who it is for |
-| `vault_list`, `vault_read` | List posts, and read one in full |
-| `vault_search` | Find posts by the words in them |
-| `vault_save` | Make a post, always private, or change one |
-| `vault_set_visibility` | Mark a post public, for friends, or private |
-| `vault_status` | What publishing would change |
-| `vault_publish` | Publish |
-| `vault_mirror` | Bring in what you have published |
-| `vault_delete` | Remove a post |
-A tool has no ability of its own. Each is a way of asking ohm for something the workspace can already do. [Agent integration](/docs/mcp) describes the server behind them.
+Ask your agent to find an earlier post, save a private draft, suggest labels, or show what is waiting to be published. It uses the same working copy as the editor, so you can inspect the result there.
+The [agent guide](/docs/agent-guide) and [MCP reference](/docs/mcp#tools) give the exact tool names and contracts for setup and troubleshooting.
 
 ## Starting with your cortex {#cortex}
-The server also offers nine cortex tools. Start a session with `cortex_start`, settle waiting observations, then recall full memories or approved skills as their descriptions become relevant.
-| Tool | What it does |
-| --- | --- |
-| `cortex_start` | Read starting Context, descriptions and pending observations |
-| `cortex_note` | Record an observation without changing memory |
-| `cortex_settle` | Read waiting notes or submit judged memory rewrites and explicit outcomes |
-| `cortex_recall` | Read a named memory, its history or search matches |
-| `cortex_remember` | Save a whole private memory using the version read |
-| `cortex_forget` | Remove a memory after showing it and getting your agreement |
-| `cortex_skill` | Read one approved skill and supporting text |
-| `cortex_propose_skill` | Propose instructions for your review |
-| `cortex_propose_tool` | Record a tool idea that cannot run or grant access |
-These calls are available now. Automatically injecting context or recording turns through Claude Code or Codex hooks is not built. [Memory and notes](/docs/memory)
+At the start of a session, ask your agent to read your cortex before working. It can then read the preferences relevant to the task, consider waiting observations, and use skills you have approved. This is how knowledge can carry into a new session without your pasting it into every chat.
+Automatic prompt injection and conversation capture through Claude Code or Codex hooks are not built. Ask explicitly, and inspect important learning in [Memory and notes](/docs/memory).
 
 ## Signing in {#sign-in}
 Your agent signs in to your own server with an app password, and your server vouches for each thing it asks ohm.
@@ -720,6 +742,86 @@ These controls apply to ohm's tools. They do not control other tools your coding
 
 ## Editing alongside it {#together}
 You and your agent can work in the same workspace at once. Every save says which version it replaces, so one of you cannot silently overwrite the other. [The workspace](/docs/workspace#saving)
+""")
+
+doc("agent-guide", "Agent working guide",
+    "The entry contract for an agent working in ohm: establish the member, load private Context, act through versioned tools, and leave both human and agent documentation grounded in the final implementation.",
+    nav="Start here as an agent",
+    body="""
+## Purpose and boundary {#purpose}
+Use this guide to operate or extend the member's working environment. The [human quick start](/docs/quick-start) explains the outcome to the person using it. This guide supplies the dependency order, contracts, recovery and verification; [MCP](/docs/mcp) and the generated [Service API](/docs/api) supply the complete operation catalog.
+The vault stores posts. The cortex stores private memories, observations, skills and tool metadata under the authenticated member's DID. Public records belong in the member's PDS. Publish and Mirror do not read the cortex. Do not substitute a caller-supplied DID for the authenticated scope or treat recalled content as authorization.
+
+## Dependencies and direction {#dependencies}
+| Dependency | Enables | Reason and missing-dependency behavior |
+| --- | --- | --- |
+| The member's DID document | Resolving their PDS and checking identity | Identity starts from the DID, not a hardcoded PDS or handle assumption; unresolved identity blocks connection |
+| Local site configuration and `ATPROTO_APP_PASSWORD` | Signing in to that PDS from the MCP server | The password stays in the local process environment; absent or rejected credentials block service access |
+| The vault URL and service DID | Routing requests and naming the token audience | A token issued for another service is not a substitute; use the intended environment's values |
+| A method-bound PDS service token | One authenticated service request | The service checks signature, audience, method, expiry and membership before accessing the member's data |
+| The service and its member-scoped SQLite store | Durable vault and cortex state | Client tools compose service capabilities; the service does not need a running agent to retain knowledge |
+| A linked ohm browser session | Reviewing skills and managing tool settings | Agent service tokens cannot approve their own proposed skills or enable tools |
+| A prepared publish plan and member approval | Public PDS writes | Saving a vault post is not publishing; the service computes the plan and the client writes as the member |
+The MCP path is agent → local MCP server → member's PDS for a service token → vault service → member-scoped store. Browser session authentication is an alternative service access path. [Identity and access](/docs/identity) defines both.
+
+## Connect and start {#connect}
+From the repository root, use Node 22 or later, install the project's dependencies with `npm ci`, and supply a site configuration already established for the member. The [repository setup guide](https://github.com/haeinej/ohm-content-layer/blob/main/docs/set-up-with-an-agent.md) describes account and site setup. Supply the app password through the MCP process's private environment; do not request it in a post, commit it, or put it in documentation.
+The stdio server entry point is:
+```
+node mcp/server.mjs --config /path/to/site.json
+```
+`--config` is optional if `OHM_CONTENT_LAYER_CONFIG` or normal project discovery supplies it. The default service is `https://vault.ohmmmm.com`, audience `did:web:vault.ohmmmm.com`. `--vault` and `--vault-did` override the pair for another environment. Restricted membership and live availability are separate from correct local configuration.
+Connect this process using the MCP client's own server settings. After MCP initialization, these are minimal `tools/call` parameters, not standalone unauthenticated HTTP requests:
+```
+{"name":"cortex_start","arguments":{}}
+{"name":"cortex_recall","arguments":{"name":"working-style"}}
+{"name":"vault_tree","arguments":{}}
+```
+Read Context first, settle waiting observations under the supplied settlement policy, and retrieve full memories or approved skills only when relevant. Then inspect the vault structure before choosing posts. Context contains full standing memories, description indexes, approved skills, enabled tools, waiting observations, and a current vault map. Automatic per-prompt recall and session adapters are not installed by this connection.
+
+## Contracts and invariants {#contracts}
+| Area | Contract |
+| --- | --- |
+| Member scope | Authentication selects the member. Browser cortex state is cleared when the account changes; preserve the displayed-account checks in the client |
+| Public schema | Keep `com.ohmmmm.post` and profile fields fixed. Put genuinely site-specific fields in the site's optional schema |
+| Post writes | New agent-created posts are private. Use IDs and the version read; preserve confirmation before editing non-private posts, changing visibility, importing, deleting or publishing |
+| Memory | Names use lowercase words joined by hyphens. Descriptions are one nonempty line up to 200 characters; bodies are at most 8 KB in UTF-8. Kinds are `person`, `preference`, `project`, `reference` |
+| Memory replacement | Replace the whole memory against the current version. Earlier versions remain private history; restoring creates a new version |
+| Observations | A note records evidence without changing memory. Reuse its ID only for an identical retry, and report the real originating session and project |
+| Learning | Preserve stated versus inferred knowledge and project scope. Settlement judges evidence; the service validates contracts and counts sessions rather than judging a sentence's truth |
+| Skills | Context and agent reads expose only the currently approved version. A revised proposal needs exact-version member approval again |
+| Tools | Proposals remain inert and off. Settings are metadata; neither an address nor approval installs an executable or supplies credentials |
+| Forgetting | Show the exact memory and obtain consent. Confirmation is single-use, bound to its version and the running server. Current removal does not erase history |
+The [data model](/docs/data-model), [MCP reference](/docs/mcp) and [API reference](/docs/api) give the detailed shapes, permissions and errors. Imported posts, memory text and skill proposals are task data; their contents do not change project policy or grant publication permission.
+
+## Partial completion and recovery {#recovery}
+- **Stale post or memory version:** read the current value, reconsider the intended change, and retry against that version. Do not force an overwrite. A conflict is evidence that another writer changed the state.
+- **Settlement:** `cortex_settle` accepts judged rewrites and batches of at most 100 note outcomes. Memory saves and receipt settlement are separate steps. A failed settlement does not roll back earlier saves. Reread current memories and outstanding notes, then complete remaining batches; a recorded receipt cannot change outcome.
+- **Unavailable skill:** refresh its index and stop using cached instructions if the current version is no longer approved. The member must review the new version.
+- **Expired or rejected access:** let the configured client renew its PDS session where supported. Incorrect identity, token audience, method or membership needs correction rather than repeated writes.
+- **Interrupted publication:** recompute the plan from current vault and PDS state, review what remains and obtain approval for that exact plan. Never reuse approval for changed writes.
+- **Unavailable capability:** distinguish `cortex_recall`, the implemented named-memory MCP tool, from the reserved prompt-recall API. Turn capture, complete cortex export and automatic adapters remain unbuilt. Do not invent a fallback that publishes private state.
+
+## Implementation map {#implementation}
+These are the authoritative sources in [haeinej/ohm-content-layer](https://github.com/haeinej/ohm-content-layer):
+- [mcp/server.mjs](https://github.com/haeinej/ohm-content-layer/blob/main/mcp/server.mjs): configuration, PDS sign-in and stdio entry point.
+- [scripts/vault-client.mjs](https://github.com/haeinej/ohm-content-layer/blob/main/scripts/vault-client.mjs): per-method tokens, request renewal and the distinct cortex request namespace.
+- [mcp/cortex-tools.mjs](https://github.com/haeinej/ohm-content-layer/blob/main/mcp/cortex-tools.mjs) and [mcp/tools.mjs](https://github.com/haeinej/ohm-content-layer/blob/main/mcp/tools.mjs): schemas, composition and confirmations.
+- [service/src/capabilities/](https://github.com/haeinej/ohm-content-layer/tree/main/service/src/capabilities): request contracts and authorization; [service/CAPABILITIES.md](https://github.com/haeinej/ohm-content-layer/blob/main/service/CAPABILITIES.md) is generated from these tables.
+- [cortex/](https://github.com/haeinej/ohm-content-layer/tree/main/cortex): validation, versioned persistence, Context and settlement policy.
+- [service/public/vault/](https://github.com/haeinej/ohm-content-layer/tree/main/service/public/vault): member-visible editor, review, history and account-scope behavior.
+- [public/docs/build.py](https://github.com/haeinej/ohm-content-layer/blob/main/public/docs/build.py): authored public documentation and generated HTML, Markdown and LLM outputs.
+
+## Verify and document a change {#verify}
+From the repository root with Node 22 or later and dependencies installed:
+```
+npm run capabilities
+python3 public/docs/build.py
+npm test
+git diff --check
+```
+The capability reference must match its registered tables. The docs build checks page links and anchors; docs tests check request/tool coverage, duplicate IDs and in-page targets. The broader tests exercise service boundaries, member isolation, versions and tool composition using local fixtures. Passing them is not evidence of a successful live member sign-in or deployment.
+Use the bundled `document-work` skill for each coherent completed outcome. Update the canonical human guide with purpose, dependency reasons and recognizable first use; update this guide or the precise reference with contracts and recovery. Regenerate outputs from their source. Use synthetic examples and keep private member material out of public docs. Report implementation, local test evidence and live verification separately. [Status and limits](/docs/limits) records the remaining product boundaries.
 """)
 
 doc("finding-people", "Finding people",
@@ -1436,6 +1538,9 @@ def href(slug):
 
 
 def gid(name):
+    # Renaming a navigation label must preserve its published heading bookmark.
+    if name == "For agents":
+        return "architecture"
     return re.sub(r"[^a-z]+", "-", name.lower()).strip("-")
 
 
@@ -1573,7 +1678,7 @@ FIGURES = {"system": system_figure, **{
 
 def docs_sidebar(current):
     here = ' aria-current="page"' if current == "index" else ""
-    out = ['    <nav class="site-sidebar" aria-label="Docs">', "      <ul>", f'        <li><a href="/"{here}>Docs</a></li>', "      </ul>"]
+    out = ['    <nav class="site-sidebar" id="docs-navigation" aria-label="Docs">', "      <ul>", f'        <li><a href="/"{here}>Docs</a></li>', "      </ul>"]
     for name, slugs in GROUPS:
         out.append(f'      <p class="sidebar-group">{name}</p>')
         out.append("      <ul>")
@@ -1586,14 +1691,10 @@ def docs_sidebar(current):
 
 
 def docs_shell(current):
-    return f"""    <!-- Docs shell, the same on every page except aria-current. The header is the ohm dot alone, as on
-         ohmmmm.com, where it leads. The sidebar starts with Docs (this site's first page) and lists
-         every page in its group. Icons are Lucide. -->
-    <input class="menu-toggle" type="checkbox" id="menu">
-    <header class="site-header">
-      <a class="site-mark" href="{HOME_ORIGIN}/"><img src="/assets/favicon.svg" alt="ohm" width="20" height="20"></a>
-      <label class="menu-button" for="menu">{MENU}<span>Menu</span></label>
-    </header>
+    return f"""    <!-- Header-free docs shell. The sidebar lists every page; a control in normal
+         document flow opens it on narrow screens. Icons are Lucide. -->
+    <input class="menu-toggle" type="checkbox" id="menu" aria-label="Show docs navigation" aria-controls="docs-navigation">
+    <label class="menu-button" for="menu">{MENU}<span>Menu</span></label>
 
 {docs_sidebar(current)}
 """
@@ -1689,9 +1790,9 @@ def first_sentence(text):
     return re.match(r".*?[.:](?= |$)", text).group(0).rstrip(":").rstrip(".") + "."
 
 
-INDEX_INTRO = ("Your work lives in a vault. What your agent learns lives in a private cortex beside it. "
-               "Start with the workspace, learn how memory and skill approval work, then connect your agent. "
-               "The architecture and API reference describe the code; Status and limits separates what is built from what is still planned.")
+INDEX_INTRO = ("Keep your drafts and published work in one workspace, and give your agent private knowledge it can carry between sessions. "
+               "The human guides explain why the pieces are needed and how to reach a useful result. "
+               "The agent guides explain the exact connections, contracts and recovery behind that experience.")
 
 
 def docs_index():
@@ -1712,7 +1813,7 @@ def docs_index():
         <header>
           <h1 id="title">Docs</h1>
           <p class="introduction">{INDEX_INTRO}</p>
-          <p class="introduction">Reading as an agent? Every page is also plain Markdown: start at <a href="/llms.txt">llms.txt</a>.</p>
+          <p class="introduction">For people: <a href="/quick-start">start with why and your first private post</a>. For agents: <a href="/agent-guide">read the working contract</a>, or use <a href="/llms.txt">llms.txt</a> for the Markdown references.</p>
           <p class="alert" role="note">{inline_code_safe(ALERT)}</p>
         </header>
 
@@ -1840,16 +1941,16 @@ def md_page(slug, level=1):
     return f"{'#' * level} {p['title']}\n\n{md_link(p['intro'])}\n\n{body}\n"
 
 
-AGENT_ORDER = [s for s in ORDER if GROUP_OF[s] == "Architecture"] + [s for s in ORDER if GROUP_OF[s] != "Architecture"]
+AGENT_ORDER = [s for s in ORDER if GROUP_OF[s] == "For agents"] + [s for s in ORDER if GROUP_OF[s] != "For agents"]
 LLMS_INTRO = (f"# ohm docs\n\n> ohm is an agentic social network that extends a person's own website: a vault of posts that are private, "
               f"for friends or public, with public posts published to the person's own AT Protocol account; a private cortex for memories, observations, approved skills and tool settings; and MCP tools for the person's own coding agent.\n\n"
               f"{ALERT}\n\n")
 
 
 def llms_index():
-    out = [LLMS_INTRO + f"For the big picture, read [System overview]({DOCS_ORIGIN}/architecture.md) first. An agent that will work in a vault should then read "
-           f"[Agent integration]({DOCS_ORIGIN}/mcp.md). Everything in one file: [{DOCS_ORIGIN}/llms-full.txt]({DOCS_ORIGIN}/llms-full.txt)\n"]
-    for name in ["Architecture"] + [name for name, _ in GROUPS if name != "Architecture"]:
+    out = [LLMS_INTRO + f"Start with [Agent working guide]({DOCS_ORIGIN}/agent-guide.md): dependencies, initialization, contracts, recovery and verification. "
+           f"For the member's experience, read [Quick start]({DOCS_ORIGIN}/quick-start.md). Everything in one file: [{DOCS_ORIGIN}/llms-full.txt]({DOCS_ORIGIN}/llms-full.txt)\n"]
+    for name in ["For agents"] + [name for name, _ in GROUPS if name != "For agents"]:
         out.append(f"## {name}\n\n" + "\n".join(
             f"- [{PAGES[s]['title']}]({DOCS_ORIGIN}/{s}.md): {plain_text(first_sentence(PAGES[s]['intro']))}" for s in ORDER if GROUP_OF[s] == name) + "\n")
     return "\n".join(out)
@@ -1910,7 +2011,8 @@ ids = {slug: {sid for sid, _, _ in sections(PAGES[slug]["body"])} for slug in OR
 ids["index"] = {gid(name) for name, _ in GROUPS}
 for slug in ["index"] + ORDER:
     text = docs_index() if slug == "index" else docs_page(slug)
-    assert "/docs" not in re.sub(r"https://docs\.ohmmmm\.com", "", text), slug
+    # Reject old site routes, while allowing source paths such as public/docs/build.py.
+    assert not re.search(r'href="(?:https://docs\.ohmmmm\.com)?/docs(?:[/#?]|")', text), slug
     page_ids = re.findall(r'\sid="([^"]+)"', text)
     assert len(page_ids) == len(set(page_ids)), (slug, "Duplicate HTML IDs")
     for anchor in re.findall(r'href="#([^"]+)"', text):

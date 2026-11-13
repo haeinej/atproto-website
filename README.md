@@ -27,7 +27,7 @@ This repository is a Claude Code plugin. Its bundled skills are:
 | [build-renderer](skills/build-renderer/SKILL.md) | Making your site's pages build from records |
 | [document-work](skills/document-work/SKILL.md) | Turning each completed outcome into distinct agent and human guides |
 
-[How documentation follows your work](docs/document-work.md) explains what to expect from the last skill and how to use it.
+[How documentation follows your work](skills/document-work/README.md) explains what to expect from the last skill and how to use it. Its instructions, writing guides and contract live together in [skills/document-work/](skills/document-work/).
 
 ```
 /plugin install ohm --marketplace haeinej/ohm-content-layer

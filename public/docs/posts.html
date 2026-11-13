@@ -27,16 +27,12 @@
   <body>
     <a class="skip" href="#content">Skip to content</a>
 
-    <!-- Docs shell, the same on every page except aria-current. The header is the ohm dot alone, as on
-         ohmmmm.com, where it leads. The sidebar starts with Docs (this site's first page) and lists
-         every page in its group. Icons are Lucide. -->
-    <input class="menu-toggle" type="checkbox" id="menu">
-    <header class="site-header">
-      <a class="site-mark" href="https://ohmmmm.com/"><img src="/assets/favicon.svg" alt="ohm" width="20" height="20"></a>
-      <label class="menu-button" for="menu"><svg class="icon" viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2.25" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 12h16"/><path d="M4 6h16"/><path d="M4 18h16"/></svg><span>Menu</span></label>
-    </header>
+    <!-- Header-free docs shell. The sidebar lists every page; a control in normal
+         document flow opens it on narrow screens. Icons are Lucide. -->
+    <input class="menu-toggle" type="checkbox" id="menu" aria-label="Show docs navigation" aria-controls="docs-navigation">
+    <label class="menu-button" for="menu"><svg class="icon" viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2.25" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 12h16"/><path d="M4 6h16"/><path d="M4 18h16"/></svg><span>Menu</span></label>
 
-    <nav class="site-sidebar" aria-label="Docs">
+    <nav class="site-sidebar" id="docs-navigation" aria-label="Docs">
       <ul>
         <li><a href="/">Docs</a></li>
       </ul>
@@ -74,8 +70,9 @@
         <li><a href="/agent">Connect your agent</a></li>
         <li><a href="/finding-people">Finding people</a></li>
       </ul>
-      <p class="sidebar-group">Architecture</p>
+      <p class="sidebar-group">For agents</p>
       <ul>
+        <li><a href="/agent-guide">Start here as an agent</a></li>
         <li><a href="/architecture">Overview</a></li>
         <li><a href="/identity">Identity and access</a></li>
         <li><a href="/data-model">Data model</a></li>
@@ -112,31 +109,9 @@
         </section>
 
         <section aria-labelledby="forms">
-          <h2 id="forms">You do not choose what kind it is</h2>
-          <p>ohm reads what kind of thing a post is from the post. It is not shown on your site. It tells other software what it is looking at, whatever you called the section it sits in.</p>
-          <div class="table">
-            <table>
-              <thead>
-                <tr><th>What the post contains</th><th>Read as</th></tr>
-              </thead>
-              <tbody>
-                <tr><th scope="row">A title, with text and anything placed in the text</th><td>writing</td></tr>
-                <tr><th scope="row">No title: a thought, a caption with a photo</th><td>note</td></tr>
-                <tr><th scope="row">Only one image</th><td>image</td></tr>
-                <tr><th scope="row">Only images, more than one</th><td>gallery</td></tr>
-                <tr><th scope="row">Only video</th><td>video</td></tr>
-                <tr><th scope="row">Only audio</th><td>audio</td></tr>
-                <tr><th scope="row">Only files, such as a PDF</th><td>file</td></tr>
-                <tr><th scope="row">Only attachments, of more than one kind</th><td>media</td></tr>
-                <tr><th scope="row">No title, and a link on a line of its own</th><td>link</td></tr>
-                <tr><th scope="row">The same, when the link plays something, such as a video page</th><td>embed</td></tr>
-                <tr><th scope="row">No title, a quoted passage, and a link to its source</th><td>quote</td></tr>
-                <tr><th scope="row">Nothing but a list</th><td>list</td></tr>
-                <tr><th scope="row">Nothing but code blocks</th><td>code</td></tr>
-              </tbody>
-            </table>
-          </div>
-          <p>So two posts under different labels can be the same kind, and one label can hold several kinds.</p>
+          <h2 id="forms">Start with what you want to keep</h2>
+          <p>Write a sentence, add a picture's address, or paste a link. Add a title if it helps and a label that tells you where to find it. You can keep a short thought and a long essay in the same section without choosing a different editor or setup.</p>
+          <p>Choose Save, then reopen the post to check your words are there. A new post stays private. Marking it Everyone prepares it for sharing; Publish is the separate step that puts it on the open network. <a href="/publish">Publish</a></p>
         </section>
 
         <section aria-labelledby="attachments">
@@ -207,7 +182,7 @@
       <p id="toc-title">On this page</p>
       <ul>
         <li><a href="#parts">What a post has</a></li>
-        <li><a href="#forms">You do not choose what kind it is</a></li>
+        <li><a href="#forms">Start with what you want to keep</a></li>
         <li><a href="#attachments">Pictures and files</a></li>
         <li><a href="#links">Links</a></li>
         <li><a href="#connections">Connecting posts</a></li>

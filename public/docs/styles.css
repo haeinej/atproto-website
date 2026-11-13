@@ -2,11 +2,10 @@
    and finding your place. Values live in these custom properties; the rules use them.
 
    Page shell, the same on every page:
-     .site-header   across the top: the ohm dot (ohmmmm.com) and Docs (this site's first page)
      .site-sidebar  left column: every page, in its group, the current one marked
      main           middle column: the page itself (one <article>)
      .site-toc      right column, on wide screens: the reader, this page's sections, the one being read marked
-   On narrow screens: the header (with a menu that opens the sidebar), then the page. */
+   On narrow screens: a menu control in document flow opens the sidebar above the page. */
 @font-face {
   font-family: "Coconat";
   src: url("/assets/fonts/coconat-regular.woff2") format("woff2");
@@ -43,16 +42,13 @@
   --ohm-strong: 600;
   --ohm-title: 400 clamp(40px, 5vw, 52px)/1.05 var(--ohm-font-serif); /* Coconat has one weight */
   --ohm-title-tracking: -0.02em;
-  --ohm-site-name: 400 22px/1 var(--ohm-font-serif); /* "Docs" in the header */
 
   --ohm-measure: 680px;
   --ohm-frame: 40px;
-  --ohm-mark: 20px;
-  --ohm-header: 64px;
   --ohm-rail: 220px;
   --ohm-toc: 220px;
   --ohm-gap: clamp(32px, 4vw, 64px);
-  --ohm-top: 32px; /* between the header and the columns */
+  --ohm-top: 32px; /* between the viewport edge and the columns */
   --ohm-item-inset: 12px; /* a sidebar row's padding; pulled back so its text lines up with the dot */
   --ohm-paragraph: 1em;
 
@@ -120,7 +116,7 @@ body {
   padding: 0 var(--ohm-frame);
   display: grid;
   grid-template-columns: var(--ohm-rail) minmax(0, 1fr);
-  grid-template-rows: var(--ohm-header) 1fr;
+  grid-template-rows: 1fr;
   column-gap: var(--ohm-gap);
 }
 
@@ -135,31 +131,16 @@ body {
 
 .skip:focus { transform: none; }
 
-.site-header {
-  grid-column: 1 / -1;
-  grid-row: 1;
-  position: sticky;
-  top: 0;
-  z-index: 2;
-  /* paper to the window's edges, so the page scrolls under it cleanly */
-  margin-inline: calc(var(--ohm-frame) * -1);
-  padding-inline: var(--ohm-frame);
-  display: flex;
-  align-items: center;
-  gap: 16px;
-  background: var(--ohm-paper-editorial);
-}
-
 .site-sidebar {
   grid-column: 1;
-  grid-row: 2;
+  grid-row: 1;
   align-self: start;
   padding-top: var(--ohm-top);
 }
 
 main {
   grid-column: 2;
-  grid-row: 2;
+  grid-row: 1;
   justify-self: center;
   width: min(100%, var(--ohm-measure));
   padding: var(--ohm-top) 0 96px;
@@ -175,8 +156,8 @@ main {
   .site-sidebar,
   .site-toc {
     position: sticky;
-    top: var(--ohm-header);
-    max-height: calc(100dvh - var(--ohm-header));
+    top: 0;
+    max-height: 100dvh;
     overflow-y: auto;
     scrollbar-width: thin;
   }
@@ -196,38 +177,11 @@ main {
   .site-toc {
     display: block;
     grid-column: 3;
-    grid-row: 2;
+    grid-row: 1;
     align-self: start;
     padding-top: var(--ohm-top);
   }
 }
-
-/* ---------- Header ---------- */
-
-.site-mark {
-  display: block;
-  flex: none;
-  width: var(--ohm-mark);
-  height: var(--ohm-mark);
-  border-radius: 50%;
-}
-
-.site-mark img {
-  display: block;
-  width: 100%;
-  height: 100%;
-}
-
-.site-mark:focus-visible { outline-offset: 3px; }
-
-/* The site's name, in the title face. Coconat has one weight, so it is set apart by face and size. */
-.site-name {
-  font: var(--ohm-site-name);
-  letter-spacing: var(--ohm-title-tracking);
-  text-decoration: none;
-}
-
-.site-name:hover { text-decoration: underline; }
 
 /* ---------- Sidebar ---------- */
 
@@ -345,10 +299,10 @@ article > header > * + * { margin-top: var(--ohm-paragraph); }
 
 section {
   margin-top: 3em;
-  scroll-margin-top: calc(var(--ohm-header) + 8px);
+  scroll-margin-top: 16px;
 }
 
-section :is(h2, h3) { scroll-margin-top: calc(var(--ohm-header) + 8px); }
+section :is(h2, h3) { scroll-margin-top: 16px; }
 
 section > * + * { margin-top: var(--ohm-paragraph); }
 
@@ -476,17 +430,14 @@ th { font-weight: var(--ohm-strong); }
 
 @media (max-width: 760px) {
   :root {
-    --ohm-header: 56px;
     --ohm-frame: 24px;
   }
 
   body { display: block; }
 
-  .site-header { height: var(--ohm-header); }
-
   main { padding: 24px 0 56px; }
 
-  /* The menu opens the sidebar under the header. The checkbox stays focusable; the label is what shows. */
+  /* The checkbox stays focusable; its visible label is an ordinary flow control. */
   .menu-toggle {
     display: block;
     position: absolute;
@@ -497,21 +448,15 @@ th { font-weight: var(--ohm-strong); }
   }
 
   .menu-button {
-    display: block;
-    margin-left: auto;
-    padding: 13px 0 13px 13px; /* 44px touch target */
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    margin-top: 8px;
+    padding: 10px 0; /* icon and padding give a 44px touch target */
     cursor: pointer;
   }
 
-  .menu-button span {
-    position: absolute;
-    width: 1px;
-    height: 1px;
-    overflow: hidden;
-    clip-path: inset(50%);
-  }
-
-  .menu-toggle:focus-visible ~ .site-header .menu-button {
+  .menu-toggle:focus-visible + .menu-button {
     outline: 2px solid currentColor;
     outline-offset: 4px;
     border-radius: 2px;

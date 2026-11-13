@@ -1,12 +1,32 @@
 # Your agent
 
-Connect the coding agent you already use to your vault and cortex. It can work on private posts, carry learning between sessions, and propose skills for your approval.
+Let the coding agent you already use help with your actual drafts and preferences. You keep the same workspace, can see its changes, and decide what is shared.
 
 ## What it is
 
 ohm does not run a background agent for you. Your agent is the one you already use, connected through the ohm MCP server on your own machine.
 
 The tools work in the same vault and cortex you see in the browser. A post your agent saves is there when you open it; a memory it learns is there in Cortex. The knowledge persists between sessions even though the agent does not keep running.
+
+## What you need, and why
+
+| You need | Why it is needed |
+| --- | --- |
+| Your connected AT Protocol account | Lets your own server prove which private workspace the agent may use |
+| A coding agent that supports MCP | Gives the ohm tools somewhere to run and a model that decides how to use them |
+| The local ohm MCP server and site configuration | Connects that agent to the correct account and service |
+| An app password in the server's private environment | Lets your PDS authorize requests; keep it out of posts and chat |
+
+Your agent or the person setting it up can follow the [agent setup guide](https://docs.ohmmmm.com/agent-guide.md#connect) for the actual entry point and configuration. Connecting these tools does not install automatic session hooks.
+
+## First use: make a private draft you can find
+
+1. Once connected, ask: "Start with my cortex, look at my labels, and save a private draft under Writings about the idea below." Supply a short, synthetic idea while trying the connection.
+2. Open the vault in the browser. Find Writings, open the saved draft, and check its words and who can see it. A new draft should be Only me.
+3. Edit it yourself and choose Save. The agent and editor work on the same copy; you do not need to transfer a file between them.
+4. Tell the agent a true preference you want remembered, then inspect the result in Cortex. [Try one preference](https://docs.ohmmmm.com/cortex.md#first-use)
+
+You have succeeded when you can reopen the draft and inspect the memory. Publishing is a separate choice. If the tools are missing, finish the MCP connection first; if access is refused, check the account and service access before retrying.
 
 ## What it can read
 
@@ -38,37 +58,15 @@ The rule behind the table: reading is free, and anything that changes what other
 
 ## The tools
 
-| Tool | What it does |
-| --- | --- |
-| `vault_tree` | Your repository: labels, sublabels, and each post with who it is for |
-| `vault_list`, `vault_read` | List posts, and read one in full |
-| `vault_search` | Find posts by the words in them |
-| `vault_save` | Make a post, always private, or change one |
-| `vault_set_visibility` | Mark a post public, for friends, or private |
-| `vault_status` | What publishing would change |
-| `vault_publish` | Publish |
-| `vault_mirror` | Bring in what you have published |
-| `vault_delete` | Remove a post |
+Ask your agent to find an earlier post, save a private draft, suggest labels, or show what is waiting to be published. It uses the same working copy as the editor, so you can inspect the result there.
 
-A tool has no ability of its own. Each is a way of asking ohm for something the workspace can already do. [Agent integration](https://docs.ohmmmm.com/mcp.md) describes the server behind them.
+The [agent guide](https://docs.ohmmmm.com/agent-guide.md) and [MCP reference](https://docs.ohmmmm.com/mcp.md#tools) give the exact tool names and contracts for setup and troubleshooting.
 
 ## Starting with your cortex
 
-The server also offers nine cortex tools. Start a session with `cortex_start`, settle waiting observations, then recall full memories or approved skills as their descriptions become relevant.
+At the start of a session, ask your agent to read your cortex before working. It can then read the preferences relevant to the task, consider waiting observations, and use skills you have approved. This is how knowledge can carry into a new session without your pasting it into every chat.
 
-| Tool | What it does |
-| --- | --- |
-| `cortex_start` | Read starting Context, descriptions and pending observations |
-| `cortex_note` | Record an observation without changing memory |
-| `cortex_settle` | Read waiting notes or submit judged memory rewrites and explicit outcomes |
-| `cortex_recall` | Read a named memory, its history or search matches |
-| `cortex_remember` | Save a whole private memory using the version read |
-| `cortex_forget` | Remove a memory after showing it and getting your agreement |
-| `cortex_skill` | Read one approved skill and supporting text |
-| `cortex_propose_skill` | Propose instructions for your review |
-| `cortex_propose_tool` | Record a tool idea that cannot run or grant access |
-
-These calls are available now. Automatically injecting context or recording turns through Claude Code or Codex hooks is not built. [Memory and notes](https://docs.ohmmmm.com/memory.md)
+Automatic prompt injection and conversation capture through Claude Code or Codex hooks are not built. Ask explicitly, and inspect important learning in [Memory and notes](https://docs.ohmmmm.com/memory.md).
 
 ## Signing in
 
