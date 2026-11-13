@@ -11,10 +11,11 @@
 // Everything shown is put on the page as text, never as markup.
 import { carryOut } from './publish.js';
 import { askPds, begin, beginWithPassword, finish, leave, restore, sendPds } from './signin.js';
+import { createCortexPanel } from './cortex.js';
 
 const $ = id => document.getElementById(id);
 const state = { mode: 'ohm', me: null, audience: '', did: '', tree: null, current: null, publishing: false, plan: null, page: 'vault', signup: false, busy: false, step: 'where' };
-const PAGES = { vault: 'Vault' };
+const PAGES = { vault: 'Vault', cortex: 'Cortex' };
 function icon(name) {
   const svg = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
   svg.setAttribute('class', 'icon');
@@ -25,6 +26,13 @@ function icon(name) {
   return svg;
 }
 const plural = (count, word) => `${count} ${word}${count === 1 ? '' : 's'}`;
+
+const cortex = createCortexPanel({
+  call, notice, changed: () => queueMicrotask(narrow),
+  canApprove: () => state.mode === 'ohm' && Boolean(state.me?.did),
+});
+$('panel').append(cortex.directory);
+$('content').append(cortex.screen);
 
 // ---- Messages. Every one is a notice: a pill at the top that leaves on its own. ----
 function notice(text, tone = 'info') {
@@ -187,6 +195,8 @@ function returnedProblem() {
 
 // Signing out ends whichever sign-in this is: the PDS is told its one is over, and ohm its own.
 async function signOut() {
+  if (state.page === 'cortex' && !cortex.canLeave()) return;
+  cortex.reset();
   await leave().catch(() => {});
   if (state.mode === 'ohm') await fetch('/api/auth/sign-out', { method: 'POST', credentials: 'same-origin', headers: { 'Content-Type': 'application/json' }, body: '{}' }).catch(() => {});
   location.reload();
@@ -239,9 +249,11 @@ $('approve-there').addEventListener('click', async () => {
   }
 });
 $('disconnect').addEventListener('click', async () => {
+  if (state.page === 'cortex' && !cortex.canLeave()) return;
   if (!confirm('Disconnect this AT Protocol account from your ohm account? Your vault is kept, and opens again when you connect it.')) return;
   try {
     await call('com.ohmmmm.account.disconnect', { body: {} });
+    cortex.reset();
     location.reload();
   } catch (problem) {
     failed('Disconnecting', problem);
@@ -269,6 +281,7 @@ async function tellOhm(path, token) {
 // Opening the page, and every time the sign-in may have changed: find out who is here and show
 // the step they are at.
 async function open() {
+  cortex.reset();
   state.mode = 'ohm';
   state.me = null;
   let me = null;
@@ -350,17 +363,21 @@ async function enter({ name, did, mirrored = true, approvedAtPds = false }) {
 
 // ---- The app's screen: the rail picks a page; the side panel and the main screen follow it. ----
 function go(page) {
+  if (!PAGES[page]) return;
+  if (state.page === 'cortex' && (page === 'cortex' || !cortex.canLeave())) return;
   state.page = page;
   $('app').dataset.page = page;
   $('panel-title').textContent = PAGES[page];
   document.title = `${PAGES[page]} · ohm`;
-  for (const part of $('app').querySelectorAll('.directory-scroll, .directory-actions, .screen')) part.hidden = part.dataset.page !== page;
+  for (const part of $('app').querySelectorAll('.directory-scroll[data-page], .directory-actions[data-page], .screen[data-page]')) part.hidden = part.dataset.page !== page;
   for (const button of $('app').querySelectorAll('[data-go]')) button.setAttribute('aria-pressed', String(button.dataset.go === page));
   narrow();
+  if (page === 'cortex') cortex.open().catch(problem => failed('Opening the cortex', problem));
 }
-// On a phone the side panel is the screen until a post is open.
+// On a phone the side panel is the screen until a post or cortex item is open.
 function narrow() {
-  $('app').classList.toggle('mobile-directory', !(state.page === 'vault' && (state.current || state.publishing)));
+  const detail = state.page === 'cortex' ? cortex.hasDetail() : state.current || state.publishing;
+  $('app').classList.toggle('mobile-directory', !detail);
 }
 // The main screen shows one of three things: a post, what publishing would change, or nothing yet.
 function mainScreen() {

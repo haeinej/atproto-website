@@ -13,7 +13,7 @@ export const INSTRUCTIONS = [
 
 // `tools` is ready-made, or a function that makes them the first time a tool is used, so that
 // starting up and listing the tools never depends on the person's configuration being in place.
-export function createServer({ tools, list, name = 'ohm-vault', version = '0.1.0' }) {
+export function createServer({ tools, list, name = 'ohm-vault', version = '0.1.0', instructions = INSTRUCTIONS }) {
   let ready;
   const made = () => (ready ??= Promise.resolve(typeof tools === 'function' ? tools() : tools).catch(problem => { ready = undefined; throw problem; }));
   const answer = (id, result) => ({ jsonrpc: '2.0', id, result });
@@ -31,7 +31,7 @@ export function createServer({ tools, list, name = 'ohm-vault', version = '0.1.0
         protocolVersion: VERSIONS.includes(params.protocolVersion) ? params.protocolVersion : VERSIONS[0],
         capabilities: { tools: {} },
         serverInfo: { name, version },
-        instructions: INSTRUCTIONS,
+        instructions,
       });
     }
     if (method === 'ping') return answer(id, {});

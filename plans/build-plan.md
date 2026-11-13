@@ -616,7 +616,7 @@ Designed under "The cortex". In the order to build:
 
 #### The cortex, as work for agents
 
-Planned 13 November 2026. Nothing has been handed out. The work is cut so that each agent has files of its own and no two write the same one. Three files are shared by everything, so one agent lays them down first and the others do not touch them: `service/schema.sql`, `service/src/capabilities/index.mjs`, and `mcp/tools.mjs`.
+Planned 13 November 2026; implementation is underway in cloud development sessions. Foundation (1) is merged. Notes (2), the agent's tools (3), the editor (6), and Skills and Tools (8) are implemented and tested together on the integration branch. The agent's key (4), adapter (5), and Out and back (7) still wait for the decisions below; the native cross-agent handoff is not verified. This work has not changed the live service. The work is cut so that each agent has files of its own and no two write the same one. Three files are shared by everything, so one agent lays them down first and the others do not touch them: `service/schema.sql`, `service/src/capabilities/index.mjs`, and `mcp/tools.mjs`.
 
 | Agent | What it builds | Its own files | Waits for | Done when |
 | --- | --- | --- | --- | --- |
@@ -705,7 +705,7 @@ Piece 4.
 
 Piece 8.
 
-**State, 13 November 2026.** Designed. Not started.
+**State, 13 November 2026.** Memory/Context, Notes and its settlement policy, Skills/Tools, the nine MCP tools, and the cortex editor are implemented in development. Shell tests cover the APIs and tool behavior, with DOM doubles for editor state; browser verification remains to be done. Agent keys, the native Claude/Codex adapter, and cortex Export/Sync remain unbuilt pending the decisions below. No live deployment or native cross-agent handoff is claimed.
 
 **Done when:** something said to Claude Code about how the member wants work done is in front of Codex the next time a prompt it fits is sent, with neither model having called a tool; with the service unreachable, a prompt is answered as quickly as with it, from the copy, and the turns of that session arrive once it is back, each once; a memory about one project is never given in another; a project switched off hands off nothing; an agent in a new session, on another machine, calls `cortex_start` and knows who it is working for and what it learned before; it knows whether it is working for a person or a company, and what each label in their vault is for; told once how a title should read, it does not need telling again in the next session; something it only noticed, in two sessions, is a memory in the third, with nobody having been asked; a note that goes against what the member said does not overwrite it; a memory that was rewritten can be put back to what it said before; a session cut off part way loses no note; everything it wrote is listed in the editor with who wrote it, and removing a memory there means the agent no longer has it; a skill an agent wrote is not used until it has been approved; an agent's request to add a tool or switch one on is refused; another member's token gets nothing from a cortex; Publish, with a cortex full, lists no change; and the cortex written out as files reads back as the same cortex.
 

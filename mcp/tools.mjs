@@ -18,6 +18,8 @@ const cortexTools = await import(cortexModule.href).catch(problem => {
   throw problem;
 });
 
+export const CORTEX_INSTRUCTIONS = cortexTools?.INSTRUCTIONS ?? '';
+
 const refuse = message => { throw new VaultProblem(message); };
 const text = { type: 'string' };
 const which = { type: 'string', description: "The post's slug, or its ID." };
