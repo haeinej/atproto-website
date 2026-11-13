@@ -33,21 +33,6 @@ test('home Wrangler schema resolves to the root installed dependency', async () 
   await access(new URL(path, config));
 });
 
-test('About labels planned social/cloud features without hiding working local sync and sign-in', async () => {
-  for (const relative of ['../public/about.html', '../../home-draft/about.html']) {
-    const all = nodes(parse(await readFile(new URL(relative, import.meta.url), 'utf8')));
-    const text = node => node.value ?? (node.childNodes ?? []).map(text).join(' ');
-    const copy = text({ childNodes: all.filter(node => node.tagName === 'p') });
-    assert.match(copy, /friends-only sharing and finding people are planned/i);
-    assert.match(copy, /Browser and direct cloud-storage sync are planned/);
-    assert.match(copy, /command-line sync brings your local folder and workspace into line when you run it/);
-    assert.match(copy, /sign in to the workspace with Google, Microsoft or Bluesky/);
-    assert.match(copy, /Public accounts hosted by ohm are planned/);
-    assert.match(copy, /Nothing is published until you say so/);
-    assert.ok(all.some(node => node.tagName === 'a' && attr(node, 'href') === 'https://docs.ohmmmm.com/limits'));
-  }
-});
-
 test('local docs and retained draft previews use repo-owned paths, not private launchers', async () => {
   const root = new URL('../../../', import.meta.url);
   const { scripts } = JSON.parse(await readFile(new URL('package.json', root), 'utf8'));

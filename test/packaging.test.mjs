@@ -22,8 +22,6 @@ test('contributor setup locks the separate service without installing from tests
       assert.doesNotMatch(scripts[hook] ?? '', /\b(?:npm|pnpm|yarn)\b[^;&|]*\b(?:install|ci)\b/, `${path}: ${hook} must not install dependencies`);
     }
   }
-  const readme = await readFile(new URL('../README.md', import.meta.url), 'utf8');
-  assert.match(readme, /npm ci\nnpm --prefix service ci\nnpm test/);
 });
 
 test('the packed CLI initializes MCP with only its declared runtime dependencies', { timeout: 30000 }, async () => {

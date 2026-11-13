@@ -313,7 +313,7 @@ java -jar importer/target/x-archive-importer.jar \
 
 Maven builds the executable JAR and runs the importer's unit tests. The final command previews offline without signing in or publishing. The preview reports the replies, reposts, quote posts, and entries with missing media that it leaves out.
 
-Imported posts are notes and use `other` when no label is supplied. `--label 'Tweets'` files them under the author's name: labels are trimmed and limited to 100 characters, retaining their authored casing in the record. The URL folder is Unicode NFC-normalized, lowercased and percent-encoded, such as `/posts/tweets/x-123` for X post `123`. The record key stays `x-123` regardless of the label. [Labels and addresses](docs/labels.md)
+Imports use `other` when no label is supplied. `--label 'Tweets'` files them under the author's name: labels are trimmed and limited to 100 characters, retaining their authored casing in the record. The URL folder is Unicode NFC-normalized, lowercased and percent-encoded, such as `/posts/tweets/x-123` for X post `123`. The record key stays `x-123` regardless of the label. [Labels and addresses](docs/labels.md)
 
 After the owner approves a reviewed selection, add `--publish --pds https://pds.example.com --handle example.com --did did:web:pds.example.com`, and `--id YOUR_X_POST_ID` once for each post, or leave `--id` out to import everything eligible. `--also-bluesky` also posts compatible text and images to Bluesky.
 
