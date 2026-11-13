@@ -34,7 +34,9 @@ function changes(before, after, attachments, { did, origin }) {
       sameFile = address.origin === new URL(origin).origin && address.pathname === '/xrpc/com.atproto.sync.getBlob' &&
         address.searchParams.get('did') === did && address.searchParams.get('cid') === old.file?.ref?.$link;
     }
-    return sameFile && (!next.kind || old.$type === `${after.$type}#${next.kind}`) && (old.alt ?? '') === (next.alt ?? '');
+    // Only images store alt metadata; every embed's descriptive text is compared in the body.
+    const sameAlt = old.$type !== `${after.$type}#image` || (old.alt ?? '') === (next.alt ?? '');
+    return sameFile && (!next.kind || old.$type === `${after.$type}#${next.kind}`) && sameAlt;
   };
   if (was.length !== now.length || now.some((id, index) => !matches(earlier.get(was[index]), wanted.get(id)))) found.push('attachments');
   return [...new Set(found)];

@@ -3,6 +3,7 @@ import test from 'node:test';
 import { POST } from '../feed/pds.mjs';
 import { postRecord } from '../vault/file.mjs';
 import { publishPlan } from '../vault/publish.mjs';
+import { carryOut } from '../service/public/vault/publish.js';
 
 // What publishing would do, worked out from a vault and what is published. Nothing is written.
 
@@ -83,4 +84,44 @@ test('a link to another post becomes its address, a connection its record, and a
   assert.match(write.record.body, /!\[A hill\]\(media:hill\)/);
   assert.deepEqual(write.record.connect, [`at://${did}/${POST}/${ids[0]}`]);
   assert.deepEqual(write.attachments, [{ id: 'hill', address: 'https://photos.example.com/hill.jpg', kind: 'image', alt: 'A hill' }]);
+});
+
+for (const [extension, mime, kind] of [['pdf', 'application/pdf', 'file'], ['mp4', 'video/mp4', 'video'], ['mp3', 'audio/mpeg', 'audio']]) {
+  test(`a published ${kind} with descriptive embed text stays unchanged on the next plan`, async () => {
+    const address = `https://assets.example.test/guide.${extension}`;
+    const sample = post(0, 'guide', { body: `![A useful description](${address})` });
+    const first = plan([sample]);
+    const published = new Map();
+    let uploads = 0, batches = 0;
+    const ports = {
+      attachment: async () => ({ bytes: new Uint8Array([1, 2, 3]), mime }),
+      upload: async () => { uploads++; return { $type: 'blob', ref: { $link: 'guide-cid' }, mimeType: mime, size: 3 }; },
+      apply: async writes => { batches++; for (const write of writes) published.set(write.rkey, write.value); },
+    };
+    // Prepared publication sends these attachments through the shared browser/MCP serializer.
+    const prepared = { ...first, collection: POST, writes: first.writes.map(write => ({ ...write, upload: write.attachments })) };
+    assert.equal((await carryOut(prepared, ports)).files, 1);
+    assert.equal(published.get(ids[0]).media[0].$type, `${POST}#${kind}`);
+    assert.equal(published.get(ids[0]).media[0].alt, undefined);
+    const again = plan([sample], [...published]);
+    assert.equal(again.unchanged, 1);
+    assert.deepEqual(again.writes, []);
+    assert.equal((await carryOut({ ...again, collection: POST }, ports)).files, 0);
+    assert.deepEqual([uploads, batches], [1, 1]);
+
+    // Ignoring a non-image alt field must not hide changes to the actual source or body text.
+    const moved = plan([{ ...sample, body: sample.body.replace('assets.example.test', 'elsewhere.example.test') }], [...published]);
+    assert.deepEqual(moved.replace[0].changes, ['attachments']);
+    const renamed = plan([{ ...sample, body: sample.body.replace('A useful description', 'A revised description') }], [...published]);
+    assert.ok(renamed.replace[0].changes.includes('body'));
+  });
+}
+
+test('an image with an extensionless address still compares its stored alt text', async () => {
+  const sample = post(0, 'image', { body: '![A hill](https://assets.example.test/content)' });
+  const record = recordOf(sample);
+  record.media = [{ $type: `${POST}#image`, id: 'content', sourceUrl: 'https://assets.example.test/content', alt: 'A hill', file: { ref: { $link: 'image-cid' }, mimeType: 'image/jpeg', size: 3 } }];
+  assert.equal(plan([sample], [[ids[0], record]]).unchanged, 1);
+  record.media[0].alt = 'A different hill';
+  assert.deepEqual(plan([sample], [[ids[0], record]]).replace[0].changes, ['attachments']);
 });

@@ -112,6 +112,11 @@ install and a build only when you work on the PDS component.
 | An old renderer sidecar or changed page shape | The existing template has no proven place for all the content. | Keep the old template, sidecar and output. Update a copy of the source page as needed, then explicitly adopt it again and compare the rebuilt page. |
 | An ambiguous mirror checkpoint or externally edited record | An automatic copy cannot prove that it owns the existing record. | Preserve the record and checkpoint for operator review; do not clear state to force an overwrite. |
 
+Keep descriptive text on document, video and audio embeds. After a successful
+Publish, opening its preview again leaves these unchanged instead of sending
+the files again. Changing their source address or descriptive text still appears
+in the next preview.
+
 Private writing in the editor lives in the current page until saved. Save before
 closing it. A network request already sent can complete even after navigation;
 the editor prevents its completion from reopening an old post or replacing newer
