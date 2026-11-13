@@ -18,10 +18,10 @@ You can start from an existing website, from an export of your posts on another 
 This repository is a Claude Code plugin. It gives your agent five skills: `start` (what this project is for and its rules), `vault` (working in your notes with the vault's tools), `suggest-labels` (deciding your site's sections with you), `migrate-site` (moving a website and social posts in without loss), and `build-renderer` (making your site's own pages build from records).
 
 ```
-/plugin install ohm-content-layer --marketplace haeinej/ohm-content-layer
+/plugin install ohm --marketplace haeinej/ohm-content-layer
 ```
 
-On Claude Code older than 2.1.275, run `/plugin marketplace add haeinej/ohm-content-layer`, then `/plugin install ohm-content-layer@ohm-content-layer`. Other agents can read [AGENTS.md](AGENTS.md) and the files under [skills/](skills/) directly. [Set up with your coding agent](docs/set-up-with-an-agent.md)
+On Claude Code older than 2.1.275, run `/plugin marketplace add haeinej/ohm-content-layer`, then `/plugin install ohm@ohm`. Other agents can read [AGENTS.md](AGENTS.md) and the files under [skills/](skills/) directly. [Set up with your coding agent](docs/set-up-with-an-agent.md)
 
 ### From the command line
 
@@ -35,11 +35,11 @@ That lists the commands. Every command previews by default and changes nothing u
 
 ```sh
 npx github:haeinej/ohm-content-layer identity example.com
-npx github:haeinej/ohm-content-layer configure --site https://example.com --handle example.com > ohm-content-layer.jsonc
+npx github:haeinej/ohm-content-layer configure --site https://example.com --handle example.com > ohm.jsonc
 npx github:haeinej/ohm-content-layer publish --file ./hello.md --slug hello --title 'Hello' --label Writing
 ```
 
-Commands read a site configuration named `ohm-content-layer.jsonc` from the folder you run them in, or take one with `--config`. The examples below shorten `npx github:haeinej/ohm-content-layer` to `ohm-content-layer`. Inside a clone of this repository the same commands are `npm run identity`, `npm run publish:post`, and so on.
+Commands read a site configuration named `ohm.jsonc` from the folder you run them in, or take one with `--config`. The examples below shorten `npx github:haeinej/ohm-content-layer` to `ohm`. Inside a clone of this repository the same commands are `npm run identity`, `npm run publish:post`, and so on.
 
 ## How it is put together
 
@@ -112,7 +112,7 @@ Your picture, name, pronouns, verified handle, description, and links sit above 
 Create an app password for your PDS account and give it to the command as `ATPROTO_APP_PASSWORD`. Without `--publish` the command prints the record and publishes nothing. [Cirrus app passwords](https://cirrus.earth/guides/create-app-password/)
 
 ```sh
-ohm-content-layer publish --file ./hello.md --slug hello --title 'Hello' --label Writings --publish
+ohm publish --file ./hello.md --slug hello --title 'Hello' --label Writings --publish
 ```
 
 The post is then at `https://example.com/posts/writings/hello`.
@@ -144,7 +144,7 @@ If you would rather keep publishing where you already do, the mirror copies it i
 Your profile is a record with the same fields as a Bluesky profile: name, description, pronouns, a picture, a banner, and up to ten links.
 
 ```sh
-ohm-content-layer profile --name 'Your Name' --pronouns 'she/her' \
+ohm profile --name 'Your Name' --pronouns 'she/her' \
   --description 'A line or two about you.' --avatar ./me.jpg \
   --link 'Newsletter=https://example.substack.com' --link https://github.com/example --publish
 ```
@@ -224,7 +224,7 @@ npx github:haeinej/ohm-content-layer mcp
 Your vault can live as a folder of Markdown files on your machine, or in a folder that a cloud keeps in sync. A label is a folder, a sublabel a folder inside it, a post a file, and the post's title, date and who may see it are properties at the top of the file. The same folder opens in Obsidian.
 
 ```sh
-ohm-content-layer sync --folder ~/Vault --vault https://vault.example.com --vault-did did:web:vault.example.com
+ohm sync --folder ~/Vault --vault https://vault.example.com --vault-did did:web:vault.example.com
 ```
 
 That looks at the folder and at ohm's working copy and says what a sync would do. Add `--apply` to do it. It needs `ATPROTO_APP_PASSWORD`, to ask your PDS for tokens that prove to the vault who you are.
@@ -245,9 +245,9 @@ Your own website can build its existing pages from the same records without its 
 A page is split into three parts. The record holds the content. A template holds the page's own markup with the content cut out. A rules file says where content sits on each kind of page.
 
 ```sh
-ohm-content-layer render adopt --page writing/essay.html --slug essay --rules render-rules.json --kind essay \
+ohm render adopt --page writing/essay.html --slug essay --rules render-rules.json --kind essay \
   --template templates/essay.html
-ohm-content-layer render build --slug essay --rules render-rules.json --kind essay \
+ohm render build --slug essay --rules render-rules.json --kind essay \
   --template templates/essay.html --out built/writing/essay.html --against writing/essay.html
 ```
 
@@ -261,9 +261,9 @@ It runs when your site is built, so the site stays plain HTML. It handles pages 
 Sites set up before the post schema was shared keep their posts under a type of their own, such as `com.example.post`. The `migrate` command copies them to `com.ohmmmm.post`. Each post keeps its key, so its address on your site does not change, and the older records are left where they are.
 
 ```sh
-ohm-content-layer migrate --from com.example.post
-ohm-content-layer migrate --from com.example.post --key hello
-ohm-content-layer migrate --from com.example.post --publish
+ohm migrate --from com.example.post
+ohm migrate --from com.example.post --key hello
+ohm migrate --from com.example.post --publish
 ```
 
 The first prints a count of what would be copied and changes nothing. `--key` prints one post's new record in full. `--publish` writes, and needs `ATPROTO_APP_PASSWORD`. A site configuration that still has `ATPROTO_POST_COLLECTION` gives `--from` its default.

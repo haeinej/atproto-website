@@ -17,7 +17,7 @@ const commands = {
 };
 const [name] = process.argv.splice(2, 1);
 if (!Object.hasOwn(commands, name ?? '')) {
-  console.log('Usage: ohm-content-layer <command> [options]\n');
+  console.log('Usage: ohm <command> [options]\n');
   for (const [command, [, summary]] of Object.entries(commands)) console.log(`  ${command.padEnd(10)} ${summary}`);
   console.log('\nCommands preview by default and change nothing until you pass --publish.');
   process.exitCode = name && !['help', '--help', '-h'].includes(name) ? 1 : 0;

@@ -1,5 +1,5 @@
 {
-  "name": "ohm-content-layer",
+  "name": "ohm",
   "version": "0.1.0",
   "description": "Build your own home on AT Protocol from the website you already have: your own PDS, one post schema shared by every site, and your own optional schemas, readable by other AT Protocol applications.",
   "private": true,
@@ -9,7 +9,7 @@
     "url": "git+https://github.com/haeinej/ohm-content-layer.git"
   },
   "bin": {
-    "ohm-content-layer": "bin/ohm-content-layer.mjs"
+    "ohm": "bin/ohm.mjs"
   },
   "files": [
     "bin",

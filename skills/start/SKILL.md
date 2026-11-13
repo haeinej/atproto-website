@@ -1,6 +1,6 @@
 ---
 name: start
-description: What the ohm-content-layer project is for and the rules for working in it. Use first, before any other ohm-content-layer skill, whenever someone wants to put their website or posts on AT Protocol, set up their own PDS or Lexicon, publish a post or profile with these tools, or asks how this project works.
+description: What the ohm project is for and the rules for working in it. Use first, before any other ohm skill, whenever someone wants to put their website or posts on AT Protocol, set up their own PDS or Lexicon, publish a post or profile with these tools, or asks how this project works.
 ---
 
 # Start here
@@ -36,7 +36,7 @@ Run them from the owner's own site folder. Nothing needs to be cloned.
 
 ```sh
 npx github:haeinej/ohm-content-layer identity example.com
-npx github:haeinej/ohm-content-layer configure --site https://example.com --handle example.com > ohm-content-layer.jsonc
+npx github:haeinej/ohm-content-layer configure --site https://example.com --handle example.com > ohm.jsonc
 npx github:haeinej/ohm-content-layer posts
 npx github:haeinej/ohm-content-layer publish --file ./post.md --slug hello --title 'Hello' --label Writing
 ```

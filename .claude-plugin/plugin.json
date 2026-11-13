@@ -1,5 +1,5 @@
 {
-  "name": "ohm-content-layer",
+  "name": "ohm",
   "version": "0.1.0",
   "description": "Build your own home on AT Protocol from the website you already have: your own PDS, one post schema shared by every site, and your own optional schemas, readable by other AT Protocol applications. Skills for setting up, deciding your site's sections, and moving a site in without loss, and tools for your agent to read, save and publish your notes.",
   "author": { "name": "haeinej", "url": "https://github.com/haeinej" },

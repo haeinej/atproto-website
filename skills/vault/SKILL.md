@@ -76,4 +76,4 @@ A mirror copies each post as it was published. It does not file, and it does not
 
 ## Setting up
 
-The tools use the same site configuration as the commands, found in the folder you are working in (`ohm-content-layer.jsonc`), and need `ATPROTO_APP_PASSWORD` set, to sign in to the person's PDS. What each tool asks the vault service for is listed in `service/CAPABILITIES.md`.
+The tools use the same site configuration as the commands, found in the folder you are working in (`ohm.jsonc`), and need `ATPROTO_APP_PASSWORD` set, to sign in to the person's PDS. What each tool asks the vault service for is listed in `service/CAPABILITIES.md`.

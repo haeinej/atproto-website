@@ -1,12 +1,12 @@
 {
-  "name": "ohm-content-layer",
+  "name": "ohm",
   "description": "Tools and skills for building your own home on AT Protocol from the website you already have.",
   "owner": {
     "name": "haeinej"
   },
   "plugins": [
     {
-      "name": "ohm-content-layer",
+      "name": "ohm",
       "source": "./",
       "description": "Build your own home on AT Protocol from the website you already have. Skills for setting up, deciding your site's sections, and moving a site in without loss."
     }
