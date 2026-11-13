@@ -90,16 +90,18 @@ try {
     await writeFile(values.template, result.template);
     await writeFile(sidecar, JSON.stringify({
       shapeVersion: 2, slug: values.slug, kind: values.kind, images, blocks: result.blocks,
+      tokens: [...new Set([...result.template.matchAll(/\{\{([\w.:]+)\}\}/g)].map(match => match[1]))]
+        .filter(name => values.prefix ? name.startsWith(`${values.prefix}:`) : !name.includes(':')),
       cutFrom: { page: values.page, sha256: createHash('sha256').update(page).digest('hex') },
     }, null, 2) + '\n');
     console.log(JSON.stringify(report, null, 2));
   } else {
     if (!values.out) throw new Error('build needs --out, where to write the page');
     const about = JSON.parse(await readFile(sidecar, 'utf8'));
-    if (about.shapeVersion !== 2) throw new Error('This template has an older sidecar. Adopt the page again before building; nothing was written.');
+    if (about.shapeVersion !== 2 || !Array.isArray(about.blocks) || !Array.isArray(about.tokens) || about.tokens.some(name => typeof name !== 'string')) throw new Error('This template has an older or incomplete sidecar. Adopt the page again before building; nothing was written.');
     if (about.slug !== values.slug || about.kind !== values.kind) throw new Error('The sidecar belongs to a different post or page kind; adopt this page again');
     // --into is the page being filled, when earlier posts on it have been filled already.
-    const built = build(await readFile(values.into ?? values.template, 'utf8'), record, rules, { images: values.images ?? about.images, prefix: values.prefix }, context, about.blocks);
+    const built = build(await readFile(values.into ?? values.template, 'utf8'), record, rules, { images: values.images ?? about.images, prefix: values.prefix, tokens: about.tokens }, context, about.blocks);
     await mkdir(dirname(values.out), { recursive: true });
     await writeFile(values.out, built);
     if (values.against) {

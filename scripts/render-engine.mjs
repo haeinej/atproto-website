@@ -434,6 +434,9 @@ function blockShape(blocks) {
 // build: fill a template from a record.
 // ---------------------------------------------------------------------------------------------
 export function build(template, record, rules, options, context, expected) {
+  for (const name of options.tokens ?? []) {
+    if (!template.includes(`{{${name}}}`)) stop(`The template no longer has the slot "${name}". Adopt the page again before building; nothing was written.`);
+  }
   const blocks = recordBlocks(record.body, rules, context);
   if (expected?.some(block => typeof block === 'string')) stop('This template has an older type-only sidecar. Adopt the page again before building; nothing was written.');
   if (expected && JSON.stringify(expected) !== JSON.stringify(blockShape(blocks))) {

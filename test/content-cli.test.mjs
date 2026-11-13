@@ -91,6 +91,10 @@ test('render resolves a public slug or explicit key and refuses old sidecars wit
   }
   const about = JSON.parse(await readFile(template + '.json', 'utf8')); delete about.shapeVersion;
   await writeFile(template + '.json', JSON.stringify(about)); await writeFile(out, 'Keep existing output');
-  const refused = command('render', ['build', ...common, '--out', out]); assert.equal(refused.status, 1); assert.match(refused.stderr, /older sidecar.*Adopt/);
+  const refused = command('render', ['build', ...common, '--out', out]); assert.equal(refused.status, 1); assert.match(refused.stderr, /older or incomplete sidecar.*Adopt/);
+  assert.equal(await readFile(out, 'utf8'), 'Keep existing output');
+  const again = command('render', ['adopt', ...common, '--page', source]); assert.equal(again.status, 0, again.stderr);
+  const damaged = (await readFile(template, 'utf8')).replace('{{b.0}}', ''); await writeFile(template, damaged);
+  const missing = command('render', ['build', ...common, '--out', out]); assert.equal(missing.status, 1); assert.match(missing.stderr, /no longer has the slot/);
   assert.equal(await readFile(out, 'utf8'), 'Keep existing output');
 }));

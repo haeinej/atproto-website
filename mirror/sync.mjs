@@ -143,7 +143,9 @@ export async function mirror(env, { get = fetch, now = new Date(), budget = Numb
             value.publishedAt === post.publishedAt && value.body === post.body && (value.title ?? '') === post.title &&
             value.label === source.label && (value.sublabel ?? '') === source.sublabel &&
             JSON.stringify(value.connect ?? []) === JSON.stringify(post.connect) &&
-            value.canonicalUrl === (source.platform === 'website' ? item.url : new URL(postPath(source, key), site).href);
+            value.canonicalUrl === (source.platform === 'website' ? item.url : new URL(postPath(source, key), site).href) &&
+            value.form === identifyForm({ title: post.title, facts: bodyFacts(post.body), kinds: [] }) &&
+            JSON.stringify(value.source ?? null) === JSON.stringify(source.platform === 'website' ? null : { platform: source.platform, uri: webUrl(item.url), id: String(item.id) });
           if (legacy && provenance && legacy.hash === oldHash && legacyText) {
             last = { binding, identity, key, cid: held.cid, recordHash: await digest(value) };
           } else if (legacy) {

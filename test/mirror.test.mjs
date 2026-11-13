@@ -246,3 +246,25 @@ test('unambiguous legacy mappings retain their keys; legacy collisions refuse mi
   assert.equal(refused.sources[0].problems.filter(text => text.includes('ambiguous legacy')).length, 2);
   assert.deepEqual(w.records.get('second'), before);
 });
+
+test('legacy hashes cannot authorize removal of dates, blob identity or extra source/site metadata', async () => {
+  for (const extra of [
+    { publishedAt: '2026-06-20T00:00:00.000Z' },
+    { source: { platform: 'owner', uri: 'https://elsewhere.example.test/' } },
+    { site: { $type: 'com.example.postSite', caption: 'Owner text' } },
+    { media: [{ id: 'owner-file', file: { ref: { $link: 'owner-cid' } } }] },
+  ]) {
+    const w = world(); w.feeds['https://example.com/feed.json'].items = [w.feeds['https://example.com/feed.json'].items[1]];
+    w.env.MIRROR_SOURCES = JSON.stringify([{ platform: 'website', feed: 'https://example.com/feed.json', label: 'Writing' }]);
+    await mirror(w.env, { get: w.get });
+    const record = w.records.get('second');
+    const bytes = new Uint8Array(await crypto.subtle.digest('SHA-256', new TextEncoder().encode(JSON.stringify([record.title, record.body, [], record.label, '', []]))));
+    w.kv.set('mirror:website:second', JSON.stringify({ hash: [...bytes].map(byte => byte.toString(16).padStart(2, '0')).join(''), collection: record.$type }));
+    for (const key of [...w.kv.keys()]) if (key.startsWith('mirror:v2:')) w.kv.delete(key);
+    const edited = { ...record, ...extra }; w.records.set('second', edited);
+    let writes = 0;
+    const refused = await mirror(w.env, { get: async (url, options = {}) => { if (options.method === 'POST') writes++; return w.get(url, options); } });
+    assert.ok(refused.sources[0].problems.some(text => text.includes('ambiguous')), JSON.stringify(extra));
+    assert.equal(writes, 0); assert.deepEqual(w.records.get('second'), edited);
+  }
+});
