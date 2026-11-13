@@ -35,7 +35,7 @@ export const TOOLS = [
     inputSchema: object({ changes: { type: 'array', items: change, maxItems: 100 }, notes: { type: 'array', items: outcome, minItems: 1, maxItems: 100 } }), requests: requests('listNotes', 'getMemory', 'putMemory', 'settleNotes') },
   { name: 'cortex_recall', description: 'Read one memory in full by name, or search by words. Named reads include version; optionally read history or a preserved version to restore using the current version.',
     inputSchema: object({ name, query: text, limit: { type: 'integer', minimum: 1, maximum: 50 }, history: { type: 'boolean' }, version }), annotations: { readOnlyHint: true }, requests: requests('searchMemories', 'getMemory') },
-  { name: 'cortex_remember', description: 'Save a whole private memory at once, without review. Use stated true only for what the member said. For an existing memory, read it first and pass version; retain its still-valid source notes and scope.',
+  { name: 'cortex_remember', description: 'Save a whole private memory at once, without review. Use stated true only for what the member said. For an existing memory, read it first and pass version; retain its still-valid source notes and scope. Omitting notes preserves sources; an explicit list, including [], replaces them.',
     inputSchema: change, requests: requests('getMemory', 'putMemory') },
   { name: 'cortex_forget', description: 'Remove a memory in two calls. Show the exact memory returned, ask, and only after agreement repeat name and confirm. Confirmations are single-use and bound to the version and this running server.',
     inputSchema: object({ name, confirm: text }, ['name']), annotations: { destructiveHint: true }, requests: requests('getMemory', 'deleteMemory') },
@@ -78,7 +78,7 @@ export function createCortexTools(options = {}) {
     if (!change.memory || typeof change.memory !== 'object') refuse('Give the whole memory');
     const held = await before(change.memory.name, change.version);
     const memory = { ...change.memory };
-    if (held?.memory.notes?.length) memory.notes = [...new Set([...held.memory.notes, ...(memory.notes ?? [])])];
+    if (memory.notes === undefined && held?.memory.notes !== undefined) memory.notes = [...held.memory.notes];
     if (held?.memory.from !== undefined && memory.from === undefined) memory.from = held.memory.from;
     return { memory, ...(change.version === undefined ? {} : { replaces: change.version }) };
   }

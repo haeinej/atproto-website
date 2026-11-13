@@ -66,7 +66,9 @@ review memory as a routine settlement step.
 For a rewrite, use the existing `getMemory`/`putMemory` contract: send the whole
 memory and `replaces` equal to the version you read. Set `notes` to the actual
 supporting note IDs, retaining older source references that still support the
-text. The service preserves the prior version. Do not send invented `seen`
+text, removing references that no longer support a corrected or rescoped claim.
+MCP rewrites preserve sources when `notes` is omitted; an explicit list, including
+`[]`, replaces them. The service preserves the prior version. Do not send invented `seen`
 counters or authors. If the write is refused as `Changed`, read again and redo
 the judgment; never overwrite a concurrent edit by blindly retrying it.
 
@@ -86,8 +88,9 @@ later note confirms it, include that historical kept note in the new memory's
 receipt. Dropped notes do not become evidence. Never reference a source note
 belonging to another member, project or memory.
 
-The service records distinct observed sessions, not the number of notes or
-settlement attempts. Its `seen.last` is the latest observation time. It appends
+The service records distinct observed sessions from the current sources and
+incoming notes, not every past receipt with the same memory name or the number
+of settlement attempts. Its `seen.last` is the latest source observation time. It appends
 the newly routed notes to source references, changes the memory's version, and
 keeps the earlier version without altering its text, author or stated status.
 The foundation permits at most 100 source-note references on a memory; if that

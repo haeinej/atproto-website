@@ -60,7 +60,8 @@ const cell = text => String(text).replaceAll('|', '\\|');
 
 export function capabilitiesPage() {
   const used = new Set(TOOLS.flatMap(tool => tool.requests));
-  const without = Object.values(REQUESTS).filter(request => !(request.name.startsWith('com.ohmmmm.vault.') && used.has(short(request.name))));
+  const without = Object.values(REQUESTS).filter(request => !used.has(request.name)
+    && !(request.name.startsWith('com.ohmmmm.vault.') && used.has(short(request.name))));
   const lines = [
     '# What the vault can do',
     '',
@@ -128,7 +129,7 @@ export function capabilitiesPage() {
     '',
     '### Requests with no tool',
     '',
-    'An agent cannot ask for these. They are for the editor, for the command line, or for signing in.',
+    'These requests have no MCP tool. They serve the editor, command line, adapters or sign-in.',
     '',
     '| Request | Capability | Why it has no tool |',
     '| --- | --- | --- |',
@@ -147,12 +148,12 @@ const NO_TOOL = {
   Export: 'The command line and the editor write the vault out. An agent reads posts one at a time',
   Account: 'It rides on an ohm session, which an agent does not have',
   Identity: 'It is part of signing in',
-  Context: 'Cortex tools are not built yet; prompt recall is also reserved for the adapter',
-  Memory: 'The Memory API is built; cortex tools will expose it in a later step',
-  Notes: 'Cortex tools will record and settle notes in a later step; the editor can read their receipts',
+  Context: 'Prompt recall is reserved for the adapter; cortex_start reads session context',
+  Memory: 'The editor uses the full memory index; cortex tools read or change individual memories',
+  Notes: 'The editor reads note receipts; cortex tools record and settle observations',
   Turns: 'The authenticated request is reserved for the adapter and is not built yet',
-  Skills: 'Cortex tools will read and propose skills in a later step. Approval and removal stay with the member in the editor',
-  Tools: 'Tool settings belong to the member in the editor. A later cortex tool may propose something to be built, but cannot switch it on',
+  Skills: 'Context lists approved skills; approval and removal stay with the member in the editor',
+  Tools: 'Context lists enabled tools. Settings and removal belong to the member; an agent may only propose something to be built',
   'Cortex Export': 'The authenticated request is reserved for taking the cortex out and is not built yet',
 };
 

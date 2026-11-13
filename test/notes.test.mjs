@@ -171,6 +171,71 @@ test('one session cannot become inferred memory evidence; historical kept notes 
   assert.equal((await store.read(me, 'plain-titles', { version: first.version })).memory.notes, undefined);
 });
 
+test('recreated inferred memories cannot inherit receipts from a deleted claim', async () => {
+  const { add, settle, list, store } = await setup();
+  for (const id of ['old-a', 'old-b']) await add(id);
+  const first = await store.write(me, memory({ stated: false, notes: ['old-a', 'old-b'] }));
+  await settle(['old-a', 'old-b'].map(id => ({ id, outcome: 'plain-titles', version: first.version })));
+  const oldReceipts = (await list('?settled=1')).notes;
+  const old = await store.read(me, 'plain-titles');
+  await store.remove(me, 'plain-titles', { replaces: old.version });
+  await add('new-c');
+  const replacement = await store.write(me, memory({ stated: false, body: 'A different claim.', notes: ['new-c'] }));
+  await assert.rejects(settle([{ id: 'new-c', outcome: 'plain-titles', version: replacement.version }]), refusal('InvalidMemory'));
+  assert.deepEqual((await list()).notes.map(note => note.id), ['new-c']);
+  assert.equal((await store.read(me, 'plain-titles')).version, replacement.version);
+  await add('new-d');
+  await settle(['new-c', 'new-d'].map(id => ({ id, outcome: 'plain-titles', version: replacement.version })));
+  const held = await store.read(me, 'plain-titles');
+  assert.deepEqual(held.memory.notes, ['new-c', 'new-d']);
+  assert.equal(held.memory.seen.count, 2);
+  assert.deepEqual((await list('?settled=1')).notes.filter(note => note.id.startsWith('old-')), oldReceipts);
+});
+
+test('evidence counters exclude receipts explicitly removed from a rewritten memory', async () => {
+  const { add, settle, list, store } = await setup();
+  await add('old');
+  const first = await store.write(me, memory());
+  await settle([{ id: 'old', outcome: 'plain-titles', version: first.version }]);
+  const old = await store.read(me, 'plain-titles');
+  const rewrite = await store.write(me, memory({ body: 'Corrected claim.', notes: [] }), { replaces: old.version });
+  await add('new');
+  await settle([{ id: 'new', outcome: 'plain-titles', version: rewrite.version }]);
+  const held = await store.read(me, 'plain-titles');
+  const latest = (await list('?settled=1')).notes.find(note => note.id === 'new');
+  assert.deepEqual(held.memory.notes, ['new']);
+  assert.deepEqual(held.memory.seen, { count: 1, last: latest.when });
+});
+
+test('each unchanged seed accepts its first confirming observation without a new inferred claim', async () => {
+  const { add, settle, store } = await setup();
+  await store.seed(me);
+  for (const name of ['identity', 'vault-map', 'working-style']) {
+    const before = await store.read(me, name);
+    await add(name);
+    await settle([{ id: name, outcome: name, version: before.version }]);
+    const held = await store.read(me, name, { history: true });
+    assert.equal(held.memory.body, before.memory.body);
+    assert.equal(held.memory.stated, false);
+    assert.deepEqual(held.memory.notes, [name]);
+    assert.equal(held.memory.seen.count, 1);
+    assert.equal(held.earlier[0].version, before.version);
+  }
+});
+
+test('rewriting a seed into an inferred claim still requires two supporting sessions', async () => {
+  const { add, settle, list, store } = await setup();
+  await store.seed(me);
+  const seed = await store.read(me, 'working-style');
+  const rewritten = await store.write(me, { ...seed.memory, body: 'Prefers automatic publishing.', notes: [] }, { replaces: seed.version });
+  await add('one');
+  await assert.rejects(settle([{ id: 'one', outcome: 'working-style', version: rewritten.version }]), refusal('InvalidMemory'));
+  assert.equal((await list()).notes.length, 1);
+  await add('two');
+  await settle(['one', 'two'].map(id => ({ id, outcome: 'working-style', version: rewritten.version })));
+  assert.equal((await store.read(me, 'working-style')).memory.seen.count, 2);
+});
+
 test('multiple notes from one session count once, across retries and later settlements', async () => {
   const { add, settle, store } = await setup();
   let { version } = await store.write(me, memory());

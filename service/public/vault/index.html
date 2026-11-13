@@ -9,6 +9,7 @@
     <link rel="preload" href="./assets/fonts/coconat-regular.woff2" as="font" type="font/woff2" crossorigin>
     <link rel="stylesheet" href="./assets/tokens.css">
     <link rel="stylesheet" href="./vault.css">
+    <link rel="stylesheet" href="./cortex.css">
     <script src="./vault.js" type="module"></script>
     <title>Vault · ohm</title>
   </head>
@@ -16,6 +17,7 @@
     <!-- The icons, drawn once and used by name. They are Lucide's (assets/LUCIDE-LICENSE.txt), the set the app uses. -->
     <svg class="sprite" aria-hidden="true" focusable="false">
       <symbol id="icon-vault" viewBox="0 0 24 24"><path d="m16 6 4 14"/><path d="M12 6v14"/><path d="M8 8v12"/><path d="M4 4v16"/></symbol>
+      <symbol id="icon-cortex" viewBox="0 0 24 24"><path d="m12 2 10 5-10 5L2 7Z"/><path d="m2 12 10 5 10-5"/><path d="m2 17 10 5 10-5"/></symbol>
       <symbol id="icon-move" viewBox="0 0 24 24"><path d="M12 15V3"/><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><path d="m7 10 5 5 5-5"/></symbol>
       <symbol id="icon-folder" viewBox="0 0 24 24"><path d="M20 20a2 2 0 0 0 2-2V8a2 2 0 0 0-2-2h-7.9a2 2 0 0 1-1.69-.9L9.6 3.9A2 2 0 0 0 7.93 3H4a2 2 0 0 0-2 2v13a2 2 0 0 0 2 2Z"/></symbol>
       <symbol id="icon-new" viewBox="0 0 24 24"><path d="M12 3H5a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.375 2.625a1 1 0 0 1 3 3l-9.013 9.014a2 2 0 0 1-.853.505l-2.873.84a.5.5 0 0 1-.62-.62l.84-2.873a2 2 0 0 1 .506-.852z"/></symbol>
@@ -123,6 +125,7 @@
         <div class="rail-brand"><a class="rail-dot" href="https://ohmmmm.com/"><img src="./assets/ohm-dot.svg" alt="ohm" width="24" height="24"></a></div>
         <div class="rail-main">
           <button class="icon-button" type="button" data-go="vault" aria-label="Vault" title="Vault" aria-pressed="true"><svg class="icon" aria-hidden="true"><use href="#icon-vault"/></svg></button>
+          <button class="icon-button" type="button" data-go="cortex" aria-label="Cortex" title="Cortex" aria-pressed="false"><svg class="icon" aria-hidden="true"><use href="#icon-cortex"/></svg></button>
         </div>
         <div class="rail-bottom">
           <button class="icon-button" type="button" popovertarget="account-menu" aria-label="You" title="You"><span class="rail-avatar" data-avatar></span></button>
@@ -230,6 +233,7 @@
       <nav class="mobile-bottom-nav" aria-label="ohm">
         <div class="mobile-nav-capsule">
           <button class="icon-button" type="button" data-go="vault" aria-label="Vault" aria-pressed="true"><svg class="icon" aria-hidden="true"><use href="#icon-vault"/></svg></button>
+          <button class="icon-button" type="button" data-go="cortex" aria-label="Cortex" aria-pressed="false"><svg class="icon" aria-hidden="true"><use href="#icon-cortex"/></svg></button>
           <button class="icon-button" type="button" popovertarget="account-menu" aria-label="You"><span class="rail-avatar" data-avatar></span></button>
         </div>
       </nav>

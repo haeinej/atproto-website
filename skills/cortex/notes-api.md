@@ -91,13 +91,17 @@ For an unacknowledged note, a missing note or target memory returns
 Malformed input returns `400 InvalidRequest`. Invalid source-note provenance,
 project mismatch, exceeding the foundation's 100-source-note limit, or fewer
 than two distinct sessions supporting an inferred target returns
-`400 InvalidMemory`.
+`400 InvalidMemory`. An unchanged built-in seed can receive its first confirming
+observation without forming an inference. Rewriting its claim or scope removes
+that exception; a seed's name alone does not waive corroboration.
 
 The service reads targets through the existing memory store. It leaves memory
 text, `stated` and `writtenBy` intact and updates `notes`, `seen`, version and
 history together, using the foundation revision recipe and history trigger.
-`seen.count` counts distinct originating sessions, including prior notes routed
-into that memory and historical kept notes explicitly included as sources;
+`seen.count` counts distinct originating sessions only from the current memory's
+source-note IDs and incoming notes, including historical kept notes explicitly
+included as sources. Old receipts with the same memory name do not count unless
+the current memory explicitly references them;
 `seen.last` is the latest source observation time. Notes from other projects,
 dropped notes or notes routed into another memory cannot supply evidence.
 Sessions and note text remain observations supplied by the authenticated
