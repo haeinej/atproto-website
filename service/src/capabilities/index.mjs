@@ -16,8 +16,11 @@ import posts from './posts.mjs';
 import publish from './publish.mjs';
 import search from './search.mjs';
 import structure from './structure.mjs';
+import memory from './memory.mjs';
+import context from './context.mjs';
+import { pendingCapabilities } from '../../../cortex/pending.mjs';
 
-export const CAPABILITIES = [posts, structure, search, mirror, publish, exporting, account, identity];
+export const CAPABILITIES = [posts, structure, search, mirror, publish, exporting, account, identity, context, memory, ...pendingCapabilities];
 
 // Every request by its name, with the capability it belongs to.
 export const REQUESTS = Object.fromEntries(CAPABILITIES.flatMap(capability =>
