@@ -209,7 +209,7 @@ async function running() {
   };
   const service = createService({ whoIs, get });
   // One request, signed by `as` for exactly that request unless told otherwise.
-  const ask = async (as, name, { query = {}, body, token, verb, cookie, origin, under = '' } = {}) => {
+  const ask = async (as, name, { query = {}, body, token, verb, cookie, origin, expected, under = '' } = {}) => {
     const url = new URL(`https://vault.ohmmmm.test${under}/xrpc/${name.includes('.') ? name : `com.ohmmmm.vault.${name}`}`);
     for (const [key, value] of Object.entries(query)) url.searchParams.set(key, value);
     // A request rides on a cookie, as the page's do, or carries a token from the member's PDS.
@@ -217,12 +217,60 @@ async function running() {
     const posted = ['putPost', 'deletePost', 'importPublished', 'com.ohmmmm.account.connect', 'com.ohmmmm.account.disconnect'].includes(name);
     return service(new Request(url, {
       method: verb ?? (posted ? 'POST' : 'GET'),
-      headers: { ...(bearer ? { Authorization: `Bearer ${bearer}` } : {}), ...(cookie ? { Cookie: cookie } : {}), ...(origin ? { Origin: origin } : {}), ...(body === undefined ? {} : { 'Content-Type': 'application/json' }) },
+      headers: { ...(bearer ? { Authorization: `Bearer ${bearer}` } : {}), ...(cookie ? { Cookie: cookie } : {}), ...(origin ? { Origin: origin } : {}), ...(expected === undefined ? {} : { 'X-Ohm-Did': expected }), ...(body === undefined ? {} : { 'Content-Type': 'application/json' }) },
       ...(body === undefined ? {} : { body: typeof body === 'string' ? body : JSON.stringify(body) }),
     }), env);
   };
   return { haein, jun, stranger, ask, env, repositories, sessions };
 }
+
+test('a stale linked-session tab cannot read or write another member or disconnect their account', async () => {
+  const { haein, jun, ask, sessions } = await running();
+  const origin = 'https://app.ohmmmm.test';
+  let cookie;
+  for (const [member, id] of [[haein, 'haein'], [jun, 'jun']]) {
+    cookie = `ohm.session_token=account-scope-${id}`;
+    sessions.set(cookie, { id, name: id });
+    assert.equal((await ask(member, 'com.ohmmmm.account.connect', {
+      cookie, origin, body: { token: await member.token('com.ohmmmm.account.connect') },
+    })).status, 200);
+  }
+  // The shared browser cookie is now Jun's; the stale editor still displays Haein.
+  const stale = { cookie, origin, expected: haein.did };
+  const cases = [
+    ['getTree', {}],
+    ['putPost', { body: { post: post('stale-draft') } }],
+    ['com.ohmmmm.cortex.listMemories', {}],
+    ['com.ohmmmm.cortex.putMemory', { verb: 'POST', body: { name: 'stale-draft', body: 'Haein private draft' } }],
+    ['com.ohmmmm.cortex.approveSkill', { verb: 'POST', body: { name: 'stale-skill', version: 'old-version' } }],
+    ['com.ohmmmm.account.get', {}],
+    ['com.ohmmmm.account.disconnect', {}],
+  ];
+  for (const [name, options] of cases) {
+    const response = await ask(jun, name, { ...stale, ...options });
+    assert.equal(response.status, 409, name);
+    assert.equal((await response.json()).error, 'AccountChanged', name);
+  }
+  const current = { cookie, expected: jun.did };
+  assert.equal((await (await ask(jun, 'com.ohmmmm.account.get', current)).json()).did, jun.did);
+  assert.equal((await (await ask(jun, 'getTree', current)).json()).posts, 0);
+  assert.equal((await ask(jun, 'com.ohmmmm.cortex.getMemory', { ...current, query: { name: 'stale-draft' } })).status, 404);
+  const signedOut = await ask(jun, 'getTree', { expected: jun.did, token: null });
+  assert.equal(signedOut.status, 401);
+  assert.equal((await signedOut.json()).error, 'SignInRequired');
+});
+
+test('the displayed-member precondition also binds PDS tokens and never replaces authentication', async () => {
+  const { haein, jun, stranger, ask } = await running();
+  assert.equal((await ask(haein, 'getTree', { expected: haein.did })).status, 200);
+  assert.equal((await ask(jun, 'getTree')).status, 200); // Existing clients need no header.
+  const response = await ask(jun, 'putPost', { expected: haein.did, body: { post: post('wrong-member') } });
+  assert.equal(response.status, 409);
+  assert.equal((await response.json()).error, 'AccountChanged');
+  assert.equal((await (await ask(jun, 'getTree')).json()).posts, 0);
+  assert.equal((await ask(haein, 'getTree', { expected: haein.did, token: null })).status, 401);
+  assert.equal((await ask(stranger, 'getTree', { expected: haein.did })).status, 403);
+});
 
 test('a member\'s vault over the four requests, with the structure read from the posts', async () => {
   const { haein, ask } = await running();

@@ -64,6 +64,15 @@ export function createService({ whoIs, get = fetch } = {}) {
         }
       }
 
+      // A browser may still display one member after its cookie changed in
+      // another tab. This is a precondition, never a way to choose an account.
+      // Check before the capability can read data or apply a stale draft.
+      const expected = request.headers.get('X-Ohm-Did');
+      if (expected !== null && asked.asks !== 'nobody') {
+        const actual = did ?? (user ? await linked.didOf(user.id) : null);
+        if (actual !== expected) throw new Refused(409, 'AccountChanged', 'The signed-in account changed; reopen the vault before continuing');
+      }
+
       const answer = await asked.run({
         name, request, url, env, get, identify, linked, did, user,
         posts: postStore(env.DB),

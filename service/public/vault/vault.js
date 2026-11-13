@@ -12,6 +12,7 @@
 import { carryOut } from './publish.js';
 import { askPds, begin, beginWithPassword, finish, leave, restore, sendPds } from './signin.js';
 import { createCortexPanel } from './cortex.js';
+import { createAccountScope } from './account-scope.js';
 
 const $ = id => document.getElementById(id);
 const state = { mode: 'ohm', me: null, audience: '', did: '', tree: null, current: null, publishing: false, plan: null, page: 'vault', signup: false, busy: false, step: 'where' };
@@ -26,6 +27,14 @@ function icon(name) {
   return svg;
 }
 const plural = (count, word) => `${count} ${word}${count === 1 ? '' : 's'}`;
+
+const accountScope = createAccountScope({ member: () => state.did, changed: () => {
+  cortex.reset();
+  state.current = null; state.tree = null; state.plan = null;
+  state.did = ''; state.me = null;
+  screen('sign-in');
+  location.reload();
+} });
 
 const cortex = createCortexPanel({
   call, notice, changed: () => queueMicrotask(narrow),
@@ -49,22 +58,33 @@ function failed(doing, problem) {
 // a member signed in with their AT Protocol account, carries a token their PDS issues for exactly
 // this request. ----
 async function call(name, { query, body } = {}) {
-  const method = name.includes('.') ? name : `com.ohmmmm.vault.${name}`;
-  const url = new URL(`./xrpc/${method}`, document.baseURI);
-  if (query) url.search = new URLSearchParams(query);
-  const headers = body ? { 'Content-Type': 'application/json' } : {};
-  if (state.mode === 'pds') {
-    const { token } = await askPds('com.atproto.server.getServiceAuth', { aud: state.audience, lxm: method, exp: String(Math.floor(Date.now() / 1000) + 60) });
-    headers.Authorization = `Bearer ${token}`;
-  }
-  const response = await fetch(url, {
-    method: body ? 'POST' : 'GET', credentials: 'same-origin', headers,
-    ...(body ? { body: JSON.stringify(body) } : {}),
+  return accountScope.run(async accountHeaders => {
+    const method = name.includes('.') ? name : `com.ohmmmm.vault.${name}`;
+    const url = new URL(`./xrpc/${method}`, document.baseURI);
+    if (query) url.search = new URLSearchParams(query);
+    const headers = { ...accountHeaders, ...(body ? { 'Content-Type': 'application/json' } : {}) };
+    if (state.mode === 'pds') {
+      const { token } = await askPds('com.atproto.server.getServiceAuth', { aud: state.audience, lxm: method, exp: String(Math.floor(Date.now() / 1000) + 60) });
+      headers.Authorization = `Bearer ${token}`;
+    }
+    const response = await fetch(url, {
+      method: body ? 'POST' : 'GET', credentials: 'same-origin', headers,
+      ...(body ? { body: JSON.stringify(body) } : {}),
+    });
+    const data = await response.json().catch(() => ({}));
+    if (!response.ok) throw Object.assign(new Error(data.message || `the vault answered HTTP ${response.status}`), { code: data.error, status: response.status, data });
+    return data;
   });
-  const data = await response.json().catch(() => ({}));
-  if (!response.ok) throw Object.assign(new Error(data.message || `the vault answered HTTP ${response.status}`), { code: data.error, status: response.status, data });
-  return data;
 }
+
+// A cookie can change in another tab without this page's sign-out handler.
+// A failed/offline check leaves drafts alone; a different member clears them.
+async function checkAccount() {
+  if (state.mode !== 'ohm' || !state.did || document.hidden) return;
+  await call('com.ohmmmm.account.get').catch(() => {});
+}
+window.addEventListener('focus', checkAccount);
+document.addEventListener('visibilitychange', checkAccount);
 
 // ---- A new post's ID and slug. The ID has the form the vault's own rules give one (vault/file.mjs). ----
 function newPostId() {
@@ -281,7 +301,9 @@ async function tellOhm(path, token) {
 // Opening the page, and every time the sign-in may have changed: find out who is here and show
 // the step they are at.
 async function open() {
+  accountScope.reset();
   cortex.reset();
+  state.did = '';
   state.mode = 'ohm';
   state.me = null;
   let me = null;
@@ -345,8 +367,8 @@ async function open() {
 }
 // The vault opens. Reading it first means an account that is not let in never sees it empty.
 async function enter({ name, did, mirrored = true, approvedAtPds = false }) {
-  state.tree = await call('getTree');
   state.did = did;
+  state.tree = await call('getTree');
   $('who').textContent = name;
   $('who-did').textContent = did;
   $('disconnect').hidden = state.mode === 'pds';
