@@ -124,18 +124,20 @@ export async function servePost(request, env, name, get = fetch) {
   if (!isRecordKey(name)) return new Response('Post not found', { status: 404 });
   try {
     const pds = pdsConfig(env);
-    // Permanent and legacy record keys remain short addresses. A mutable slug requires a
-    // complete inventory so a stale graph cannot hide a new post or an ambiguity.
-    const direct = await recordByKey(pds, name, get);
-    const data = direct && direct.value.slug !== name ? direct : await recordBySlug(pds, name, get);
+    const asked = new URL(request.url).pathname;
+    // Qualified paths name public slugs first; bare paths keep permanent-key priority.
+    // Only a complete, unambiguous inventory can establish a qualified-key fallback.
+    const qualified = asked.startsWith('/posts/') && asked.slice('/posts/'.length).includes('/');
+    const data = qualified
+      ? await recordBySlug(pds, name, get) ?? await recordByKey(pds, name, get)
+      : await recordByKey(pds, name, get) ?? await recordBySlug(pds, name, get);
     if (!data) return new Response('Post not found', { status: 404 });
     const { key } = data;
     const post = data.uri === `at://${pds.did}/${pds.collection}/${key}` &&
       normalizeArchivePost(data.value, key, pds);
     if (!post) return new Response('Post not found', { status: 404 });
-    // A post has one address, which follows its label and sublabel. The short address, an old one
-    // from before it was refiled, or any other path ending in its key is sent on to it.
-    const asked = new URL(request.url).pathname;
+    // The resolved post has one address, following its label and sublabel. Short addresses and
+    // stale filing paths redirect there.
     if (asked.startsWith('/posts/') && decodeURIComponent(asked) !== decodeURIComponent(post.permalink)) {
       return Response.redirect(new URL(post.permalink, request.url), 308);
     }
