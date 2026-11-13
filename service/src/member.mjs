@@ -37,7 +37,7 @@ export async function published(get, pds, did, collection) {
       records.set(key, record.value);
     }
     if (data.cursor === undefined || data.cursor === null || data.cursor === '') return records;
-    if (typeof data.cursor !== 'string' || cursors.has(data.cursor) || !data.records.length || page === 49) incomplete();
+    if (typeof data.cursor !== 'string' || cursors.has(data.cursor) || page === 49) incomplete();
     cursors.add(data.cursor);
     cursor = data.cursor;
   }
