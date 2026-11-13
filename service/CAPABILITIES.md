@@ -43,6 +43,8 @@ Who may ask is one of four things, and each request says which:
 
 A member's posts and cortex are served to that member and nobody else. Who is asking is settled before either store is looked at. Cortex data is private and is never part of Publish or the mirror.
 
+The editor sends `X-Ohm-Did` for the member it displays. If the authenticated account differs, the service refuses with `409 AccountChanged` before running the request. This optional precondition binds stale tabs to their displayed member; it cannot select an account or replace authentication.
+
 ## Posts
 
 Read and change the posts in a vault, one at a time. Every change names the version it replaces, so two edits never overwrite each other unseen.
@@ -528,6 +530,7 @@ A refusal is JSON with an `error`, which is one of the names below, and a `messa
 | Error | Status | When |
 | --- | --- | --- |
 | `SignInRequired` | 401 | The request rides on an ohm session, and there is none |
+| `AccountChanged` | 409 | The authenticated DID differs from X-Ohm-Did, the member displayed by the editor. Reopen before reading or changing content |
 | `AuthRequired` | 401 | The token is missing, cannot be read, was issued for another request or service, has run out, or its signature does not match |
 | `NotAMember` | 403 | The account has not been let in yet |
 | `WrongOrigin` | 403 | A request that changes something came with a session but not from ohm's own pages |
