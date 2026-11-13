@@ -11,7 +11,7 @@ test('the reference page says exactly what the service and the tools do', async 
 });
 
 test('every way the service says no is in the reference, with the status it is sent with', async () => {
-  const folders = [new URL('../service/src/', import.meta.url), new URL('../service/src/capabilities/', import.meta.url)];
+  const folders = [new URL('../service/src/', import.meta.url), new URL('../service/src/capabilities/', import.meta.url), new URL('../cortex/', import.meta.url)];
   const found = new Map();
   for (const folder of folders) {
     for (const name of (await readdir(folder)).filter(each => each.endsWith('.mjs'))) {

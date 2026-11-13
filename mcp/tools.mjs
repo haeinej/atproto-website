@@ -11,12 +11,20 @@ import { carryOut } from '../service/public/vault/publish.js';
 import { VISIBILITIES, VaultProblem } from '../vault/core.mjs';
 import { newPostId } from '../vault/file.mjs';
 
+// Optional cortex tools export TOOLS and createCortexTools(options); nested import failures propagate.
+const cortexModule = new URL('./cortex-tools.mjs', import.meta.url);
+const cortexTools = await import(cortexModule.href).catch(problem => {
+  if (problem.code === 'ERR_MODULE_NOT_FOUND' && problem.url === cortexModule.href) return null;
+  throw problem;
+});
+
 const refuse = message => { throw new VaultProblem(message); };
 const text = { type: 'string' };
 const which = { type: 'string', description: "The post's slug, or its ID." };
 
 // Each tool, with the requests of the vault service it is made of.
 export const TOOLS = [
+  ...(cortexTools?.TOOLS ?? []),
   {
     name: 'vault_tree',
     description: "The structure of the person's vault: its labels, the sublabels inside them, and each post with who can see it. Start here to learn what the vault holds.",
@@ -116,7 +124,9 @@ const audience = {
 
 // `vault` reaches the vault service as the person: tree, search, get, put, remove
 // (scripts/vault-client.mjs).
-export function createTools({ vault }) {
+export function createTools(options) {
+  const { vault } = options;
+  const cortex = cortexTools?.createCortexTools(options);
   // Every post's line in the tree, each knowing its label and sublabel.
   const lines = async () => (await vault.tree()).labels.flatMap(folder => [
     ...folder.posts.map(post => ({ ...post, label: folder.label, sublabel: '' })),
@@ -318,6 +328,7 @@ export function createTools({ vault }) {
   return {
     list: OFFERED,
     async call(name, args = {}) {
+      if (cortex?.list.some(tool => tool.name === name)) return cortex.call(name, args);
       if (!Object.hasOwn(calls, name)) refuse(`There is no tool named ${name}`);
       return calls[name](args);
     },

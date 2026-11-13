@@ -18,6 +18,13 @@ This page is the whole list. It is written from the same tables the service and 
 | **Export** | The whole vault written out as files a person can keep: each post as Markdown, where it sits in a folder. The same files open in Obsidian, and read back as the same posts. | `exportFiles` | [export.mjs](src/capabilities/export.mjs) |
 | **Account** | For a member signed in to ohm: who they are, and which AT Protocol account their vault is. One ohm account works in one AT Protocol account, and the other way round. These ride on the ohm session only; a token from a PDS does not reach them. | `get`, `connect`, `disconnect` | [account.mjs](src/capabilities/account.mjs) |
 | **Identity** | The first steps of signing in: finding an account from its handle, and saying who a token from a PDS names. Neither touches a vault. | `findAccount`, `whoAmI` | [identity.mjs](src/capabilities/identity.mjs) |
+| **Context** | The private cortex at session start: always memories in full, an index of the rest, approved skills, enabled tools and work waiting to be settled. | `getContext`, `recall` | [context.mjs](src/capabilities/context.mjs) |
+| **Memory** | Private memories for the authenticated member. Every rewrite names the version it replaces and preserves that earlier version. | `listMemories`, `getMemory`, `putMemory`, `deleteMemory`, `searchMemories` | [memory.mjs](src/capabilities/memory.mjs) |
+| **Notes** | Private cortex notes. Not built yet. | `addNote`, `listNotes`, `settleNotes` | [pending.mjs](../cortex/pending.mjs) |
+| **Turns** | Private cortex turns. Not built yet. | `addTurns`, `listTurns`, `settleTurns` | [pending.mjs](../cortex/pending.mjs) |
+| **Skills** | Private cortex skills. Not built yet. | `listSkills`, `getSkill`, `putSkill`, `approveSkill`, `deleteSkill` | [pending.mjs](../cortex/pending.mjs) |
+| **Tools** | Private cortex tools. Not built yet. | `listTools`, `putTool`, `deleteTool`, `proposeTool` | [pending.mjs](../cortex/pending.mjs) |
+| **Cortex Export** | Private cortex cortex export. Not built yet. | `exportFiles` | [pending.mjs](../cortex/pending.mjs) |
 
 The service never writes to anyone's repository. Saving a post, whatever it says about who may see it, changes only the vault's own copy. Publishing is worked out here and carried out by the member, signed in at their own PDS ([public/vault/publish.js](public/vault/publish.js)).
 
@@ -34,7 +41,7 @@ Who may ask is one of four things, and each request says which:
 | The member | Such a token from their own PDS, as the command line and an agent's tools send; or their ohm session, as the editor sends, which is worth exactly the one account it was connected to |
 | The member, signed in to ohm | Their ohm session only. A request that changes something must also come from ohm's own pages |
 
-A member's posts are served to that member and nobody else. Who is asking is settled before anything about a vault is looked at.
+A member's posts and cortex are served to that member and nobody else. Who is asking is settled before either store is looked at. Cortex data is private and is never part of Publish or the mirror.
 
 ## Posts
 
@@ -233,6 +240,287 @@ Says who a token from a PDS names. The token has to be issued for this request a
 | Takes | Nothing |
 | Gives | `did`, and `handle` when the handle points back to the account |
 
+## Context
+
+The private cortex at session start: always memories in full, an index of the rest, approved skills, enabled tools and work waiting to be settled.
+
+### `com.ohmmmm.cortex.getContext`
+
+Get the three initial memories without inventing identity or preferences. The vault-map entry includes a current, service-derived vault structure beside its editable memory. The version changes with the context.
+
+| | |
+| --- | --- |
+| Reads or changes | Reads only (`GET`) |
+| Who may ask | The member |
+| Takes | Nothing |
+| Gives | `always` ({memory, version}, with current `vault` on vault-map), `memories` (name, description, kind), `skills`, `tools`, `notes`, `turns` (waiting count), `version` |
+
+### `com.ohmmmm.cortex.recall`
+
+Not built yet. Prompt recall will use project isolation and a character budget.
+
+| | |
+| --- | --- |
+| Reads or changes | Reads only (`GET`) |
+| Who may ask | The member |
+| Takes | `q`: the prompt<br>`project`: optional: the repository<br>`budget`: optional: 1,500 characters unless said |
+| Gives | `memories` (name, description, passage), `skills` (name, description), within the budget |
+
+## Memory
+
+Private memories for the authenticated member. Every rewrite names the version it replaces and preserves that earlier version.
+
+### `com.ohmmmm.cortex.listMemories`
+
+List memory descriptions and versions, with a stable cursor. With since, include changes and removals.
+
+| | |
+| --- | --- |
+| Reads or changes | Reads only (`GET`) |
+| Who may ask | The member |
+| Takes | `since`: optional: an earlier cursor<br>`kind`: optional: person, preference, project or reference |
+| Gives | `memories` (name, version, description, kind, writtenBy, when), `cursor`, and optionally `more` |
+
+### `com.ohmmmm.cortex.getMemory`
+
+Read a memory in full. An optional version reads a preserved earlier version; putMemory can restore it with the current replaces value.
+
+| | |
+| --- | --- |
+| Reads or changes | Reads only (`GET`) |
+| Who may ask | The member |
+| Takes | `name`: the memory name<br>`version`: optional: a preserved earlier version<br>`history`: optional: 1 to list earlier versions and their authors and times |
+| Gives | `memory`, `version`, and with history=1, `earlier` (version, writtenBy, when, replacedAt) |
+
+### `com.ohmmmm.cortex.putMemory`
+
+Save the whole memory, naming the version it replaces. The service sets writtenBy from the authenticated principal and retains its own seen counters. Repeated writes are safe.
+
+| | |
+| --- | --- |
+| Reads or changes | Changes (`POST`) |
+| Who may ask | The member |
+| Takes | `memory`: the whole memory<br>`replaces`: optional: the version it replaces |
+| Gives | `name`, `version`, and `unchanged` when nothing differed |
+
+### `com.ohmmmm.cortex.deleteMemory`
+
+Remove a memory, naming its current version. Earlier text remains private in history; the removal is included in the next incremental list.
+
+| | |
+| --- | --- |
+| Reads or changes | Changes (`POST`) |
+| Who may ask | The member |
+| Takes | `name`: the memory name<br>`replaces`: the version being removed |
+| Gives | `name`, `removed` |
+
+### `com.ohmmmm.cortex.searchMemories`
+
+Find memories mentioning every word of q. A description counts more than the body. Ties are ordered by name.
+
+| | |
+| --- | --- |
+| Reads or changes | Reads only (`GET`) |
+| Who may ask | The member |
+| Takes | `q`: words to find<br>`limit`: optional: 10 unless said, at most 50 |
+| Gives | `memories` (name, description, kind, passage), best first |
+
+## Notes
+
+Private cortex notes. Not built yet.
+
+### `com.ohmmmm.cortex.addNote`
+
+This cortex request is not built yet.
+
+| | |
+| --- | --- |
+| Reads or changes | Changes (`POST`) |
+| Who may ask | The member |
+| Takes | `id`: a client-made ID<br>`note`: one line, at most 500 characters<br>`session`: the session<br>`project`: optional: repository |
+| Gives | `id` |
+
+### `com.ohmmmm.cortex.listNotes`
+
+This cortex request is not built yet.
+
+| | |
+| --- | --- |
+| Reads or changes | Reads only (`GET`) |
+| Who may ask | The member |
+| Takes | `settled`: optional: include settled notes |
+| Gives | `notes` |
+
+### `com.ohmmmm.cortex.settleNotes`
+
+This cortex request is not built yet.
+
+| | |
+| --- | --- |
+| Reads or changes | Changes (`POST`) |
+| Who may ask | The member |
+| Takes | `notes`: each note ID and its outcome |
+| Gives | `settled` |
+
+## Turns
+
+Private cortex turns. Not built yet.
+
+### `com.ohmmmm.cortex.addTurns`
+
+This cortex request is not built yet.
+
+| | |
+| --- | --- |
+| Reads or changes | Changes (`POST`) |
+| Who may ask | The member |
+| Takes | `turns`: up to 50 client-identified turns |
+| Gives | `kept` |
+
+### `com.ohmmmm.cortex.listTurns`
+
+This cortex request is not built yet.
+
+| | |
+| --- | --- |
+| Reads or changes | Reads only (`GET`) |
+| Who may ask | The member |
+| Takes | `limit`: optional: 40 unless said |
+| Gives | `turns`, `waiting` |
+
+### `com.ohmmmm.cortex.settleTurns`
+
+This cortex request is not built yet.
+
+| | |
+| --- | --- |
+| Reads or changes | Changes (`POST`) |
+| Who may ask | The member |
+| Takes | `turns`: each turn ID and its outcome |
+| Gives | `settled` |
+
+## Skills
+
+Private cortex skills. Not built yet.
+
+### `com.ohmmmm.cortex.listSkills`
+
+This cortex request is not built yet.
+
+| | |
+| --- | --- |
+| Reads or changes | Reads only (`GET`) |
+| Who may ask | The member |
+| Takes | Nothing |
+| Gives | `skills` |
+
+### `com.ohmmmm.cortex.getSkill`
+
+This cortex request is not built yet.
+
+| | |
+| --- | --- |
+| Reads or changes | Reads only (`GET`) |
+| Who may ask | The member |
+| Takes | `name`: the skill name |
+| Gives | `skill`, `version` |
+
+### `com.ohmmmm.cortex.putSkill`
+
+This cortex request is not built yet.
+
+| | |
+| --- | --- |
+| Reads or changes | Changes (`POST`) |
+| Who may ask | The member |
+| Takes | `skill`: SKILL.md and supporting files<br>`replaces`: optional: previous version |
+| Gives | `name`, `version`, `approved` |
+
+### `com.ohmmmm.cortex.approveSkill`
+
+This cortex request is not built yet.
+
+| | |
+| --- | --- |
+| Reads or changes | Changes (`POST`) |
+| Who may ask | The member, signed in to ohm |
+| Takes | `name`: the skill name<br>`version`: exactly the version approved |
+| Gives | `name`, `approved` |
+
+### `com.ohmmmm.cortex.deleteSkill`
+
+This cortex request is not built yet.
+
+| | |
+| --- | --- |
+| Reads or changes | Changes (`POST`) |
+| Who may ask | The member |
+| Takes | `name`: the skill name<br>`replaces`: current version |
+| Gives | `name`, `removed` |
+
+## Tools
+
+Private cortex tools. Not built yet.
+
+### `com.ohmmmm.cortex.listTools`
+
+This cortex request is not built yet.
+
+| | |
+| --- | --- |
+| Reads or changes | Reads only (`GET`) |
+| Who may ask | The member |
+| Takes | Nothing |
+| Gives | `tools` |
+
+### `com.ohmmmm.cortex.putTool`
+
+This cortex request is not built yet.
+
+| | |
+| --- | --- |
+| Reads or changes | Changes (`POST`) |
+| Who may ask | The member, signed in to ohm |
+| Takes | `tool`: the tool<br>`replaces`: optional: previous version |
+| Gives | `name`, `version` |
+
+### `com.ohmmmm.cortex.deleteTool`
+
+This cortex request is not built yet.
+
+| | |
+| --- | --- |
+| Reads or changes | Changes (`POST`) |
+| Who may ask | The member, signed in to ohm |
+| Takes | `name`: the tool name<br>`replaces`: current version |
+| Gives | `name`, `removed` |
+
+### `com.ohmmmm.cortex.proposeTool`
+
+This cortex request is not built yet.
+
+| | |
+| --- | --- |
+| Reads or changes | Changes (`POST`) |
+| Who may ask | The member |
+| Takes | `tool`: name, description, inputs and outputs |
+| Gives | `name`, `proposed` |
+
+## Cortex Export
+
+Private cortex cortex export. Not built yet.
+
+### `com.ohmmmm.cortex.exportFiles`
+
+This cortex request is not built yet.
+
+| | |
+| --- | --- |
+| Reads or changes | Reads only (`GET`) |
+| Who may ask | The member |
+| Takes | Nothing |
+| Gives | `files` (path, text) |
+
 ## When the answer is no
 
 A refusal is JSON with an `error`, which is one of the names below, and a `message` in plain words. The message is written to be shown to a person as it is.
@@ -251,10 +539,13 @@ A refusal is JSON with an `error`, which is one of the names below, and a `messa
 | `WrongMethod` | 405 | The request is the other of GET and POST |
 | `InvalidRequest` | 400 | The request is not JSON, or something it says is not what that request takes |
 | `InvalidPost` | 400 | The post is not one the vault can hold. The message lists every reason |
+| `InvalidMemory` | 400 | The memory is not one the cortex can hold, or its source notes do not belong to this member. The message says why |
 | `InvalidCursor` | 400 | `since` is not a value an earlier list returned |
-| `NotFound` | 404 | There is no such post |
-| `Changed` | 409 | The post has changed since the version the request names. The answer carries the current version |
+| `NotFound` | 404 | There is no such post or memory version |
+| `Changed` | 409 | The post or memory has changed since the version the request names. The answer carries the current version |
 | `SlugTaken` | 409 | Another post in the vault already has that slug |
+| `NameTaken` | 409 | A memory already has that name; read it and name its version to replace it |
+| `NotBuiltYet` | 501 | The cortex request is registered and authenticated, but its implementation has not been built yet |
 | `TooLarge` | 413 | The post is more than 600 KB of text, or a file it places is empty or larger than 25 MB |
 | `FileUnreachable` | 502 | A file a post places could not be fetched from where the post says it is |
 | `AccountNotFound` | 404 | No AT Protocol account answers to that handle or DID |
@@ -298,6 +589,29 @@ An agent cannot ask for these. They are for the editor, for the command line, or
 | `disconnect` | Account | It rides on an ohm session, which an agent does not have |
 | `findAccount` | Identity | It is part of signing in |
 | `whoAmI` | Identity | It is part of signing in |
+| `getContext` | Context | Cortex tools are not built yet; prompt recall is also reserved for the adapter |
+| `recall` | Context | Cortex tools are not built yet; prompt recall is also reserved for the adapter |
+| `listMemories` | Memory | The Memory API is built; cortex tools will expose it in a later step |
+| `getMemory` | Memory | The Memory API is built; cortex tools will expose it in a later step |
+| `putMemory` | Memory | The Memory API is built; cortex tools will expose it in a later step |
+| `deleteMemory` | Memory | The Memory API is built; cortex tools will expose it in a later step |
+| `searchMemories` | Memory | The Memory API is built; cortex tools will expose it in a later step |
+| `addNote` | Notes | The authenticated request is reserved and is not built yet |
+| `listNotes` | Notes | The authenticated request is reserved and is not built yet |
+| `settleNotes` | Notes | The authenticated request is reserved and is not built yet |
+| `addTurns` | Turns | The authenticated request is reserved for the adapter and is not built yet |
+| `listTurns` | Turns | The authenticated request is reserved for the adapter and is not built yet |
+| `settleTurns` | Turns | The authenticated request is reserved for the adapter and is not built yet |
+| `listSkills` | Skills | The authenticated request is reserved and is not built yet |
+| `getSkill` | Skills | The authenticated request is reserved and is not built yet |
+| `putSkill` | Skills | The authenticated request is reserved and is not built yet |
+| `approveSkill` | Skills | The authenticated request is reserved and is not built yet |
+| `deleteSkill` | Skills | The authenticated request is reserved and is not built yet |
+| `listTools` | Tools | The authenticated request is reserved and is not built yet |
+| `putTool` | Tools | The authenticated request is reserved and is not built yet |
+| `deleteTool` | Tools | The authenticated request is reserved and is not built yet |
+| `proposeTool` | Tools | The authenticated request is reserved and is not built yet |
+| `exportFiles` | Cortex Export | The authenticated request is reserved for taking the cortex out and is not built yet |
 
 ## Not here yet
 

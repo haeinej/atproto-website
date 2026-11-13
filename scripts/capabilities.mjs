@@ -17,7 +17,11 @@ const ASKS = {
   member: ['The member', 'Such a token from their own PDS, as the command line and an agent\'s tools send; or their ohm session, as the editor sends, which is worth exactly the one account it was connected to'],
   ohm: ['The member, signed in to ohm', 'Their ohm session only. A request that changes something must also come from ohm\'s own pages'],
 };
-const FILES = { Posts: 'posts', Structure: 'structure', Search: 'search', Mirror: 'mirror', Publish: 'publish', Export: 'export', Account: 'account', Identity: 'identity' };
+const FILES = Object.fromEntries(Object.entries({
+  Posts: 'posts', Structure: 'structure', Search: 'search', Mirror: 'mirror', Publish: 'publish', Export: 'export', Account: 'account', Identity: 'identity',
+  Context: 'context', Memory: 'memory',
+}).map(([name, file]) => [name, `src/capabilities/${file}.mjs`]));
+for (const name of ['Notes', 'Turns', 'Skills', 'Tools', 'Cortex Export']) FILES[name] = '../cortex/pending.mjs';
 
 // Every way the service says no. The same words go to a person in the editor and to an agent.
 export const REFUSALS = {
@@ -33,10 +37,13 @@ export const REFUSALS = {
   WrongMethod: [405, 'The request is the other of GET and POST'],
   InvalidRequest: [400, 'The request is not JSON, or something it says is not what that request takes'],
   InvalidPost: [400, 'The post is not one the vault can hold. The message lists every reason'],
+  InvalidMemory: [400, 'The memory is not one the cortex can hold, or its source notes do not belong to this member. The message says why'],
   InvalidCursor: [400, '`since` is not a value an earlier list returned'],
-  NotFound: [404, 'There is no such post'],
-  Changed: [409, 'The post has changed since the version the request names. The answer carries the current version'],
+  NotFound: [404, 'There is no such post or memory version'],
+  Changed: [409, 'The post or memory has changed since the version the request names. The answer carries the current version'],
   SlugTaken: [409, 'Another post in the vault already has that slug'],
+  NameTaken: [409, 'A memory already has that name; read it and name its version to replace it'],
+  NotBuiltYet: [501, 'The cortex request is registered and authenticated, but its implementation has not been built yet'],
   TooLarge: [413, 'The post is more than 600 KB of text, or a file it places is empty or larger than 25 MB'],
   FileUnreachable: [502, 'A file a post places could not be fetched from where the post says it is'],
   AccountNotFound: [404, 'No AT Protocol account answers to that handle or DID'],
@@ -64,7 +71,7 @@ export function capabilitiesPage() {
     '',
     '| Capability | What it is for | Requests | Where |',
     '| --- | --- | --- | --- |',
-    ...CAPABILITIES.map(capability => `| **${capability.name}** | ${cell(capability.about)} | ${Object.keys(capability.requests).map(name => `\`${short(name)}\``).join(', ')} | [${FILES[capability.name]}.mjs](src/capabilities/${FILES[capability.name]}.mjs) |`),
+    ...CAPABILITIES.map(capability => `| **${capability.name}** | ${cell(capability.about)} | ${Object.keys(capability.requests).map(name => `\`${short(name)}\``).join(', ')} | [${FILES[capability.name].split('/').at(-1)}](${FILES[capability.name]}) |`),
     '',
     'The service never writes to anyone\'s repository. Saving a post, whatever it says about who may see it, changes only the vault\'s own copy. Publishing is worked out here and carried out by the member, signed in at their own PDS ([public/vault/publish.js](public/vault/publish.js)).',
     '',
@@ -78,7 +85,7 @@ export function capabilitiesPage() {
     '| --- | --- |',
     ...Object.values(ASKS).map(([who, how]) => `| ${cell(who)} | ${cell(how)} |`),
     '',
-    'A member\'s posts are served to that member and nobody else. Who is asking is settled before anything about a vault is looked at.',
+    'A member\'s posts and cortex are served to that member and nobody else. Who is asking is settled before either store is looked at. Cortex data is private and is never part of Publish or the mirror.',
     '',
   ];
   for (const capability of CAPABILITIES) {
@@ -137,6 +144,13 @@ const NO_TOOL = {
   Export: 'The command line and the editor write the vault out. An agent reads posts one at a time',
   Account: 'It rides on an ohm session, which an agent does not have',
   Identity: 'It is part of signing in',
+  Context: 'Cortex tools are not built yet; prompt recall is also reserved for the adapter',
+  Memory: 'The Memory API is built; cortex tools will expose it in a later step',
+  Notes: 'The authenticated request is reserved and is not built yet',
+  Turns: 'The authenticated request is reserved for the adapter and is not built yet',
+  Skills: 'The authenticated request is reserved and is not built yet',
+  Tools: 'The authenticated request is reserved and is not built yet',
+  'Cortex Export': 'The authenticated request is reserved for taking the cortex out and is not built yet',
 };
 
 if (process.argv[1] === fileURLToPath(import.meta.url)) {
