@@ -18,6 +18,7 @@ export async function syncFolder({ folder, vault, apply = false, take = {}, now 
   const report = { toOhm: [], toFolder: [], same: 0, conflicts: [], ask: [], problems: [], applied: apply };
   const state = (await folder.state()) ?? {};
   const next = {};
+  const settledIds = new Set();
 
   // The folder: every file that is a post, by the ID it carries. A file with none is new.
   const files = new Map();
@@ -58,6 +59,7 @@ export async function syncFolder({ folder, vault, apply = false, take = {}, now 
     try {
       const { version } = await vault.put(file.post, replaces);
       next[id] = { version, path: file.path };
+      settledIds.add(id);
     } catch (problem) {
       report.toOhm.pop();
       report.problems.push({ path: file.path, problems: [problem.message] });
@@ -78,6 +80,7 @@ export async function syncFolder({ folder, vault, apply = false, take = {}, now 
     await folder.write(made.path, made.text);
     if (file && file.path !== made.path) await folder.remove(file.path);
     next[id] = { version, path: made.path };
+    settledIds.add(id);
   };
 
   for (const id of new Set([...files.keys(), ...held.keys(), ...Object.keys(state)])) {
@@ -94,6 +97,7 @@ export async function syncFolder({ folder, vault, apply = false, take = {}, now 
         // The same post in both places, however its file is laid out. Nothing to do.
         report.same++;
         next[id] = { version: post.version, path: file.path };
+        settledIds.add(id);
       } else if (changedHere && !changedThere) await toOhm(id, file, post.version);
       else if (changedThere && !changedHere) await toFolder(id, file);
       else if (take[id] === 'folder') await toOhm(id, file, post.version);
@@ -110,7 +114,7 @@ export async function syncFolder({ folder, vault, apply = false, take = {}, now 
         // Removed in ohm, and the file is as it was. The file is the member's, so it is asked about.
         if (take[id] === 'remove') {
           report.toFolder.push({ id, path: file.path, slug: file.post.slug, removed: true });
-          if (apply) await folder.remove(file.path);
+          if (apply) { await folder.remove(file.path); settledIds.add(id); }
         } else {
           report.ask.push({ id, path: file.path, slug: file.post.slug, question: 'This post was removed in ohm. Remove its file too?' });
           next[id] = last;
@@ -125,7 +129,7 @@ export async function syncFolder({ folder, vault, apply = false, take = {}, now 
         // Its file is gone and the post is as it was. A missing file is never taken as an instruction.
         if (take[id] === 'remove') {
           report.toOhm.push({ id, path: last.path, removed: true });
-          if (apply) await vault.remove(id, post.version);
+          if (apply) { await vault.remove(id, post.version); settledIds.add(id); }
         } else {
           report.ask.push({ id, path: last.path, slug: post.slug, question: 'This post\'s file is gone from your folder. Remove the post from ohm too?' });
           next[id] = last;
@@ -152,9 +156,14 @@ export async function syncFolder({ folder, vault, apply = false, take = {}, now 
   }
 
   if (apply) {
-    // A version put beside a file for comparing is taken away once the matter is settled.
+    // Absence from the conflict report is not a resolution: a pull or save may have refused.
+    // Remove only recognized comparison copies for a post that actually settled this run.
     const open = new Set(report.conflicts.map(each => each.beside));
-    for (const path of beside) if (!open.has(path) && !blockedPaths.has(path.slice(0, -'.from-ohm'.length))) await folder.remove(path);
+    for (const path of beside) {
+      const original = path.slice(0, -'.from-ohm'.length);
+      const read = filePost(original, occupied.get(path));
+      if (!open.has(path) && !blockedPaths.has(original) && read && !read.problems.length && settledIds.has(read.post.id)) await folder.remove(path);
+    }
     await folder.keep(Object.fromEntries(Object.entries(next).filter(([, value]) => value)));
   }
   return report;

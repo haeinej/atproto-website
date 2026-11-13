@@ -106,11 +106,16 @@ install and a build only when you work on the PDS component.
 | A changed-account or membership refusal | A stale page must not read or mutate another displayed account's work. | Reopen the workspace for the intended account. Account discovery and disconnect remain available when admission is revoked. |
 | A warning about unsaved writing | Navigation would discard a local draft. | Cancel to keep editing, or save. New text typed during a pending save still needs its own save. |
 | A version conflict | Someone changed the stored post or memory after it was read. | Keep the draft, read the current version and reconcile before retrying. |
-| An occupied sync path, invalid file or copied ID | Pulling must not overwrite an unrelated file or treat invalid local content as a deletion. | Preserve both copies; correct the metadata or choose another path, then preview again. Do not discard the sync baseline to suppress the warning. |
+| An occupied sync path, invalid file or copied ID | Pulling must not overwrite an unrelated file or treat invalid local content as a deletion. | Preserve both copies; correct the metadata or choose another path, then preview again. An explicit choice only clears its comparison copy after the chosen save or pull succeeds. Do not discard the sync baseline to suppress the warning. |
 | An incomplete repository listing | A partial list cannot safely stand for everything the person owns. | Retry after the PDS recovers, or review the configured bound; do not treat the partial result as a completed import. |
 | A changed mirror summary | Counts or conversion losses changed between review and saving. | Review a new preview and confirm it. This approval covers the displayed summary, not frozen body bytes. |
 | An old renderer sidecar or changed page shape | The existing template has no proven place for all the content. | Keep the old template, sidecar and output. Update a copy of the source page as needed, then explicitly adopt it again and compare the rebuilt page. |
 | An ambiguous mirror checkpoint or externally edited record | An automatic copy cannot prove that it owns the existing record. | Preserve the record and checkpoint for operator review; do not clear state to force an overwrite. |
+
+A `.from-ohm` file is a comparison copy, not another post to upload. If sync
+refuses your chosen resolution, or its save fails, the copy stays for retrying.
+A copy with an unknown or different post ID stays for manual review; only remove
+it yourself after checking that its writing is preserved.
 
 Keep descriptive text on document, video and audio embeds. After a successful
 Publish, opening its preview again leaves these unchanged instead of sending
