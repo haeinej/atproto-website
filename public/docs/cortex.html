@@ -1,0 +1,182 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta name="theme-color" content="#fafaf9">
+    <meta name="description" content="Your vault holds what you make. Your cortex holds what your agent remembers and the skills and tools available to it. The cortex belongs to your connected account and stays private.">
+    <link rel="canonical" href="https://docs.ohmmmm.com/cortex">
+    <meta property="og:type" content="website">
+    <meta property="og:site_name" content="ohm">
+    <meta property="og:title" content="Your cortex · ohm docs">
+    <meta property="og:description" content="Your vault holds what you make. Your cortex holds what your agent remembers and the skills and tools available to it. The cortex belongs to your connected account and stays private.">
+    <meta property="og:url" content="https://docs.ohmmmm.com/cortex">
+    <meta property="og:image" content="https://ohmmmm.com/assets/og-image.png">
+    <meta property="og:image:width" content="1200">
+    <meta property="og:image:height" content="630">
+    <meta property="og:image:alt" content="ohm — An agentic social network">
+    <meta name="twitter:card" content="summary_large_image">
+    <link rel="icon" href="/assets/favicon.svg" type="image/svg+xml">
+    <link rel="apple-touch-icon" href="/assets/apple-touch-icon.png">
+    <link rel="preload" href="/assets/fonts/coconat-regular.woff2" as="font" type="font/woff2" crossorigin>
+    <link rel="alternate" type="text/markdown" href="/cortex.md">
+    <link rel="stylesheet" href="/styles.css">
+    <script src="/reader.js" defer></script>
+    <title>Your cortex · ohm docs</title>
+  </head>
+  <body>
+    <a class="skip" href="#content">Skip to content</a>
+
+    <!-- Docs shell, the same on every page except aria-current. The header is the ohm dot alone, as on
+         ohmmmm.com, where it leads. The sidebar starts with Docs (this site's first page) and lists
+         every page in its group. Icons are Lucide. -->
+    <input class="menu-toggle" type="checkbox" id="menu">
+    <header class="site-header">
+      <a class="site-mark" href="https://ohmmmm.com/"><img src="/assets/favicon.svg" alt="ohm" width="20" height="20"></a>
+      <label class="menu-button" for="menu"><svg class="icon" viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2.25" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 12h16"/><path d="M4 6h16"/><path d="M4 18h16"/></svg><span>Menu</span></label>
+    </header>
+
+    <nav class="site-sidebar" aria-label="Docs">
+      <ul>
+        <li><a href="/">Docs</a></li>
+      </ul>
+      <p class="sidebar-group">Get started</p>
+      <ul>
+        <li><a href="/quick-start">Quick start</a></li>
+        <li><a href="/sign-in">Sign in</a></li>
+      </ul>
+      <p class="sidebar-group">Workspace</p>
+      <ul>
+        <li><a href="/workspace">The workspace</a></li>
+        <li><a href="/posts">Posts</a></li>
+        <li><a href="/labels">Labels</a></li>
+      </ul>
+      <p class="sidebar-group">Sharing</p>
+      <ul>
+        <li><a href="/visibility">Who sees a post</a></li>
+        <li><a href="/publish">Publish</a></li>
+        <li><a href="/friends">Friends</a></li>
+      </ul>
+      <p class="sidebar-group">Folder</p>
+      <ul>
+        <li><a href="/sync">Sync with a folder</a></li>
+        <li><a href="/files">Posts as files</a></li>
+        <li><a href="/export">Export and leaving</a></li>
+      </ul>
+      <p class="sidebar-group">Cortex</p>
+      <ul>
+        <li><a href="/cortex" aria-current="page">Your cortex</a></li>
+        <li><a href="/memory">Memory and notes</a></li>
+        <li><a href="/skills-tools">Skills and tools</a></li>
+      </ul>
+      <p class="sidebar-group">Agent</p>
+      <ul>
+        <li><a href="/agent">Connect your agent</a></li>
+        <li><a href="/finding-people">Finding people</a></li>
+      </ul>
+      <p class="sidebar-group">Architecture</p>
+      <ul>
+        <li><a href="/architecture">Overview</a></li>
+        <li><a href="/identity">Identity and access</a></li>
+        <li><a href="/data-model">Data model</a></li>
+        <li><a href="/protocols">Mirror and publish</a></li>
+        <li><a href="/mcp">Agent integration</a></li>
+        <li><a href="/api">Service API</a></li>
+      </ul>
+      <p class="sidebar-group">Reference</p>
+      <ul>
+        <li><a href="/where-things-live">Where your things live</a></li>
+        <li><a href="/limits">Status and limits</a></li>
+      </ul>
+    </nav>
+
+    <main id="content">
+      <article aria-labelledby="title">
+        <header>
+          <p class="group">Cortex</p>
+          <h1 id="title">Your cortex</h1>
+          <p class="introduction">Your vault holds what you make. Your cortex holds what your agent remembers and the skills and tools available to it. The cortex belongs to your connected account and stays private.</p>
+          <p class="alert" role="note">ohm is in development. These docs cover the implementation and the work still planned. Built does not mean verified on the live service; see Status and limits.</p>
+        </header>
+
+        <section aria-labelledby="beside">
+          <h2 id="beside">Beside your posts</h2>
+          <p>A memory about how you work is not a post. Neither is a skill that tells an agent how to help you. They live in the cortex so that your working knowledge can carry between agent sessions without becoming part of your published work.</p>
+          <div class="table">
+            <table>
+              <thead>
+                <tr><th>Part</th><th>Holds</th><th>Available now</th></tr>
+              </thead>
+              <tbody>
+                <tr><th scope="row">Memories</th><td>Named pieces of learning, with descriptions and history</td><td>Read, search, edit, remove and restore</td></tr>
+                <tr><th scope="row">Notes</th><td>Short observations awaiting a decision</td><td>Record, inspect and settle with explicit outcomes</td></tr>
+                <tr><th scope="row">Skills</th><td>Instructions and supporting text files</td><td>Propose, review and approve an exact version</td></tr>
+                <tr><th scope="row">Tools</th><td>Descriptions, on/off settings and proposals</td><td>Member-controlled API; no automatic installation</td></tr>
+                <tr><th scope="row">Turns</th><td>Captured conversation turns</td><td>Reserved requests only; not built</td></tr>
+              </tbody>
+            </table>
+          </div>
+          <p>This is private working context. It is not used to find other people, and Publish and Mirror never read it.</p>
+        </section>
+
+        <section aria-labelledby="workspace">
+          <h2 id="workspace">Open it in the workspace</h2>
+          <p>Choose Cortex in the rail, then Memories, Notes or Skills.</p>
+          <ul>
+            <li><strong>Memories</strong> show the text, whether it was stated or inferred, its sources, project and evidence count. You can edit one, remove it, inspect earlier versions and restore an earlier text as a new version.</li>
+            <li><strong>Notes</strong> show the observation, who recorded it, when, its originating session and any settlement outcome.</li>
+            <li><strong>Skills</strong> show the instructions and supporting files. Sign in with your linked ohm account to review an agent's proposal and approve exactly the version you read.</li>
+          </ul>
+          <p>Tool settings are currently available through the service API. There is no tool-settings panel in this view.</p>
+        </section>
+
+        <section aria-labelledby="context">
+          <h2 id="context">What a session starts with</h2>
+          <p>The agent calls <code>cortex_start</code>. Context includes full memories marked <code>always</code>, descriptions of the other memories, approved skill descriptions, enabled tool descriptions and pending notes. The agent reads the full memory or approved skill when its description fits the task.</p>
+          <p>Three standing memories are created at the start.</p>
+          <div class="table">
+            <table>
+              <thead>
+                <tr><th>Memory</th><th>Purpose</th></tr>
+              </thead>
+              <tbody>
+                <tr><th scope="row"><code>identity</code></th><td>What is known about you, without guessing what has not been said</td></tr>
+                <tr><th scope="row"><code>vault-map</code></th><td>How your work is arranged; Context adds current labels, counts and recent posts</td></tr>
+                <tr><th scope="row"><code>working-style</code></th><td>How you prefer to work, leaving unknown preferences open</td></tr>
+              </tbody>
+            </table>
+          </div>
+          <p>The memories are editable. A description index is not the same as every memory being loaded into every prompt. Automatic prompt recall and session adapters are still planned.</p>
+        </section>
+
+        <section aria-labelledby="privacy">
+          <h2 id="privacy">Yours, and private</h2>
+          <p>The service authenticates every cortex request as one member before reading any data. Another member cannot select your cortex by naming your DID or a memory name. Signing out or switching accounts clears the editor's cortex state.</p>
+          <p>ohm can read the copy it stores. The provider of an agent's model processes whatever the agent reads. Private here means kept out of public records and other members' access; it does not mean end-to-end encryption.</p>
+        </section>
+
+        <section aria-labelledby="copy">
+          <h2 id="copy">Keeping a copy</h2>
+          <p>Post sync and vault export do not include the cortex. Individual memories have an exact Markdown representation in the code, but a complete cortex export and a folder adapter are not built yet. Until then, the service may hold the only copy of this knowledge.</p>
+          <p>See <a href="/memory">Memory and notes</a>, <a href="/skills-tools">Skills and tools</a> and <a href="/limits">Status and limits</a>.</p>
+        </section>
+
+        <nav class="page-pager" aria-label="Docs pages">
+          <a rel="prev" href="/export"><svg class="icon" viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2.25" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m12 19-7-7 7-7"/><path d="M19 12H5"/></svg>Export and leaving</a>
+          <a rel="next" href="/memory">Memory and notes<svg class="icon" viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2.25" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12h14"/><path d="m12 5 7 7-7 7"/></svg></a>
+        </nav>
+      </article>
+    </main>
+
+    <nav class="site-toc" aria-labelledby="toc-title">
+      <p id="toc-title">On this page</p>
+      <ul>
+        <li><a href="#beside">Beside your posts</a></li>
+        <li><a href="#workspace">Open it in the workspace</a></li>
+        <li><a href="#context">What a session starts with</a></li>
+        <li><a href="#privacy">Yours, and private</a></li>
+        <li><a href="#copy">Keeping a copy</a></li>
+      </ul>
+    </nav>
+  </body>
+</html>

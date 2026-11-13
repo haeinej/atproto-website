@@ -4,12 +4,12 @@
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <meta name="theme-color" content="#fafaf9">
-    <meta name="description" content="ohm keeps a working copy of your posts, private ones included, so that you and your agent can work from anywhere. Your originals live with you.">
+    <meta name="description" content="Public posts live in your AT Protocol repository. ohm keeps your working vault and private cortex. Post sync can keep a copy with you; cortex export is still planned.">
     <link rel="canonical" href="https://docs.ohmmmm.com/where-things-live">
     <meta property="og:type" content="website">
     <meta property="og:site_name" content="ohm">
     <meta property="og:title" content="Where your things live · ohm docs">
-    <meta property="og:description" content="ohm keeps a working copy of your posts, private ones included, so that you and your agent can work from anywhere. Your originals live with you.">
+    <meta property="og:description" content="Public posts live in your AT Protocol repository. ohm keeps your working vault and private cortex. Post sync can keep a copy with you; cortex export is still planned.">
     <meta property="og:url" content="https://docs.ohmmmm.com/where-things-live">
     <meta property="og:image" content="https://ohmmmm.com/assets/og-image.png">
     <meta property="og:image:width" content="1200">
@@ -63,6 +63,12 @@
         <li><a href="/files">Posts as files</a></li>
         <li><a href="/export">Export and leaving</a></li>
       </ul>
+      <p class="sidebar-group">Cortex</p>
+      <ul>
+        <li><a href="/cortex">Your cortex</a></li>
+        <li><a href="/memory">Memory and notes</a></li>
+        <li><a href="/skills-tools">Skills and tools</a></li>
+      </ul>
       <p class="sidebar-group">Agent</p>
       <ul>
         <li><a href="/agent">Connect your agent</a></li>
@@ -89,12 +95,12 @@
         <header>
           <p class="group">Reference</p>
           <h1 id="title">Where your things live</h1>
-          <p class="introduction">ohm keeps a working copy of your posts, private ones included, so that you and your agent can work from anywhere. Your originals live with you.</p>
-          <p class="alert" role="note">ohm is still in production, and these pages are its architecture document: they describe how it is meant to work, not a finished product.</p>
+          <p class="introduction">Public posts live in your AT Protocol repository. ohm keeps your working vault and private cortex. Post sync can keep a copy with you; cortex export is still planned.</p>
+          <p class="alert" role="note">ohm is in development. These docs cover the implementation and the work still planned. Built does not mean verified on the live service; see Status and limits.</p>
         </header>
 
         <section aria-labelledby="places">
-          <h2 id="places">Three places</h2>
+          <h2 id="places">The places</h2>
           <div class="table">
             <table>
               <thead>
@@ -103,8 +109,9 @@
               <tbody>
                 <tr><th scope="row">Your account on the open network</th><td>Your public posts, and your identity</td><td>Yours. It is hosted by Bluesky or on a server you run, and it can be moved</td></tr>
                 <tr><th scope="row">Your ohm account</th><td>Who you are when you sign in to ohm</td><td>Made with Google, Microsoft or Bluesky. It holds no posts</td></tr>
-                <tr><th scope="row">Your folder</th><td>Every post that is not public, as Markdown files</td><td>Yours, on your machine or in your own cloud storage</td></tr>
-                <tr><th scope="row">Your workspace on ohm</th><td>A working copy of all of it</td><td>ohm holds it for you</td></tr>
+                <tr><th scope="row">Your folder, once synced</th><td>Your posts as Markdown files</td><td>Yours, on your machine or in locally synced storage</td></tr>
+                <tr><th scope="row">Your vault on ohm</th><td>A working copy of every post</td><td>ohm holds it for you</td></tr>
+                <tr><th scope="row">Your cortex on ohm</th><td>Memories, history, observations, skills and tool settings</td><td>Private to your connected DID; not included in post sync or export</td></tr>
               </tbody>
             </table>
           </div>
@@ -118,8 +125,8 @@
                 <tr><td></td><th>The original</th><th>ohm's working copy</th><th>Who ohm shows it to</th></tr>
               </thead>
               <tbody>
-                <tr><th scope="row">Public</th><td>Your account, in the open</td><td>Yes</td><td>Everyone</td></tr>
-                <tr><th scope="row">Friends</th><td>Your folder, once connected</td><td>Yes</td><td>You, and your friends</td></tr>
+                <tr><th scope="row">Public</th><td>Your account, in the open</td><td>Yes</td><td>The vault API serves only you; published records are public at your PDS</td></tr>
+                <tr><th scope="row">Friends</th><td>Your folder, once connected</td><td>Yes</td><td>Only you for now; friends-only delivery is planned</td></tr>
                 <tr><th scope="row">Private</th><td>Your folder, once connected</td><td>Yes</td><td>Only you</td></tr>
               </tbody>
             </table>
@@ -139,7 +146,8 @@
 
         <section aria-labelledby="folder">
           <h2 id="folder">With and without a folder</h2>
-          <p>With a folder connected, deleting ohm's copy loses nothing. Until you connect one, ohm holds the only copy of your private and friends-only posts. <a href="/sync">Sync with a folder</a></p>
+          <p>With an up-to-date synced folder, you have a copy of your posts. Until you sync or export, ohm may hold the only copy of private and friends-only posts. <a href="/sync">Sync with a folder</a></p>
+          <p>Your cortex is separate. Post files do not back it up, and removing a memory from Context preserves its history. A complete cortex export and folder adapter remain planned. <a href="/cortex">Your cortex</a></p>
         </section>
 
         <section aria-labelledby="identity">
@@ -157,7 +165,7 @@
     <nav class="site-toc" aria-labelledby="toc-title">
       <p id="toc-title">On this page</p>
       <ul>
-        <li><a href="#places">Three places</a></li>
+        <li><a href="#places">The places</a></li>
         <li><a href="#by-visibility">By who can see the post</a></li>
         <li><a href="#reads">What ohm can read</a></li>
         <li><a href="#folder">With and without a folder</a></li>

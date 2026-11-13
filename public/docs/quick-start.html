@@ -4,12 +4,12 @@
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <meta name="theme-color" content="#fafaf9">
-    <meta name="description" content="Your first session in ohm: sign in, say where your posts live, write a post, decide who sees it, and publish. Then connect a folder of your own and bring in your agent.">
+    <meta name="description" content="Start with your posts, then open the private cortex your agent uses to remember your work. Publishing, folder sync and connecting an agent are separate steps.">
     <link rel="canonical" href="https://docs.ohmmmm.com/quick-start">
     <meta property="og:type" content="website">
     <meta property="og:site_name" content="ohm">
     <meta property="og:title" content="Quick start · ohm docs">
-    <meta property="og:description" content="Your first session in ohm: sign in, say where your posts live, write a post, decide who sees it, and publish. Then connect a folder of your own and bring in your agent.">
+    <meta property="og:description" content="Start with your posts, then open the private cortex your agent uses to remember your work. Publishing, folder sync and connecting an agent are separate steps.">
     <meta property="og:url" content="https://docs.ohmmmm.com/quick-start">
     <meta property="og:image" content="https://ohmmmm.com/assets/og-image.png">
     <meta property="og:image:width" content="1200">
@@ -63,6 +63,12 @@
         <li><a href="/files">Posts as files</a></li>
         <li><a href="/export">Export and leaving</a></li>
       </ul>
+      <p class="sidebar-group">Cortex</p>
+      <ul>
+        <li><a href="/cortex">Your cortex</a></li>
+        <li><a href="/memory">Memory and notes</a></li>
+        <li><a href="/skills-tools">Skills and tools</a></li>
+      </ul>
       <p class="sidebar-group">Agent</p>
       <ul>
         <li><a href="/agent">Connect your agent</a></li>
@@ -89,8 +95,8 @@
         <header>
           <p class="group">Get started</p>
           <h1 id="title">Quick start</h1>
-          <p class="introduction">Your first session in ohm: sign in, say where your posts live, write a post, decide who sees it, and publish. Then connect a folder of your own and bring in your agent.</p>
-          <p class="alert" role="note">ohm is still in production, and these pages are its architecture document: they describe how it is meant to work, not a finished product.</p>
+          <p class="introduction">Start with your posts, then open the private cortex your agent uses to remember your work. Publishing, folder sync and connecting an agent are separate steps.</p>
+          <p class="alert" role="note">ohm is in development. These docs cover the implementation and the work still planned. Built does not mean verified on the live service; see Status and limits.</p>
         </header>
 
         <section aria-labelledby="sign-in">
@@ -133,7 +139,7 @@
           <p>Every post is one of three things.</p>
           <ul>
             <li><strong>Private.</strong> Only you.</li>
-            <li><strong>Friends.</strong> The people you follow who follow you back.</li>
+            <li><strong>Friends.</strong> Reserved for people you follow who follow you back. Delivery to friends is not implemented yet.</li>
             <li><strong>Public.</strong> Everyone, on your website and anywhere else your published layer is read.</li>
           </ul>
           <p>Changing this does not share anything yet. It marks the post, and a mark on the Publish button shows that something is waiting. <a href="/visibility">More about who sees a post</a></p>
@@ -146,16 +152,22 @@
         </section>
 
         <section aria-labelledby="folder">
-          <h2 id="folder">7. Connect a folder of your own</h2>
-          <p>Connect a folder on your computer and sync. Each post appears there as a Markdown file, filed in a folder named for its label.</p>
-          <p>From then on your originals live with you, and ohm holds a working copy. Edit a file in the folder and sync, and the change arrives in your workspace. Syncing never publishes.</p>
-          <p>Until you connect a folder, ohm holds the only copy of your private and friends-only posts. <a href="/sync">More about syncing</a></p>
+          <h2 id="folder">7. Keep a copy of your posts</h2>
+          <p>Export your vault, or use the command-line folder sync. Each post becomes a Markdown file, filed under its label. Browser folder sync and direct cloud-storage connections are planned.</p>
+          <p>Syncing never publishes. It currently covers posts, not your cortex; cortex export is still planned. <a href="/sync">More about syncing</a></p>
         </section>
 
         <section aria-labelledby="agent">
           <h2 id="agent">8. Bring in your agent</h2>
           <p>Connect the coding agent you already use, and it can read and write in your workspace. It reads your private posts too, which is how it knows what you are working on.</p>
+          <p>Ask it to start with your cortex. It reads standing memories and descriptions, then recalls the detail it needs. Automatic session hooks are not installed by connecting the MCP tools.</p>
           <p>Anything that changes what other people see is shown to you first, publishing included. <a href="/agent">More about your agent</a></p>
+        </section>
+
+        <section aria-labelledby="cortex">
+          <h2 id="cortex">9. See what your agent remembers</h2>
+          <p>Open Cortex in the rail. Memories, Notes and Skills are separate from your posts. You can edit a memory, inspect its earlier versions, restore one, and review an agent's proposed skill before approving it.</p>
+          <p>Your cortex stays private. Publish does not read it. <a href="/cortex">Your cortex</a></p>
         </section>
 
         <section aria-labelledby="next">
@@ -184,8 +196,9 @@
         <li><a href="#write">4. Write a post</a></li>
         <li><a href="#who">5. Decide who sees it</a></li>
         <li><a href="#publish">6. Publish</a></li>
-        <li><a href="#folder">7. Connect a folder of your own</a></li>
+        <li><a href="#folder">7. Keep a copy of your posts</a></li>
         <li><a href="#agent">8. Bring in your agent</a></li>
+        <li><a href="#cortex">9. See what your agent remembers</a></li>
         <li><a href="#next">Things to ask your agent first</a></li>
       </ul>
     </nav>

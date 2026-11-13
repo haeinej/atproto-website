@@ -61,5 +61,5 @@ Both ways of writing them are read, and each file keeps whichever it was written
 A post written out as a file and read back is the same post. That holds for titles and text in any script, and for text that YAML would otherwise misread.
 
 ---
-ohm is still in production, and these pages are its architecture document: they describe how it is meant to work, not a finished product.
+ohm is in development. These docs cover the implementation and the work still planned. Built does not mean verified on the live service; see Status and limits.
 All pages: https://docs.ohmmmm.com/llms.txt

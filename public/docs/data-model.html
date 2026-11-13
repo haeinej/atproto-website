@@ -4,12 +4,12 @@
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <meta name="theme-color" content="#fafaf9">
-    <meta name="description" content="The unit of ohm is the post. It exists in three forms that map onto each other exactly: a row in the vault, a com.ohmmmm.post record in the member&#x27;s repository when it is public, and a Markdown file in the member&#x27;s folder.">
+    <meta name="description" content="Posts and cortex knowledge are separate data. A post maps to a vault row, a public repository record and a Markdown file. Memories, notes, skills and tools have private, member-scoped storage of their own.">
     <link rel="canonical" href="https://docs.ohmmmm.com/data-model">
     <meta property="og:type" content="website">
     <meta property="og:site_name" content="ohm">
     <meta property="og:title" content="Data model · ohm docs">
-    <meta property="og:description" content="The unit of ohm is the post. It exists in three forms that map onto each other exactly: a row in the vault, a com.ohmmmm.post record in the member&#x27;s repository when it is public, and a Markdown file in the member&#x27;s folder.">
+    <meta property="og:description" content="Posts and cortex knowledge are separate data. A post maps to a vault row, a public repository record and a Markdown file. Memories, notes, skills and tools have private, member-scoped storage of their own.">
     <meta property="og:url" content="https://docs.ohmmmm.com/data-model">
     <meta property="og:image" content="https://ohmmmm.com/assets/og-image.png">
     <meta property="og:image:width" content="1200">
@@ -63,6 +63,12 @@
         <li><a href="/files">Posts as files</a></li>
         <li><a href="/export">Export and leaving</a></li>
       </ul>
+      <p class="sidebar-group">Cortex</p>
+      <ul>
+        <li><a href="/cortex">Your cortex</a></li>
+        <li><a href="/memory">Memory and notes</a></li>
+        <li><a href="/skills-tools">Skills and tools</a></li>
+      </ul>
       <p class="sidebar-group">Agent</p>
       <ul>
         <li><a href="/agent">Connect your agent</a></li>
@@ -89,8 +95,8 @@
         <header>
           <p class="group">Architecture</p>
           <h1 id="title">Data model</h1>
-          <p class="introduction">The unit of ohm is the post. It exists in three forms that map onto each other exactly: a row in the vault, a <code>com.ohmmmm.post</code> record in the member's repository when it is public, and a Markdown file in the member's folder.</p>
-          <p class="alert" role="note">ohm is still in production, and these pages are its architecture document: they describe how it is meant to work, not a finished product.</p>
+          <p class="introduction">Posts and cortex knowledge are separate data. A post maps to a vault row, a public repository record and a Markdown file. Memories, notes, skills and tools have private, member-scoped storage of their own.</p>
+          <p class="alert" role="note">ohm is in development. These docs cover the implementation and the work still planned. Built does not mean verified on the live service; see Status and limits.</p>
         </header>
 
         <section aria-labelledby="post">
@@ -203,7 +209,7 @@
 
         <section aria-labelledby="storage">
           <h2 id="storage">Storage</h2>
-          <p>The vault service stores two tables.</p>
+          <p>The service stores posts, account links and cortex data. Every cortex table is scoped by the member's DID; a memory name, skill name or observation ID is never a cross-member address.</p>
           <div class="table">
             <table>
               <thead>
@@ -212,10 +218,23 @@
               <tbody>
                 <tr><th scope="row"><code>posts</code></th><td>Account DID and post ID</td><td>The post as JSON, its version and sequence, and indexed copies of the fields the repository tree is drawn from</td></tr>
                 <tr><th scope="row"><code>links</code></th><td>ohm user ID, with the DID unique</td><td>Which AT Protocol account an ohm account works in, and when its published posts were first mirrored</td></tr>
+                <tr><th scope="row"><code>cortex_memories</code></th><td>DID and memory name</td><td>Current JSON, revision, sequence and removal state</td></tr>
+                <tr><th scope="row"><code>cortex_memory_versions</code></th><td>DID, name and earlier version</td><td>Preserved memory text; rewrites and removals retain the prior row atomically</td></tr>
+                <tr><th scope="row"><code>cortex_notes</code></th><td>DID and note ID</td><td>Observation, originating session, project, authenticated author and immutable outcome receipt</td></tr>
+                <tr><th scope="row"><code>cortex_skills</code></th><td>DID and skill name</td><td>Instructions and supporting files; approval names one exact version</td></tr>
+                <tr><th scope="row"><code>cortex_tools</code></th><td>DID and tool name</td><td>Settings or inert proposals; no credentials or executable configuration</td></tr>
+                <tr><th scope="row"><code>cortex_turns</code>, <code>cortex_turn_receipts</code></th><td>DID and turn ID</td><td>Reserved storage for the unbuilt turn-capture adapter</td></tr>
               </tbody>
             </table>
           </div>
-          <p>The database enforces two invariants itself: a slug is used once within a vault, and a write succeeds only against the version it names.</p>
+          <p>The database enforces unique keys and conditional updates. Memory history is preserved by a trigger in the same statement as a rewrite or removal. Restoring earlier text creates a new revision, so an old concurrency token does not become current again.</p>
+        </section>
+
+        <section aria-labelledby="context">
+          <h2 id="context">Context</h2>
+          <p><code>getContext</code> seeds <code>identity</code>, <code>vault-map</code> and <code>working-style</code>. Its <code>always</code> array contains full <code>{memory, version}</code> entries; <code>vault-map</code> also includes current service-derived vault structure and recent posts. Other memories are indexed by name, description and kind.</p>
+          <p>Approved skill descriptions, enabled non-proposed tool descriptions, pending notes and the waiting-turn count complete Context. Its version changes with its inputs. A project field records scope, but the planned automatic prompt-recall request is not implemented; callers must not assume automatic project filtering or a context budget.</p>
+          <p>The post schema and profile schema are unchanged by cortex data. Nothing in these private tables is published as <code>com.ohmmmm.post</code>.</p>
         </section>
 
         <nav class="page-pager" aria-label="Docs pages">
@@ -234,6 +253,7 @@
         <li><a href="#attachments">Attachments</a></li>
         <li><a href="#mapping">From vault to record</a></li>
         <li><a href="#storage">Storage</a></li>
+        <li><a href="#context">Context</a></li>
       </ul>
     </nav>
   </body>

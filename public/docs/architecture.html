@@ -4,12 +4,12 @@
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <meta name="theme-color" content="#fafaf9">
-    <meta name="description" content="ohm is built from three kinds of system with a strict division of ownership: the member&#x27;s AT Protocol account, which holds their identity and everything public; ohm&#x27;s services, which hold a working copy; and clients on the member&#x27;s device, the only place a write to the member&#x27;s account originates.">
+    <meta name="description" content="ohm keeps a vault of posts and a private cortex for agent knowledge. The member&#x27;s PDS owns public records; ohm stores working state; clients on the member&#x27;s device perform approved publication.">
     <link rel="canonical" href="https://docs.ohmmmm.com/architecture">
     <meta property="og:type" content="website">
     <meta property="og:site_name" content="ohm">
     <meta property="og:title" content="System overview · ohm docs">
-    <meta property="og:description" content="ohm is built from three kinds of system with a strict division of ownership: the member&#x27;s AT Protocol account, which holds their identity and everything public; ohm&#x27;s services, which hold a working copy; and clients on the member&#x27;s device, the only place a write to the member&#x27;s account originates.">
+    <meta property="og:description" content="ohm keeps a vault of posts and a private cortex for agent knowledge. The member&#x27;s PDS owns public records; ohm stores working state; clients on the member&#x27;s device perform approved publication.">
     <meta property="og:url" content="https://docs.ohmmmm.com/architecture">
     <meta property="og:image" content="https://ohmmmm.com/assets/og-image.png">
     <meta property="og:image:width" content="1200">
@@ -63,6 +63,12 @@
         <li><a href="/files">Posts as files</a></li>
         <li><a href="/export">Export and leaving</a></li>
       </ul>
+      <p class="sidebar-group">Cortex</p>
+      <ul>
+        <li><a href="/cortex">Your cortex</a></li>
+        <li><a href="/memory">Memory and notes</a></li>
+        <li><a href="/skills-tools">Skills and tools</a></li>
+      </ul>
       <p class="sidebar-group">Agent</p>
       <ul>
         <li><a href="/agent">Connect your agent</a></li>
@@ -89,13 +95,13 @@
         <header>
           <p class="group">Architecture</p>
           <h1 id="title">System overview</h1>
-          <p class="introduction">ohm is built from three kinds of system with a strict division of ownership: the member's AT Protocol account, which holds their identity and everything public; ohm's services, which hold a working copy; and clients on the member's device, the only place a write to the member's account originates.</p>
-          <p class="alert" role="note">ohm is still in production, and these pages are its architecture document: they describe how it is meant to work, not a finished product.</p>
+          <p class="introduction">ohm keeps a vault of posts and a private cortex for agent knowledge. The member's PDS owns public records; ohm stores working state; clients on the member's device perform approved publication.</p>
+          <p class="alert" role="note">ohm is in development. These docs cover the implementation and the work still planned. Built does not mean verified on the live service; see Status and limits.</p>
         </header>
 
         <section aria-labelledby="how">
           <h2 id="how">How it works</h2>
-          <p>Everything in ohm is a post, and every post is in a member's vault: one working copy of all their work, held by ohm, in a structure of labels, sublabels and posts. A post is private, for friends, or public. The whole system follows from keeping two things apart: working in the vault, and publishing from it.</p>
+          <p>The vault holds what a member makes: posts filed under labels and sublabels, private, for friends or public. The cortex holds what their agents learn and can use: memories, observations, approved skills and tool settings. Both are member-scoped, but only public posts can become repository records.</p>
           <ol>
             <li><strong>Sign in.</strong> A person signs in to ohm, and once connects the AT Protocol account that owns their posts. That account lives on a Personal Data Server (PDS) they host themselves or at Bluesky. It is theirs whether or not they use ohm.</li>
             <li><strong>Mirror.</strong> What the account has already published is read from its repository into the vault. From then on the vault holds everything: public posts, and private and friends-only ones that exist nowhere else on the network.</li>
@@ -104,6 +110,7 @@
             <li><strong>Publish.</strong> The vault service works out what would have to change in the member's repository for what is published to match the vault. The member reviews that plan and approves it, and their own device, signed in at their own PDS, makes the changes. Public posts become <code>com.ohmmmm.post</code> records.</li>
             <li><strong>Read.</strong> The member's website and any other AT Protocol application read those records from the repository. ohm is not in that path.</li>
             <li><strong>Keep.</strong> The vault can be synced to a folder the member holds, or exported, as Markdown files. With a folder connected, nothing depends on ohm keeping its copy.</li>
+            <li><strong>Learn.</strong> An agent reads Context, records observations, saves memories and proposes skills. The member can inspect memory history and approve skill versions in Cortex. This state is separate from post sync; cortex export is not built yet.</li>
           </ol>
           <p>Three rules hold everywhere and are worth knowing before anything else.</p>
           <ul>
@@ -116,7 +123,7 @@
         <section aria-labelledby="components">
           <h2 id="components">Components</h2>
           <figure class="figure">
-            <div class="figure-scroll"><svg viewBox="0 0 640 400" width="640" height="400" role="img" aria-labelledby="figure-system"><title id="figure-system">The parts of ohm and what passes between them</title><defs><marker id="head-system" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path class="d-head" d="M0 0 10 5 0 10z"/></marker></defs><rect class="d-group" x="0" y="0" width="640" height="112" rx="14"/><text class="d-caption" x="16" y="24">MEMBER'S DEVICE</text><rect class="d-box" x="16" y="38" width="192" height="58" rx="10"/><text class="d-title" x="30" y="64">Workspace</text><text class="d-sub" x="30" y="83">Browser</text><rect class="d-box" x="224" y="38" width="192" height="58" rx="10"/><text class="d-title" x="238" y="64">Agent tools</text><text class="d-sub" x="238" y="83">MCP server</text><rect class="d-box" x="432" y="38" width="192" height="58" rx="10"/><text class="d-title" x="446" y="64">Folder sync</text><text class="d-sub" x="446" y="83">Command line</text><rect class="d-group" x="0" y="168" width="296" height="232" rx="14"/><text class="d-caption" x="16" y="192">OHM</text><rect class="d-box" x="16" y="206" width="264" height="64" rx="10"/><text class="d-title" x="30" y="232">Vault service</text><text class="d-sub" x="30" y="251">Working copy of every post</text><rect class="d-box" x="16" y="320" width="264" height="64" rx="10"/><text class="d-title" x="30" y="346">ohm sign-in</text><text class="d-sub" x="30" y="365">Accounts and sessions</text><rect class="d-group" x="344" y="168" width="296" height="118" rx="14"/><text class="d-caption" x="360" y="192">MEMBER'S ACCOUNT</text><rect class="d-box" x="360" y="206" width="264" height="64" rx="10"/><text class="d-title" x="374" y="232">Personal Data Server</text><text class="d-sub" x="374" y="251">Identity and public repository</text><rect class="d-box d-outside" x="344" y="342" width="140" height="58" rx="10"/><text class="d-title" x="358" y="368">Website</text><text class="d-sub" x="358" y="387">Renders records</text><rect class="d-box d-outside" x="500" y="342" width="140" height="58" rx="10"/><text class="d-title" x="514" y="368">Other apps</text><text class="d-sub" x="514" y="387">Read records</text><path class="d-arrow" d="M148 112L148 204" marker-end="url(#head-system)"/><text class="d-label" x="158" y="146" text-anchor="start">API requests</text><path class="d-arrow" d="M528 112L528 204" marker-end="url(#head-system)"/><text class="d-label" x="518" y="146" text-anchor="end">Sign-in, tokens, publish</text><path class="d-arrow" d="M280 238L358 238" marker-end="url(#head-system)"/><text class="d-label" x="320" y="229" text-anchor="middle">reads</text><path class="d-arrow" d="M148 270L148 318" marker-end="url(#head-system)"/><text class="d-label" x="158" y="300" text-anchor="start">session check</text><path class="d-arrow" d="M414 270L414 340" marker-end="url(#head-system)"/><path class="d-arrow" d="M570 270L570 340" marker-end="url(#head-system)"/><text class="d-label" x="492" y="322" text-anchor="middle">public records</text></svg></div>
+            <div class="figure-scroll"><svg viewBox="0 0 640 400" width="640" height="400" role="img" aria-labelledby="figure-system"><title id="figure-system">The parts of ohm and what passes between them</title><defs><marker id="head-system" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path class="d-head" d="M0 0 10 5 0 10z"/></marker></defs><rect class="d-group" x="0" y="0" width="640" height="112" rx="14"/><text class="d-caption" x="16" y="24">MEMBER'S DEVICE</text><rect class="d-box" x="16" y="38" width="192" height="58" rx="10"/><text class="d-title" x="30" y="64">Workspace</text><text class="d-sub" x="30" y="83">Browser</text><rect class="d-box" x="224" y="38" width="192" height="58" rx="10"/><text class="d-title" x="238" y="64">Agent tools</text><text class="d-sub" x="238" y="83">MCP server</text><rect class="d-box" x="432" y="38" width="192" height="58" rx="10"/><text class="d-title" x="446" y="64">Folder sync</text><text class="d-sub" x="446" y="83">Command line</text><rect class="d-group" x="0" y="168" width="296" height="232" rx="14"/><text class="d-caption" x="16" y="192">OHM</text><rect class="d-box" x="16" y="206" width="264" height="64" rx="10"/><text class="d-title" x="30" y="232">Vault + cortex service</text><text class="d-sub" x="30" y="251">Posts and private agent knowledge</text><rect class="d-box" x="16" y="320" width="264" height="64" rx="10"/><text class="d-title" x="30" y="346">ohm sign-in</text><text class="d-sub" x="30" y="365">Accounts and sessions</text><rect class="d-group" x="344" y="168" width="296" height="118" rx="14"/><text class="d-caption" x="360" y="192">MEMBER'S ACCOUNT</text><rect class="d-box" x="360" y="206" width="264" height="64" rx="10"/><text class="d-title" x="374" y="232">Personal Data Server</text><text class="d-sub" x="374" y="251">Identity and public repository</text><rect class="d-box d-outside" x="344" y="342" width="140" height="58" rx="10"/><text class="d-title" x="358" y="368">Website</text><text class="d-sub" x="358" y="387">Renders records</text><rect class="d-box d-outside" x="500" y="342" width="140" height="58" rx="10"/><text class="d-title" x="514" y="368">Other apps</text><text class="d-sub" x="514" y="387">Read records</text><path class="d-arrow" d="M148 112L148 204" marker-end="url(#head-system)"/><text class="d-label" x="158" y="146" text-anchor="start">API requests</text><path class="d-arrow" d="M528 112L528 204" marker-end="url(#head-system)"/><text class="d-label" x="518" y="146" text-anchor="end">Sign-in, tokens, publish</text><path class="d-arrow" d="M280 238L358 238" marker-end="url(#head-system)"/><text class="d-label" x="320" y="229" text-anchor="middle">reads</text><path class="d-arrow" d="M148 270L148 318" marker-end="url(#head-system)"/><text class="d-label" x="158" y="300" text-anchor="start">session check</text><path class="d-arrow" d="M414 270L414 340" marker-end="url(#head-system)"/><path class="d-arrow" d="M570 270L570 340" marker-end="url(#head-system)"/><text class="d-label" x="492" y="322" text-anchor="middle">public records</text></svg></div>
             <figcaption>Clients on the member's device call the vault service for everything in the working copy, and the member's own PDS for sign-in and publishing. The vault service only reads from the PDS.</figcaption>
           </figure>
           <div class="table">
@@ -126,9 +133,11 @@
               </thead>
               <tbody>
                 <tr><th scope="row">Workspace</th><td>The member's browser, served from <code>app.ohmmmm.com/vault</code></td><td>Editor, repository tree, publish review</td><td>Implemented</td></tr>
-                <tr><th scope="row">Agent tools</th><td>An MCP server, <code>ohm-vault</code>, on the member's machine</td><td>Ten tools composed from service requests. <a href="/mcp">Agent integration</a></td><td>Implemented</td></tr>
+                <tr><th scope="row">Cortex panel</th><td>The member's browser, beside the vault</td><td>Memories, Notes and Skills; history, restore and approval</td><td>Implemented</td></tr>
+                <tr><th scope="row">Agent tools</th><td>An MCP server, <code>ohm-vault</code>, on the member's machine</td><td>Vault and cortex tools composed from service requests. <a href="/mcp">Agent integration</a></td><td>Implemented</td></tr>
                 <tr><th scope="row">Folder sync</th><td>A command-line client on the member's machine</td><td>Two-way sync between the vault and a folder of Markdown files</td><td>Implemented</td></tr>
-                <tr><th scope="row">Vault service</th><td>Cloudflare Workers and D1</td><td>Stores the working copy of every post. Computes mirror and publish plans. Never writes to a member's repository</td><td>Implemented</td></tr>
+                <tr><th scope="row">Vault and cortex service</th><td>Cloudflare Workers and D1</td><td>Stores posts and private cortex data; checks versions, evidence and approvals; computes mirror and publish plans</td><td>Implemented</td></tr>
+                <tr><th scope="row">Agent adapters</th><td>The member's machine</td><td>Automatic session hooks, prompt recall and turn capture</td><td>Planned</td></tr>
                 <tr><th scope="row">ohm sign-in</th><td>Cloudflare Workers and D1</td><td>ohm accounts and sessions, with Google, Microsoft and Bluesky as identity providers</td><td>Implemented</td></tr>
                 <tr><th scope="row">Personal Data Server (PDS)</th><td>The member's host: self-hosted, or Bluesky</td><td>The account's DID, signing key, and repository of public records and files</td><td>External</td></tr>
                 <tr><th scope="row">Website and other applications</th><td>Their own hosts</td><td>Read public records from the repository</td><td>External</td></tr>
@@ -140,7 +149,7 @@
 
         <section aria-labelledby="ownership">
           <h2 id="ownership">Ownership</h2>
-          <p>Each kind of data has one system of record. ohm is the system of record for nothing a member cannot take away.</p>
+          <p>Public records remain at the member's PDS. Posts have a portable folder format. Cortex data currently lives in the service, and a complete way to export it is still missing.</p>
           <div class="table">
             <table>
               <thead>
@@ -150,6 +159,7 @@
                 <tr><th scope="row">Identity: DID, handle, signing key</th><td>The member's PDS</td><td>A reference to the DID</td></tr>
                 <tr><th scope="row">Public posts</th><td>The member's repository, as <code>com.ohmmmm.post</code> records</td><td>A working copy</td></tr>
                 <tr><th scope="row">Private and friends-only posts</th><td>The member's folder, once connected</td><td>A working copy. Until a folder is connected, the only copy</td></tr>
+                <tr><th scope="row">Memory, history, notes, skills and tool settings</th><td>Private cortex, scoped by the member's DID</td><td>The stored copy; post exports do not include it</td></tr>
                 <tr><th scope="row">ohm account and session</th><td>ohm sign-in</td><td>The account itself</td></tr>
                 <tr><th scope="row">The link between an ohm account and a DID</th><td>Vault service</td><td>One row, unique in both directions</td></tr>
               </tbody>
@@ -162,10 +172,11 @@
           <ol>
             <li><strong>The service never writes to a member's repository.</strong> It holds no credential that could. Publishing is planned by the service and carried out from the member's device. <a href="/protocols">Mirror and publish</a></li>
             <li><strong>Authentication is delegated to the member's PDS.</strong> The PDS signs a short-lived token for each request, and the service verifies it against the account's own DID document. ohm stores no PDS password or token. <a href="/identity">Identity and access</a></li>
-            <li><strong>Every change is conditional.</strong> A write names the version it replaces and is refused if the post has moved on, so the editor, an agent and a sync can work on the same vault without overwriting each other.</li>
-            <li><strong>Capabilities are isolated.</strong> The service offers eight capabilities, each a separate module with its own requests. An agent's tools are compositions of those requests and add none of their own. <a href="/api">Service API</a></li>
+            <li><strong>Versioned changes are conditional.</strong> A post, memory, skill or tool setting is replaced against the version read. A stale write is refused rather than silently overwriting newer work.</li>
+            <li><strong>Capabilities are isolated.</strong> Requests are grouped by responsibility. Agent tools compose those requests and add no service privileges. Reserved requests remain authenticated and refuse with <code>NotBuiltYet</code>. <a href="/api">Service API</a></li>
             <li><strong>Requests are idempotent.</strong> A request sent twice ends in the same state as one sent once. A post's ID is generated by the client, so creating it twice creates one post.</li>
-            <li><strong>One portable format.</strong> Sync and export produce the same folder of Markdown files, and reading them back yields the same posts. <a href="/files">Posts as files</a></li>
+            <li><strong>One portable post format.</strong> Post sync and export produce the same Markdown files. Cortex serialization exists for individual memories, but complete cortex export is planned. <a href="/files">Posts as files</a></li>
+            <li><strong>Cortex stays private.</strong> Publish, Mirror and public records do not read it. Context includes only approved skill versions and enabled, non-proposed tool descriptions. The service makes no model calls.</li>
           </ol>
         </section>
 
@@ -192,6 +203,7 @@
           <ul>
             <li><a href="/identity">Identity and access</a>: the two identities, and how every request is authenticated.</li>
             <li><a href="/data-model">Data model</a>: a post in the vault, the published record, identifiers and versions.</li>
+            <li><a href="/cortex">Your cortex</a>: private memory, observations, skills and tools beside the vault.</li>
             <li><a href="/protocols">Mirror and publish</a>: the two exchanges with a member's repository.</li>
             <li><a href="/mcp">Agent integration</a>: the MCP server, its tools, and how changes are confirmed.</li>
             <li><a href="/api">Service API</a>: every request, error and agent tool.</li>

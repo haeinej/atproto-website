@@ -1,10 +1,10 @@
 # Service API
 
-The vault service exposes fifteen requests in eight capabilities. This reference is generated from the same tables the service runs on.
+The vault and cortex service registers 38 requests in 15 capabilities. This reference includes authenticated placeholders and is generated from the tables the service runs on.
 
 ## Conventions
 
-The vault service speaks XRPC, the request convention of the AT Protocol. Every request has a namespaced name and is sent to `/xrpc/` followed by that name.
+The vault and cortex service speaks XRPC, the request convention of the AT Protocol. Every request has a namespaced name and is sent to `/xrpc/` followed by that name. Cortex requests are private; a registered request can still be an authenticated `NotBuiltYet` placeholder.
 
 | | |
 | --- | --- |
@@ -12,7 +12,7 @@ The vault service speaks XRPC, the request convention of the AT Protocol. Every 
 | Reads | `GET`, with parameters in the query string |
 | Changes | `POST`, with parameters as a JSON body |
 | Responses | JSON, sent with `Cache-Control: private, no-store`. `getAttachment` answers with the file itself |
-| Idempotency | Every request can be repeated safely. A change names the version it replaces, and a repeat of a change already made reports `unchanged` |
+| Idempotency | Versioned writes name the version replaced; identical retries are safe. Notes reuse client-made IDs and retain settlement receipts. A multi-request tool can partially complete, so reread state before retrying after a failure |
 | Authentication | A service token from the member's PDS in `Authorization: Bearer`, or an ohm session. [Identity and access](https://docs.ohmmmm.com/identity.md) |
 
 The access level of each request is one of four.
@@ -221,6 +221,287 @@ Says who a token from a PDS names. The token has to be issued for this request a
 | Parameters | None |
 | Returns | `did`, and `handle` when the handle points back to the account |
 
+## Context
+
+The private cortex at session start: always memories in full, an index of the rest, approved skills, enabled tools and work waiting to be settled.
+
+### `com.ohmmmm.cortex.getContext`
+
+Get the three initial memories without inventing identity or preferences. The vault-map entry includes a current, service-derived vault structure beside its editable memory. The version changes with the context.
+
+| | |
+| --- | --- |
+| Method | `GET` |
+| Access | Member |
+| Parameters | None |
+| Returns | `always` ({memory, version}, with current `vault` on vault-map), `memories` (name, description, kind), `skills`, `tools`, `notes`, `turns` (waiting count), `version` |
+
+### `com.ohmmmm.cortex.recall`
+
+Not built yet. Prompt recall will use project isolation and a character budget.
+
+| | |
+| --- | --- |
+| Method | `GET` |
+| Access | Member |
+| Parameters | `q`: the prompt<br>`project`: optional: the repository<br>`budget`: optional: 1,500 characters unless said |
+| Returns | `memories` (name, description, passage), `skills` (name, description), within the budget |
+
+## Memory
+
+Private memories for the authenticated member. Every rewrite names the version it replaces and preserves that earlier version.
+
+### `com.ohmmmm.cortex.listMemories`
+
+List memory descriptions and versions, with a stable cursor. With since, include changes and removals.
+
+| | |
+| --- | --- |
+| Method | `GET` |
+| Access | Member |
+| Parameters | `since`: optional: an earlier cursor<br>`kind`: optional: person, preference, project or reference |
+| Returns | `memories` (name, version, description, kind, writtenBy, when), `cursor`, and optionally `more` |
+
+### `com.ohmmmm.cortex.getMemory`
+
+Read a memory in full. An optional version reads a preserved earlier version; putMemory can restore it with the current replaces value.
+
+| | |
+| --- | --- |
+| Method | `GET` |
+| Access | Member |
+| Parameters | `name`: the memory name<br>`version`: optional: a preserved earlier version<br>`history`: optional: 1 to list earlier versions and their authors and times |
+| Returns | `memory`, `version`, and with history=1, `earlier` (version, writtenBy, when, replacedAt) |
+
+### `com.ohmmmm.cortex.putMemory`
+
+Save the whole memory, naming the version it replaces. The service sets writtenBy from the authenticated principal and retains its own seen counters. Repeated writes are safe.
+
+| | |
+| --- | --- |
+| Method | `POST` |
+| Access | Member |
+| Parameters | `memory`: the whole memory<br>`replaces`: optional: the version it replaces |
+| Returns | `name`, `version`, and `unchanged` when nothing differed |
+
+### `com.ohmmmm.cortex.deleteMemory`
+
+Remove a memory, naming its current version. Earlier text remains private in history; the removal is included in the next incremental list.
+
+| | |
+| --- | --- |
+| Method | `POST` |
+| Access | Member |
+| Parameters | `name`: the memory name<br>`replaces`: the version being removed |
+| Returns | `name`, `removed` |
+
+### `com.ohmmmm.cortex.searchMemories`
+
+Find memories mentioning every word of q. A description counts more than the body. Ties are ordered by name.
+
+| | |
+| --- | --- |
+| Method | `GET` |
+| Access | Member |
+| Parameters | `q`: words to find<br>`limit`: optional: 10 unless said, at most 50 |
+| Returns | `memories` (name, description, kind, passage), best first |
+
+## Notes
+
+Private observations with client-made IDs and immutable explicit settlement receipts. The member’s agent judges; the service makes no model calls.
+
+### `com.ohmmmm.cortex.addNote`
+
+Record one observation without changing memory. The service records the authenticated author and time. Retrying the same ID and content is safe; reusing an ID for different content is refused.
+
+| | |
+| --- | --- |
+| Method | `POST` |
+| Access | Member |
+| Parameters | `id`: a client-made ID, at most 200 characters<br>`note`: one nonempty line, at most 500 characters<br>`session`: the originating session, at most 200 characters<br>`project`: optional: repository, at most 2,000 characters |
+| Returns | `id` |
+
+### `com.ohmmmm.cortex.listNotes`
+
+List unsettled observations, oldest first. With settled=1, include immutable receipts and kept observations to compare across sessions.
+
+| | |
+| --- | --- |
+| Method | `GET` |
+| Access | Member |
+| Parameters | `settled`: optional: 1 or true to include settled notes |
+| Returns | `notes` (id, text, session, project, writtenBy, when, and if settled, settledAt and outcome) |
+
+### `com.ohmmmm.cortex.settleNotes`
+
+Atomically record from 1 to 100 explicit outcomes: kept, dropped or a memory name with its current version. Each note is settled once. Memory evidence counts distinct originating sessions and preserves earlier memory versions; retries do not count twice.
+
+| | |
+| --- | --- |
+| Method | `POST` |
+| Access | Member |
+| Parameters | `notes`: 1–100 distinct {id, outcome, version?}; a memory outcome requires the current memory version |
+| Returns | `settled` (the note IDs acknowledged) |
+
+## Turns
+
+Private cortex turns. Not built yet.
+
+### `com.ohmmmm.cortex.addTurns`
+
+This cortex request is not built yet.
+
+| | |
+| --- | --- |
+| Method | `POST` |
+| Access | Member |
+| Parameters | `turns`: up to 50 client-identified turns |
+| Returns | `kept` |
+
+### `com.ohmmmm.cortex.listTurns`
+
+This cortex request is not built yet.
+
+| | |
+| --- | --- |
+| Method | `GET` |
+| Access | Member |
+| Parameters | `limit`: optional: 40 unless said |
+| Returns | `turns`, `waiting` |
+
+### `com.ohmmmm.cortex.settleTurns`
+
+This cortex request is not built yet.
+
+| | |
+| --- | --- |
+| Method | `POST` |
+| Access | Member |
+| Parameters | `turns`: each turn ID and its outcome |
+| Returns | `settled` |
+
+## Skills
+
+Private skills with member approval tied to the exact saved version. Supporting files stay inside the skill.
+
+### `com.ohmmmm.cortex.listSkills`
+
+List descriptions and approval state; this index never exposes supporting files or skill instructions.
+
+| | |
+| --- | --- |
+| Method | `GET` |
+| Access | Member |
+| Parameters | None |
+| Returns | `skills` (name, version, description, writtenBy, approved) |
+
+### `com.ohmmmm.cortex.getSkill`
+
+Read SKILL.md and supporting text files. A token cannot read an unapproved skill; the linked member can review it in ohm.
+
+| | |
+| --- | --- |
+| Method | `GET` |
+| Access | Member |
+| Parameters | `name`: the skill name |
+| Returns | `skill` ({text, files: [{path, text}]}), `version` |
+
+### `com.ohmmmm.cortex.putSkill`
+
+Save SKILL.md with name and description in YAML and optional supporting files. Token-authored changes lose approval; identical retries preserve the current approval.
+
+| | |
+| --- | --- |
+| Method | `POST` |
+| Access | Member |
+| Parameters | `skill`: {text, files: [{path, text}]}; name and description are read from SKILL.md<br>`replaces`: optional: the version being replaced |
+| Returns | `name`, `version`, `approved`, optionally `unchanged` |
+
+### `com.ohmmmm.cortex.approveSkill`
+
+Approve exactly the named current version from the linked member’s ohm session. A later edit needs new approval.
+
+| | |
+| --- | --- |
+| Method | `POST` |
+| Access | Member, with an ohm session |
+| Parameters | `name`: the skill name<br>`version`: exactly the current version to approve |
+| Returns | `name`, `approved` |
+
+### `com.ohmmmm.cortex.deleteSkill`
+
+Remove a skill from the linked member’s ohm session, naming its current version. Repeating a completed removal is safe.
+
+| | |
+| --- | --- |
+| Method | `POST` |
+| Access | Member, with an ohm session |
+| Parameters | `name`: the skill name<br>`replaces`: the current version |
+| Returns | `name`, `removed` |
+
+## Tools
+
+The member’s private tool settings and inert proposals. Only an ohm session changes tool settings. Server addresses are metadata; this capability never connects to a server or keeps credentials.
+
+### `com.ohmmmm.cortex.listTools`
+
+List tool settings with versions, and proposals marked proposed and off. Context exposes only enabled tools that are not proposals.
+
+| | |
+| --- | --- |
+| Method | `GET` |
+| Access | Member |
+| Parameters | None |
+| Returns | `tools` (name, description, on, address when given, version, proposed, writtenBy; inputs and outputs on proposals) |
+
+### `com.ohmmmm.cortex.putTool`
+
+Save or switch a tool from the linked member’s ohm session, naming the version replaced. A proposal cannot be switched on. No credentials or executable configuration is accepted.
+
+| | |
+| --- | --- |
+| Method | `POST` |
+| Access | Member, with an ohm session |
+| Parameters | `tool`: {name, description, on, address?}; optional address is credential-free HTTPS metadata only<br>`replaces`: optional: the version being replaced |
+| Returns | `name`, `version`, optionally `unchanged` |
+
+### `com.ohmmmm.cortex.deleteTool`
+
+Remove a tool setting or proposal from the linked member’s ohm session, naming its current version. Repeating a completed removal is safe.
+
+| | |
+| --- | --- |
+| Method | `POST` |
+| Access | Member, with an ohm session |
+| Parameters | `name`: the tool name<br>`replaces`: the current version |
+| Returns | `name`, `removed` |
+
+### `com.ohmmmm.cortex.proposeTool`
+
+Record a tool to be built, with its inputs and outputs. It is always off and proposed, cannot overwrite a tool, and identical retries keep one proposal.
+
+| | |
+| --- | --- |
+| Method | `POST` |
+| Access | Member |
+| Parameters | `tool`: {name, description, inputs, outputs}; inputs and outputs are text |
+| Returns | `name`, `proposed`, optionally `unchanged` |
+
+## Cortex Export
+
+Private cortex cortex export. Not built yet.
+
+### `com.ohmmmm.cortex.exportFiles`
+
+This cortex request is not built yet.
+
+| | |
+| --- | --- |
+| Method | `GET` |
+| Access | Member |
+| Parameters | None |
+| Returns | `files` (path, text) |
+
 ## Errors
 
 A refusal is JSON with an `error` code from the table below and a `message` written to be shown to a person as it is.
@@ -228,6 +509,7 @@ A refusal is JSON with an `error` code from the table below and a `message` writ
 | Error | Status | Cause |
 | --- | --- | --- |
 | `SignInRequired` | 401 | The request rides on an ohm session, and there is none |
+| `AccountChanged` | 409 | The authenticated DID differs from X-Ohm-Did, the member displayed by the editor. Reopen before reading or changing content |
 | `AuthRequired` | 401 | The token is missing, cannot be read, was issued for another request or service, has run out, or its signature does not match |
 | `NotAMember` | 403 | The account has not been let in yet |
 | `WrongOrigin` | 403 | A request that changes something came with a session but not from ohm's own pages |
@@ -239,10 +521,16 @@ A refusal is JSON with an `error` code from the table below and a `message` writ
 | `WrongMethod` | 405 | The request is the other of GET and POST |
 | `InvalidRequest` | 400 | The request is not JSON, or something it says is not what that request takes |
 | `InvalidPost` | 400 | The post is not one the vault can hold. The message lists every reason |
+| `InvalidMemory` | 400 | The memory is not one the cortex can hold, or its source notes do not belong to this member. The message says why |
+| `InvalidSkill` | 400 | The skill or its supporting text files do not fit the cortex rules. The message says why |
+| `SkillNotApproved` | 403 | An agent asked for skill instructions whose current version the member has not approved |
+| `InvalidTool` | 400 | The tool setting or proposal is not valid. Credentials and executable configuration stay outside the cortex |
 | `InvalidCursor` | 400 | `since` is not a value an earlier list returned |
-| `NotFound` | 404 | There is no such post |
-| `Changed` | 409 | The post has changed since the version the request names. The answer carries the current version |
+| `NotFound` | 404 | There is no such post, cortex item or saved version |
+| `Changed` | 409 | The post or cortex item has changed since the version the request names. The answer carries the current version |
 | `SlugTaken` | 409 | Another post in the vault already has that slug |
+| `NameTaken` | 409 | A cortex item already has that name; read it and name its version to replace it. A tool proposal cannot replace an existing tool |
+| `NotBuiltYet` | 501 | The cortex request is registered and authenticated, but its implementation has not been built yet |
 | `TooLarge` | 413 | The post is more than 600 KB of text, or a file it places is empty or larger than 25 MB |
 | `FileUnreachable` | 502 | A file a post places could not be fetched from where the post says it is |
 | `AccountNotFound` | 404 | No AT Protocol account answers to that handle or DID |
@@ -256,6 +544,15 @@ An agent's tools are compositions of the requests above and add no capability of
 
 | Tool | Effect | Requests used |
 | --- | --- | --- |
+| `cortex_start` | Read | `com.ohmmmm.cortex.getContext` |
+| `cortex_note` | Change | `com.ohmmmm.cortex.addNote` |
+| `cortex_settle` | Change | `com.ohmmmm.cortex.listNotes`, `com.ohmmmm.cortex.getMemory`, `com.ohmmmm.cortex.putMemory`, `com.ohmmmm.cortex.settleNotes` |
+| `cortex_recall` | Read | `com.ohmmmm.cortex.searchMemories`, `com.ohmmmm.cortex.getMemory` |
+| `cortex_remember` | Change | `com.ohmmmm.cortex.getMemory`, `com.ohmmmm.cortex.putMemory` |
+| `cortex_forget` | Change | `com.ohmmmm.cortex.getMemory`, `com.ohmmmm.cortex.deleteMemory` |
+| `cortex_skill` | Read | `com.ohmmmm.cortex.getSkill` |
+| `cortex_propose_skill` | Change | `com.ohmmmm.cortex.getSkill`, `com.ohmmmm.cortex.putSkill` |
+| `cortex_propose_tool` | Change | `com.ohmmmm.cortex.proposeTool` |
 | `vault_tree` | Read | `getTree` |
 | `vault_list` | Read | `getTree` |
 | `vault_read` | Read | `getTree`, `getPost` |
@@ -267,12 +564,14 @@ An agent's tools are compositions of the requests above and add no capability of
 | `vault_mirror` | Change | `importPublished` |
 | `vault_delete` | Change | `getTree`, `getPost`, `deletePost` |
 
-The server that offers these tools is described in [Agent integration](https://docs.ohmmmm.com/mcp.md). Three rules hold for every tool that changes something.
+The server that offers these tools is described in [Agent integration](https://docs.ohmmmm.com/mcp.md). Vault tools follow these rules.
 
 1. **A new post is private.** Marking it for anyone else is a separate, confirmed step.
 2. **Changes that others can see take two calls.** The first returns what would happen and a `confirm` value bound to exactly that outcome. Only a second call carrying the value proceeds.
 3. **A post is changed from the version that was read.** If it has changed since, nothing is saved.
 
+Cortex memory and note writes need no approval queue. Forgetting uses its own single-use confirmation. Agents can propose skills and tools, but approval and tool settings require the linked member's ohm session.
+
 ---
-ohm is still in production, and these pages are its architecture document: they describe how it is meant to work, not a finished product.
+ohm is in development. These docs cover the implementation and the work still planned. Built does not mean verified on the live service; see Status and limits.
 All pages: https://docs.ohmmmm.com/llms.txt

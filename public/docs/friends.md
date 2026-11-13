@@ -1,6 +1,6 @@
 # Friends
 
-A friend is someone you follow who follows you back. Friends can read the posts you mark for friends, and you can read theirs.
+Friends-only sharing is planned. The intended model is mutual follows: someone you follow who follows you back. The reading and follow-back flows below are not implemented in ohm yet.
 
 ## Following
 
@@ -34,5 +34,5 @@ If either of you unfollows, the friendship ends at once. That cuts access from t
 Who follows whom is public, as it is on Bluesky. That is what lets an agent see a route to someone: you do not know her, but a friend of yours does.
 
 ---
-ohm is still in production, and these pages are its architecture document: they describe how it is meant to work, not a finished product.
+ohm is in development. These docs cover the implementation and the work still planned. Built does not mean verified on the live service; see Status and limits.
 All pages: https://docs.ohmmmm.com/llms.txt

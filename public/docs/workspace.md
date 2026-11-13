@@ -1,6 +1,6 @@
 # The workspace
 
-The workspace is one page: a narrow rail, your repository beside it, and the post you have open filling the rest.
+Use the rail to switch between your vault of posts and your private cortex. Each has a list beside it and the item you open filling the rest.
 
 ## Your repository, in the side panel
 
@@ -58,10 +58,16 @@ The arrows beside Publish read your account on the open network again and bring 
 
 You, your agent and a sync can all change a post. Every save says which version it replaces. If the post changed in the meantime, the save is refused and you are shown the current version, so nothing is silently overwritten.
 
+## Your cortex
+
+The Cortex button in the rail opens Memories, Notes and Skills. This is what your agent has learned and the instructions you have approved, separate from your posts.
+
+You can edit or remove a memory, read its history, restore an earlier version, inspect a note's sources, and approve an exact skill version. Tool settings currently have a service API, not a settings panel here. [Your cortex](https://docs.ohmmmm.com/cortex.md)
+
 ## You
 
 Your picture is at the foot of the rail. Its menu takes your whole vault away as files, disconnects your account on the open network, and signs you out.
 
 ---
-ohm is still in production, and these pages are its architecture document: they describe how it is meant to work, not a finished product.
+ohm is in development. These docs cover the implementation and the work still planned. Built does not mean verified on the live service; see Status and limits.
 All pages: https://docs.ohmmmm.com/llms.txt

@@ -1,6 +1,6 @@
 # Posts
 
-Everything you keep in ohm is a post: an essay, a note to yourself, a photograph, a link. A post is a piece of Markdown with a date, and it can be one sentence.
+Everything you make in the vault is a post: an essay, a note to yourself, a photograph, a link. Agent memories, observations and skills live separately in the cortex.
 
 ## What a post has
 
@@ -86,5 +86,5 @@ Deleting a private post removes it from your workspace. With a folder connected,
 Deleting a post that is published removes it from your site at the next Publish. Copies that other services already made stay where they are.
 
 ---
-ohm is still in production, and these pages are its architecture document: they describe how it is meant to work, not a finished product.
+ohm is in development. These docs cover the implementation and the work still planned. Built does not mean verified on the live service; see Status and limits.
 All pages: https://docs.ohmmmm.com/llms.txt

@@ -1,6 +1,6 @@
 # Sync with a folder
 
-Connect a folder of your own and your posts live there as Markdown files. Sync brings the folder and your workspace into line, in both directions.
+The command-line sync brings your posts and a local folder of Markdown files into line. It does not sync the cortex. Browser and direct cloud-storage sync are planned.
 
 ## Why connect a folder
 
@@ -13,9 +13,9 @@ Until you connect a folder, ohm holds the only copy of your private and friends-
 
 ## Connect one
 
-Choose a folder, connect it, and press Sync. The first sync writes every post into it, filed in folders named for your labels. [How posts look as files](https://docs.ohmmmm.com/files.md)
+Use the ohm command-line sync with a folder on your computer. It writes posts as Markdown files under their labels. Run it again to exchange edits. [How posts look as files](https://docs.ohmmmm.com/files.md)
 
-The folder can be on your computer, or in any cloud storage that keeps a folder in sync.
+A locally synced cloud-storage folder is still a local folder to this command. Choosing a folder and pressing Sync in the workspace is a planned flow.
 
 ## What Sync does
 
@@ -60,5 +60,5 @@ Writing `visibility: public` in a file only marks the post. It becomes public wh
 Run it again. A sync can be repeated safely, and it picks up where things stand.
 
 ---
-ohm is still in production, and these pages are its architecture document: they describe how it is meant to work, not a finished product.
+ohm is in development. These docs cover the implementation and the work still planned. Built does not mean verified on the live service; see Status and limits.
 All pages: https://docs.ohmmmm.com/llms.txt

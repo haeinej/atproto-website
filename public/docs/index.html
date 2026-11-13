@@ -4,12 +4,12 @@
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <meta name="theme-color" content="#fafaf9">
-    <meta name="description" content="How ohm works. The guides follow the product in the order you meet it: signing in, the workspace, sharing, your own folder and your agent. Architecture describes the system underneath: its components, how requests are authenticated, the data model, and the service API.">
+    <meta name="description" content="Your work lives in a vault. What your agent learns lives in a private cortex beside it. Start with the workspace, learn how memory and skill approval work, then connect your agent. The architecture and API reference describe the code; Status and limits separates what is built from what is still planned.">
     <link rel="canonical" href="https://docs.ohmmmm.com/">
     <meta property="og:type" content="website">
     <meta property="og:site_name" content="ohm">
     <meta property="og:title" content="ohm docs">
-    <meta property="og:description" content="How ohm works. The guides follow the product in the order you meet it: signing in, the workspace, sharing, your own folder and your agent. Architecture describes the system underneath: its components, how requests are authenticated, the data model, and the service API.">
+    <meta property="og:description" content="Your work lives in a vault. What your agent learns lives in a private cortex beside it. Start with the workspace, learn how memory and skill approval work, then connect your agent. The architecture and API reference describe the code; Status and limits separates what is built from what is still planned.">
     <meta property="og:url" content="https://docs.ohmmmm.com/">
     <meta property="og:image" content="https://ohmmmm.com/assets/og-image.png">
     <meta property="og:image:width" content="1200">
@@ -63,6 +63,12 @@
         <li><a href="/files">Posts as files</a></li>
         <li><a href="/export">Export and leaving</a></li>
       </ul>
+      <p class="sidebar-group">Cortex</p>
+      <ul>
+        <li><a href="/cortex">Your cortex</a></li>
+        <li><a href="/memory">Memory and notes</a></li>
+        <li><a href="/skills-tools">Skills and tools</a></li>
+      </ul>
       <p class="sidebar-group">Agent</p>
       <ul>
         <li><a href="/agent">Connect your agent</a></li>
@@ -88,15 +94,15 @@
       <article aria-labelledby="title">
         <header>
           <h1 id="title">Docs</h1>
-          <p class="introduction">How ohm works. The guides follow the product in the order you meet it: signing in, the workspace, sharing, your own folder and your agent. Architecture describes the system underneath: its components, how requests are authenticated, the data model, and the service API.</p>
+          <p class="introduction">Your work lives in a vault. What your agent learns lives in a private cortex beside it. Start with the workspace, learn how memory and skill approval work, then connect your agent. The architecture and API reference describe the code; Status and limits separates what is built from what is still planned.</p>
           <p class="introduction">Reading as an agent? Every page is also plain Markdown: start at <a href="/llms.txt">llms.txt</a>.</p>
-          <p class="alert" role="note">ohm is still in production, and these pages are its architecture document: they describe how it is meant to work, not a finished product.</p>
+          <p class="alert" role="note">ohm is in development. These docs cover the implementation and the work still planned. Built does not mean verified on the live service; see Status and limits.</p>
         </header>
 
         <section aria-labelledby="get-started">
           <h2 id="get-started">Get started</h2>
           <ul class="pages">
-            <li><a href="/quick-start">Quick start</a>. Your first session in ohm.</li>
+            <li><a href="/quick-start">Quick start</a>. Start with your posts, then open the private cortex your agent uses to remember your work.</li>
             <li><a href="/sign-in">Sign in</a>. You sign in to ohm with an ohm account, made with Google, Microsoft or Bluesky.</li>
           </ul>
         </section>
@@ -104,8 +110,8 @@
         <section aria-labelledby="workspace">
           <h2 id="workspace">Workspace</h2>
           <ul class="pages">
-            <li><a href="/workspace">The workspace</a>. The workspace is one page.</li>
-            <li><a href="/posts">Posts</a>. Everything you keep in ohm is a post.</li>
+            <li><a href="/workspace">The workspace</a>. Use the rail to switch between your vault of posts and your private cortex.</li>
+            <li><a href="/posts">Posts</a>. Everything you make in the vault is a post.</li>
             <li><a href="/labels">Labels</a>. Labels are the sections of your work, in your own words.</li>
           </ul>
         </section>
@@ -113,46 +119,55 @@
         <section aria-labelledby="sharing">
           <h2 id="sharing">Sharing</h2>
           <ul class="pages">
-            <li><a href="/visibility">Who sees a post</a>. Every post is private, for friends, or public.</li>
+            <li><a href="/visibility">Who sees a post</a>. Every post is marked private, for friends, or public.</li>
             <li><a href="/publish">Publish</a>. Publish makes what other people see match your workspace.</li>
-            <li><a href="/friends">Friends</a>. A friend is someone you follow who follows you back.</li>
+            <li><a href="/friends">Friends</a>. Friends-only sharing is planned.</li>
           </ul>
         </section>
 
         <section aria-labelledby="folder">
           <h2 id="folder">Folder</h2>
           <ul class="pages">
-            <li><a href="/sync">Sync with a folder</a>. Connect a folder of your own and your posts live there as Markdown files.</li>
+            <li><a href="/sync">Sync with a folder</a>. The command-line sync brings your posts and a local folder of Markdown files into line.</li>
             <li><a href="/files">Posts as files</a>. In your folder, each post is one Markdown file.</li>
-            <li><a href="/export">Export and leaving</a>. You can take everything out of ohm at any time, and have ohm's copy deleted.</li>
+            <li><a href="/export">Export and leaving</a>. You can export your vault posts as Markdown files.</li>
+          </ul>
+        </section>
+
+        <section aria-labelledby="cortex">
+          <h2 id="cortex">Cortex</h2>
+          <ul class="pages">
+            <li><a href="/cortex">Your cortex</a>. Your vault holds what you make.</li>
+            <li><a href="/memory">Memory and notes</a>. A memory is something worth carrying forward.</li>
+            <li><a href="/skills-tools">Skills and tools</a>. A skill tells an agent how to do a task.</li>
           </ul>
         </section>
 
         <section aria-labelledby="agent">
           <h2 id="agent">Agent</h2>
           <ul class="pages">
-            <li><a href="/agent">Your agent</a>. Connect the coding agent you already use, and it can read and write in your workspace.</li>
-            <li><a href="/finding-people">Finding people</a>. When you are stuck on something that needs another person, your agent helps you find that person.</li>
+            <li><a href="/agent">Your agent</a>. Connect the coding agent you already use to your vault and cortex.</li>
+            <li><a href="/finding-people">Finding people</a>. Finding people is planned.</li>
           </ul>
         </section>
 
         <section aria-labelledby="architecture">
           <h2 id="architecture">Architecture</h2>
           <ul class="pages">
-            <li><a href="/architecture">System overview</a>. ohm is built from three kinds of system with a strict division of ownership.</li>
+            <li><a href="/architecture">System overview</a>. ohm keeps a vault of posts and a private cortex for agent knowledge.</li>
             <li><a href="/identity">Identity and access</a>. A member has two identities.</li>
-            <li><a href="/data-model">Data model</a>. The unit of ohm is the post.</li>
+            <li><a href="/data-model">Data model</a>. Posts and cortex knowledge are separate data.</li>
             <li><a href="/protocols">Mirror and publish</a>. Two exchanges connect a vault to its member's repository.</li>
             <li><a href="/mcp">Agent integration</a>. An agent reaches a vault through an MCP server that runs on the member's own machine.</li>
-            <li><a href="/api">Service API</a>. The vault service exposes fifteen requests in eight capabilities.</li>
+            <li><a href="/api">Service API</a>. The vault and cortex service registers 38 requests in 15 capabilities.</li>
           </ul>
         </section>
 
         <section aria-labelledby="reference">
           <h2 id="reference">Reference</h2>
           <ul class="pages">
-            <li><a href="/where-things-live">Where your things live</a>. ohm keeps a working copy of your posts, private ones included, so that you and your agent can work from anywhere.</li>
-            <li><a href="/limits">Status and limits</a>. The implementation status of each part of ohm, what cannot be undone, and what ohm is not.</li>
+            <li><a href="/where-things-live">Where your things live</a>. Public posts live in your AT Protocol repository.</li>
+            <li><a href="/limits">Status and limits</a>. What is built, what has been tested and what remains planned.</li>
           </ul>
         </section>
 
@@ -169,6 +184,7 @@
         <li><a href="#workspace">Workspace</a></li>
         <li><a href="#sharing">Sharing</a></li>
         <li><a href="#folder">Folder</a></li>
+        <li><a href="#cortex">Cortex</a></li>
         <li><a href="#agent">Agent</a></li>
         <li><a href="#architecture">Architecture</a></li>
         <li><a href="#reference">Reference</a></li>

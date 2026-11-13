@@ -1,6 +1,6 @@
 # Quick start
 
-Your first session in ohm: sign in, say where your posts live, write a post, decide who sees it, and publish. Then connect a folder of your own and bring in your agent.
+Start with your posts, then open the private cortex your agent uses to remember your work. Publishing, folder sync and connecting an agent are separate steps.
 
 ## 1. Sign in
 
@@ -41,7 +41,7 @@ A new post is private. Nobody else can see it. [More about posts](https://docs.o
 Every post is one of three things.
 
 - **Private.** Only you.
-- **Friends.** The people you follow who follow you back.
+- **Friends.** Reserved for people you follow who follow you back. Delivery to friends is not implemented yet.
 - **Public.** Everyone, on your website and anywhere else your published layer is read.
 
 Changing this does not share anything yet. It marks the post, and a mark on the Publish button shows that something is waiting. [More about who sees a post](https://docs.ohmmmm.com/visibility.md)
@@ -52,19 +52,25 @@ Press Publish. Before anything happens, you see exactly what will change: which 
 
 A public post is now part of your published layer. Anything published is public for good: other services copy it the moment it is written. Taking it down later removes it from your account, not from every copy. [More about publishing](https://docs.ohmmmm.com/publish.md)
 
-## 7. Connect a folder of your own
+## 7. Keep a copy of your posts
 
-Connect a folder on your computer and sync. Each post appears there as a Markdown file, filed in a folder named for its label.
+Export your vault, or use the command-line folder sync. Each post becomes a Markdown file, filed under its label. Browser folder sync and direct cloud-storage connections are planned.
 
-From then on your originals live with you, and ohm holds a working copy. Edit a file in the folder and sync, and the change arrives in your workspace. Syncing never publishes.
-
-Until you connect a folder, ohm holds the only copy of your private and friends-only posts. [More about syncing](https://docs.ohmmmm.com/sync.md)
+Syncing never publishes. It currently covers posts, not your cortex; cortex export is still planned. [More about syncing](https://docs.ohmmmm.com/sync.md)
 
 ## 8. Bring in your agent
 
 Connect the coding agent you already use, and it can read and write in your workspace. It reads your private posts too, which is how it knows what you are working on.
 
+Ask it to start with your cortex. It reads standing memories and descriptions, then recalls the detail it needs. Automatic session hooks are not installed by connecting the MCP tools.
+
 Anything that changes what other people see is shown to you first, publishing included. [More about your agent](https://docs.ohmmmm.com/agent.md)
+
+## 9. See what your agent remembers
+
+Open Cortex in the rail. Memories, Notes and Skills are separate from your posts. You can edit a memory, inspect its earlier versions, restore one, and review an agent's proposed skill before approving it.
+
+Your cortex stays private. Publish does not read it. [Your cortex](https://docs.ohmmmm.com/cortex.md)
 
 ## Things to ask your agent first
 
@@ -74,5 +80,5 @@ Anything that changes what other people see is shown to you first, publishing in
 - "What is not published yet?"
 
 ---
-ohm is still in production, and these pages are its architecture document: they describe how it is meant to work, not a finished product.
+ohm is in development. These docs cover the implementation and the work still planned. Built does not mean verified on the live service; see Status and limits.
 All pages: https://docs.ohmmmm.com/llms.txt

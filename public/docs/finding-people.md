@@ -1,6 +1,6 @@
 # Finding people
 
-When you are stuck on something that needs another person, your agent helps you find that person. What it can settle alone, it settles. For everything else, it takes you to someone.
+Finding people is planned. Your agent will help when a task needs advice, feedback, an introduction or a collaborator; the matching and introduction flows below are not implemented.
 
 ## When a person is what you need
 
@@ -47,5 +47,5 @@ You also hear when you are the person someone else is looking for. Your agent pa
 - It does not send anything you have not read.
 
 ---
-ohm is still in production, and these pages are its architecture document: they describe how it is meant to work, not a finished product.
+ohm is in development. These docs cover the implementation and the work still planned. Built does not mean verified on the live service; see Status and limits.
 All pages: https://docs.ohmmmm.com/llms.txt
