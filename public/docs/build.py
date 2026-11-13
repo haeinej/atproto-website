@@ -920,7 +920,7 @@ The access level of each request is one of four.
                        f"| Parameters | {'None' if takes == 'Nothing' else takes} |\n| Returns | {gives} |")
     out.append("## Errors {#errors}\nA refusal is JSON with an `error` code from the table below and a `message` written to be shown to a person as it is.\n"
                "| Error | Status | Cause |\n| --- | --- | --- |\n" + "\n".join(f"| {code} | {status} | {cause} |" for code, status, cause in errors))
-    out.append("## Agent tools {#tools}\nAn agent's tools are compositions of the requests above and add no capability of their own. Each runs on the member's machine and "
+    out.append("## Agent tools {#agent-tools}\nAn agent's tools are compositions of the requests above and add no capability of their own. Each runs on the member's machine and "
                "authenticates as the member, with a service token per request.\n| Tool | Effect | Requests used |\n| --- | --- | --- |\n"
                + "\n".join(f"| {tool} | {'Read' if effect == 'Reads only' else 'Change'} | {made} |" for tool, effect, made, _ in tools)
                + "\nThe server that offers these tools is described in [Agent integration](/docs/mcp). Vault tools follow these rules.\n"
@@ -1911,6 +1911,10 @@ ids["index"] = {gid(name) for name, _ in GROUPS}
 for slug in ["index"] + ORDER:
     text = docs_index() if slug == "index" else docs_page(slug)
     assert "/docs" not in re.sub(r"https://docs\.ohmmmm\.com", "", text), slug
+    page_ids = re.findall(r'\sid="([^"]+)"', text)
+    assert len(page_ids) == len(set(page_ids)), (slug, "Duplicate HTML IDs")
+    for anchor in re.findall(r'href="#([^"]+)"', text):
+        assert anchor in page_ids, (slug, anchor)
     for target, anchor in re.findall(r'href="/([\w-]*)(?:#([\w-]+))?"', text):
         if target in ("assets", "llms"):
             continue
