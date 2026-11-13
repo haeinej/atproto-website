@@ -312,6 +312,40 @@ test('unambiguous legacy mappings retain their keys; legacy collisions refuse mi
   assert.deepEqual(w.records.get('second'), before);
 });
 
+test('legacy text mappings accept recursively reordered source metadata and retain connect order', async () => {
+  const w = world(), now = new Date('2026-06-04T00:00:00Z');
+  w.env.X_BEARER_TOKEN = 'x-token';
+  w.env.MIRROR_SOURCES = JSON.stringify([{ platform: 'x', userId: 'owner', label: 'Notes' }]);
+  const get = async (url, options) => String(url).startsWith('https://api.x.com/2/users/owner/tweets')
+    ? Response.json({ data: [{ id: '100', text: 'A plain text note.', created_at: '2026-06-01T09:00:00Z',
+      referenced_tweets: [{ type: 'replied_to', id: '12' }, { type: 'quoted', id: '34' }] }] })
+    : w.get(url, options);
+  await mirror(w.env, { get });
+  const record = structuredClone(w.records.get('x-100'));
+  assert.deepEqual(record.connect, ['https://x.com/i/web/status/12', 'https://x.com/i/web/status/34']);
+  const legacy = async value => {
+    for (const key of [...w.kv.keys()]) if (key.startsWith('mirror:v2:')) w.kv.delete(key);
+    const bytes = new Uint8Array(await crypto.subtle.digest('SHA-256', new TextEncoder().encode(JSON.stringify(
+      [value.title ?? '', value.body, [], value.label, value.sublabel ?? '', value.connect]))));
+    w.kv.set('mirror:x:x-100', JSON.stringify({ hash: [...bytes].map(byte => byte.toString(16).padStart(2, '0')).join(''), collection: value.$type }));
+  };
+  await legacy(record);
+  const reordered = reorderedPds(get);
+  const adopted = await mirror(w.env, { get: reordered, now });
+  assert.deepEqual(adopted.sources[0].problems, []);
+  assert.deepEqual(adopted.sources[0].written.map(item => item.key), ['x-100']);
+  assert.equal(w.records.size, 1); assert.deepEqual(w.records.get('x-100'), { ...record, updatedAt: now.toISOString() });
+
+  // Even a matching V1 hash cannot adopt a different connect-array order than the source.
+  const edited = { ...w.records.get('x-100'), connect: [...record.connect].reverse() };
+  w.records.set('x-100', edited); w.versions.set('x-100', 'owner-edited-cid');
+  await legacy(edited);
+  let writes = 0;
+  const refused = await mirror(w.env, { get: (url, options = {}) => { if (options.method === 'POST') writes++; return reordered(url, options); } });
+  assert.ok(refused.sources[0].problems.some(problem => problem.includes('ambiguous')));
+  assert.equal(writes, 0); assert.deepEqual(w.records.get('x-100'), edited);
+});
+
 test('legacy hashes cannot authorize removal of dates, blob identity or extra source/site metadata', async () => {
   for (const extra of [
     { publishedAt: '2026-06-20T00:00:00.000Z' },
