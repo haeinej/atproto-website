@@ -351,6 +351,39 @@ test('a mismatched skill index or PDS fallback cannot enable approval', async t 
   assert.equal(calls.some(call => call.name.endsWith('approveSkill')), false);
 });
 
+test('a token refresh clears a previously approved skill snapshot when its replacement is refused', async t => {
+  dom(t);
+  const fixture = await service();
+  fixture.keyboard(false);
+  const first = await fixture.ask('putSkill', { body: { skill: skill('Approved first snapshot') } });
+  fixture.keyboard(true);
+  await fixture.ask('approveSkill', { body: { name: 'repeat-work', version: first.version } });
+  fixture.keyboard(false);
+  const { panel, calls } = panelFor(fixture.ask, { canApprove: () => false });
+  await panel.open(); await click(panel.directory, 'Skills'); await item(panel, 'repeat-work');
+  assert.match(panel.screen.textContent, /Approved first snapshot/);
+  assert.match(panel.screen.textContent, /Approved for this version/);
+  assert.match(panel.screen.textContent, /PDS token cannot approve/);
+
+  const second = await fixture.ask('putSkill', { body: { skill: skill('Unapproved replacement'), replaces: first.version } });
+  await panel.open();
+  assert.match(panel.directory.textContent, /Awaiting approval/);
+  assert.match(panel.screen.textContent, /Sign in to ohm with a linked account/);
+  for (const text of ['Approved first snapshot', 'Unapproved replacement', 'Approved for this version', 'reference/check.txt', 'Approve this version', first.version]) {
+    assert.ok(!panel.screen.textContent.includes(text), `Stale or forbidden detail: ${text}`);
+  }
+  assert.equal(calls.some(call => call.name.endsWith('approveSkill')), false);
+
+  // Once the linked member approves the new version, token reads recover normally.
+  fixture.keyboard(true);
+  await fixture.ask('approveSkill', { body: { name: 'repeat-work', version: second.version } });
+  fixture.keyboard(false);
+  await panel.open();
+  assert.match(panel.screen.textContent, /Unapproved replacement/);
+  assert.ok(panel.screen.textContent.includes(second.version));
+  assert.match(panel.screen.textContent, /Approved for this version/);
+});
+
 test('an unapproved skill refused to a PDS token offers linked ohm sign-in', async t => {
   dom(t);
   const fixture = await service(); fixture.keyboard(false);

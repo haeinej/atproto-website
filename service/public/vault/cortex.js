@@ -181,7 +181,9 @@ export function createCortexPanel({ call, notice, changed, canApprove }) {
       renderDetail(); renderDirectory();
     } catch (problem) {
       if (!live(ticket) || serial !== reading) return;
-      current = before ?? { type, key };
+      // A previously approved snapshot must not survive a refused current read.
+      const unavailableSkill = type === 'skills' && (problem.code === 'SkillNotApproved' || problem.status === 404);
+      current = unavailableSkill ? { type, key } : before ?? { type, key };
       current.error = problem.code === 'SkillNotApproved' ? 'Sign in to ohm with a linked account to read and approve this skill.' : `Opening this item did not work: ${problem.message}`;
       renderDetail();
       notice(current.error, 'error');
