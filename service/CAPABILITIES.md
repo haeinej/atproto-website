@@ -22,8 +22,8 @@ This page is the whole list. It is written from the same tables the service and 
 | **Memory** | Private memories for the authenticated member. Every rewrite names the version it replaces and preserves that earlier version. | `listMemories`, `getMemory`, `putMemory`, `deleteMemory`, `searchMemories` | [memory.mjs](src/capabilities/memory.mjs) |
 | **Notes** | Private cortex notes. Not built yet. | `addNote`, `listNotes`, `settleNotes` | [notes.mjs](src/capabilities/notes.mjs) |
 | **Turns** | Private cortex turns. Not built yet. | `addTurns`, `listTurns`, `settleTurns` | [pending.mjs](../cortex/pending.mjs) |
-| **Skills** | Private cortex skills. Not built yet. | `listSkills`, `getSkill`, `putSkill`, `approveSkill`, `deleteSkill` | [skills.mjs](src/capabilities/skills.mjs) |
-| **Tools** | Private cortex tools. Not built yet. | `listTools`, `putTool`, `deleteTool`, `proposeTool` | [tools.mjs](src/capabilities/tools.mjs) |
+| **Skills** | Private skills with member approval tied to the exact saved version. Supporting files stay inside the skill. | `listSkills`, `getSkill`, `putSkill`, `approveSkill`, `deleteSkill` | [skills.mjs](src/capabilities/skills.mjs) |
+| **Tools** | The member’s private tool settings and inert proposals. Only an ohm session changes tool settings. Server addresses are metadata; this capability never connects to a server or keeps credentials. | `listTools`, `putTool`, `deleteTool`, `proposeTool` | [tools.mjs](src/capabilities/tools.mjs) |
 | **Cortex Export** | Private cortex cortex export. Not built yet. | `exportFiles` | [pending.mjs](../cortex/pending.mjs) |
 
 The service never writes to anyone's repository. Saving a post, whatever it says about who may see it, changes only the vault's own copy. Publishing is worked out here and carried out by the member, signed in at their own PDS ([public/vault/publish.js](public/vault/publish.js)).
@@ -401,110 +401,110 @@ This cortex request is not built yet.
 
 ## Skills
 
-Private cortex skills. Not built yet.
+Private skills with member approval tied to the exact saved version. Supporting files stay inside the skill.
 
 ### `com.ohmmmm.cortex.listSkills`
 
-This cortex request is not built yet.
+List descriptions and approval state; this index never exposes supporting files or skill instructions.
 
 | | |
 | --- | --- |
 | Reads or changes | Reads only (`GET`) |
 | Who may ask | The member |
 | Takes | Nothing |
-| Gives | `skills` |
+| Gives | `skills` (name, version, description, writtenBy, approved) |
 
 ### `com.ohmmmm.cortex.getSkill`
 
-This cortex request is not built yet.
+Read SKILL.md and supporting text files. A token cannot read an unapproved skill; the linked member can review it in ohm.
 
 | | |
 | --- | --- |
 | Reads or changes | Reads only (`GET`) |
 | Who may ask | The member |
 | Takes | `name`: the skill name |
-| Gives | `skill`, `version` |
+| Gives | `skill` ({text, files: [{path, text}]}), `version` |
 
 ### `com.ohmmmm.cortex.putSkill`
 
-This cortex request is not built yet.
+Save SKILL.md with name and description in YAML and optional supporting files. Token-authored changes lose approval; identical retries preserve the current approval.
 
 | | |
 | --- | --- |
 | Reads or changes | Changes (`POST`) |
 | Who may ask | The member |
-| Takes | `skill`: SKILL.md and supporting files<br>`replaces`: optional: previous version |
-| Gives | `name`, `version`, `approved` |
+| Takes | `skill`: {text, files: [{path, text}]}; name and description are read from SKILL.md<br>`replaces`: optional: the version being replaced |
+| Gives | `name`, `version`, `approved`, optionally `unchanged` |
 
 ### `com.ohmmmm.cortex.approveSkill`
 
-This cortex request is not built yet.
+Approve exactly the named current version from the linked member’s ohm session. A later edit needs new approval.
 
 | | |
 | --- | --- |
 | Reads or changes | Changes (`POST`) |
 | Who may ask | The member, signed in to ohm |
-| Takes | `name`: the skill name<br>`version`: exactly the version approved |
+| Takes | `name`: the skill name<br>`version`: exactly the current version to approve |
 | Gives | `name`, `approved` |
 
 ### `com.ohmmmm.cortex.deleteSkill`
 
-This cortex request is not built yet.
+Remove a skill from the linked member’s ohm session, naming its current version. Repeating a completed removal is safe.
 
 | | |
 | --- | --- |
 | Reads or changes | Changes (`POST`) |
-| Who may ask | The member |
-| Takes | `name`: the skill name<br>`replaces`: current version |
+| Who may ask | The member, signed in to ohm |
+| Takes | `name`: the skill name<br>`replaces`: the current version |
 | Gives | `name`, `removed` |
 
 ## Tools
 
-Private cortex tools. Not built yet.
+The member’s private tool settings and inert proposals. Only an ohm session changes tool settings. Server addresses are metadata; this capability never connects to a server or keeps credentials.
 
 ### `com.ohmmmm.cortex.listTools`
 
-This cortex request is not built yet.
+List tool settings with versions, and proposals marked proposed and off. Context exposes only enabled tools that are not proposals.
 
 | | |
 | --- | --- |
 | Reads or changes | Reads only (`GET`) |
 | Who may ask | The member |
 | Takes | Nothing |
-| Gives | `tools` |
+| Gives | `tools` (name, description, on, address when given, version, proposed, writtenBy; inputs and outputs on proposals) |
 
 ### `com.ohmmmm.cortex.putTool`
 
-This cortex request is not built yet.
+Save or switch a tool from the linked member’s ohm session, naming the version replaced. A proposal cannot be switched on. No credentials or executable configuration is accepted.
 
 | | |
 | --- | --- |
 | Reads or changes | Changes (`POST`) |
 | Who may ask | The member, signed in to ohm |
-| Takes | `tool`: the tool<br>`replaces`: optional: previous version |
-| Gives | `name`, `version` |
+| Takes | `tool`: {name, description, on, address?}; optional address is credential-free HTTPS metadata only<br>`replaces`: optional: the version being replaced |
+| Gives | `name`, `version`, optionally `unchanged` |
 
 ### `com.ohmmmm.cortex.deleteTool`
 
-This cortex request is not built yet.
+Remove a tool setting or proposal from the linked member’s ohm session, naming its current version. Repeating a completed removal is safe.
 
 | | |
 | --- | --- |
 | Reads or changes | Changes (`POST`) |
 | Who may ask | The member, signed in to ohm |
-| Takes | `name`: the tool name<br>`replaces`: current version |
+| Takes | `name`: the tool name<br>`replaces`: the current version |
 | Gives | `name`, `removed` |
 
 ### `com.ohmmmm.cortex.proposeTool`
 
-This cortex request is not built yet.
+Record a tool to be built, with its inputs and outputs. It is always off and proposed, cannot overwrite a tool, and identical retries keep one proposal.
 
 | | |
 | --- | --- |
 | Reads or changes | Changes (`POST`) |
 | Who may ask | The member |
-| Takes | `tool`: name, description, inputs and outputs |
-| Gives | `name`, `proposed` |
+| Takes | `tool`: {name, description, inputs, outputs}; inputs and outputs are text |
+| Gives | `name`, `proposed`, optionally `unchanged` |
 
 ## Cortex Export
 
@@ -540,11 +540,14 @@ A refusal is JSON with an `error`, which is one of the names below, and a `messa
 | `InvalidRequest` | 400 | The request is not JSON, or something it says is not what that request takes |
 | `InvalidPost` | 400 | The post is not one the vault can hold. The message lists every reason |
 | `InvalidMemory` | 400 | The memory is not one the cortex can hold, or its source notes do not belong to this member. The message says why |
+| `InvalidSkill` | 400 | The skill or its supporting text files do not fit the cortex rules. The message says why |
+| `SkillNotApproved` | 403 | An agent asked for skill instructions whose current version the member has not approved |
+| `InvalidTool` | 400 | The tool setting or proposal is not valid. Credentials and executable configuration stay outside the cortex |
 | `InvalidCursor` | 400 | `since` is not a value an earlier list returned |
-| `NotFound` | 404 | There is no such post or memory version |
-| `Changed` | 409 | The post or memory has changed since the version the request names. The answer carries the current version |
+| `NotFound` | 404 | There is no such post, cortex item or saved version |
+| `Changed` | 409 | The post or cortex item has changed since the version the request names. The answer carries the current version |
 | `SlugTaken` | 409 | Another post in the vault already has that slug |
-| `NameTaken` | 409 | A memory already has that name; read it and name its version to replace it |
+| `NameTaken` | 409 | A cortex item already has that name; read it and name its version to replace it. A tool proposal cannot replace an existing tool |
 | `NotBuiltYet` | 501 | The cortex request is registered and authenticated, but its implementation has not been built yet |
 | `TooLarge` | 413 | The post is more than 600 KB of text, or a file it places is empty or larger than 25 MB |
 | `FileUnreachable` | 502 | A file a post places could not be fetched from where the post says it is |
@@ -602,15 +605,15 @@ An agent cannot ask for these. They are for the editor, for the command line, or
 | `addTurns` | Turns | The authenticated request is reserved for the adapter and is not built yet |
 | `listTurns` | Turns | The authenticated request is reserved for the adapter and is not built yet |
 | `settleTurns` | Turns | The authenticated request is reserved for the adapter and is not built yet |
-| `listSkills` | Skills | The authenticated request is reserved and is not built yet |
-| `getSkill` | Skills | The authenticated request is reserved and is not built yet |
-| `putSkill` | Skills | The authenticated request is reserved and is not built yet |
-| `approveSkill` | Skills | The authenticated request is reserved and is not built yet |
-| `deleteSkill` | Skills | The authenticated request is reserved and is not built yet |
-| `listTools` | Tools | The authenticated request is reserved and is not built yet |
-| `putTool` | Tools | The authenticated request is reserved and is not built yet |
-| `deleteTool` | Tools | The authenticated request is reserved and is not built yet |
-| `proposeTool` | Tools | The authenticated request is reserved and is not built yet |
+| `listSkills` | Skills | Cortex tools will read and propose skills in a later step. Approval and removal stay with the member in the editor |
+| `getSkill` | Skills | Cortex tools will read and propose skills in a later step. Approval and removal stay with the member in the editor |
+| `putSkill` | Skills | Cortex tools will read and propose skills in a later step. Approval and removal stay with the member in the editor |
+| `approveSkill` | Skills | Cortex tools will read and propose skills in a later step. Approval and removal stay with the member in the editor |
+| `deleteSkill` | Skills | Cortex tools will read and propose skills in a later step. Approval and removal stay with the member in the editor |
+| `listTools` | Tools | Tool settings belong to the member in the editor. A later cortex tool may propose something to be built, but cannot switch it on |
+| `putTool` | Tools | Tool settings belong to the member in the editor. A later cortex tool may propose something to be built, but cannot switch it on |
+| `deleteTool` | Tools | Tool settings belong to the member in the editor. A later cortex tool may propose something to be built, but cannot switch it on |
+| `proposeTool` | Tools | Tool settings belong to the member in the editor. A later cortex tool may propose something to be built, but cannot switch it on |
 | `exportFiles` | Cortex Export | The authenticated request is reserved for taking the cortex out and is not built yet |
 
 ## Not here yet

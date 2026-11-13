@@ -354,7 +354,9 @@ test('all 23 cortex requests are registered and later agents get authenticated e
   sessions.set('session=member', { id: 'member' });
   const requests = Object.values(REQUESTS).filter(request => request.name.startsWith('com.ohmmmm.cortex.'));
   assert.equal(requests.length, 23);
-  const built = ['getContext', 'listMemories', 'getMemory', 'putMemory', 'deleteMemory', 'searchMemories'];
+  const built = ['getContext', 'listMemories', 'getMemory', 'putMemory', 'deleteMemory', 'searchMemories',
+    'listSkills', 'getSkill', 'putSkill', 'approveSkill', 'deleteSkill',
+    'listTools', 'putTool', 'deleteTool', 'proposeTool'];
   for (const request of requests.filter(request => !built.includes(request.name.split('.').at(-1)))) {
     assert.equal((await ask(mine, request.name, { token: null, ...(request.verb === 'POST' ? { body: {} } : {}) })).status, 401);
     if (request.asks === 'ohm') {
