@@ -17,6 +17,7 @@ import { createAccountScope } from './account-scope.js';
 const $ = id => document.getElementById(id);
 const state = { mode: 'ohm', me: null, audience: '', did: '', tree: null, current: null, publishing: false, plan: null, page: 'vault', signup: false, busy: false, step: 'where' };
 const PAGES = { vault: 'Vault', cortex: 'Cortex' };
+let selection = 0;
 function icon(name) {
   const svg = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
   svg.setAttribute('class', 'icon');
@@ -57,20 +58,23 @@ function failed(doing, problem) {
 // ---- One request to the vault. It rides on the ohm session the browser already holds, or, for
 // a member signed in with their AT Protocol account, carries a token their PDS issues for exactly
 // this request. ----
-async function call(name, { query, body } = {}) {
-  return accountScope.run(async accountHeaders => {
+async function call(name, { query, body, binary = false } = {}) {
+  return accountScope.run(async (accountHeaders, current) => {
+    const { mode, audience } = state;
     const method = name.includes('.') ? name : `com.ohmmmm.vault.${name}`;
     const url = new URL(`./xrpc/${method}`, document.baseURI);
     if (query) url.search = new URLSearchParams(query);
     const headers = { ...accountHeaders, ...(body ? { 'Content-Type': 'application/json' } : {}) };
-    if (state.mode === 'pds') {
-      const { token } = await askPds('com.atproto.server.getServiceAuth', { aud: state.audience, lxm: method, exp: String(Math.floor(Date.now() / 1000) + 60) });
+    if (mode === 'pds') {
+      const { token } = await askPds('com.atproto.server.getServiceAuth', { aud: audience, lxm: method, exp: String(Math.floor(Date.now() / 1000) + 60) });
       headers.Authorization = `Bearer ${token}`;
     }
+    current();
     const response = await fetch(url, {
       method: body ? 'POST' : 'GET', credentials: 'same-origin', headers,
       ...(body ? { body: JSON.stringify(body) } : {}),
     });
+    if (response.ok && binary) return { bytes: new Uint8Array(await response.arrayBuffer()), mime: (response.headers.get('Content-Type') ?? 'application/octet-stream').split(';')[0].trim() };
     const data = await response.json().catch(() => ({}));
     if (!response.ok) throw Object.assign(new Error(data.message || `the vault answered HTTP ${response.status}`), { code: data.error, status: response.status, data });
     return data;
@@ -215,7 +219,9 @@ function returnedProblem() {
 
 // Signing out ends whichever sign-in this is: the PDS is told its one is over, and ohm its own.
 async function signOut() {
-  if (state.page === 'cortex' && !cortex.canLeave()) return;
+  if (!canLeaveWorkspace()) return;
+  selection++;
+  accountScope.reset();
   cortex.reset();
   await leave().catch(() => {});
   if (state.mode === 'ohm') await fetch('/api/auth/sign-out', { method: 'POST', credentials: 'same-origin', headers: { 'Content-Type': 'application/json' }, body: '{}' }).catch(() => {});
@@ -269,9 +275,10 @@ $('approve-there').addEventListener('click', async () => {
   }
 });
 $('disconnect').addEventListener('click', async () => {
-  if (state.page === 'cortex' && !cortex.canLeave()) return;
   if (!confirm('Disconnect this AT Protocol account from your ohm account? Your vault is kept, and opens again when you connect it.')) return;
+  if (!canLeaveWorkspace()) return;
   try {
+    selection++;
     await call('com.ohmmmm.account.disconnect', { body: {} });
     cortex.reset();
     location.reload();
@@ -384,17 +391,22 @@ async function enter({ name, did, mirrored = true, approvedAtPds = false }) {
 }
 
 // ---- The app's screen: the rail picks a page; the side panel and the main screen follow it. ----
-function go(page) {
-  if (!PAGES[page]) return;
-  if (state.page === 'cortex' && (page === 'cortex' || !cortex.canLeave())) return;
+function go(page, { checked = false } = {}) {
+  if (!PAGES[page] || (state.page === 'cortex' && page === 'cortex')) return false;
+  if (page !== state.page) {
+    if (!checked && !canLeaveWorkspace()) return false;
+    selection++;
+    state.current = null;
+  }
   state.page = page;
   $('app').dataset.page = page;
   $('panel-title').textContent = PAGES[page];
   document.title = `${PAGES[page]} · ohm`;
   for (const part of $('app').querySelectorAll('.directory-scroll[data-page], .directory-actions[data-page], .screen[data-page]')) part.hidden = part.dataset.page !== page;
   for (const button of $('app').querySelectorAll('[data-go]')) button.setAttribute('aria-pressed', String(button.dataset.go === page));
-  narrow();
+  mainScreen();
   if (page === 'cortex') cortex.open().catch(problem => failed('Opening the cortex', problem));
+  return true;
 }
 // On a phone the side panel is the screen until a post or cortex item is open.
 function narrow() {
@@ -555,12 +567,25 @@ $('mirror').addEventListener('click', () => mirror());
 
 // ---- One post. ----
 const fields = { title: 'post-name', label: 'label', sublabel: 'sublabel', slug: 'slug', visibility: 'visibility', date: 'date', body: 'body' };
+const formValues = () => JSON.stringify(Object.values(fields).map(id => $(id).value));
+const postDirty = () => Boolean(state.current && formValues() !== state.current.baseline);
+function canLeavePost() { return !postDirty() || confirm('Discard your unsaved post changes?'); }
+function canLeaveWorkspace() { return canLeavePost() && (state.page !== 'cortex' || cortex.canLeave()); }
+window.addEventListener('beforeunload', event => {
+  if (postDirty()) { event.preventDefault(); event.returnValue = ''; }
+});
 function show(post, version) {
   state.current = { post, version };
   state.publishing = false;
   mainScreen();
-  $('post-title').textContent = version ? (post.title || post.slug) : 'A new post';
+  $('save').disabled = false;
+  delete $('slug').dataset.typed;
   for (const [name, id] of Object.entries(fields)) $(id).value = post[name] ?? '';
+  state.current.baseline = formValues();
+  postDetails(post, version);
+}
+function postDetails(post, version) {
+  $('post-title').textContent = version ? (post.title || post.slug) : 'A new post';
   $('delete').hidden = !version;
   const found = state.tree?.labels.flatMap(folder => [...folder.posts, ...folder.sublabels.flatMap(group => group.posts)]).find(each => each.id === post.id);
   $('post-facts').textContent = version
@@ -569,29 +594,36 @@ function show(post, version) {
   $('post-problems').replaceChildren(...(found?.problems ?? []).map(text => Object.assign(document.createElement('li'), { textContent: `Cannot be published yet: ${text}` })));
 }
 async function openPost(id) {
+  if (!canLeaveWorkspace()) return;
+  const ticket = ++selection, before = state.current, values = formValues();
+  const current = () => ticket === selection && state.current === before && values === formValues();
   try {
     const { post, version } = await call('getPost', { query: { id } });
-    state.current = { post, version };
+    if (!current()) return;
     await loadTree();
+    if (!current()) return;
     show(post, version);
   } catch (problem) {
-    failed('Opening the post', problem);
+    if (current()) failed('Opening the post', problem);
   }
 }
 function newPost() {
-  delete $('slug').dataset.typed;
-  go('vault');
+  if (!canLeaveWorkspace() || !go('vault', { checked: true })) return;
+  selection++;
   show({ id: newPostId(), slug: '', label: '', sublabel: '', visibility: 'private', body: '', properties: {} }, null);
   $('post-name').focus();
 }
 $('new-post').addEventListener('click', newPost);
 $('new-post-here').addEventListener('click', newPost);
 // Leaving a post: the main screen is empty again, and on a phone the side panel is back.
-function closePost() {
+function closePost({ force = false } = {}) {
+  if (!force && !canLeavePost()) return false;
+  selection++;
   state.current = null;
   mainScreen();
+  return true;
 }
-$('back').addEventListener('click', async () => { closePost(); await loadTree(); });
+$('back').addEventListener('click', async () => { if (closePost()) await loadTree(); });
 // A new post's slug follows its title until the slug is typed by hand.
 $('post-name').addEventListener('input', () => {
   if (state.current && !state.current.version && !$('slug').dataset.typed) $('slug').value = slugOf($('post-name').value);
@@ -600,7 +632,10 @@ $('slug').addEventListener('input', () => { $('slug').dataset.typed = 'yes'; });
 
 $('post-form').addEventListener('submit', async event => {
   event.preventDefault();
-  const { post: before, version } = state.current;
+  const held = state.current;
+  if (!held || held.saving) return;
+  const { post: before, version } = held;
+  const ticket = selection, submitted = formValues();
   const text = name => $(fields[name]).value.trim();
   // What the form does not show, such as where a post first appeared or its site's own layer, is kept as it was.
   const post = { ...before, slug: text('slug'), label: text('label'), sublabel: text('sublabel'), visibility: $('visibility').value, body: text('body') };
@@ -608,22 +643,35 @@ $('post-form').addEventListener('submit', async event => {
     if (text(name)) post[name] = text(name);
     else delete post[name];
   }
+  held.saving = true;
+  $('save').disabled = true;
   try {
     const saved = await call('putPost', { body: { post, ...(version ? { replaces: version } : {}) } });
+    if (state.current !== held || ticket !== selection) return;
+    held.post = post; held.version = saved.version; held.baseline = submitted;
+    // A save advances the base version, but typing since submission remains unsaved in the form.
+    if (formValues() === submitted) show(post, saved.version);
+    else postDetails(post, saved.version);
     notice(saved.unchanged ? 'Nothing to save' : 'Saved');
-    await openPost(post.id);
+    await loadTree();
     refreshStatus();
   } catch (problem) {
+    if (state.current !== held || ticket !== selection) return;
     failed(`Saving "${post.slug}"`, problem);
     if (problem.code === 'Changed') notice('It was changed somewhere else since you opened it. Open it again to see the newer version; what you typed is still in the form.', 'error');
+  } finally {
+    held.saving = false;
+    if (state.current === held) $('save').disabled = false;
   }
 });
 $('delete').addEventListener('click', async () => {
-  const { post, version } = state.current;
+  const held = state.current;
+  if (!held || held.saving) return;
+  const { post, version } = held, ticket = selection;
   if (!confirm(`Remove "${post.title || post.slug}" from your vault? This cannot be undone here.`)) return;
   try {
     await call('deletePost', { body: { id: post.id, replaces: version } });
-    closePost();
+    if (state.current === held && ticket === selection) closePost({ force: true });
     await loadTree();
     refreshStatus();
   } catch (problem) {
@@ -699,6 +747,9 @@ function showPlan(plan, approved) {
   for (const id of ['publish-password-label', 'publish-password-note', 'publish-ways']) $(id).hidden = approved;
 }
 async function openPublish() {
+  if (!canLeaveWorkspace() || !go('vault', { checked: true })) return;
+  const ticket = ++selection;
+  state.current = null;
   state.publishing = true;
   mainScreen();
   $('publish-summary').textContent = 'Working out what would change…';
@@ -706,13 +757,15 @@ async function openPublish() {
   $('publish-form').hidden = true;
   try {
     const signedIn = await restore();
-    showPlan(await call('getPublishPlan', { query: { prepare: '1' } }), Boolean(signedIn && signedIn.did === state.did));
+    const plan = await call('getPublishPlan', { query: { prepare: '1' } });
+    if (ticket === selection && state.publishing) showPlan(plan, Boolean(signedIn && signedIn.did === state.did));
   } catch (problem) {
     $('publish-summary').textContent = `What would change could not be worked out: ${problem.message}`;
   }
 }
 // Leaving the Publish screen lets go of any sign-in at the PDS that was made for it.
 async function closePublish() {
+  selection++;
   state.publishing = false;
   $('publish-password').value = '';
   mainScreen();
@@ -755,17 +808,14 @@ $('publish-form').addEventListener('submit', async event => {
     }
     if (plan.repository !== signedIn.did) throw new Error('the sign-in at your PDS is for another account');
     notice('Publishing…');
-    const done = await carryOut(plan, {
+    const done = await accountScope.run(async (_, current) => carryOut(plan, {
       async attachment(write, item) {
-        const url = new URL('./xrpc/com.ohmmmm.vault.getAttachment', document.baseURI);
-        url.search = new URLSearchParams({ id: write.rkey, attachment: item.id });
-        const response = await fetch(url, { credentials: 'same-origin' });
-        if (!response.ok) throw new Error((await response.json().catch(() => ({}))).message || `the file "${item.id}" could not be fetched`);
-        return { bytes: new Uint8Array(await response.arrayBuffer()), mime: (response.headers.get('Content-Type') ?? 'application/octet-stream').split(';')[0].trim() };
+        current();
+        return call('getAttachment', { query: { id: write.rkey, attachment: item.id }, binary: true });
       },
-      upload: async (bytes, mime) => (await sendPds('com.atproto.repo.uploadBlob', { bytes, mime })).blob,
-      apply: writes => sendPds('com.atproto.repo.applyWrites', { json: { repo: plan.repository, writes } }),
-    });
+      upload: async (bytes, mime) => { current(); return (await sendPds('com.atproto.repo.uploadBlob', { bytes, mime, expectedDid: plan.repository, current })).blob; },
+      apply: writes => { current(); return sendPds('com.atproto.repo.applyWrites', { json: { repo: plan.repository, writes }, expectedDid: plan.repository, current }); },
+    }));
     await leave().catch(() => {});
     const said = [done.created && `${done.created} published`, done.replaced && `${done.replaced} replaced`, done.removed && `${done.removed} taken down`].filter(Boolean).join(', ');
     notice(`Published: ${said}`);

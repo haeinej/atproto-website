@@ -16,14 +16,28 @@ const stored = new Map();
 globalThis.indexedDB = {
   open() {
     const opening = {};
-    const request = (run) => { const asked = {}; queueMicrotask(() => { asked.result = run(); asked.onsuccess?.(); }); return asked; };
     opening.result = {
       createObjectStore() {},
-      transaction: () => ({ objectStore: () => ({
-        get: name => request(() => stored.get(name)),
-        put: (value, name) => request(() => { stored.set(name, value); }),
-        delete: name => request(() => { stored.delete(name); }),
-      }) }),
+      close() {},
+      transaction() {
+        let pending = 0, ended = false;
+        const transaction = { abort() { ended = true; queueMicrotask(() => transaction.onabort?.()); } };
+        const request = run => {
+          const asked = {}; pending++;
+          queueMicrotask(() => {
+            if (ended) return;
+            asked.result = run(); asked.onsuccess?.({ target: asked }); pending--;
+            queueMicrotask(() => { if (!pending && !ended) { ended = true; transaction.oncomplete?.(); } });
+          });
+          return asked;
+        };
+        transaction.objectStore = () => ({
+          get: name => request(() => stored.get(name)),
+          put: (value, name) => request(() => { stored.set(name, value); }),
+          delete: name => request(() => { stored.delete(name); }),
+        });
+        return transaction;
+      },
     };
     queueMicrotask(() => opening.onsuccess?.());
     return opening;
@@ -47,7 +61,7 @@ function network({ signIn = () => Response.json({ did: account.did, accessJwt: '
   return asked;
 }
 
-const { askPds, beginWithPassword, leave, restore } = await import('../service/public/vault/signin.js');
+const { askPds, beginWithPassword, finish, leave, restore, sendPds } = await import('../service/public/vault/signin.js');
 
 test('an app password signs a member in at their own PDS, for this visit only, and nothing is kept', async () => {
   const asked = network();
@@ -86,4 +100,92 @@ test('a password the PDS refuses signs nobody in, and says why', async () => {
   network({ signIn: () => Response.json({ did: 'did:web:pds.someone-else.test', accessJwt: 'access-1' }) });
   await assert.rejects(beginWithPassword('haein.test', password, 'sign-in'), /a different account/);
   assert.equal(await restore(), null);
+});
+
+const deferred = () => { let resolve; const promise = new Promise(yes => { resolve = yes; }); return { promise, resolve }; };
+async function oauth(id) {
+  const pair = await crypto.subtle.generateKey({ name: 'ECDSA', namedCurve: 'P-256' }, true, ['sign', 'verify']);
+  const keys = pair;
+  const session = { id, account, keys, issuer: account.pds, tokenEndpoint: `${account.pds}/token`, accessToken: `access-${id}`, refreshToken: `refresh-${id}`, expiresAt: 0, purpose: 'sign-in' };
+  stored.set('owner', id); stored.set('session', session);
+  return session;
+}
+
+test('OAuth refresh cannot restore logout, cross-tab logout, or a replacement sign-in for the same DID', async () => {
+  const otherTab = await import('../service/public/vault/signin.js?other-tab');
+  for (const action of ['logout', 'cross-tab logout', 'same DID replacement']) {
+    await leave();
+    await oauth('old');
+    const started = deferred(), released = deferred();
+    let requests = 0;
+    globalThis.fetch = async input => {
+      assert.equal(String(input), `${account.pds}/token`);
+      requests++; started.resolve();
+      await released.promise;
+      return Response.json({ sub: account.did, access_token: 'too-late', refresh_token: 'too-late-refresh', expires_in: 3600 });
+    };
+    const reading = askPds('com.atproto.repo.describeRepo', { repo: account.did });
+    const refused = assert.rejects(reading, /sign-in changed/);
+    await started.promise;
+    if (action === 'same DID replacement') await oauth('new');
+    else await (action === 'logout' ? leave() : otherTab.leave());
+    released.resolve();
+    await refused;
+    assert.equal(requests, 1, 'An old refresh must not continue the protected request');
+    if (action === 'same DID replacement') assert.equal(stored.get('session').accessToken, 'access-new');
+    else { assert.equal(await restore(), null); assert.equal(stored.has('session'), false); }
+  }
+  await leave();
+});
+
+test('parallel OAuth requests share one refresh within the owning session', async () => {
+  await oauth('shared');
+  let refreshes = 0, requests = 0;
+  globalThis.fetch = async input => {
+    if (String(input) === `${account.pds}/token`) {
+      refreshes++;
+      return Response.json({ sub: account.did, access_token: 'current', refresh_token: 'current-refresh', expires_in: 3600 });
+    }
+    requests++;
+    return Response.json({ ok: true });
+  };
+  await Promise.all([askPds('com.atproto.repo.describeRepo'), askPds('com.atproto.repo.describeRepo')]);
+  assert.equal(refreshes, 1); assert.equal(requests, 2);
+  assert.equal(stored.get('session').id, 'shared');
+  await leave();
+});
+
+test('a late app-password response cannot restore a session after logout', async () => {
+  const started = deferred(), release = deferred();
+  network({ signIn: async () => { started.resolve(); await release.promise; return Response.json({ did: account.did, accessJwt: 'too-late' }); } });
+  const signingIn = beginWithPassword('haein.test', password);
+  const refused = assert.rejects(signingIn, /sign-in changed/);
+  await started.promise; await leave(); release.resolve(); await refused;
+  assert.equal(await restore(), null);
+});
+
+test('a stale OAuth callback cannot consume a newer pending sign-in or finish after logout', async () => {
+  await leave();
+  const session = await oauth('callback');
+  stored.delete('session');
+  stored.set('pending', { ...session, state: 'current-state' });
+  globalThis.location = { search: `?state=old-state&code=synthetic&iss=${encodeURIComponent(account.pds)}`, hash: '' };
+  globalThis.history = { replaceState() {} };
+  await assert.rejects(finish(), /not started here/);
+  assert.equal(stored.get('pending').state, 'current-state');
+  location.search = location.search.replace('old-state', 'current-state');
+  const started = deferred(), released = deferred();
+  globalThis.fetch = async () => { started.resolve(); await released.promise; return Response.json({ sub: account.did, access_token: 'late', expires_in: 3600 }); };
+  const finishing = finish(), refused = assert.rejects(finishing, /sign-in changed/);
+  await started.promise; await leave(); released.resolve(); await refused;
+  assert.equal(await restore(), null); assert.equal(stored.has('session'), false);
+});
+
+test('publish refuses a different PDS account before sending bytes or writes', async () => {
+  const asked = network();
+  await beginWithPassword('haein.test', password);
+  const before = asked.length;
+  await assert.rejects(sendPds('com.atproto.repo.uploadBlob', { bytes: new Uint8Array([1]), mime: 'image/png', expectedDid: 'did:web:other.test' }), /sign-in changed/);
+  assert.equal(asked.length, before);
+  await leave();
 });
