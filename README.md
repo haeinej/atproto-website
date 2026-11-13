@@ -43,7 +43,7 @@ The commands run from any folder, so you can work inside your own website's fold
 npx github:haeinej/ohm-content-layer
 ```
 
-That lists the commands. Every command previews by default and changes nothing until you pass `--publish`.
+That lists the commands. Public publishing commands preview until you pass `--publish`; show the preview to the owner and get approval first. Private imports use `--save`, folder sync uses `--apply`, and renderer commands write local output. Those writes do not publish anything.
 
 ```sh
 npx github:haeinej/ohm-content-layer identity example.com
@@ -372,6 +372,20 @@ rm -f "$snapshot_file"
 ```
 
 Set `INCLUDE_BLUESKY_POSTS=true` in the Worker's configuration to list native Bluesky posts from the same account, and `INCLUDE_LEGACY_NOTES=true` for older `com.haeinjung.note` entries.
+
+## Work on this repository
+
+For a source checkout, use Node.js 22 or newer and install both locked dependency sets from the repository root:
+
+```sh
+npm ci
+npm --prefix service ci
+npm test
+```
+
+The root dependencies run the CLI, renderer, public-site tooling and tests. The separate service package supplies the pinned signature-verification library used by the vault service and integration tests; root `npm ci` does not install it. If tests cannot find `service/node_modules/@noble/curves`, run the service install above rather than changing imports or fetching packages from a test. Neither tests nor package installation automatically installs service dependencies.
+
+This contributor setup is not required to use the packaged CLI in your own site's folder. [Run your own PDS and site](#run-your-own-pds-and-site) has the separate Cirrus prerequisites. [Public sites](public/README.md) lists local preview commands; the [agent working guide](https://docs.ohmmmm.com/agent-guide#verify) gives verification and recovery contracts.
 
 ## In this repository
 
