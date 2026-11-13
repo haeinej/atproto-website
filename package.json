@@ -42,10 +42,21 @@
     "profile": "node scripts/profile.mjs",
     "snapshot": "node scripts/snapshot.mjs",
     "test": "node --experimental-sqlite --test",
-    "render": "node scripts/render.mjs"
+    "render": "node scripts/render.mjs",
+    "home:dev": "wrangler dev --config public/home/wrangler.jsonc --ip 127.0.0.1 --port 8790 --local-upstream 127.0.0.1:8790",
+    "home:check": "node --check public/home/src/worker.js && node --check public/home/public/sw.js && node --check public/home/public/sw-register.js && wrangler deploy --config public/home/wrangler.jsonc --dry-run",
+    "home:deploy": "wrangler deploy --config public/home/wrangler.jsonc",
+    "home:seo": "node public/home/scripts/check-seo.mjs",
+    "home:joiners": "node public/home/scripts/joiners.mjs",
+    "docs:build": "python3 public/docs/build.py",
+    "docs:deploy": "wrangler deploy --config public/docs/wrangler.jsonc"
   },
   "dependencies": {
     "markdown-it": "15.0.3",
     "markdown-it-footnote": "4.0.0"
+  },
+  "devDependencies": {
+    "parse5": "^8.1.1",
+    "wrangler": "^4.161.0"
   }
 }

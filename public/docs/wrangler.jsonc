@@ -1,5 +1,5 @@
 // docs.ohmmmm.com: static pages, no Worker script. Headers are in _headers.
-// Deploy from this folder: npx wrangler deploy
+// Deploy: npm run docs:deploy (or, from this folder, npx wrangler deploy)
 {
   "name": "ohm-docs",
   "account_id": "bf82067932bd22931840d77dd338d57f",

@@ -1,0 +1,46 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+    <meta name="theme-color" content="#fafaf9">
+    <meta name="mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-title" content="ohm">
+    <meta name="apple-mobile-web-app-status-bar-style" content="default">
+    <meta name="robots" content="noindex">
+    <link rel="icon" href="/favicon.ico?v=2" sizes="32x32">
+    <link rel="icon" href="/assets/favicon.svg?v=2" type="image/svg+xml">
+    <link rel="manifest" href="/manifest.webmanifest">
+    <link rel="preload" href="/assets/fonts/coconat-regular.woff2" as="font" type="font/woff2" crossorigin>
+    <link rel="stylesheet" href="/styles.css">
+    <script src="/sw-register.js" defer></script>
+    <title>Not found · ohm</title>
+  </head>
+  <body>
+    <a class="skip" href="#content">Skip to content</a>
+
+    <!-- Site shell, the same on every page except aria-current: a sidebar with the ohm dot (home), then
+         About and Docs (its own site, docs.ohmmmm.com). On phones: the dot and Menu, which opens the list
+         full screen (the checkbox holds it open; no script). -->
+    <input class="menu-toggle" type="checkbox" id="menu" aria-label="Menu">
+    <header class="site-header">
+      <a class="site-mark" href="/"><img src="/assets/favicon.svg?v=2" alt="ohm" width="20" height="20"></a>
+      <label class="menu-button" for="menu"><span class="menu-open">Menu</span><span class="menu-close">Close</span></label>
+      <nav class="site-sections" aria-label="Site">
+        <ul>
+          <li class="menu-only"><a href="/">Home</a></li>
+          <li><a href="/about">About</a></li>
+          <li><a href="https://docs.ohmmmm.com/">Docs<svg class="icon" viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2.25" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M7 7h10v10"/><path d="M7 17 17 7"/></svg></a></li>
+        </ul>
+      </nav>
+    </header>
+
+    <main id="content">
+      <article aria-labelledby="title">
+        <h1 id="title">Not found</h1>
+        <p class="introduction">There is nothing at this address. <a href="/">Go to ohm</a>.</p>
+      </article>
+    </main>
+  </body>
+</html>

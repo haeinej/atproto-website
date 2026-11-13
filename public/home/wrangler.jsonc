@@ -1,0 +1,28 @@
+{
+  "$schema": "../../node_modules/wrangler/config-schema.json",
+  "name": "ohm-web",
+  "account_id": "bf82067932bd22931840d77dd338d57f",
+  "main": "src/worker.js",
+  "compatibility_date": "2026-10-30",
+  "workers_dev": false,
+  "preview_urls": false,
+  "assets": {
+    "directory": "./public",
+    "binding": "ASSETS",
+    "run_worker_first": true,
+    "html_handling": "drop-trailing-slash",
+    "not_found_handling": "404-page"
+  },
+  // The list of people who joined the plan from the homepage (src/worker.js, schema.sql).
+  "d1_databases": [
+    { "binding": "DB", "database_name": "ohm-web", "database_id": "df244875-b345-49d3-9251-df1bfc4d6799" }
+  ],
+  // A few sign-ups a minute from one place is a person correcting a typo. More is turned away.
+  "ratelimits": [
+    { "name": "JOIN_LIMITER", "namespace_id": "1002", "simple": { "limit": 5, "period": 60 } }
+  ],
+  "routes": [
+    { "pattern": "ohmmmm.com", "custom_domain": true },
+    { "pattern": "www.ohmmmm.com", "custom_domain": true }
+  ]
+}

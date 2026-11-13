@@ -7,11 +7,13 @@
  * The saved copy is used only when the network fails or takes longer than 4 s. Offline, an unsaved
  * page falls back to /.
  * styles.css, the scripts and images: served from the cache at once and refreshed in the background.
- * The font: served from the cache (its file name is its version; website/README.md §3).
+ * The font: served from the cache (its file name is its version; ../home/README.md §3).
+ *
+ * The icon paths carry the same ?v= as the pages' <link> tags (../home/README.md §3).
  *
  * Bump VERSION when PRECACHE changes (a page or asset added, renamed or removed): the new
  * worker installs a fresh cache and deletes the old one. Ordinary edits need no bump. */
-const VERSION = "10";
+const VERSION = "11";
 const CACHE = `ohm-site-${VERSION}`;
 const PRECACHE = [
   "/",
@@ -22,11 +24,13 @@ const PRECACHE = [
   "/privacy",
   "/styles.css",
   "/landing.js",
+  "/join.js",
   "/sw-register.js",
   "/manifest.webmanifest",
   "/assets/fonts/coconat-regular.woff2",
-  "/assets/favicon.svg",
-  "/assets/apple-touch-icon.png",
+  "/favicon.ico?v=2",
+  "/assets/favicon.svg?v=2",
+  "/assets/apple-touch-icon.png?v=2",
   "/assets/icon-192.png",
   "/assets/icon-512.png",
   "/assets/icon-maskable-512.png",

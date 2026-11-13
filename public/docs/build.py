@@ -1,6 +1,6 @@
 """Builds docs.ohmmmm.com, and puts the site header on every page of the ohmmmm.com draft.
 
-    python3 plans/ohmmmm-docs/build.py
+    python3 public/docs/build.py
 
 The docs' words are in this file: GROUPS sets the sidebar and the order of pages, and each doc()
 call below is one page, written in a small Markdown (## headings with {#ids}, lists, tables,
@@ -11,17 +11,17 @@ Service API page is read from ../../service/CAPABILITIES.md.
 It writes, in this folder: index.html, one .html per page, 404.html, sitemap.xml and robots.txt,
 and for agents a .md copy of each page, llms.txt and llms-full.txt.
 It does not write styles.css, reader.js, _headers, wrangler.jsonc or assets/, which are edited by
-hand. In ../ohmmmm-home it replaces each page's sidebar (the "Site shell" block: the dot, About, Docs)
+hand. In ../home-draft it replaces each page's sidebar (the "Site shell" block: the dot, About, Docs)
 and keeps the company directory on index.html only.
 
-The live ohmmmm.com is built from another repository (ohm, website/public) and is not touched here.
+The live ohmmmm.com is ../home (public/home/public) and is not touched here.
 Deploy the docs from this folder: npx wrangler deploy --profile ohm"""
 import html
 import re
 from pathlib import Path
 
 docs_site = Path(__file__).resolve().parent
-site = docs_site.parent / "ohmmmm-home"
+site = docs_site.parent / "home-draft"
 DOCS_ORIGIN = "https://docs.ohmmmm.com"
 HOME_ORIGIN = "https://ohmmmm.com"
 

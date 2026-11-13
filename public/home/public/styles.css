@@ -1,0 +1,684 @@
+/* ohmmmm.com: the editorial context from DESIGN.md. Values live in these
+   custom properties only; the rules below use them and nothing else.
+
+   Page shell, the same on every page:
+     .site-header   the sidebar, top of the left column: the ohm dot (home), then About and Docs
+                    (Docs is its own site, docs.ohmmmm.com), the current one marked with a bar
+     main           right column: the page itself (one <article>)
+     .site-footer   landing page only: the company directory (Contact, Support, Terms, Privacy)
+   On narrow screens: the dot with About and Docs in a row, then the page.
+
+   The landing page (body.landing) is one opening section on a slow WebGL field of the Fatale greens
+   (after vercel.com; landing.js), and a minimal footer. See "Landing" at the end. */
+@font-face {
+  font-family: "Coconat";
+  src: url("/assets/fonts/coconat-regular.woff2") format("woff2");
+  font-weight: 400;
+  font-style: normal;
+  font-display: swap;
+}
+
+:root {
+  color-scheme: light;
+  --ohm-font-serif: "Coconat", Georgia, "Times New Roman", serif;
+  --ohm-font-sans: "Helvetica Neue", Helvetica, Arial, sans-serif;
+
+  /* One ink, like a printed page: the Fatale forest green on warm paper. */
+  --ohm-forest: #013220;
+  --ohm-paper-editorial: #fafaf9;
+  --ohm-ink-quiet: #4c6e61; /* forest at 70% on paper, 5.4:1 */
+  --ohm-selection: rgb(161 214 174 / 0.42);
+
+  /* One size for everything except the page title. Headings differ by weight. */
+  --ohm-size: 16px;
+  --ohm-leading: 1.65;
+  --ohm-text: 400 var(--ohm-size)/var(--ohm-leading) var(--ohm-font-sans);
+  --ohm-tracking: -0.015em;
+  --ohm-strong: 600;
+  --ohm-title: 400 clamp(40px, 6vw, 60px)/1.05 var(--ohm-font-serif); /* Coconat has one weight */
+  --ohm-title-tracking: -0.02em;
+  --ohm-title-gap: 28px;
+
+  --ohm-measure: 620px;
+  --ohm-gutter: 48px;
+  --ohm-frame: 40px;
+  --ohm-mark: 20px;
+  --ohm-rail: 160px;
+  --ohm-rail-gap: clamp(32px, 5vw, 80px);
+  --ohm-top: 32px; /* between the header and the columns */
+  /* The page's padding, kept clear of a phone's notch, rounded corners and home indicator
+     (the page draws edge to edge: viewport-fit=cover). */
+  --ohm-pad-top: max(var(--ohm-frame), env(safe-area-inset-top));
+  --ohm-pad-left: max(var(--ohm-frame), env(safe-area-inset-left));
+  --ohm-pad-right: max(var(--ohm-frame), env(safe-area-inset-right));
+  --ohm-pad-bottom: max(var(--ohm-frame), env(safe-area-inset-bottom));
+  --ohm-paragraph: 1em;
+  --ohm-section-gap: 2.5em;
+  --ohm-subsection-gap: 1.75em;
+
+  font-family: var(--ohm-font-sans);
+  font-synthesis: none;
+  -webkit-font-smoothing: antialiased;
+  background: var(--ohm-paper-editorial);
+  color: var(--ohm-forest);
+}
+
+html { background-color: var(--ohm-paper-editorial); }
+
+* { box-sizing: border-box; }
+
+::selection { background: var(--ohm-selection); }
+
+body,
+h1, h2, h3, p, ul, li {
+  font: var(--ohm-text);
+  letter-spacing: var(--ohm-tracking);
+}
+
+h1, h2, h3, p, ul { margin: 0; }
+
+h2, h3 { font-weight: var(--ohm-strong); }
+
+/* The page title: the one large thing on the page. */
+h1 {
+  font: var(--ohm-title);
+  letter-spacing: var(--ohm-title-tracking);
+}
+
+a {
+  color: inherit;
+  text-underline-offset: 3px;
+  text-decoration-thickness: 1px;
+}
+
+a:focus-visible {
+  outline: 2px solid currentColor;
+  outline-offset: 4px;
+  border-radius: 2px;
+}
+
+/* ---------- Shell ---------- */
+
+body {
+  margin: 0;
+  min-height: 100vh;
+  min-height: 100dvh;
+  padding: var(--ohm-pad-top) var(--ohm-pad-right) var(--ohm-pad-bottom) var(--ohm-pad-left);
+  display: grid;
+  grid-template-columns: var(--ohm-rail) minmax(0, var(--ohm-measure));
+  grid-template-rows: 1fr auto;
+  column-gap: var(--ohm-rail-gap);
+}
+
+.skip {
+  position: absolute;
+  left: var(--ohm-frame);
+  top: 8px;
+  z-index: 3;
+  transform: translateY(-200%);
+  background: var(--ohm-paper-editorial);
+}
+
+.skip:focus { transform: none; }
+
+.site-header {
+  grid-column: 1;
+  grid-row: 1;
+  align-self: start;
+}
+
+main {
+  grid-column: 2;
+  grid-row: 1 / 3;
+  padding-bottom: 80px;
+}
+
+@media (min-width: 761px) and (min-height: 480px) {
+  .site-header {
+    position: sticky;
+    top: var(--ohm-pad-top);
+  }
+}
+
+/* ---------- Sidebar ---------- */
+
+.site-mark {
+  display: block;
+  flex: none;
+  width: var(--ohm-mark);
+  height: var(--ohm-mark);
+  /* centred on the first line of the page beside it */
+  margin-top: calc((var(--ohm-size) * var(--ohm-leading) - var(--ohm-mark)) / 2);
+  border-radius: 50%;
+}
+
+.site-mark img {
+  display: block;
+  width: 100%;
+  height: 100%;
+}
+
+.site-mark:focus-visible { outline-offset: 3px; }
+
+/* The Menu button, its checkbox, Home and the Docs arrow are for the phone menu only. */
+.menu-toggle,
+.menu-button,
+.site-sections .menu-only,
+.site-sections .icon { display: none; }
+
+/* About and Docs, under the dot. The current page is in full ink with a bar beside it. */
+.site-sections { margin-top: 40px; }
+
+.site-sections ul {
+  list-style: none;
+  padding: 0;
+}
+
+.site-sections li + li { margin-top: 2px; }
+
+.site-sections a {
+  position: relative;
+  display: inline-block;
+  color: var(--ohm-ink-quiet);
+  text-decoration: none;
+}
+
+.site-sections a:hover,
+.site-sections a[aria-current] { color: var(--ohm-forest); }
+
+.site-sections a[aria-current]::before {
+  content: "";
+  position: absolute;
+  left: -12px;
+  top: 5px;
+  bottom: 5px;
+  width: 2px;
+  border-radius: 1px;
+  background: var(--ohm-forest);
+}
+
+/* ---------- Directory ---------- */
+
+.site-footer ul {
+  list-style: none;
+  padding: 0;
+}
+
+.site-footer a { text-decoration: none; }
+
+.site-footer a:hover { text-decoration: underline; }
+
+/* ---------- Main: the page ---------- */
+
+.updated { color: var(--ohm-ink-quiet); }
+
+/* Spacing is the only hierarchy: a line between paragraphs, more between sections. */
+article > header > * + *,
+section > * + * { margin-top: var(--ohm-paragraph); }
+
+article > header > h1 + * { margin-top: var(--ohm-title-gap); }
+
+section {
+  margin-top: var(--ohm-section-gap);
+  scroll-margin-top: var(--ohm-frame);
+}
+
+section > * + h3 { margin-top: var(--ohm-subsection-gap); }
+
+section p,
+section li {
+  text-wrap: pretty;
+  overflow-wrap: break-word;
+}
+
+section ul { padding-left: 1.2em; }
+
+section li + li { margin-top: 0.4em; }
+
+/* Something to type: the same size as the text around it, set apart by its letters and an indent. */
+code, pre { font-family: ui-monospace, "SF Mono", Menlo, Consolas, monospace; }
+
+pre {
+  margin: 0;
+  padding-left: 1.2em;
+  font-size: var(--ohm-size);
+  line-height: var(--ohm-leading);
+  overflow-x: auto;
+}
+
+section ol { margin: 0; padding-left: 1.2em; }
+
+/* ---------- Narrow screens: a bar with the dot and Menu, then the page ---------- */
+
+@media (max-width: 760px) {
+  :root { --ohm-frame: calc(var(--ohm-gutter) / 2); }
+
+  body {
+    display: block;
+    padding-top: env(safe-area-inset-top);
+    padding-bottom: max(32px, env(safe-area-inset-bottom));
+  }
+
+  .site-header {
+    position: relative;
+    z-index: 3;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    height: 60px;
+  }
+
+  .site-mark { margin-top: 0; }
+
+  /* Menu, on the right. The checkbox stays focusable; the label is what shows. */
+  .menu-toggle {
+    display: block;
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    margin: 0;
+    opacity: 0;
+  }
+
+  .menu-button {
+    display: block;
+    padding: 12px 0 12px 16px; /* 44px touch target */
+    cursor: pointer;
+  }
+
+  .menu-close { display: none; }
+
+  .menu-toggle:checked ~ .site-header .menu-open { display: none; }
+
+  .menu-toggle:checked ~ .site-header .menu-close { display: inline; }
+
+  .menu-toggle:focus-visible ~ .site-header .menu-button {
+    outline: 2px solid currentColor;
+    outline-offset: 4px;
+    border-radius: 2px;
+  }
+
+  /* The list: hidden until Menu, then the whole screen, large rows on thin rules. */
+  .site-sections {
+    display: none;
+    position: fixed;
+    inset: calc(60px + env(safe-area-inset-top)) 0 0;
+    z-index: 3;
+    margin: 0;
+    padding: 8px var(--ohm-pad-right) max(32px, env(safe-area-inset-bottom)) var(--ohm-pad-left);
+    background: var(--ohm-paper-editorial);
+    overflow-y: auto;
+  }
+
+  .menu-toggle:checked ~ .site-header .site-sections { display: block; }
+
+  /* While the menu is open the bar is plain paper too, up under the status bar and to both edges,
+     so bar and sheet read as one surface. */
+  .menu-toggle:checked ~ .site-header::before {
+    content: "";
+    position: absolute;
+    z-index: -1;
+    inset: calc(env(safe-area-inset-top) * -1) calc(var(--ohm-pad-right) * -1) 0 calc(var(--ohm-pad-left) * -1);
+    background: var(--ohm-paper-editorial);
+  }
+
+  body:has(.menu-toggle:checked) { overflow: hidden; }
+
+  .site-sections .menu-only { display: list-item; }
+
+  .site-sections li + li { margin-top: 0; }
+
+  .site-sections a {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 14px 0;
+    border-bottom: 1px solid rgb(1 50 32 / 0.12);
+    color: var(--ohm-forest);
+    font-size: 22px;
+    line-height: 1.3;
+  }
+
+  .site-sections .icon { display: block; }
+
+  .site-sections a[aria-current]::before { display: none; }
+
+  .site-sections a[aria-current] { font-weight: var(--ohm-strong); }
+
+  main { padding: 12px 0 56px; }
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  html { scroll-behavior: smooth; }
+}
+
+/* ---------- Landing ---------- */
+
+.landing {
+  --ohm-line: rgb(1 50 32 / 0.12);
+  --ohm-statement: 400 clamp(32px, 3.6vw, 48px)/1.12 var(--ohm-font-serif);
+  overflow-x: clip; /* the field runs to the window's edges */
+  grid-template-columns: var(--ohm-rail) minmax(0, 1fr);
+  grid-template-rows: auto auto;
+}
+
+.landing main {
+  grid-column: 2;
+  grid-row: 1;
+  padding: 0;
+}
+
+
+/* Every section on a faint rule. */
+.landing article > :is(header, section) {
+  display: grid;
+  grid-template-columns: minmax(0, var(--ohm-measure));
+  align-content: start;
+  margin: 0;
+  padding: 72px 0 0;
+  scroll-margin-top: var(--ohm-frame);
+}
+
+.landing article > section { margin-top: 72px; border-top: 1px solid var(--ohm-line); }
+
+.landing article > :is(header, section) > * { grid-column: 1; }
+
+.landing article > section > h2 {
+  font: var(--ohm-heading-landing);
+  letter-spacing: -0.02em;
+}
+
+.landing article > section > h2 + * { margin-top: 24px; }
+
+/* The statement, on the field. */
+.landing .intro {
+  position: relative;
+  isolation: isolate;
+  grid-template-columns: minmax(0, var(--ohm-measure));
+  align-content: center;
+  min-height: min(760px, calc(100svh - var(--ohm-frame) * 2));
+  padding-top: 0;
+}
+
+.landing .intro .intro-text { grid-column: 1; }
+
+.landing .intro h1 {
+  font: var(--ohm-statement);
+  letter-spacing: -0.025em;
+  text-wrap: balance;
+}
+
+.landing .intro-text > * + * { margin-top: var(--ohm-paragraph); }
+
+.landing .intro-text > h1 + * { margin-top: 28px; }
+
+.landing .actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  margin-top: 32px;
+}
+
+.landing .button {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  min-height: 40px;
+  padding: 8px 18px;
+  border: 1px solid var(--ohm-forest);
+  border-radius: 999px;
+  background: var(--ohm-forest);
+  color: var(--ohm-paper-editorial);
+  font-size: 15px;
+  text-decoration: none;
+  transition: background-color 0.16s, color 0.16s;
+}
+
+.landing .button:hover { background: #00261a; }
+
+/* Joining the plan: the hero's button opens a small popup with one field. The browser places it
+   in the middle of the window, over everything, and dims what is behind it. */
+.landing .actions .button { cursor: pointer; font-family: inherit; letter-spacing: inherit; }
+
+.join-popup {
+  width: min(380px, calc(100vw - 32px));
+  padding: 32px 28px 24px;
+  border: 0;
+  border-radius: 24px;
+  background: var(--ohm-paper-editorial);
+  color: var(--ohm-forest);
+  box-shadow: 0 12px 32px rgb(0 0 0 / 0.14);
+}
+
+/* What is behind the popup is blurred, under a thin veil of the page's own paper. */
+.join-popup::backdrop {
+  background: rgb(250 250 249 / 0.35);
+  -webkit-backdrop-filter: blur(14px);
+  backdrop-filter: blur(14px);
+}
+
+.join-popup h2 {
+  font: 400 28px/1.1 var(--ohm-font-serif);
+  letter-spacing: var(--ohm-title-tracking);
+}
+
+.join-close {
+  position: absolute;
+  top: 14px;
+  right: 14px;
+  display: grid;
+  place-items: center;
+  width: 32px;
+  height: 32px;
+  padding: 0;
+  border: 0;
+  border-radius: 50%;
+  background: none;
+  color: var(--ohm-ink-quiet);
+  cursor: pointer;
+}
+
+.join-close:hover { background: rgb(1 50 32 / 0.06); color: var(--ohm-forest); }
+
+.join {
+  display: flex;
+  gap: 8px;
+  margin-top: 20px;
+}
+
+.join-label,
+.join-trap {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip-path: inset(50%);
+  white-space: nowrap;
+}
+
+.join-email {
+  flex: 1;
+  min-width: 0;
+  min-height: 40px;
+  padding: 8px 16px;
+  border: 1px solid var(--ohm-line);
+  border-radius: 999px;
+  background: rgb(1 50 32 / 0.04);
+  color: var(--ohm-forest);
+  font: inherit;
+  font-size: 16px; /* at this size a phone does not zoom in on the field */
+  letter-spacing: inherit;
+}
+
+.join-email::placeholder { color: var(--ohm-ink-quiet); }
+.join-email:focus-visible,
+.join-close:focus-visible { outline: 2px solid var(--ohm-forest); outline-offset: 2px; }
+.landing .join .button { cursor: pointer; font-family: inherit; letter-spacing: inherit; }
+
+.join-note,
+.join-problem {
+  margin-top: 14px;
+  color: var(--ohm-ink-quiet);
+  font-size: 14px;
+}
+
+.join-problem { color: #a13535; }
+
+/* After joining, the popup says thank you, and under it what happens next. */
+.join-thanks { padding: 4px 28px 4px 0; }
+
+.join-thanks-title {
+  font: 400 28px/1.15 var(--ohm-font-serif);
+  letter-spacing: var(--ohm-title-tracking);
+}
+
+.join-thanks-more {
+  margin-top: 10px;
+  color: var(--ohm-ink-quiet);
+  font-size: 15px;
+}
+
+.join-popup [hidden] { display: none; }
+
+.landing .button-quiet {
+  background: none;
+  color: var(--ohm-forest);
+  border-color: var(--ohm-line);
+}
+
+.landing .button-quiet:hover { background: rgb(1 50 32 / 0.05); }
+
+/* The opening section's background: a slow field of the Fatale greens, drawn by landing.js with
+   WebGL. It runs from the window's top and sides and fades into the page by the section's end, so it
+   has no edge; it is mostly paper and lightest behind the text. Without WebGL the stage shows a still
+   version (.is-still). */
+.landing .intro .shade-stage {
+  position: absolute;
+  z-index: -1;
+  top: -160px; /* past the top of the page and under a phone's status bar, so the field has no edge */
+  left: calc((var(--ohm-rail) + var(--ohm-rail-gap) + var(--ohm-pad-left)) * -1);
+  right: calc(var(--ohm-pad-right) * -1);
+  bottom: -120px;
+  pointer-events: none;
+}
+
+.shade-canvas {
+  display: block;
+  width: 100%;
+  height: 100%;
+}
+
+.landing .site-header { z-index: 2; }
+
+.shade-stage.is-still {
+  background:
+    radial-gradient(34% 40% at 78% 30%, rgb(161 163 130 / 0.30), transparent 72%),
+    radial-gradient(30% 36% at 62% 52%, rgb(22 62 44 / 0.22), transparent 72%),
+    radial-gradient(24% 30% at 88% 60%, rgb(42 20 22 / 0.10), transparent 70%);
+}
+
+/* The footer: the name on the left, small columns of links on the right, a quiet line below. */
+.landing .site-footer {
+  grid-column: 1 / -1;
+  grid-row: 2;
+  padding: 56px 0 24px;
+  font-size: 14px;
+  line-height: 1.5;
+}
+
+.footer-top {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1.6fr);
+  gap: 32px;
+}
+
+.footer-name {
+  align-self: start;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin: 0;
+  color: var(--ohm-ink-quiet);
+  font: 400 26px/1 var(--ohm-font-serif);
+  letter-spacing: -0.02em;
+}
+
+.footer-name { color: var(--ohm-forest); }
+
+.footer-name img {
+  display: block;
+  flex: none;
+  width: 18px;
+  height: 18px;
+}
+
+.footer-columns {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 32px;
+}
+
+/* Each column's name: bold, in plain case. */
+.footer-label {
+  margin: 0 0 8px;
+  color: var(--ohm-forest);
+  font-size: 15px;
+  font-weight: var(--ohm-strong);
+  letter-spacing: normal;
+  text-transform: none;
+}
+
+.landing .site-footer ul {
+  list-style: none;
+  padding: 0;
+}
+
+.landing .site-footer li + li { margin-top: 4px; }
+
+.landing .site-footer li,
+.landing .site-footer a {
+  font-size: 15px;
+  line-height: 1.5;
+}
+
+/* Links a step lighter than the column names, still well above contrast (#2e5444 on paper, 8:1). */
+.landing .site-footer a {
+  color: #2e5444;
+  text-decoration: none;
+}
+
+.landing .site-footer a:hover { color: var(--ohm-forest); }
+
+@media (max-width: 760px) {
+  .landing main { padding-top: 0; }
+
+  .landing .intro .shade-stage { left: calc(var(--ohm-pad-left) * -1); }
+
+  /* The opening section fills the first screen; the footer waits below. */
+  /* the screen, less the 60px bar, 12px above the page and the status bar */
+  .landing .intro { min-height: calc(100svh - 72px - env(safe-area-inset-top)); }
+
+  .landing article > :is(header, section) { padding-top: 48px; }
+
+  .landing article > section { margin-top: 48px; }
+
+  /* The name, then two columns of links, then Contact across. */
+  .landing .site-footer { padding-top: 40px; }
+
+  .footer-top { grid-template-columns: minmax(0, 1fr); gap: 28px; }
+
+  .footer-columns {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 24px 16px;
+  }
+
+  .footer-columns > :last-child { grid-column: 1 / -1; }
+
+  .landing .site-footer a {
+    display: inline-block;
+    padding-block: 5px;
+  }
+
+  .landing .site-footer li + li { margin-top: 0; }
+}
+
