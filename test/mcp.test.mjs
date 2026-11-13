@@ -267,7 +267,7 @@ test('an agent publishes: it shows what would change first, and the repository c
   assert.deepEqual([...repository.keys()], ['from-elsewhere']);
 });
 
-test('each tool asks the vault service only for what it says it is made of', async () => {
+test('each tool names real API requests, and vault tools ask only for what they declare', async () => {
   const { tools, asked } = await toolsOf();
   const made = await tools.call('vault_save', { key: 'hello', body: 'A first post.' });
   const calls = {
@@ -281,8 +281,11 @@ test('each tool asks the vault service only for what it says it is made of', asy
   };
   for (const tool of TOOLS) {
     // Every request a tool names is one the service has, and reading tools name none that change anything.
-    for (const name of tool.requests) assert.ok(REQUESTS[`com.ohmmmm.vault.${name}`], `${tool.name} names ${name}`);
-    if (tool.annotations?.readOnlyHint) assert.deepEqual(tool.requests.filter(name => REQUESTS[`com.ohmmmm.vault.${name}`].changes), [], tool.name);
+    const request = name => REQUESTS[name.includes('.') ? name : `com.ohmmmm.vault.${name}`];
+    for (const name of tool.requests) assert.ok(request(name), `${tool.name} names ${name}`);
+    if (tool.annotations?.readOnlyHint) assert.deepEqual(tool.requests.filter(name => request(name).changes), [], tool.name);
+    // Cortex behavior is exercised against the service in cortex-mcp.test.mjs.
+    if (!tool.name.startsWith('vault_')) continue;
     for (const args of calls[tool.name]) {
       asked.length = 0;
       const first = await tools.call(tool.name, args);
@@ -304,12 +307,15 @@ test('the server speaks the protocol: it lists the tools, answers calls, and rep
   assert.deepEqual((await ask('ping')).result, {});
 
   const listed = (await ask('tools/list')).result.tools;
-  assert.deepEqual(listed.map(tool => tool.name),
+  assert.deepEqual(listed.filter(tool => tool.name.startsWith('vault_')).map(tool => tool.name),
     ['vault_tree', 'vault_list', 'vault_read', 'vault_search', 'vault_save', 'vault_set_visibility', 'vault_status', 'vault_publish', 'vault_mirror', 'vault_delete']);
+  assert.deepEqual(listed.filter(tool => tool.name.startsWith('cortex_')).map(tool => tool.name).sort(),
+    ['cortex_start', 'cortex_note', 'cortex_settle', 'cortex_recall', 'cortex_remember', 'cortex_forget', 'cortex_skill', 'cortex_propose_skill', 'cortex_propose_tool'].sort());
+  assert.equal(listed.length, 19);
   // An agent is told a tool's name, what it does and what it takes, and nothing else.
   for (const tool of listed) assert.deepEqual([tool.inputSchema.type, Object.keys(tool).filter(key => !['name', 'description', 'inputSchema', 'annotations'].includes(key))], ['object', []]);
   // Only the tools that read are marked as changing nothing.
-  assert.deepEqual(listed.filter(tool => tool.annotations?.readOnlyHint).map(tool => tool.name), ['vault_tree', 'vault_list', 'vault_read', 'vault_search', 'vault_status']);
+  assert.deepEqual(listed.filter(tool => tool.name.startsWith('vault_') && tool.annotations?.readOnlyHint).map(tool => tool.name), ['vault_tree', 'vault_list', 'vault_read', 'vault_search', 'vault_status']);
 
   const saved = await ask('tools/call', { name: 'vault_save', arguments: { key: 'hello', body: 'A first post.' } });
   assert.equal(JSON.parse(saved.result.content[0].text).visibility, 'private');
@@ -337,7 +343,9 @@ test('the server starts on its own and answers over standard input and output', 
   const lines = out.trim().split('\n').map(line => JSON.parse(line));
   assert.equal(code, 0);
   assert.deepEqual(lines.map(line => line.id), [1, 2, 3]);
-  assert.equal(lines[1].result.tools.length, 10);
+  assert.equal(lines[1].result.tools.length, 19);
+  assert.match(lines[0].result.instructions, /cortex_start/);
+  assert.match(lines[0].result.instructions, /Saving never publishes/);
   assert.equal(lines[2].result.isError, true);
   assert.match(lines[2].result.content[0].text, /No site configuration here/);
 });

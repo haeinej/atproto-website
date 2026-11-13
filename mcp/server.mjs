@@ -16,8 +16,8 @@ import { pdsConfig, webUrl } from '../feed/pds.mjs';
 import { siteVars } from '../scripts/config.mjs';
 import { signIn } from '../scripts/rpc.mjs';
 import { vaultClient } from '../scripts/vault-client.mjs';
-import { createServer, serve } from './protocol.mjs';
-import { createTools, OFFERED } from './tools.mjs';
+import { createServer, serve, INSTRUCTIONS } from './protocol.mjs';
+import { createTools, OFFERED, CORTEX_INSTRUCTIONS } from './tools.mjs';
 
 const OHM = { url: 'https://vault.ohmmmm.com', did: 'did:web:vault.ohmmmm.com' };
 
@@ -33,4 +33,6 @@ async function localTools(values) {
 
 const { values } = parseArgs({ options: { config: { type: 'string' }, vault: { type: 'string' }, 'vault-did': { type: 'string' } } });
 process.stdin.setEncoding('utf8');
-await serve(createServer({ list: OFFERED, tools: () => localTools(values) }), process.stdin, process.stdout);
+await serve(createServer({ list: OFFERED, tools: () => localTools(values),
+  instructions: [INSTRUCTIONS, CORTEX_INSTRUCTIONS].filter(Boolean).join('\n\n'),
+}), process.stdin, process.stdout);

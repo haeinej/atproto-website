@@ -19,9 +19,9 @@ const ASKS = {
 };
 const FILES = Object.fromEntries(Object.entries({
   Posts: 'posts', Structure: 'structure', Search: 'search', Mirror: 'mirror', Publish: 'publish', Export: 'export', Account: 'account', Identity: 'identity',
-  Context: 'context', Memory: 'memory',
+  Context: 'context', Memory: 'memory', Notes: 'notes', Skills: 'skills', Tools: 'tools',
 }).map(([name, file]) => [name, `src/capabilities/${file}.mjs`]));
-for (const name of ['Notes', 'Turns', 'Skills', 'Tools', 'Cortex Export']) FILES[name] = '../cortex/pending.mjs';
+for (const name of ['Turns', 'Cortex Export']) FILES[name] = '../cortex/pending.mjs';
 
 // Every way the service says no. The same words go to a person in the editor and to an agent.
 export const REFUSALS = {
@@ -38,11 +38,14 @@ export const REFUSALS = {
   InvalidRequest: [400, 'The request is not JSON, or something it says is not what that request takes'],
   InvalidPost: [400, 'The post is not one the vault can hold. The message lists every reason'],
   InvalidMemory: [400, 'The memory is not one the cortex can hold, or its source notes do not belong to this member. The message says why'],
+  InvalidSkill: [400, 'The skill or its supporting text files do not fit the cortex rules. The message says why'],
+  SkillNotApproved: [403, 'An agent asked for skill instructions whose current version the member has not approved'],
+  InvalidTool: [400, 'The tool setting or proposal is not valid. Credentials and executable configuration stay outside the cortex'],
   InvalidCursor: [400, '`since` is not a value an earlier list returned'],
-  NotFound: [404, 'There is no such post or memory version'],
-  Changed: [409, 'The post or memory has changed since the version the request names. The answer carries the current version'],
+  NotFound: [404, 'There is no such post, cortex item or saved version'],
+  Changed: [409, 'The post or cortex item has changed since the version the request names. The answer carries the current version'],
   SlugTaken: [409, 'Another post in the vault already has that slug'],
-  NameTaken: [409, 'A memory already has that name; read it and name its version to replace it'],
+  NameTaken: [409, 'A cortex item already has that name; read it and name its version to replace it. A tool proposal cannot replace an existing tool'],
   NotBuiltYet: [501, 'The cortex request is registered and authenticated, but its implementation has not been built yet'],
   TooLarge: [413, 'The post is more than 600 KB of text, or a file it places is empty or larger than 25 MB'],
   FileUnreachable: [502, 'A file a post places could not be fetched from where the post says it is'],
@@ -57,7 +60,8 @@ const cell = text => String(text).replaceAll('|', '\\|');
 
 export function capabilitiesPage() {
   const used = new Set(TOOLS.flatMap(tool => tool.requests));
-  const without = Object.values(REQUESTS).filter(request => !(request.name.startsWith('com.ohmmmm.vault.') && used.has(short(request.name))));
+  const without = Object.values(REQUESTS).filter(request => !used.has(request.name)
+    && !(request.name.startsWith('com.ohmmmm.vault.') && used.has(short(request.name))));
   const lines = [
     '# What the vault can do',
     '',
@@ -125,7 +129,7 @@ export function capabilitiesPage() {
     '',
     '### Requests with no tool',
     '',
-    'An agent cannot ask for these. They are for the editor, for the command line, or for signing in.',
+    'These requests have no MCP tool. They serve the editor, command line, adapters or sign-in.',
     '',
     '| Request | Capability | Why it has no tool |',
     '| --- | --- | --- |',
@@ -144,12 +148,12 @@ const NO_TOOL = {
   Export: 'The command line and the editor write the vault out. An agent reads posts one at a time',
   Account: 'It rides on an ohm session, which an agent does not have',
   Identity: 'It is part of signing in',
-  Context: 'Cortex tools are not built yet; prompt recall is also reserved for the adapter',
-  Memory: 'The Memory API is built; cortex tools will expose it in a later step',
-  Notes: 'The authenticated request is reserved and is not built yet',
+  Context: 'Prompt recall is reserved for the adapter; cortex_start reads session context',
+  Memory: 'The editor uses the full memory index; cortex tools read or change individual memories',
+  Notes: 'The editor reads note receipts; cortex tools record and settle observations',
   Turns: 'The authenticated request is reserved for the adapter and is not built yet',
-  Skills: 'The authenticated request is reserved and is not built yet',
-  Tools: 'The authenticated request is reserved and is not built yet',
+  Skills: 'Context lists approved skills; approval and removal stay with the member in the editor',
+  Tools: 'Context lists enabled tools. Settings and removal belong to the member; an agent may only propose something to be built',
   'Cortex Export': 'The authenticated request is reserved for taking the cortex out and is not built yet',
 };
 
