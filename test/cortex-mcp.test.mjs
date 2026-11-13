@@ -255,6 +255,36 @@ test('settlement rewrites retain stated provenance and sources, preserve history
   assert.deepEqual((await call('cortex_settle')).notes.map(each => each.id), ['next']);
 });
 
+test('memory rewrites honor explicit source lists and preserve sources only when omitted', async t => {
+  const { call, note } = await running(t);
+  await note('a'); await note('b');
+  let saved = await call('cortex_remember', { memory: memory({ notes: ['a', 'b'] }) });
+  saved = await call('cortex_remember', { memory: memory({ notes: ['b'] }), version: saved.version });
+  assert.deepEqual((await call('cortex_recall', { name: 'plain-titles' })).memory.notes, ['b']);
+  saved = await call('cortex_remember', { memory: memory({ body: 'Still the same sources.' }), version: saved.version });
+  assert.deepEqual((await call('cortex_recall', { name: 'plain-titles' })).memory.notes, ['b']);
+  await call('cortex_remember', { memory: memory({ notes: [] }), version: saved.version });
+  assert.deepEqual((await call('cortex_recall', { name: 'plain-titles' })).memory.notes, []);
+});
+
+test('rescoping a memory can discard obsolete project evidence before settlement', async t => {
+  const { call, note } = await running(t);
+  await note('repo-a', { project: 'repo-a' });
+  const saved = await call('cortex_remember', { memory: memory({ project: 'repo-a', notes: ['repo-a'] }) });
+  await call('cortex_settle', { notes: [{ id: 'repo-a', outcome: 'plain-titles', version: saved.version }] });
+  const before = await call('cortex_recall', { name: 'plain-titles' });
+  const receipt = (await call('cortex_settle')).history[0];
+  await note('repo-b', { project: 'repo-b' });
+  const result = await call('cortex_settle', {
+    changes: [{ memory: memory({ project: 'repo-b', body: 'A corrected repo-B claim.', notes: [] }), version: before.version }],
+    notes: [{ id: 'repo-b', outcome: 'plain-titles', version: before.version }],
+  });
+  assert.equal(result.complete, true);
+  assert.deepEqual(result.memories[0].memory.notes, ['repo-b']);
+  assert.equal(result.memories[0].memory.seen.count, 1);
+  assert.deepEqual((await call('cortex_settle')).history.find(note => note.id === 'repo-a'), receipt);
+});
+
 test('settlement refuses nonexistent targets, missing versions, duplicate outcomes and cross-project evidence', async t => {
   const { call, note } = await running(t);
   const first = await call('cortex_remember', { memory: memory({ project: 'repo-one' }) });

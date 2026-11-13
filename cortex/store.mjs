@@ -6,16 +6,17 @@ const next = '(SELECT COALESCE(MAX(seq), 0) + 1 FROM cortex_memories WHERE did =
 const changed = (name, held) => new Refused(409, 'Changed', 'The memory has changed since the version this request names', { name, current: held?.version ?? null });
 const known = name => typeof name === 'string' && name.length <= 100 && NAME.test(name) ? name : (() => { throw new Refused(400, 'InvalidMemory', 'Say which memory with its lowercase, hyphenated name'); })();
 
+export const seedMemories = did => [
+  { name: 'identity', description: 'Who this member is; compose with them from what they say and show', kind: 'person', body: `Authenticated account: ${did}.\nWhether this is a person or a company, what they do, and how they sound has not yet been composed with them.` },
+  { name: 'vault-map', description: 'The current vault structure and the member’s descriptions of its labels', kind: 'reference', body: 'Label descriptions have not yet been composed. Context supplies the current structure, counts and recent posts alongside this memory.' },
+  { name: 'working-style', description: 'How this member wants work done, learned from what they say and correct', kind: 'preference', body: 'No working preferences have been stated yet. Learn them from the member; do not infer them from this seed.' },
+];
+
 export function memoryStore(db) {
   const current = (did, name) => db.prepare('SELECT * FROM cortex_memories WHERE did = ?1 AND name = ?2').bind(did, name).first();
   const store = {
     async seed(did) {
-      const seeds = [
-        { name: 'identity', description: 'Who this member is; compose with them from what they say and show', kind: 'person', body: `Authenticated account: ${did}.\nWhether this is a person or a company, what they do, and how they sound has not yet been composed with them.` },
-        { name: 'vault-map', description: 'The current vault structure and the member’s descriptions of its labels', kind: 'reference', body: 'Label descriptions have not yet been composed. Context supplies the current structure, counts and recent posts alongside this memory.' },
-        { name: 'working-style', description: 'How this member wants work done, learned from what they say and correct', kind: 'preference', body: 'No working preferences have been stated yet. Learn them from the member; do not infer them from this seed.' },
-      ];
-      for (const seed of seeds) {
+      for (const seed of seedMemories(did)) {
         const memory = cleanMemory({ ...seed, always: true, stated: false, writtenBy: did, seen: { count: 0, last: null } });
         const version = await memoryVersion(memory);
         const now = new Date().toISOString();

@@ -1,5 +1,5 @@
 import { cleanMemory, cortexVersion, InvalidMemory, memoryVersion, NAME } from '../../../cortex/core.mjs';
-import { memoryStore } from '../../../cortex/store.mjs';
+import { memoryStore, seedMemories } from '../../../cortex/store.mjs';
 import { Refused } from '../store.mjs';
 
 const invalid = message => { throw new Refused(400, 'InvalidRequest', message); };
@@ -95,11 +95,15 @@ async function settleNotes({ env: { DB: db }, did, body }) {
       }
       snapshots.set(id, note);
     }
-    const evidence = [...all.values()].filter(note => projectOf(note.project) === projectOf(previous.project)
-      && (note.outcome === name || sources.includes(note.id)));
-    for (const note of evidence) snapshots.set(note.id, note);
+    // A receipt names an outcome, not a memory incarnation. Only the current
+    // source list and this batch support this claim; old namesakes do not.
+    const evidence = sources.map(id => all.get(id));
     const sessions = new Set(evidence.map(note => note.session));
-    if (!previous.stated && sessions.size < 2) throw new Refused(400, 'InvalidMemory', 'An inferred memory needs observations from at least two distinct sessions');
+    const seed = seedMemories(did).find(seed => seed.name === name);
+    // Recording agreement with an unchanged placeholder forms no new inference.
+    // Its name alone is insufficient: a rewritten/scoped seed needs corroboration.
+    const unchangedSeed = seed && ['description', 'kind', 'body', 'project', 'from'].every(key => previous[key] === seed[key]);
+    if (!previous.stated && !unchangedSeed && sessions.size < 2) throw new Refused(400, 'InvalidMemory', 'An inferred memory needs observations from at least two distinct sessions');
     let memory;
     try {
       memory = cleanMemory({ ...previous, notes: sources,
