@@ -130,6 +130,16 @@ function outsideCode(body, change) {
   return out.join('\n');
 }
 
+// Compare actual media placements, including repeats, while keeping code examples literal.
+export function mediaLayout(body) {
+  const placements = [];
+  const text = outsideCode(String(body ?? ''), part => part.replace(/(!\[[^\]]*\])\(media:([A-Za-z0-9_-]+)\)/g, (_whole, label, id) => {
+    placements.push(id);
+    return `${label}(media)`;
+  }));
+  return { body: text.trim(), placements };
+}
+
 // The body as a record holds it. A file points at its attachments by address; a record places
 // them by ID and holds a stored copy of each. Links to other notes become links to their addresses.
 //   noteAddress(name) -> the address of the note with that name or slug, or nothing
