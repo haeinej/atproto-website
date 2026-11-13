@@ -1244,7 +1244,7 @@ The tools work in the same working copy the workspace shows. A post an agent sav
 
 ## What an agent should know {{#model}}
 Start with these rules, then use the supplied cortex settlement skill for learning decisions.
-- **Call `cortex_start` first.** Read standing memories and the description indexes. Settle pending notes before continuing; recall full memories and approved skills when needed.
+- **Start every session with Context.** Call `cortex_start` first. Read standing memories and the description indexes. Settle pending notes before continuing; recall full memories and approved skills when needed.
 - **The vault is one person's work,** as posts filed under labels and sublabels. Start with `vault_tree` to see its shape, then `vault_read` or `vault_search`.
 - **Every post is private, for friends, or public.** Private posts are context for helping the member. Nothing from one belongs in anything another person can see.
 - **A new post is saved private.** `vault_save` never shares anything. To change who a post is for, use `vault_set_visibility`, which always asks first.
