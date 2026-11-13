@@ -2,6 +2,10 @@ package com.atprotowebsite;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ObjectNode;
+import com.ibm.icu.lang.UCharacter;
+import com.ibm.icu.text.Normalizer2;
+import com.ibm.icu.text.UnicodeSet;
+import com.ibm.icu.text.UnicodeSetSpanner;
 import java.io.IOException;
 import java.net.URI;
 import java.net.URLEncoder;
@@ -11,7 +15,6 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
-import java.text.Normalizer;
 import java.time.Instant;
 import java.util.Arrays;
 import java.util.List;
@@ -22,6 +25,10 @@ record Post(String id, Instant createdAt, String text, String body, List<Post.Me
     static final String COLLECTION = "com.ohmmmm.post";
     static final String BLUESKY_COLLECTION = "app.bsky.feed.post";
     private static final ObjectMapper JSON = new ObjectMapper();
+    // Unicode 17 folder rules must not depend on the JDK's Unicode version.
+    private static final Normalizer2 NFC = Normalizer2.getNFCInstance();
+    private static final UnicodeSetSpanner FOLDER_SEPARATORS = new UnicodeSetSpanner(
+            new UnicodeSet("[^[:L:][:N:][:M:]]").freeze());
     private static final long X_EPOCH = 1_288_834_974_657L;
     private static final long TID_SLOTS_PER_MILLISECOND = 1_000 * 1_024L;
     private static final String TID_ALPHABET = "234567abcdefghijklmnopqrstuvwxyz";
@@ -55,8 +62,9 @@ record Post(String id, Instant createdAt, String text, String body, List<Post.Me
         // author's label while deriving the same normalized, encoded URL folder.
         String filedUnder = label.replaceAll("^[\\s\\p{Z}\\uFEFF]+|[\\s\\p{Z}\\uFEFF]+$", "");
         filedUnder = filedUnder.isEmpty() ? "other" : filedUnder.substring(0, Math.min(100, filedUnder.length()));
-        String folder = Normalizer.normalize(filedUnder, Normalizer.Form.NFC).toLowerCase(Locale.ROOT)
-                .replaceAll("[^\\p{L}\\p{N}\\p{M}]+", "-").replaceAll("^-|-$", "");
+        String folder = FOLDER_SEPARATORS.replaceFrom(
+                UCharacter.toLowerCase(Locale.ROOT, NFC.normalize(filedUnder)), "-",
+                UnicodeSetSpanner.CountMethod.WHOLE_SPAN).replaceAll("^-|-$", "");
         String path = "/posts/" + (folder.isEmpty() ? "" : URLEncoder.encode(folder, StandardCharsets.UTF_8) + "/")
                 + recordKey();
         var record = JSON.createObjectNode().put("$type", collection).put("body", body)
