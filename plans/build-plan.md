@@ -512,7 +512,7 @@ One program, `ohm cortex hook <moment>`, the same for both agents. An agent's ho
 | A session starts | `SessionStart` | `SessionStart` | Answers with the memories marked `always` and a line for each other memory and skill, from its own copy. Then, without being waited for, brings that copy up to date and sends anything still waiting to be sent |
 | The member sends a prompt | `UserPromptSubmit` | `UserPromptSubmit` | Finds the few memories that fit the prompt and answers with them, 1,500 characters at most, as `additionalContext`. With nothing that fits it answers with nothing |
 | A turn ends | `Stop` | `Stop` | Writes one line to a file on the member's machine: the session, the turn, the folder, the prompt and the last thing the agent said. It reaches no network, and returns at once |
-| A session ends | `SessionEnd` | `SessionEnd`, on the desktop build only | Sends what is waiting. Nothing depends on this running |
+| A session ends | `SessionEnd` | `SessionEnd`: observed on CLI 0.168.0 at normal exit in the probe below; on the earlier Mac builds, desktop only | Sends what is waiting. Nothing depends on this running |
 
 Four rules keep it from getting in the way of the work:
 
