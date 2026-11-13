@@ -4,12 +4,12 @@
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <meta name="theme-color" content="#fafaf9">
-    <meta name="description" content="Connect the coding agent you already use to your vault and cortex. It can work on private posts, carry learning between sessions, and propose skills for your approval.">
+    <meta name="description" content="Let the coding agent you already use help with your actual drafts and preferences. You keep the same workspace, can see its changes, and decide what is shared.">
     <link rel="canonical" href="https://docs.ohmmmm.com/agent">
     <meta property="og:type" content="website">
     <meta property="og:site_name" content="ohm">
     <meta property="og:title" content="Your agent · ohm docs">
-    <meta property="og:description" content="Connect the coding agent you already use to your vault and cortex. It can work on private posts, carry learning between sessions, and propose skills for your approval.">
+    <meta property="og:description" content="Let the coding agent you already use help with your actual drafts and preferences. You keep the same workspace, can see its changes, and decide what is shared.">
     <meta property="og:url" content="https://docs.ohmmmm.com/agent">
     <meta property="og:image" content="https://ohmmmm.com/assets/og-image.png">
     <meta property="og:image:width" content="1200">
@@ -27,16 +27,12 @@
   <body>
     <a class="skip" href="#content">Skip to content</a>
 
-    <!-- Docs shell, the same on every page except aria-current. The header is the ohm dot alone, as on
-         ohmmmm.com, where it leads. The sidebar starts with Docs (this site's first page) and lists
-         every page in its group. Icons are Lucide. -->
-    <input class="menu-toggle" type="checkbox" id="menu">
-    <header class="site-header">
-      <a class="site-mark" href="https://ohmmmm.com/"><img src="/assets/favicon.svg" alt="ohm" width="20" height="20"></a>
-      <label class="menu-button" for="menu"><svg class="icon" viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2.25" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 12h16"/><path d="M4 6h16"/><path d="M4 18h16"/></svg><span>Menu</span></label>
-    </header>
+    <!-- Header-free docs shell. The sidebar lists every page; a control in normal
+         document flow opens it on narrow screens. Icons are Lucide. -->
+    <input class="menu-toggle" type="checkbox" id="menu" aria-label="Show docs navigation" aria-controls="docs-navigation">
+    <label class="menu-button" for="menu"><svg class="icon" viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2.25" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 12h16"/><path d="M4 6h16"/><path d="M4 18h16"/></svg><span>Menu</span></label>
 
-    <nav class="site-sidebar" aria-label="Docs">
+    <nav class="site-sidebar" id="docs-navigation" aria-label="Docs">
       <ul>
         <li><a href="/">Docs</a></li>
       </ul>
@@ -74,8 +70,9 @@
         <li><a href="/agent" aria-current="page">Connect your agent</a></li>
         <li><a href="/finding-people">Finding people</a></li>
       </ul>
-      <p class="sidebar-group">Architecture</p>
+      <p class="sidebar-group">For agents</p>
       <ul>
+        <li><a href="/agent-guide">Start here as an agent</a></li>
         <li><a href="/architecture">Overview</a></li>
         <li><a href="/identity">Identity and access</a></li>
         <li><a href="/data-model">Data model</a></li>
@@ -95,7 +92,7 @@
         <header>
           <p class="group">Agent</p>
           <h1 id="title">Your agent</h1>
-          <p class="introduction">Connect the coding agent you already use to your vault and cortex. It can work on private posts, carry learning between sessions, and propose skills for your approval.</p>
+          <p class="introduction">Let the coding agent you already use help with your actual drafts and preferences. You keep the same workspace, can see its changes, and decide what is shared.</p>
           <p class="alert" role="note">ohm is in development. These docs cover the implementation and the work still planned. Built does not mean verified on the live service; see Status and limits.</p>
         </header>
 
@@ -103,6 +100,35 @@
           <h2 id="what">What it is</h2>
           <p>ohm does not run a background agent for you. Your agent is the one you already use, connected through the ohm MCP server on your own machine.</p>
           <p>The tools work in the same vault and cortex you see in the browser. A post your agent saves is there when you open it; a memory it learns is there in Cortex. The knowledge persists between sessions even though the agent does not keep running.</p>
+        </section>
+
+        <section aria-labelledby="need">
+          <h2 id="need">What you need, and why</h2>
+          <div class="table">
+            <table>
+              <thead>
+                <tr><th>You need</th><th>Why it is needed</th></tr>
+              </thead>
+              <tbody>
+                <tr><th scope="row">Your connected AT Protocol account</th><td>Lets your own server prove which private workspace the agent may use</td></tr>
+                <tr><th scope="row">A coding agent that supports MCP</th><td>Gives the ohm tools somewhere to run and a model that decides how to use them</td></tr>
+                <tr><th scope="row">The local ohm MCP server and site configuration</th><td>Connects that agent to the correct account and service</td></tr>
+                <tr><th scope="row">An app password in the server's private environment</th><td>Lets your PDS authorize requests; keep it out of posts and chat</td></tr>
+              </tbody>
+            </table>
+          </div>
+          <p>Your agent or the person setting it up can follow the <a href="/agent-guide#connect">agent setup guide</a> for the actual entry point and configuration. Connecting these tools does not install automatic session hooks.</p>
+        </section>
+
+        <section aria-labelledby="first-use">
+          <h2 id="first-use">First use: make a private draft you can find</h2>
+          <ol>
+            <li>Once connected, ask: "Start with my cortex, look at my labels, and save a private draft under Writings about the idea below." Supply a short, synthetic idea while trying the connection.</li>
+            <li>Open the vault in the browser. Find Writings, open the saved draft, and check its words and who can see it. A new draft should be Only me.</li>
+            <li>Edit it yourself and choose Save. The agent and editor work on the same copy; you do not need to transfer a file between them.</li>
+            <li>Tell the agent a true preference you want remembered, then inspect the result in Cortex. <a href="/cortex#first-use">Try one preference</a></li>
+          </ol>
+          <p>You have succeeded when you can reopen the draft and inspect the memory. Publishing is a separate choice. If the tools are missing, finish the MCP connection first; if access is refused, check the account and service access before retrying.</p>
         </section>
 
         <section aria-labelledby="reads">
@@ -142,49 +168,14 @@
 
         <section aria-labelledby="tools">
           <h2 id="tools">The tools</h2>
-          <div class="table">
-            <table>
-              <thead>
-                <tr><th>Tool</th><th>What it does</th></tr>
-              </thead>
-              <tbody>
-                <tr><th scope="row"><code>vault_tree</code></th><td>Your repository: labels, sublabels, and each post with who it is for</td></tr>
-                <tr><th scope="row"><code>vault_list</code>, <code>vault_read</code></th><td>List posts, and read one in full</td></tr>
-                <tr><th scope="row"><code>vault_search</code></th><td>Find posts by the words in them</td></tr>
-                <tr><th scope="row"><code>vault_save</code></th><td>Make a post, always private, or change one</td></tr>
-                <tr><th scope="row"><code>vault_set_visibility</code></th><td>Mark a post public, for friends, or private</td></tr>
-                <tr><th scope="row"><code>vault_status</code></th><td>What publishing would change</td></tr>
-                <tr><th scope="row"><code>vault_publish</code></th><td>Publish</td></tr>
-                <tr><th scope="row"><code>vault_mirror</code></th><td>Bring in what you have published</td></tr>
-                <tr><th scope="row"><code>vault_delete</code></th><td>Remove a post</td></tr>
-              </tbody>
-            </table>
-          </div>
-          <p>A tool has no ability of its own. Each is a way of asking ohm for something the workspace can already do. <a href="/mcp">Agent integration</a> describes the server behind them.</p>
+          <p>Ask your agent to find an earlier post, save a private draft, suggest labels, or show what is waiting to be published. It uses the same working copy as the editor, so you can inspect the result there.</p>
+          <p>The <a href="/agent-guide">agent guide</a> and <a href="/mcp#tools">MCP reference</a> give the exact tool names and contracts for setup and troubleshooting.</p>
         </section>
 
         <section aria-labelledby="cortex">
           <h2 id="cortex">Starting with your cortex</h2>
-          <p>The server also offers nine cortex tools. Start a session with <code>cortex_start</code>, settle waiting observations, then recall full memories or approved skills as their descriptions become relevant.</p>
-          <div class="table">
-            <table>
-              <thead>
-                <tr><th>Tool</th><th>What it does</th></tr>
-              </thead>
-              <tbody>
-                <tr><th scope="row"><code>cortex_start</code></th><td>Read starting Context, descriptions and pending observations</td></tr>
-                <tr><th scope="row"><code>cortex_note</code></th><td>Record an observation without changing memory</td></tr>
-                <tr><th scope="row"><code>cortex_settle</code></th><td>Read waiting notes or submit judged memory rewrites and explicit outcomes</td></tr>
-                <tr><th scope="row"><code>cortex_recall</code></th><td>Read a named memory, its history or search matches</td></tr>
-                <tr><th scope="row"><code>cortex_remember</code></th><td>Save a whole private memory using the version read</td></tr>
-                <tr><th scope="row"><code>cortex_forget</code></th><td>Remove a memory after showing it and getting your agreement</td></tr>
-                <tr><th scope="row"><code>cortex_skill</code></th><td>Read one approved skill and supporting text</td></tr>
-                <tr><th scope="row"><code>cortex_propose_skill</code></th><td>Propose instructions for your review</td></tr>
-                <tr><th scope="row"><code>cortex_propose_tool</code></th><td>Record a tool idea that cannot run or grant access</td></tr>
-              </tbody>
-            </table>
-          </div>
-          <p>These calls are available now. Automatically injecting context or recording turns through Claude Code or Codex hooks is not built. <a href="/memory">Memory and notes</a></p>
+          <p>At the start of a session, ask your agent to read your cortex before working. It can then read the preferences relevant to the task, consider waiting observations, and use skills you have approved. This is how knowledge can carry into a new session without your pasting it into every chat.</p>
+          <p>Automatic prompt injection and conversation capture through Claude Code or Codex hooks are not built. Ask explicitly, and inspect important learning in <a href="/memory">Memory and notes</a>.</p>
         </section>
 
         <section aria-labelledby="sign-in">
@@ -230,6 +221,8 @@
       <p id="toc-title">On this page</p>
       <ul>
         <li><a href="#what">What it is</a></li>
+        <li><a href="#need">What you need, and why</a></li>
+        <li><a href="#first-use">First use: make a private draft you can find</a></li>
         <li><a href="#reads">What it can read</a></li>
         <li><a href="#does">What it can do, and what needs your yes</a></li>
         <li><a href="#tools">The tools</a></li>

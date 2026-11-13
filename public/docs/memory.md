@@ -1,23 +1,28 @@
 # Memory and notes
 
-A memory is something worth carrying forward. A note is an observation to consider before changing that memory. Both are private, with sources that you can inspect.
+Keep useful knowledge without turning every passing observation into a fact about you. Memories carry learning forward; notes give an agent somewhere to put an uncertain observation until there is enough reason to use it.
 
 ## A memory
 
 Every memory has a name, a one-line description and Markdown text. The description lets an agent decide whether to read the whole memory.
 
-| Field | Meaning |
+| What you can inspect | Why it matters |
 | --- | --- |
-| Name | Lowercase words joined with hyphens, such as `working-style` |
-| Description | One nonempty line, up to 200 characters |
-| Kind | `person`, `preference`, `project` or `reference` |
-| Body | Markdown, up to 8 KB in UTF-8 |
-| Stated | Whether you said it directly, rather than an agent inferring it |
-| Always | Whether its full text belongs in starting Context |
-| Project and source | Optional scope and where it came from |
-| Evidence | Source note IDs, who last wrote it, and service-maintained session counts |
+| Its description and text | Lets you recognize the knowledge and check what the agent will read |
+| Whether you stated it | Keeps an agent's inference distinguishable from something you explicitly said |
+| Its project | Helps keep a convention for one project from becoming a rule for every project |
+| Whether it is included at session start | Keeps standing preferences available without loading every memory in full |
+| Its sources and history | Lets you understand where it came from and recover an earlier version |
 
 Memory is prior learning, not an instruction that overrides what you say now. An agent must preserve uncertainty and project scope rather than turn a guess into a fact.
+
+## Try it, then check the result
+
+You need a connected agent to record learning through the tools, and the Cortex view to inspect it. [Your cortex](https://docs.ohmmmm.com/cortex.md#first-use) walks through the first connection and preference.
+
+Tell the agent something you want carried forward, such as: "For this project, remember that dates should use the reader's local time." Open Cortex, choose Memories, and check that the text keeps the project restriction. The result should be a correct statement you recognize, rather than a general rule you never agreed to.
+
+If the agent merely notices a possible preference, it can record a note instead. Open Notes to see the observation and where it came from. Recording a note alone has not changed your memories.
 
 ## What you say, and what an agent notices
 
@@ -39,7 +44,7 @@ The agent reads pending notes and kept history, judges what they mean, and gives
 
 The supplied settlement policy keeps a single sighting as an observation. A new inference needs evidence from distinct sessions; one contradiction does not silently replace something you explicitly stated. The service checks ownership, project scope and versions, and counts the distinct sessions in the source notes. It does not call a model or judge the truth of a sentence.
 
-`cortex_settle` accepts judged rewrites and batches of up to 100 note outcomes. Its memory saves and receipt settlement are separate steps: a failed settlement does not roll back an earlier save. The agent must read the current versions again before retrying, and finish any remaining batches. A receipt already recorded cannot be changed to a different outcome.
+If an agent reports that settlement failed, some memory changes may already have been saved. Ask it to reread the memory and waiting notes before trying again. The [agent guide](https://docs.ohmmmm.com/agent-guide.md#recovery) explains the partial-completion contract.
 
 ## Read before replacing
 
@@ -49,7 +54,7 @@ Earlier versions are preserved privately. In Cortex, open a memory's history, re
 
 ## Forgetting
 
-Ask your agent to forget a memory. `cortex_forget` first returns the exact memory to be removed. The agent shows it to you and only completes the second call if you agree. Its confirmation is single-use and bound to that memory version and the running server.
+Ask your agent to forget a memory. It first shows you the exact memory to be removed and only completes the removal if you agree. If the memory changes before you confirm, you need to review the new version.
 
 Removal takes the memory out of current Context. It does not erase its preserved history. Deleting all retained data is a separate manual request. [Export and leaving](https://docs.ohmmmm.com/export.md)
 

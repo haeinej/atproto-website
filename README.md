@@ -15,7 +15,19 @@ You can start from an existing website, from an export of your posts on another 
 
 ### With your coding agent
 
-This repository is a Claude Code plugin. It gives your agent five skills: `start` (what this project is for and its rules), `vault` (working in your notes with the vault's tools), `suggest-labels` (deciding your site's sections with you), `migrate-site` (moving a website and social posts in without loss), and `build-renderer` (making your site's own pages build from records).
+This repository is a Claude Code plugin. Its bundled skills are:
+
+| Skill | What it helps with |
+| --- | --- |
+| [start](skills/start/SKILL.md) | The project's purpose and rules |
+| [vault](skills/vault/SKILL.md) | Working in your notes with the vault's tools |
+| [cortex](skills/cortex/SKILL.md) | Private memory, observations and learning between sessions |
+| [suggest-labels](skills/suggest-labels/SKILL.md) | Deciding your site's sections with you |
+| [migrate-site](skills/migrate-site/SKILL.md) | Moving a website and social posts in without loss |
+| [build-renderer](skills/build-renderer/SKILL.md) | Making your site's pages build from records |
+| [document-work](skills/document-work/SKILL.md) | Turning each completed outcome into distinct agent and human guides |
+
+[How documentation follows your work](skills/document-work/README.md) explains what to expect from the last skill and how to use it. Its instructions, writing guides and contract live together in [skills/document-work/](skills/document-work/).
 
 ```
 /plugin install ohm --marketplace haeinej/ohm-content-layer

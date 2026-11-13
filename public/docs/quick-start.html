@@ -4,12 +4,12 @@
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <meta name="theme-color" content="#fafaf9">
-    <meta name="description" content="Start with your posts, then open the private cortex your agent uses to remember your work. Publishing, folder sync and connecting an agent are separate steps.">
+    <meta name="description" content="Keep your drafts, published work and agent knowledge connected, while choosing what becomes public. Start by saving one private post; add publishing and an agent when you need them.">
     <link rel="canonical" href="https://docs.ohmmmm.com/quick-start">
     <meta property="og:type" content="website">
     <meta property="og:site_name" content="ohm">
     <meta property="og:title" content="Quick start · ohm docs">
-    <meta property="og:description" content="Start with your posts, then open the private cortex your agent uses to remember your work. Publishing, folder sync and connecting an agent are separate steps.">
+    <meta property="og:description" content="Keep your drafts, published work and agent knowledge connected, while choosing what becomes public. Start by saving one private post; add publishing and an agent when you need them.">
     <meta property="og:url" content="https://docs.ohmmmm.com/quick-start">
     <meta property="og:image" content="https://ohmmmm.com/assets/og-image.png">
     <meta property="og:image:width" content="1200">
@@ -27,16 +27,12 @@
   <body>
     <a class="skip" href="#content">Skip to content</a>
 
-    <!-- Docs shell, the same on every page except aria-current. The header is the ohm dot alone, as on
-         ohmmmm.com, where it leads. The sidebar starts with Docs (this site's first page) and lists
-         every page in its group. Icons are Lucide. -->
-    <input class="menu-toggle" type="checkbox" id="menu">
-    <header class="site-header">
-      <a class="site-mark" href="https://ohmmmm.com/"><img src="/assets/favicon.svg" alt="ohm" width="20" height="20"></a>
-      <label class="menu-button" for="menu"><svg class="icon" viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2.25" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 12h16"/><path d="M4 6h16"/><path d="M4 18h16"/></svg><span>Menu</span></label>
-    </header>
+    <!-- Header-free docs shell. The sidebar lists every page; a control in normal
+         document flow opens it on narrow screens. Icons are Lucide. -->
+    <input class="menu-toggle" type="checkbox" id="menu" aria-label="Show docs navigation" aria-controls="docs-navigation">
+    <label class="menu-button" for="menu"><svg class="icon" viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2.25" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 12h16"/><path d="M4 6h16"/><path d="M4 18h16"/></svg><span>Menu</span></label>
 
-    <nav class="site-sidebar" aria-label="Docs">
+    <nav class="site-sidebar" id="docs-navigation" aria-label="Docs">
       <ul>
         <li><a href="/">Docs</a></li>
       </ul>
@@ -74,8 +70,9 @@
         <li><a href="/agent">Connect your agent</a></li>
         <li><a href="/finding-people">Finding people</a></li>
       </ul>
-      <p class="sidebar-group">Architecture</p>
+      <p class="sidebar-group">For agents</p>
       <ul>
+        <li><a href="/agent-guide">Start here as an agent</a></li>
         <li><a href="/architecture">Overview</a></li>
         <li><a href="/identity">Identity and access</a></li>
         <li><a href="/data-model">Data model</a></li>
@@ -95,24 +92,50 @@
         <header>
           <p class="group">Get started</p>
           <h1 id="title">Quick start</h1>
-          <p class="introduction">Start with your posts, then open the private cortex your agent uses to remember your work. Publishing, folder sync and connecting an agent are separate steps.</p>
+          <p class="introduction">Keep your drafts, published work and agent knowledge connected, while choosing what becomes public. Start by saving one private post; add publishing and an agent when you need them.</p>
           <p class="alert" role="note">ohm is in development. These docs cover the implementation and the work still planned. Built does not mean verified on the live service; see Status and limits.</p>
         </header>
 
+        <section aria-labelledby="why">
+          <h2 id="why">Why the pieces are separate</h2>
+          <p>An idea can become a draft, then a public post. You need somewhere to work on it before it is ready, and a way to publish it without making every draft public. Your vault is that working space. Your own account on the open network holds what you publish.</p>
+          <p>Your agent also learns how you work. That knowledge belongs in a private cortex beside your posts, so a preference about editing does not become part of your website. <a href="/cortex">Your cortex</a></p>
+        </section>
+
+        <section aria-labelledby="need">
+          <h2 id="need">What you need, and why</h2>
+          <p>An AT Protocol account is your identity on the open network. A Personal Data Server, or PDS, is the server that holds that account's public records. Bluesky hosts accounts too; you can connect one instead of running a server yourself.</p>
+          <div class="table">
+            <table>
+              <thead>
+                <tr><th>You need</th><th>Why</th><th>Who sets it up</th></tr>
+              </thead>
+              <tbody>
+                <tr><th scope="row">An ohm sign-in</th><td>Lets the workspace recognize you when you return</td><td>You sign in with a supported provider</td></tr>
+                <tr><th scope="row">A connected AT Protocol account</th><td>Proves which vault and cortex are yours and identifies where public posts belong</td><td>You connect your existing account; if you have none, create one first</td></tr>
+                <tr><th scope="row">A website</th><td>Gives public records a page with your own design</td><td>Optional for saving private work; connecting its content is separate work</td></tr>
+                <tr><th scope="row">A coding agent</th><td>Uses your work as context and carries learning between sessions</td><td>Optional; the browser editor works without one</td></tr>
+                <tr><th scope="row">A local folder</th><td>Gives you a separate copy of your posts</td><td>Optional; export or command-line sync when you want one</td></tr>
+              </tbody>
+            </table>
+          </div>
+          <p>Access is restricted while ohm is being tested. These steps describe the implemented workspace; check <a href="/limits">Status and limits</a> for what remains unverified or unavailable.</p>
+        </section>
+
         <section aria-labelledby="sign-in">
           <h2 id="sign-in">1. Sign in</h2>
-          <p>Sign in or sign up with Google, Microsoft or Bluesky. That makes your ohm account. <a href="/sign-in">More about signing in</a></p>
+          <p>Open the workspace and sign in with Google, Microsoft or Bluesky. This identifies you to ohm; it does not share a draft or publish anything. <a href="/sign-in">Sign in</a></p>
         </section>
 
         <section aria-labelledby="where">
           <h2 id="where">2. Say where your posts live</h2>
-          <p>Your posts belong to an account on the open network, not to ohm. Once, you say which one.</p>
+          <p>Connect the account whose posts you want to work on. This connection lets ohm keep the right private workspace behind your sign-in.</p>
           <ul>
             <li><strong>You have a server of your own.</strong> Enter your handle and an app password from it.</li>
             <li><strong>You have a website, and no server yet.</strong> ohm shows you how to set one up beside your site, then you come back with your handle.</li>
             <li><strong>You use Bluesky.</strong> Enter your Bluesky handle. If you signed in with Bluesky, this step is already done.</li>
           </ul>
-          <p>What you have already published there is brought into your workspace on its own.</p>
+          <p>Supported posts you have already published are brought into your workspace. They stay public; connecting an account does not make a new private post public.</p>
         </section>
 
         <section aria-labelledby="workspace">
@@ -129,9 +152,9 @@
         <section aria-labelledby="write">
           <h2 id="write">4. Write a post</h2>
           <p>Start a new post and write. A post is Markdown, and it can be one sentence.</p>
-          <p>You do not say what kind of thing it is. A post with a title is a writing, one without is a note, and one that only shows a photograph is an image. ohm reads that from the post.</p>
+          <p>Give it a label so you can find it again, and choose Save. You can add a title when it helps; a short thought is enough.</p>
           <p>To add a picture, paste the address of one that is already on the web.</p>
-          <p>A new post is private. Nobody else can see it. <a href="/posts">More about posts</a></p>
+          <p>A new post is private. Open another post, then return to your draft: seeing your saved words again is the first useful result. You can stop here and keep working privately. <a href="/posts">More about posts</a></p>
         </section>
 
         <section aria-labelledby="who">
@@ -146,7 +169,7 @@
         </section>
 
         <section aria-labelledby="publish">
-          <h2 id="publish">6. Publish</h2>
+          <h2 id="publish">6. Publish when you want to share</h2>
           <p>Press Publish. Before anything happens, you see exactly what will change: which posts will be published for the first time, replaced, or taken down. Then you approve at your own server, and it is done.</p>
           <p>A public post is now part of your published layer. Anything published is public for good: other services copy it the moment it is written. Taking it down later removes it from your account, not from every copy. <a href="/publish">More about publishing</a></p>
         </section>
@@ -190,12 +213,14 @@
     <nav class="site-toc" aria-labelledby="toc-title">
       <p id="toc-title">On this page</p>
       <ul>
+        <li><a href="#why">Why the pieces are separate</a></li>
+        <li><a href="#need">What you need, and why</a></li>
         <li><a href="#sign-in">1. Sign in</a></li>
         <li><a href="#where">2. Say where your posts live</a></li>
         <li><a href="#workspace">3. Look around your workspace</a></li>
         <li><a href="#write">4. Write a post</a></li>
         <li><a href="#who">5. Decide who sees it</a></li>
-        <li><a href="#publish">6. Publish</a></li>
+        <li><a href="#publish">6. Publish when you want to share</a></li>
         <li><a href="#folder">7. Keep a copy of your posts</a></li>
         <li><a href="#agent">8. Bring in your agent</a></li>
         <li><a href="#cortex">9. See what your agent remembers</a></li>

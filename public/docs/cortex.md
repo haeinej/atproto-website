@@ -1,6 +1,6 @@
 # Your cortex
 
-Your vault holds what you make. Your cortex holds what your agent remembers and the skills and tools available to it. The cortex belongs to your connected account and stays private.
+Give your agent a place to keep what it learns about your work, so you do not have to explain the same preferences every session. You can inspect and correct that knowledge without making it a post.
 
 ## Beside your posts
 
@@ -25,6 +25,21 @@ Choose Cortex in the rail, then Memories, Notes or Skills.
 - **Skills** show the instructions and supporting files. Sign in with your linked ohm account to review an agent's proposal and approve exactly the version you read.
 
 Tool settings are currently available through the service API. There is no tool-settings panel in this view.
+
+## What you need, and why
+
+Your connected account identifies whose private knowledge this is. Your agent needs the ohm MCP connection to read or save it; opening a new chat alone does not bring that knowledge into the conversation. [Connect your agent](https://docs.ohmmmm.com/agent.md)
+
+The browser is where you inspect the result and review proposed skills. To approve a skill, use your linked ohm sign-in: the agent's credentials intentionally cannot approve its own instructions.
+
+## Try one preference
+
+1. Connect your agent and ask it to start with your cortex. The first Context request creates three starting memories without guessing your identity or preferences.
+2. Tell it: "Remember that I prefer a short first draft before polished prose." This is an example; use a preference that is true for you.
+3. Open Cortex, choose Memories, and read the saved preference. Check that it says what you meant. You can edit the text if it does not.
+4. In a later session, ask the agent to start with your cortex and read the relevant memory before drafting.
+
+The visible result is a memory you can inspect and reuse. Whether a later draft follows it also depends on the agent reading it and following your current request. Automatic recall into every prompt is not built.
 
 ## What a session starts with
 

@@ -4,12 +4,12 @@
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <meta name="theme-color" content="#fafaf9">
-    <meta name="description" content="A memory is something worth carrying forward. A note is an observation to consider before changing that memory. Both are private, with sources that you can inspect.">
+    <meta name="description" content="Keep useful knowledge without turning every passing observation into a fact about you. Memories carry learning forward; notes give an agent somewhere to put an uncertain observation until there is enough reason to use it.">
     <link rel="canonical" href="https://docs.ohmmmm.com/memory">
     <meta property="og:type" content="website">
     <meta property="og:site_name" content="ohm">
     <meta property="og:title" content="Memory and notes · ohm docs">
-    <meta property="og:description" content="A memory is something worth carrying forward. A note is an observation to consider before changing that memory. Both are private, with sources that you can inspect.">
+    <meta property="og:description" content="Keep useful knowledge without turning every passing observation into a fact about you. Memories carry learning forward; notes give an agent somewhere to put an uncertain observation until there is enough reason to use it.">
     <meta property="og:url" content="https://docs.ohmmmm.com/memory">
     <meta property="og:image" content="https://ohmmmm.com/assets/og-image.png">
     <meta property="og:image:width" content="1200">
@@ -27,16 +27,12 @@
   <body>
     <a class="skip" href="#content">Skip to content</a>
 
-    <!-- Docs shell, the same on every page except aria-current. The header is the ohm dot alone, as on
-         ohmmmm.com, where it leads. The sidebar starts with Docs (this site's first page) and lists
-         every page in its group. Icons are Lucide. -->
-    <input class="menu-toggle" type="checkbox" id="menu">
-    <header class="site-header">
-      <a class="site-mark" href="https://ohmmmm.com/"><img src="/assets/favicon.svg" alt="ohm" width="20" height="20"></a>
-      <label class="menu-button" for="menu"><svg class="icon" viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2.25" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 12h16"/><path d="M4 6h16"/><path d="M4 18h16"/></svg><span>Menu</span></label>
-    </header>
+    <!-- Header-free docs shell. The sidebar lists every page; a control in normal
+         document flow opens it on narrow screens. Icons are Lucide. -->
+    <input class="menu-toggle" type="checkbox" id="menu" aria-label="Show docs navigation" aria-controls="docs-navigation">
+    <label class="menu-button" for="menu"><svg class="icon" viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2.25" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 12h16"/><path d="M4 6h16"/><path d="M4 18h16"/></svg><span>Menu</span></label>
 
-    <nav class="site-sidebar" aria-label="Docs">
+    <nav class="site-sidebar" id="docs-navigation" aria-label="Docs">
       <ul>
         <li><a href="/">Docs</a></li>
       </ul>
@@ -74,8 +70,9 @@
         <li><a href="/agent">Connect your agent</a></li>
         <li><a href="/finding-people">Finding people</a></li>
       </ul>
-      <p class="sidebar-group">Architecture</p>
+      <p class="sidebar-group">For agents</p>
       <ul>
+        <li><a href="/agent-guide">Start here as an agent</a></li>
         <li><a href="/architecture">Overview</a></li>
         <li><a href="/identity">Identity and access</a></li>
         <li><a href="/data-model">Data model</a></li>
@@ -95,7 +92,7 @@
         <header>
           <p class="group">Cortex</p>
           <h1 id="title">Memory and notes</h1>
-          <p class="introduction">A memory is something worth carrying forward. A note is an observation to consider before changing that memory. Both are private, with sources that you can inspect.</p>
+          <p class="introduction">Keep useful knowledge without turning every passing observation into a fact about you. Memories carry learning forward; notes give an agent somewhere to put an uncertain observation until there is enough reason to use it.</p>
           <p class="alert" role="note">ohm is in development. These docs cover the implementation and the work still planned. Built does not mean verified on the live service; see Status and limits.</p>
         </header>
 
@@ -105,21 +102,25 @@
           <div class="table">
             <table>
               <thead>
-                <tr><th>Field</th><th>Meaning</th></tr>
+                <tr><th>What you can inspect</th><th>Why it matters</th></tr>
               </thead>
               <tbody>
-                <tr><th scope="row">Name</th><td>Lowercase words joined with hyphens, such as <code>working-style</code></td></tr>
-                <tr><th scope="row">Description</th><td>One nonempty line, up to 200 characters</td></tr>
-                <tr><th scope="row">Kind</th><td><code>person</code>, <code>preference</code>, <code>project</code> or <code>reference</code></td></tr>
-                <tr><th scope="row">Body</th><td>Markdown, up to 8 KB in UTF-8</td></tr>
-                <tr><th scope="row">Stated</th><td>Whether you said it directly, rather than an agent inferring it</td></tr>
-                <tr><th scope="row">Always</th><td>Whether its full text belongs in starting Context</td></tr>
-                <tr><th scope="row">Project and source</th><td>Optional scope and where it came from</td></tr>
-                <tr><th scope="row">Evidence</th><td>Source note IDs, who last wrote it, and service-maintained session counts</td></tr>
+                <tr><th scope="row">Its description and text</th><td>Lets you recognize the knowledge and check what the agent will read</td></tr>
+                <tr><th scope="row">Whether you stated it</th><td>Keeps an agent's inference distinguishable from something you explicitly said</td></tr>
+                <tr><th scope="row">Its project</th><td>Helps keep a convention for one project from becoming a rule for every project</td></tr>
+                <tr><th scope="row">Whether it is included at session start</th><td>Keeps standing preferences available without loading every memory in full</td></tr>
+                <tr><th scope="row">Its sources and history</th><td>Lets you understand where it came from and recover an earlier version</td></tr>
               </tbody>
             </table>
           </div>
           <p>Memory is prior learning, not an instruction that overrides what you say now. An agent must preserve uncertainty and project scope rather than turn a guess into a fact.</p>
+        </section>
+
+        <section aria-labelledby="first-use">
+          <h2 id="first-use">Try it, then check the result</h2>
+          <p>You need a connected agent to record learning through the tools, and the Cortex view to inspect it. <a href="/cortex#first-use">Your cortex</a> walks through the first connection and preference.</p>
+          <p>Tell the agent something you want carried forward, such as: "For this project, remember that dates should use the reader's local time." Open Cortex, choose Memories, and check that the text keeps the project restriction. The result should be a correct statement you recognize, rather than a general rule you never agreed to.</p>
+          <p>If the agent merely notices a possible preference, it can record a note instead. Open Notes to see the observation and where it came from. Recording a note alone has not changed your memories.</p>
         </section>
 
         <section aria-labelledby="learning">
@@ -145,7 +146,7 @@
             </table>
           </div>
           <p>The supplied settlement policy keeps a single sighting as an observation. A new inference needs evidence from distinct sessions; one contradiction does not silently replace something you explicitly stated. The service checks ownership, project scope and versions, and counts the distinct sessions in the source notes. It does not call a model or judge the truth of a sentence.</p>
-          <p><code>cortex_settle</code> accepts judged rewrites and batches of up to 100 note outcomes. Its memory saves and receipt settlement are separate steps: a failed settlement does not roll back an earlier save. The agent must read the current versions again before retrying, and finish any remaining batches. A receipt already recorded cannot be changed to a different outcome.</p>
+          <p>If an agent reports that settlement failed, some memory changes may already have been saved. Ask it to reread the memory and waiting notes before trying again. The <a href="/agent-guide#recovery">agent guide</a> explains the partial-completion contract.</p>
         </section>
 
         <section aria-labelledby="versions">
@@ -156,7 +157,7 @@
 
         <section aria-labelledby="forgetting">
           <h2 id="forgetting">Forgetting</h2>
-          <p>Ask your agent to forget a memory. <code>cortex_forget</code> first returns the exact memory to be removed. The agent shows it to you and only completes the second call if you agree. Its confirmation is single-use and bound to that memory version and the running server.</p>
+          <p>Ask your agent to forget a memory. It first shows you the exact memory to be removed and only completes the removal if you agree. If the memory changes before you confirm, you need to review the new version.</p>
           <p>Removal takes the memory out of current Context. It does not erase its preserved history. Deleting all retained data is a separate manual request. <a href="/export">Export and leaving</a></p>
         </section>
 
@@ -171,6 +172,7 @@
       <p id="toc-title">On this page</p>
       <ul>
         <li><a href="#memory">A memory</a></li>
+        <li><a href="#first-use">Try it, then check the result</a></li>
         <li><a href="#learning">What you say, and what an agent notices</a></li>
         <li><a href="#settlement">Settling observations</a></li>
         <li><a href="#versions">Read before replacing</a></li>

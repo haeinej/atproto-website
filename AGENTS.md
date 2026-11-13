@@ -25,6 +25,16 @@ These are enforced by the commands and tests. Do not work around them.
 9. **Nothing lost, nothing looks different, only the content side changes.** Work on a copy, take a baseline, and check against it. [skills/migrate-site/SKILL.md](skills/migrate-site/SKILL.md)
 10. **Publish nothing without the owner's approval.** A record on a PDS is public the moment it is written. Preview first.
 
+## Finish work with documentation
+
+For every coherent chunk of project implementation or workflow work, use
+[the document-work skill](skills/document-work/SKILL.md) before declaring it done
+or handing it off. Maintain two distinct guides: an agent reference with exact
+contracts, dependencies and verification, and a human guide explaining why the
+result is needed, why its prerequisites matter, and how to reach a useful outcome.
+Update canonical guides as the work evolves and keep their navigation current.
+Keep member content private and use synthetic examples in public documentation.
+
 ## Where to start
 
 - Someone setting this up: [docs/set-up-with-an-agent.md](docs/set-up-with-an-agent.md)
@@ -32,4 +42,5 @@ These are enforced by the commands and tests. Do not work around them.
 - Reading, saving, or changing the owner's notes, or who can see one: [skills/vault/SKILL.md](skills/vault/SKILL.md)
 - Deciding sections: [skills/suggest-labels/SKILL.md](skills/suggest-labels/SKILL.md)
 - Making a site's pages build from records: [skills/build-renderer/SKILL.md](skills/build-renderer/SKILL.md)
+- Documenting completed work for people and agents: [skills/document-work/SKILL.md](skills/document-work/SKILL.md)
 - The commands: `npm run identity`, `posts`, `profile`, `publish:post`, `render`, `lexicon`, `configure`, `migrate`. Run `npm test` after changing code.

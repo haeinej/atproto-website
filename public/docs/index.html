@@ -4,12 +4,12 @@
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <meta name="theme-color" content="#fafaf9">
-    <meta name="description" content="Your work lives in a vault. What your agent learns lives in a private cortex beside it. Start with the workspace, learn how memory and skill approval work, then connect your agent. The architecture and API reference describe the code; Status and limits separates what is built from what is still planned.">
+    <meta name="description" content="Keep your drafts and published work in one workspace, and give your agent private knowledge it can carry between sessions. The human guides explain why the pieces are needed and how to reach a useful result. The agent guides explain the exact connections, contracts and recovery behind that experience.">
     <link rel="canonical" href="https://docs.ohmmmm.com/">
     <meta property="og:type" content="website">
     <meta property="og:site_name" content="ohm">
     <meta property="og:title" content="ohm docs">
-    <meta property="og:description" content="Your work lives in a vault. What your agent learns lives in a private cortex beside it. Start with the workspace, learn how memory and skill approval work, then connect your agent. The architecture and API reference describe the code; Status and limits separates what is built from what is still planned.">
+    <meta property="og:description" content="Keep your drafts and published work in one workspace, and give your agent private knowledge it can carry between sessions. The human guides explain why the pieces are needed and how to reach a useful result. The agent guides explain the exact connections, contracts and recovery behind that experience.">
     <meta property="og:url" content="https://docs.ohmmmm.com/">
     <meta property="og:image" content="https://ohmmmm.com/assets/og-image.png">
     <meta property="og:image:width" content="1200">
@@ -27,16 +27,12 @@
   <body>
     <a class="skip" href="#content">Skip to content</a>
 
-    <!-- Docs shell, the same on every page except aria-current. The header is the ohm dot alone, as on
-         ohmmmm.com, where it leads. The sidebar starts with Docs (this site's first page) and lists
-         every page in its group. Icons are Lucide. -->
-    <input class="menu-toggle" type="checkbox" id="menu">
-    <header class="site-header">
-      <a class="site-mark" href="https://ohmmmm.com/"><img src="/assets/favicon.svg" alt="ohm" width="20" height="20"></a>
-      <label class="menu-button" for="menu"><svg class="icon" viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2.25" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 12h16"/><path d="M4 6h16"/><path d="M4 18h16"/></svg><span>Menu</span></label>
-    </header>
+    <!-- Header-free docs shell. The sidebar lists every page; a control in normal
+         document flow opens it on narrow screens. Icons are Lucide. -->
+    <input class="menu-toggle" type="checkbox" id="menu" aria-label="Show docs navigation" aria-controls="docs-navigation">
+    <label class="menu-button" for="menu"><svg class="icon" viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2.25" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 12h16"/><path d="M4 6h16"/><path d="M4 18h16"/></svg><span>Menu</span></label>
 
-    <nav class="site-sidebar" aria-label="Docs">
+    <nav class="site-sidebar" id="docs-navigation" aria-label="Docs">
       <ul>
         <li><a href="/" aria-current="page">Docs</a></li>
       </ul>
@@ -74,8 +70,9 @@
         <li><a href="/agent">Connect your agent</a></li>
         <li><a href="/finding-people">Finding people</a></li>
       </ul>
-      <p class="sidebar-group">Architecture</p>
+      <p class="sidebar-group">For agents</p>
       <ul>
+        <li><a href="/agent-guide">Start here as an agent</a></li>
         <li><a href="/architecture">Overview</a></li>
         <li><a href="/identity">Identity and access</a></li>
         <li><a href="/data-model">Data model</a></li>
@@ -94,15 +91,15 @@
       <article aria-labelledby="title">
         <header>
           <h1 id="title">Docs</h1>
-          <p class="introduction">Your work lives in a vault. What your agent learns lives in a private cortex beside it. Start with the workspace, learn how memory and skill approval work, then connect your agent. The architecture and API reference describe the code; Status and limits separates what is built from what is still planned.</p>
-          <p class="introduction">Reading as an agent? Every page is also plain Markdown: start at <a href="/llms.txt">llms.txt</a>.</p>
+          <p class="introduction">Keep your drafts and published work in one workspace, and give your agent private knowledge it can carry between sessions. The human guides explain why the pieces are needed and how to reach a useful result. The agent guides explain the exact connections, contracts and recovery behind that experience.</p>
+          <p class="introduction">For people: <a href="/quick-start">start with why and your first private post</a>. For agents: <a href="/agent-guide">read the working contract</a>, or use <a href="/llms.txt">llms.txt</a> for the Markdown references.</p>
           <p class="alert" role="note">ohm is in development. These docs cover the implementation and the work still planned. Built does not mean verified on the live service; see Status and limits.</p>
         </header>
 
         <section aria-labelledby="get-started">
           <h2 id="get-started">Get started</h2>
           <ul class="pages">
-            <li><a href="/quick-start">Quick start</a>. Start with your posts, then open the private cortex your agent uses to remember your work.</li>
+            <li><a href="/quick-start">Quick start</a>. Keep your drafts, published work and agent knowledge connected, while choosing what becomes public.</li>
             <li><a href="/sign-in">Sign in</a>. You sign in to ohm with an ohm account, made with Google, Microsoft or Bluesky.</li>
           </ul>
         </section>
@@ -137,8 +134,8 @@
         <section aria-labelledby="cortex">
           <h2 id="cortex">Cortex</h2>
           <ul class="pages">
-            <li><a href="/cortex">Your cortex</a>. Your vault holds what you make.</li>
-            <li><a href="/memory">Memory and notes</a>. A memory is something worth carrying forward.</li>
+            <li><a href="/cortex">Your cortex</a>. Give your agent a place to keep what it learns about your work, so you do not have to explain the same preferences every session.</li>
+            <li><a href="/memory">Memory and notes</a>. Keep useful knowledge without turning every passing observation into a fact about you.</li>
             <li><a href="/skills-tools">Skills and tools</a>. A skill tells an agent how to do a task.</li>
           </ul>
         </section>
@@ -146,14 +143,15 @@
         <section aria-labelledby="agent">
           <h2 id="agent">Agent</h2>
           <ul class="pages">
-            <li><a href="/agent">Your agent</a>. Connect the coding agent you already use to your vault and cortex.</li>
+            <li><a href="/agent">Your agent</a>. Let the coding agent you already use help with your actual drafts and preferences.</li>
             <li><a href="/finding-people">Finding people</a>. Finding people is planned.</li>
           </ul>
         </section>
 
         <section aria-labelledby="architecture">
-          <h2 id="architecture">Architecture</h2>
+          <h2 id="architecture">For agents</h2>
           <ul class="pages">
+            <li><a href="/agent-guide">Agent working guide</a>. The entry contract for an agent working in ohm.</li>
             <li><a href="/architecture">System overview</a>. ohm keeps a vault of posts and a private cortex for agent knowledge.</li>
             <li><a href="/identity">Identity and access</a>. A member has two identities.</li>
             <li><a href="/data-model">Data model</a>. Posts and cortex knowledge are separate data.</li>
@@ -186,7 +184,7 @@
         <li><a href="#folder">Folder</a></li>
         <li><a href="#cortex">Cortex</a></li>
         <li><a href="#agent">Agent</a></li>
-        <li><a href="#architecture">Architecture</a></li>
+        <li><a href="#architecture">For agents</a></li>
         <li><a href="#reference">Reference</a></li>
       </ul>
     </nav>

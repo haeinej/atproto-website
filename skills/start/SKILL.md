@@ -29,6 +29,7 @@ Read `AGENTS.md` there before doing anything. It holds the ten rules, which the 
 | Deciding the site's sections with the owner | the `suggest-labels` skill |
 | Moving a website and social posts in | the `migrate-site` skill |
 | Making the site's own pages build from records | the `build-renderer` skill |
+| Finishing a chunk of work or preparing its handoff | the `document-work` skill; maintain both agent and human documentation |
 
 ## Running the commands
 
