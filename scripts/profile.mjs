@@ -42,12 +42,26 @@ try {
   const profileType = ownCollection(namespace, 'profile');
   const linkType = ownCollection(namespace, 'profileLink');
   // A preview still works when the PDS cannot be reached; saving does not, since it would lose what is there.
-  const read = type => rpc(origin, 'com.atproto.repo.getRecord', { query: { repo: did, collection: type, rkey: 'self' } })
-    .then(result => result.data.value, problem => { if (values.publish) throw problem; });
+  const read = async type => {
+    try {
+      const { response, data } = await rpc(origin, 'com.atproto.repo.getRecord', { query: { repo: did, collection: type, rkey: 'self' } });
+      if ([400, 404].includes(response.status) && data.error === 'RecordNotFound') return null;
+      if (!response.ok) throw new Error(`Reading the profile failed (HTTP ${response.status})`);
+      if (data.uri !== `at://${did}/${type}/self` || !data.value || typeof data.value !== 'object' || Array.isArray(data.value) || data.value.$type !== type || typeof data.cid !== 'string' || !data.cid) {
+        throw new Error('The PDS returned an invalid profile; nothing was saved');
+      }
+      return data;
+    } catch (problem) {
+      if (values.publish) throw problem;
+      return null;
+    }
+  };
 
   // Start from what is already saved, so setting one field leaves the others alone.
   // --from-bluesky starts from the account's Bluesky profile instead.
-  const saved = (values['from-bluesky'] ? await read('app.bsky.actor.profile') : await read(profileType)) ?? {};
+  const existing = await read(profileType);
+  const source = values['from-bluesky'] ? await read('app.bsky.actor.profile') : existing;
+  const saved = source?.value ?? {};
   const { links: savedLinks, ...kept } = saved;
   const record = { ...kept, $type: profileType };
   if (values.name !== undefined) record.displayName = text(values.name, 'name', 64);
@@ -101,7 +115,7 @@ try {
       }
       if (!record.links.length) delete record.links;
     }
-    const put = await rpc(origin, 'com.atproto.repo.putRecord', { body: { repo: did, collection: profileType, rkey: 'self', record }, token });
+    const put = await rpc(origin, 'com.atproto.repo.putRecord', { body: { repo: did, collection: profileType, rkey: 'self', record, swapRecord: existing?.cid ?? null }, token });
     if (!put.response.ok) throw new Error(`Saving the profile failed (HTTP ${put.response.status})`);
     console.log(put.data.uri ?? `at://${did}/${profileType}/self`);
   }

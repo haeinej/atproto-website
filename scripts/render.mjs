@@ -18,17 +18,16 @@ import { pdsConfig, webUrl } from '../feed/pds.mjs';
 import { siteVars } from './config.mjs';
 import { imageSize } from './image-size.mjs';
 import { adopt, build, compare, RenderProblem } from './render-engine.mjs';
+import { recordByKey, recordBySlug } from '../feed/repository.mjs';
 
 async function loadRecord(values, pds) {
   if (values.record) {
     const saved = JSON.parse(await readFile(values.record, 'utf8'));
     return saved.record ?? saved.value ?? saved;
   }
-  const url = new URL('/xrpc/com.atproto.repo.getRecord', pds.origin);
-  url.search = new URLSearchParams({ repo: pds.did, collection: pds.collection, rkey: values.slug });
-  const response = await fetch(url, { signal: AbortSignal.timeout(30_000) });
-  if (!response.ok) throw new Error(`No post "${values.slug}" in the repository (HTTP ${response.status})`);
-  return (await response.json()).value;
+  const found = values.key ? await recordByKey(pds, values.key) : await recordBySlug(pds, values.slug);
+  if (!found) throw new Error(`No post "${values.key ?? values.slug}" in the repository`);
+  return found.value;
 }
 
 try {
@@ -37,7 +36,7 @@ try {
     options: {
       page: { type: 'string' }, slug: { type: 'string' }, rules: { type: 'string' }, kind: { type: 'string' },
       template: { type: 'string' }, out: { type: 'string' }, against: { type: 'string' }, images: { type: 'string' },
-      record: { type: 'string' }, config: { type: 'string' },
+      record: { type: 'string' }, config: { type: 'string' }, key: { type: 'string' },
       prefix: { type: 'string' }, set: { type: 'string', multiple: true, default: [] }, into: { type: 'string' },
     },
   });
@@ -90,13 +89,15 @@ try {
     await mkdir(dirname(values.template), { recursive: true });
     await writeFile(values.template, result.template);
     await writeFile(sidecar, JSON.stringify({
-      slug: values.slug, kind: values.kind, images, blocks: result.blocks,
+      shapeVersion: 2, slug: values.slug, kind: values.kind, images, blocks: result.blocks,
       cutFrom: { page: values.page, sha256: createHash('sha256').update(page).digest('hex') },
     }, null, 2) + '\n');
     console.log(JSON.stringify(report, null, 2));
   } else {
     if (!values.out) throw new Error('build needs --out, where to write the page');
     const about = JSON.parse(await readFile(sidecar, 'utf8'));
+    if (about.shapeVersion !== 2) throw new Error('This template has an older sidecar. Adopt the page again before building; nothing was written.');
+    if (about.slug !== values.slug || about.kind !== values.kind) throw new Error('The sidecar belongs to a different post or page kind; adopt this page again');
     // --into is the page being filled, when earlier posts on it have been filled already.
     const built = build(await readFile(values.into ?? values.template, 'utf8'), record, rules, { images: values.images ?? about.images, prefix: values.prefix }, context, about.blocks);
     await mkdir(dirname(values.out), { recursive: true });

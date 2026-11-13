@@ -8,30 +8,17 @@
 // configuration names. --key prints one post in full, beside the record it came from.
 // --save needs ATPROTO_APP_PASSWORD, to ask your PDS for a token that proves to the vault who you are.
 import { parseArgs } from 'node:util';
-import { isRecordKey, pdsConfig, POST, webUrl } from '../feed/pds.mjs';
+import { pdsConfig, POST, webUrl } from '../feed/pds.mjs';
 import { importVault, saveImported } from '../vault/import.mjs';
 import { siteVars } from './config.mjs';
-import { rpc, signIn } from './rpc.mjs';
+import { signIn } from './rpc.mjs';
 import { vaultClient } from './vault-client.mjs';
+import { listRecords } from '../feed/repository.mjs';
 
 // Every record of one type, as the repository lists them. A PDS may repeat one across a page boundary.
 async function list(pds, collection) {
-  const records = new Map();
-  const prefix = `at://${pds.did}/${collection}/`;
-  let cursor;
-  for (let page = 0; page < 500; page++) {
-    const { response, data } = await rpc(pds.origin, 'com.atproto.repo.listRecords', {
-      query: { repo: pds.did, collection, limit: '100', ...(cursor ? { cursor } : {}) },
-    });
-    if (!response.ok) throw new Error(`Listing ${collection} failed (HTTP ${response.status})`);
-    for (const record of data.records ?? []) {
-      const key = String(record.uri).startsWith(prefix) ? record.uri.slice(prefix.length) : '';
-      if (isRecordKey(key)) records.set(key, record.value);
-    }
-    if (!data.cursor || data.cursor === cursor) return records;
-    cursor = data.cursor;
-  }
-  throw new Error(`${collection} has more records than this command reads`);
+  const { records } = await listRecords({ ...pds, collection, maxPages: 500 });
+  return new Map(records.map(record => [record.uri.split('/').at(-1), record.value]));
 }
 
 try {

@@ -17,6 +17,7 @@ test('a post kept under its ID is found by its slug, and its address follows the
   // The PDS holds the record under its ID. The site's list knows the address it was last given.
   const records = new Map([[id, record]]);
   const get = async url => {
+    if (url.pathname.endsWith('listRecords')) return Response.json({ records: [...records].map(([key, value]) => ({ uri: `at://${did}/${POST}/${key}`, value })) });
     const held = records.get(url.searchParams.get('rkey'));
     return held ? Response.json({ uri: `at://${did}/${POST}/${url.searchParams.get('rkey')}`, value: held }) : Response.json({ error: 'RecordNotFound' }, { status: 400 });
   };
@@ -34,13 +35,13 @@ test('a post kept under its ID is found by its slug, and its address follows the
   }
   // A slug nobody has, and a site whose list has not been built yet.
   assert.equal((await ask('/posts/writings/collisions/no-such-post', listed(address))).status, 404);
-  assert.equal((await ask(address, { get: async () => null })).status, 404);
+  assert.equal((await ask(address, { get: async () => null })).status, 200);
 
   // Renamed: the record is the same record, and the old address sends readers to the new one once
   // the site's list has caught up.
   records.set(id, postRecord({ ...post, slug: 'the-trap' }, { did, site: 'https://example.test' }).record);
   const renamed = '/posts/writings/collisions/the-trap';
-  assert.equal((await ask(renamed, listed(renamed))).status, 200);
+  assert.equal((await ask(renamed, listed(address))).status, 200);
   const old = await ask(`/posts/${id}`, listed(renamed));
   assert.equal(new URL(old.headers.get('Location')).pathname, renamed);
 });
@@ -54,4 +55,17 @@ test('a post published before posts had IDs is kept under its slug and works as 
   assert.equal(new URL((await ask('/posts/hello')).headers.get('Location')).pathname, '/posts/writings/hello');
   // A slug that is not a slug is not trusted to build an address.
   assert.match(recordProblems({ ...record, slug: '../admin' }, 'hello').join(' '), /slug is lowercase Latin letters/);
+});
+
+test('slug routes fail closed on duplicate matches or an incomplete inventory even without a snapshot', async () => {
+  const record = { $type: POST, slug: 'hello', body: 'Words.', publishedAt: '2026-01-01T00:00:00.000Z', canonicalUrl: 'https://example.test/posts/writings/hello', label: 'Writings' };
+  const request = new Request('https://example.test/posts/writings/hello');
+  for (const inventory of [
+    { records: ['3aaaaaaaaaaaa', '3bbbbbbbbbbbb'].map(key => ({ uri: `at://${did}/${POST}/${key}`, value: record })) },
+    { records: [], cursor: 'same' },
+  ]) {
+    const response = await servePost(request, config, 'hello', async url => url.pathname.endsWith('getRecord')
+      ? Response.json({ error: 'RecordNotFound' }, { status: 400 }) : Response.json(inventory));
+    assert.equal(response.status, 502);
+  }
 });

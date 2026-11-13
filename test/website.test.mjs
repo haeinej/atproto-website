@@ -76,8 +76,8 @@ test('an individual post resolves its record and escapes untrusted content', asy
   const footnoted = await noted.text();
   assert.match(footnoted, /Discovery<sup class="footnote-ref"><a href="#fn-test-post-1" id="fnref-test-post-1">1<\/a><\/sup>/);
   assert.match(footnoted, /<li id="fn-test-post-2" class="footnote-item"><p>Revealing private context\.\s*<\/p>/);
-  const missing = await servePost(request, config, 'test-post', async () =>
-    Response.json({ error: 'RecordNotFound' }, { status: 400 }));
+  const missing = await servePost(request, config, 'test-post', async url =>
+    url.pathname.endsWith('listRecords') ? Response.json({ records: [] }) : Response.json({ error: 'RecordNotFound' }, { status: 400 }));
   assert.equal(missing.status, 404);
 });
 
