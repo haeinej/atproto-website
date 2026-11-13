@@ -9,7 +9,7 @@ Every site ohm serves to the public, one folder to a site. This repository is wh
 | `home-draft/` | Nowhere. A draft of the home page | None | the `ohmmmm-draft` entry in `.claude/launch.json` | Not deployed |
 
 - `home/` is a Worker (`src/worker.js`) in front of static pages (`public/`), with a database of the people who joined the plan (`schema.sql`, `npm run home:joiners`). Its map is `home/README.md`.
-- `docs/` is static pages built from the Markdown beside them by `build.py`, which also writes the sidebar into `home-draft/`.
+- `docs/` is authored in `docs/build.py`, which generates its HTML, Markdown and LLM copies and also writes the sidebar into `home-draft/`.
 - After a deploy of `home/`, `npm run home:seo` crawls the live site and checks it.
 - The vault at `vault.ohmmmm.com` is not here. It is `service/`.
 
