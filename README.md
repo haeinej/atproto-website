@@ -311,7 +311,11 @@ java -jar importer/target/x-archive-importer.jar \
   --archive /path/to/extracted-archive --site https://example.com
 ```
 
-That previews offline. To publish a reviewed selection, add `--publish --pds https://pds.example.com --handle example.com --did did:web:pds.example.com`, and `--id YOUR_X_POST_ID` once for each post, or leave `--id` out to import everything eligible. Imported posts are notes; `--label 'Tweets'` files them under a name. The preview reports the replies, reposts, quote posts, and entries with missing media that it leaves out. `--also-bluesky` also posts compatible text and images to Bluesky.
+Maven builds the executable JAR and runs the importer's unit tests. The final command previews offline without signing in or publishing. The preview reports the replies, reposts, quote posts, and entries with missing media that it leaves out.
+
+Imported posts are notes and use `other` when no label is supplied. `--label 'Tweets'` files them under the author's name: labels are trimmed and limited to 100 characters, retaining their authored casing in the record. The URL folder is Unicode NFC-normalized, lowercased and percent-encoded, such as `/posts/tweets/x-123` for X post `123`. The record key stays `x-123` regardless of the label. [Labels and addresses](docs/labels.md)
+
+After the owner approves a reviewed selection, add `--publish --pds https://pds.example.com --handle example.com --did did:web:pds.example.com`, and `--id YOUR_X_POST_ID` once for each post, or leave `--id` out to import everything eligible. `--also-bluesky` also posts compatible text and images to Bluesky.
 
 ## Run your own PDS and site
 
@@ -425,7 +429,7 @@ Not yet:
 - **The vault holds no files.** A picture or file is placed in a post by its address, and a copy is sent to your PDS when the post is published.
 - **Syncing a folder has not been run against the deployed service.**
 - **Private posts and the profile command have not been run against Cloudflare.** Private posts are tested with stand-ins for Cloudflare Access and its storage.
-- **The X importer has not published to a live PDS.** Its Java 21 Maven build, packaged `--help` command and synthetic offline preview have been verified locally.
+- **The X importer's deployed behavior and authenticated publishing are unverified.** Its Java 21 Maven build, unit tests, packaged `--help` command and synthetic offline preview have been verified locally.
 - **The migrate command has only been previewed.** It has read a live repository and its converted records pass the schema, but it has not written to a PDS.
 - **There is no command to change a published post.** Changing a label, moving a private post to public, or deleting one is done by hand.
 - **The site renderer stops on quotations, code, and captions.** A page that uses one is reported as not done.
