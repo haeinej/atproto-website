@@ -306,6 +306,7 @@ Extract your X export and keep `data/tweets.js`, any `tweets-partN.js` files, an
 
 ```sh
 mvn -f importer/pom.xml package
+java -jar importer/target/x-archive-importer.jar --help
 java -jar importer/target/x-archive-importer.jar \
   --archive /path/to/extracted-archive --site https://example.com
 ```
@@ -424,7 +425,7 @@ Not yet:
 - **The vault holds no files.** A picture or file is placed in a post by its address, and a copy is sent to your PDS when the post is published.
 - **Syncing a folder has not been run against the deployed service.**
 - **Private posts and the profile command have not been run against Cloudflare.** Private posts are tested with stand-ins for Cloudflare Access and its storage.
-- **The X importer has changes that are not compiled.** It now saves each post's form and a single label, and writes `com.ohmmmm.post` records.
+- **The X importer has not published to a live PDS.** Its Java 21 Maven build, packaged `--help` command and synthetic offline preview have been verified locally.
 - **The migrate command has only been previewed.** It has read a live repository and its converted records pass the schema, but it has not written to a PDS.
 - **There is no command to change a published post.** Changing a label, moving a private post to public, or deleting one is done by hand.
 - **The site renderer stops on quotations, code, and captions.** A page that uses one is reported as not done.
