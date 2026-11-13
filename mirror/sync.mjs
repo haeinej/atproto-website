@@ -7,6 +7,7 @@ import { bodyFacts } from '../feed/render.mjs';
 import { htmlToMarkdown } from './html-to-markdown.mjs';
 import { reader } from './sources.mjs';
 import { recordByKey } from '../feed/repository.mjs';
+import { recordVersion } from '../vault/core.mjs';
 
 const escape = text => text.replace(/([\\`*_[\]<>])/g, '\\$1').replace(/^(#{1,6} |[-+>] )/gm, '\\$1').replace(/^(\d+)([.)] )/gm, '$1\\$2');
 const IMAGE = /^image\/(?:jpeg|png|webp|gif|avif)$/;
@@ -147,7 +148,7 @@ export async function mirror(env, { get = fetch, now = new Date(), budget = Numb
             value.form === identifyForm({ title: post.title, facts: bodyFacts(post.body), kinds: [] }) &&
             JSON.stringify(value.source ?? null) === JSON.stringify(source.platform === 'website' ? null : { platform: source.platform, uri: webUrl(item.url), id: String(item.id) });
           if (legacy && provenance && legacy.hash === oldHash && legacyText) {
-            last = { binding, identity, key, cid: held.cid, recordHash: await digest(value) };
+            last = { binding, identity, key, cid: held.cid, recordHash: await recordVersion(value) };
           } else if (legacy) {
             throw new Error('legacy mirror ownership/content is ambiguous; preserve the record and review its checkpoint');
           } else {
@@ -160,14 +161,14 @@ export async function mirror(env, { get = fetch, now = new Date(), budget = Numb
           }
         }
         if (held && (typeof held.cid !== 'string' || !held.cid)) throw new Error('the PDS did not supply a version for the mirrored record');
-        if (last?.phase === 'pending' && held && await digest(held.value) === await digest(last.intended)) {
+        if (last?.phase === 'pending' && held && await recordVersion(held.value) === await recordVersion(last.intended)) {
           // The record committed, but its success checkpoint did not. Acknowledge those exact
           // bytes before considering a newer source revision; never create a second record.
-          last = { binding, identity, key, phase: 'complete', hash: last.intendedHash, recordHash: await digest(held.value), cid: held.cid, at: report.at };
+          last = { binding, identity, key, phase: 'complete', hash: last.intendedHash, recordHash: await recordVersion(held.value), cid: held.cid, at: report.at };
           await env.MIRROR.put(stateKey, JSON.stringify(last));
           if (last.hash === hash) { result.unchanged++; await env.MIRROR.put(errorKey, 'null'); continue; }
         }
-        if (last && held && (!last.recordHash || await digest(held.value) !== last.recordHash)) throw new Error('the mirrored record changed outside the mirror; review it before retrying');
+        if (last && held && (!last.recordHash || await recordVersion(held.value) !== last.recordHash)) throw new Error('the mirrored record changed outside the mirror; review it before retrying');
         if (last && !held && (last.phase !== 'pending' || last.recordHash)) throw new Error('the mirrored record was removed; review the deletion before recreating it');
         const media = [];
         for (const image of post.images) {
@@ -202,7 +203,7 @@ export async function mirror(env, { get = fetch, now = new Date(), budget = Numb
           body: { repo: pds.did, collection: pds.collection, rkey: key, record, ...(held ? { swapRecord: held.cid } : {}) },
         }, get);
         if (written.uri !== `at://${pds.did}/${pds.collection}/${key}` || typeof written.cid !== 'string' || !written.cid) throw new Error('PDS returned an invalid write acknowledgement; retry to reconcile it');
-        await env.MIRROR.put(stateKey, JSON.stringify({ binding, identity, key, phase: 'complete', hash, recordHash: await digest(record), cid: written.cid, at: report.at }));
+        await env.MIRROR.put(stateKey, JSON.stringify({ binding, identity, key, phase: 'complete', hash, recordHash: await recordVersion(record), cid: written.cid, at: report.at }));
         await env.MIRROR.put(errorKey, 'null');
         result.written.push({ key, form, ...(post.simplified.length ? { simplified: post.simplified } : {}) });
       } catch (problem) {

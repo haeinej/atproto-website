@@ -232,6 +232,71 @@ test('a PDS write followed by a failed checkpoint is reconciled without creating
   assert.equal(second.sources[0].unchanged, 2);
 });
 
+// PDS JSON objects need not retain the key order of a submitted record, including in blobs
+// and source metadata. Array order and all values remain exactly as stored by the fixture.
+function reorderedPds(get) {
+  const reorder = value => Array.isArray(value) ? value.map(reorder)
+    : value && typeof value === 'object'
+      ? Object.fromEntries(Object.entries(value).reverse().map(([key, item]) => [key, reorder(item)]))
+      : value;
+  return async (url, options) => {
+    const response = await get(url, options);
+    if (!String(url).includes('com.atproto.repo.getRecord') || !response.ok) return response;
+    const data = await response.json();
+    const value = reorder(data.value);
+    assert.deepEqual(value, data.value);
+    return Response.json({ ...data, value });
+  };
+}
+
+test('mirror updates owned records after recursive PDS JSON key reordering', async () => {
+  const w = world(), get = reorderedPds(w.get);
+  await mirror(w.env, { get });
+  w.feeds['https://example.com/feed.json'].items[0].content_html = '<p>A new street.</p><p><img src="https://example.com/media/street.jpg" alt="A wet street"></p>';
+  w.feeds['https://me.substack.com/feed'] = w.feeds['https://me.substack.com/feed'].replace('Dear reader.', 'Dear reader, revised.');
+  const changed = await mirror(w.env, { get });
+  assert.deepEqual(changed.sources.map(source => source.problems), [[], []]);
+  assert.deepEqual(changed.sources.map(source => source.written.map(item => item.key)), [['a-walk'], ['substack-a-letter']]);
+  assert.match(w.records.get('a-walk').body, /A new street/);
+  assert.equal(w.records.get('substack-a-letter').body, 'Dear reader, revised.');
+  assert.equal(w.records.size, 3);
+});
+
+test('pending writes reconcile after recursive PDS JSON key reordering without another write', async () => {
+  const w = world(), get = reorderedPds(w.get);
+  w.env.MIRROR_SOURCES = JSON.stringify([{ platform: 'website', feed: 'https://example.com/feed.json', label: 'Writing' }]);
+  w.feeds['https://example.com/feed.json'].items = [w.feeds['https://example.com/feed.json'].items[0]];
+  const put = w.env.MIRROR.put; let fail = true;
+  w.env.MIRROR.put = async (key, value) => {
+    if (fail && key.startsWith('mirror:v2:') && JSON.parse(value).phase === 'complete') { fail = false; throw Error('checkpoint unavailable'); }
+    return put(key, value);
+  };
+  const first = await mirror(w.env, { get });
+  assert.match(first.sources[0].problems[0], /checkpoint unavailable/);
+  const stateKey = [...w.kv.keys()].find(key => key.startsWith('mirror:v2:'));
+  assert.equal(JSON.parse(w.kv.get(stateKey)).phase, 'pending');
+  let writes = 0;
+  const retried = await mirror(w.env, { get: (url, options = {}) => { if (options.method === 'POST') writes++; return get(url, options); } });
+  assert.deepEqual(retried.sources[0].problems, []);
+  assert.equal(retried.sources[0].unchanged, 1);
+  assert.equal(JSON.parse(w.kv.get(stateKey)).phase, 'complete');
+  assert.equal(writes, 0); assert.equal(w.records.size, 1); assert.equal(w.blobs.length, 1);
+});
+
+test('a genuine nested owner edit still refuses without writes after recursive PDS JSON key reordering', async () => {
+  const w = world(), get = reorderedPds(w.get);
+  await mirror(w.env, { get });
+  const edited = structuredClone(w.records.get('a-walk'));
+  edited.media[0].file.ref.$link = 'owner-edited-blob';
+  w.records.set('a-walk', edited); w.versions.set('a-walk', 'owner-edited-cid');
+  w.feeds['https://example.com/feed.json'].items[0].content_html = '<p>New source writing.</p>';
+  let writes = 0;
+  const refused = await mirror(w.env, { get: (url, options = {}) => { if (options.method === 'POST') writes++; return get(url, options); } });
+  assert.ok(refused.sources[0].problems.some(problem => problem.includes('outside the mirror')));
+  assert.equal(writes, 0);
+  assert.deepEqual(w.records.get('a-walk'), edited);
+});
+
 test('unambiguous legacy mappings retain their keys; legacy collisions refuse migration', async () => {
   const w = world(); await mirror(w.env, { get: w.get });
   const hash = async value => [...new Uint8Array(await crypto.subtle.digest('SHA-256', new TextEncoder().encode(JSON.stringify(value))))].map(byte => byte.toString(16).padStart(2, '0')).join('');
