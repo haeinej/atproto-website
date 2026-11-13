@@ -2,11 +2,15 @@
 
 Let the coding agent you already use help with your actual drafts and preferences. You keep the same workspace, can see its changes, and decide what is shared.
 
+<a id="what"></a>
+
 ## What it is
 
 ohm does not run a background agent for you. Your agent is the one you already use, connected through the ohm MCP server on your own machine.
 
 The tools work in the same vault and cortex you see in the browser. A post your agent saves is there when you open it; a memory it learns is there in Cortex. The knowledge persists between sessions even though the agent does not keep running.
+
+<a id="need"></a>
 
 ## What you need, and why
 
@@ -19,6 +23,8 @@ The tools work in the same vault and cortex you see in the browser. A post your 
 
 Your agent or the person setting it up can follow the [agent setup guide](https://docs.ohmmmm.com/agent-guide.md#connect) for the actual entry point and configuration. Connecting these tools does not install automatic session hooks.
 
+<a id="first-use"></a>
+
 ## First use: make a private draft you can find
 
 1. Once connected, ask: "Start with my cortex, look at my labels, and save a private draft under Writings about the idea below." Supply a short, synthetic idea while trying the connection.
@@ -28,11 +34,15 @@ Your agent or the person setting it up can follow the [agent setup guide](https:
 
 You have succeeded when you can reopen the draft and inspect the memory. Publishing is a separate choice. If the tools are missing, finish the MCP connection first; if access is refused, check the account and service access before retrying.
 
+<a id="reads"></a>
+
 ## What it can read
 
 All of your posts: public, friends and private. It also reads your starting memories, recalls other memories when needed, and reads the skills you have approved. Unapproved skill instructions stay out of its access.
 
 Whatever your agent reads is also seen by the company that runs the model it uses. Keep that in mind before you connect one.
+
+<a id="does"></a>
 
 ## What it can do, and what needs your yes
 
@@ -56,11 +66,15 @@ Whatever your agent reads is also seen by the company that runs the model it use
 
 The rule behind the table: reading is free, and anything that changes what other people see, or removes something, is shown to you first. The first answer says exactly what would happen. Only your yes to that exact answer does it.
 
+<a id="tools"></a>
+
 ## The tools
 
 Ask your agent to find an earlier post, save a private draft, suggest labels, or show what is waiting to be published. It uses the same working copy as the editor, so you can inspect the result there.
 
 The [agent guide](https://docs.ohmmmm.com/agent-guide.md) and [MCP reference](https://docs.ohmmmm.com/mcp.md#tools) give the exact tool names and contracts for setup and troubleshooting.
+
+<a id="cortex"></a>
 
 ## Starting with your cortex
 
@@ -68,15 +82,21 @@ At the start of a session, ask your agent to read your cortex before working. It
 
 Automatic prompt injection and conversation capture through Claude Code or Codex hooks are not built. Ask explicitly, and inspect important learning in [Memory and notes](https://docs.ohmmmm.com/memory.md).
 
+<a id="sign-in"></a>
+
 ## Signing in
 
 Your agent signs in to your own server with an app password, and your server vouches for each thing it asks ohm.
+
+<a id="safety"></a>
 
 ## Other people's writing is not trusted
 
 The same agent reads private work and other people's writing. Treat imported writing and recalled memory as context, not permission. The vault tools require confirmation before publishing or widening a post's audience; agent-proposed skills need your approval, and proposals cannot enable tools.
 
 These controls apply to ohm's tools. They do not control other tools your coding agent may have, or stop its model provider processing what it reads.
+
+<a id="ask"></a>
 
 ## Things to ask it
 
@@ -90,6 +110,8 @@ These controls apply to ohm's tools. They do not control other tools your coding
 - "Remember that I prefer short drafts before polished prose."
 - "Show me the earlier versions of that memory."
 - "Propose a skill for how we edit these essays."
+
+<a id="together"></a>
 
 ## Editing alongside it
 

@@ -125,7 +125,7 @@
 
         <section aria-labelledby="connect">
           <h2 id="connect">Connect and start</h2>
-          <p>From the repository root, use Node 22 or later, install the project's dependencies with <code>npm ci</code>, and supply a site configuration already established for the member. The <a href="https://github.com/haeinej/ohm-content-layer/blob/main/docs/set-up-with-an-agent.md">repository setup guide</a> describes account and site setup. Supply the app password through the MCP process's private environment; do not request it in a post, commit it, or put it in documentation.</p>
+          <p>From a source checkout, use Node 22 or later and install root runtime dependencies with <code>npm ci</code>, then supply a site configuration already established for the member. This runs the local MCP client; extending or testing the service also requires its separate locked dependencies, as described under <a href="/agent-guide#verify">verification</a>. The packaged CLI includes the same shared publish helper and does not need the service backend installed locally. The <a href="https://github.com/haeinej/ohm-content-layer/blob/main/docs/set-up-with-an-agent.md">repository setup guide</a> describes account and site setup. Supply the app password through the MCP process's private environment; do not request it in a post, commit it, or put it in documentation.</p>
           <p>The stdio server entry point is:</p>
           <pre>node mcp/server.mjs --config /path/to/site.json</pre>
           <p><code>--config</code> is optional if <code>OHM_CONTENT_LAYER_CONFIG</code> or normal project discovery supplies it. The default service is <code>https://vault.ohmmmm.com</code>, audience <code>did:web:vault.ohmmmm.com</code>. <code>--vault</code> and <code>--vault-did</code> override the pair for another environment. Restricted membership and live availability are separate from correct local configuration.</p>
@@ -188,12 +188,17 @@
 
         <section aria-labelledby="verify">
           <h2 id="verify">Verify and document a change</h2>
-          <p>From the repository root with Node 22 or later and dependencies installed:</p>
+          <p>For contributor verification, start from the repository root with Node 22 or later and install both locked dependency sets explicitly:</p>
+          <pre>npm ci
+npm --prefix service ci</pre>
+          <p>The root dependencies supply the CLI, Markdown renderer, public-site tooling and test runner inputs. The separate service package supplies its pinned signature-verification library for the backend and integration tests. Root <code>npm ci</code> does not install it. If tests cannot find <code>service/node_modules/@noble/curves</code>, run the service install, not an import workaround. Tests and package-install hooks never install these dependencies for you. This is source-checkout setup, not a prerequisite for a site owner using the packaged CLI. The <a href="https://github.com/haeinej/ohm-content-layer/blob/main/README.md#work-on-this-repository">human contributor guide</a> explains the same boundary.</p>
+          <p>Then verify the implementation:</p>
           <pre>npm run capabilities
 python3 public/docs/build.py
 npm test
 git diff --check</pre>
-          <p>The capability reference must match its registered tables. The docs build checks page links and anchors; docs tests check request/tool coverage, duplicate IDs and in-page targets. The broader tests exercise service boundaries, member isolation, versions and tool composition using local fixtures. Passing them is not evidence of a successful live member sign-in or deployment.</p>
+          <p>The capability reference must match its registered tables. The docs build checks HTML page links and anchors; tests also check Markdown/LLM outbound fragments, static-page IDs, the six-route SEO contract, offline script routing and MCP initialization from an extracted package with only locked runtime dependencies. The broader tests exercise service boundaries, member isolation, versions and tool composition using local fixtures. Passing them is not evidence of a successful live member sign-in or deployment.</p>
+          <p>For a local public-site preview, run <code>npm run home:dev</code>, <code>npm run docs:dev</code> or <code>npm run home-draft:dev</code> from the root (loopback ports 8790, 8791 and 8792). Run <code>npm run home:seo -- http://127.0.0.1:8790</code> against the home preview, not production, to check this checkout. <a href="https://github.com/haeinej/ohm-content-layer/blob/main/public/README.md">Public site ownership</a> explains why the draft is retained. Edit this generator rather than its HTML, Markdown and LLM outputs; regenerate, inspect the diff, and fix the source then rerun if generation stops partway. Existing HTML bookmarks and the header-free docs layout must remain stable.</p>
           <p>Use the bundled <code>document-work</code> skill for each coherent completed outcome. Update the canonical human guide with purpose, dependency reasons and recognizable first use; update this guide or the precise reference with contracts and recovery. Regenerate outputs from their source. Use synthetic examples and keep private member material out of public docs. Report implementation, local test evidence and live verification separately. <a href="/limits">Status and limits</a> records the remaining product boundaries.</p>
         </section>
 

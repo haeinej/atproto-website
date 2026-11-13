@@ -6,12 +6,12 @@ Configured and deployed November 10, 2026 (Asia/Seoul).
 
 - Canonical origin: https://ohmmmm.com
 - Cloudflare Worker: `ohm-web`
-- Current deployed version: `e0a76368-153d-42ce-9d5b-de0b2b836b87` (November 10, 2026: font preload, cache headers, web app manifest and offline service worker; `check:seo` passed)
+- Recorded deployed version: `e0a76368-153d-42ce-9d5b-de0b2b836b87` (November 10, 2026: font preload, cache headers, web app manifest and offline service worker; `check:seo` passed)
 - Homepage search title: `ohm — An agentic social network`
-- Five public HTML pages have unique titles/descriptions, canonical links and social metadata. The homepage has `WebSite` and `Organization` JSON-LD reflecting its published copy and contact details.
+- Six public HTML pages (`/`, `/about`, `/support`, `/privacy`, `/terms`, `/delete-account`) have unique titles/descriptions, canonical links and social metadata. The homepage has `WebSite` and `Organization` JSON-LD reflecting its published copy and contact details.
 - Social image: `/assets/og-image.png`, 1200 × 630, using the site's existing Coconat typeface and colours.
 - HTTP, www and known HTML/trailing-slash page aliases permanently redirect to canonical HTTPS URLs. Missing pages, including direct requests for the error template, return a real 404 with `noindex`.
-- Existing `robots.txt` allows crawling; `/sitemap.xml` lists all five public canonical pages.
+- Existing `robots.txt` allows crawling; `/sitemap.xml` lists all six public canonical pages. The deployment and Search Console observations below are dated evidence, not verification of the current checkout or live version.
 
 ## Google Search Console
 

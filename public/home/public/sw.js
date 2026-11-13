@@ -108,7 +108,7 @@ self.addEventListener("fetch", event => {
     event.respondWith(page(event));
   } else if (url.pathname.startsWith("/assets/fonts/")) {
     event.respondWith(asset(event, false));
-  } else if (["/styles.css", "/landing.js", "/sw-register.js", "/manifest.webmanifest"].includes(url.pathname) || url.pathname.startsWith("/assets/")) {
+  } else if (["/styles.css", "/landing.js", "/join.js", "/sw-register.js", "/manifest.webmanifest"].includes(url.pathname) || url.pathname.startsWith("/assets/")) {
     event.respondWith(asset(event, true));
   }
 });

@@ -2,6 +2,8 @@
 
 The vault and cortex service registers 38 requests in 15 capabilities. This reference includes authenticated placeholders and is generated from the tables the service runs on.
 
+<a id="conventions"></a>
+
 ## Conventions
 
 The vault and cortex service speaks XRPC, the request convention of the AT Protocol. Every request has a namespaced name and is sent to `/xrpc/` followed by that name. Cortex requests are private; a registered request can still be an authenticated `NotBuiltYet` placeholder.
@@ -23,6 +25,8 @@ The access level of each request is one of four.
 | Any authenticated account | A service token from any PDS, issued for this request |
 | Member | A service token from the member's own PDS, or an ohm session connected to that account |
 | Member, with an ohm session | An ohm session only. A change must also originate from ohm's own pages |
+
+<a id="posts"></a>
 
 ## Posts
 
@@ -72,6 +76,8 @@ Removes one post, for good.
 | Parameters | `id`: the post's ID<br>`replaces`: the version being removed |
 | Returns | `id`, `removed` |
 
+<a id="structure"></a>
+
 ## Structure
 
 The shape of a vault: its labels, the sublabels inside them, and a line for each post. Enough to draw it or decide where something belongs, without reading any post in full.
@@ -86,6 +92,8 @@ Labels, sublabels, and each post with who may see it, what kind of thing it is, 
 | Access | Member |
 | Parameters | None |
 | Returns | `posts`, `public`, `friends`, `private` (counts), and `labels`, each with its `posts` and `sublabels` |
+
+<a id="search"></a>
 
 ## Search
 
@@ -102,6 +110,8 @@ The posts that mention every word of `q`, best first, each with a passage that s
 | Parameters | `q`: the words to look for<br>`visibility`: optional: only posts at this visibility<br>`limit`: optional: how many, 10 unless said, 50 at most |
 | Returns | `found`, and `posts` (id, slug, title, label, sublabel, visibility, date, passage) |
 
+<a id="mirror"></a>
+
 ## Mirror
 
 Bring what the member has already published on their PDS into the vault. It only reads the PDS, and it never changes a post the member has since changed in the vault.
@@ -116,6 +126,8 @@ Reads the member's repository and says what it holds as posts: how many, which w
 | Access | Member |
 | Parameters | `apply`: optional: save the posts<br>`site`: optional: the member's website, when it is not the one their handle names<br>`from`: optional: one older post type to read, when it should not be found |
 | Returns | `site`, `types`, `records`, `posts`, `sameAsPublished`, `differs`, `lost`, `cannotBePublishedYet`, `skipped`, `applied`; and with `apply`, `saved`, `unchanged`, `changedThere`, `refused` |
+
+<a id="publish"></a>
 
 ## Publish
 
@@ -143,6 +155,8 @@ One file that one of the member's posts places, fetched from where the post says
 | Parameters | `id`: the post's ID<br>`attachment`: the name the post's record places the file under |
 | Returns | The file, with its type |
 
+<a id="export"></a>
+
 ## Export
 
 The whole vault written out as files a person can keep: each post as Markdown, where it sits in a folder. The same files open in Obsidian, and read back as the same posts.
@@ -157,6 +171,8 @@ Every post as a file: its path in a folder, and its text.
 | Access | Member |
 | Parameters | None |
 | Returns | `files` (path, text) |
+
+<a id="account"></a>
 
 ## Account
 
@@ -195,6 +211,8 @@ Unties the AT Protocol account. The vault is kept, and opens again when the acco
 | Parameters | None |
 | Returns | `did`, now empty |
 
+<a id="identity"></a>
+
 ## Identity
 
 The first steps of signing in: finding an account from its handle, and saying who a token from a PDS names. Neither touches a vault.
@@ -221,6 +239,8 @@ Says who a token from a PDS names. The token has to be issued for this request a
 | Parameters | None |
 | Returns | `did`, and `handle` when the handle points back to the account |
 
+<a id="context"></a>
+
 ## Context
 
 The private cortex at session start: always memories in full, an index of the rest, approved skills, enabled tools and work waiting to be settled.
@@ -246,6 +266,8 @@ Not built yet. Prompt recall will use project isolation and a character budget.
 | Access | Member |
 | Parameters | `q`: the prompt<br>`project`: optional: the repository<br>`budget`: optional: 1,500 characters unless said |
 | Returns | `memories` (name, description, passage), `skills` (name, description), within the budget |
+
+<a id="memory"></a>
 
 ## Memory
 
@@ -306,6 +328,8 @@ Find memories mentioning every word of q. A description counts more than the bod
 | Parameters | `q`: words to find<br>`limit`: optional: 10 unless said, at most 50 |
 | Returns | `memories` (name, description, kind, passage), best first |
 
+<a id="notes"></a>
+
 ## Notes
 
 Private observations with client-made IDs and immutable explicit settlement receipts. The member’s agent judges; the service makes no model calls.
@@ -343,6 +367,8 @@ Atomically record from 1 to 100 explicit outcomes: kept, dropped or a memory nam
 | Parameters | `notes`: 1–100 distinct {id, outcome, version?}; a memory outcome requires the current memory version |
 | Returns | `settled` (the note IDs acknowledged) |
 
+<a id="turns"></a>
+
 ## Turns
 
 Private cortex turns. Not built yet.
@@ -379,6 +405,8 @@ This cortex request is not built yet.
 | Access | Member |
 | Parameters | `turns`: each turn ID and its outcome |
 | Returns | `settled` |
+
+<a id="skills"></a>
 
 ## Skills
 
@@ -439,6 +467,8 @@ Remove a skill from the linked member’s ohm session, naming its current versio
 | Parameters | `name`: the skill name<br>`replaces`: the current version |
 | Returns | `name`, `removed` |
 
+<a id="tools"></a>
+
 ## Tools
 
 The member’s private tool settings and inert proposals. Only an ohm session changes tool settings. Server addresses are metadata; this capability never connects to a server or keeps credentials.
@@ -487,6 +517,8 @@ Record a tool to be built, with its inputs and outputs. It is always off and pro
 | Parameters | `tool`: {name, description, inputs, outputs}; inputs and outputs are text |
 | Returns | `name`, `proposed`, optionally `unchanged` |
 
+<a id="cortex-export"></a>
+
 ## Cortex Export
 
 Private cortex cortex export. Not built yet.
@@ -501,6 +533,8 @@ This cortex request is not built yet.
 | Access | Member |
 | Parameters | None |
 | Returns | `files` (path, text) |
+
+<a id="errors"></a>
 
 ## Errors
 
@@ -537,6 +571,8 @@ A refusal is JSON with an `error` code from the table below and a `message` writ
 | `NoRepository` | 400 | The account's DID document does not say where its repository is kept |
 | `RepositoryUnreachable` | 502 | The account's PDS would not answer |
 | `InternalError` | 500 | Something went wrong in the service itself |
+
+<a id="agent-tools"></a>
 
 ## Agent tools
 

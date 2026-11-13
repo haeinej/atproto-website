@@ -765,7 +765,7 @@ The vault stores posts. The cortex stores private memories, observations, skills
 The MCP path is agent → local MCP server → member's PDS for a service token → vault service → member-scoped store. Browser session authentication is an alternative service access path. [Identity and access](/docs/identity) defines both.
 
 ## Connect and start {#connect}
-From the repository root, use Node 22 or later, install the project's dependencies with `npm ci`, and supply a site configuration already established for the member. The [repository setup guide](https://github.com/haeinej/ohm-content-layer/blob/main/docs/set-up-with-an-agent.md) describes account and site setup. Supply the app password through the MCP process's private environment; do not request it in a post, commit it, or put it in documentation.
+From a source checkout, use Node 22 or later and install root runtime dependencies with `npm ci`, then supply a site configuration already established for the member. This runs the local MCP client; extending or testing the service also requires its separate locked dependencies, as described under [verification](/docs/agent-guide#verify). The packaged CLI includes the same shared publish helper and does not need the service backend installed locally. The [repository setup guide](https://github.com/haeinej/ohm-content-layer/blob/main/docs/set-up-with-an-agent.md) describes account and site setup. Supply the app password through the MCP process's private environment; do not request it in a post, commit it, or put it in documentation.
 The stdio server entry point is:
 ```
 node mcp/server.mjs --config /path/to/site.json
@@ -813,14 +813,21 @@ These are the authoritative sources in [haeinej/ohm-content-layer](https://githu
 - [public/docs/build.py](https://github.com/haeinej/ohm-content-layer/blob/main/public/docs/build.py): authored public documentation and generated HTML, Markdown and LLM outputs.
 
 ## Verify and document a change {#verify}
-From the repository root with Node 22 or later and dependencies installed:
+For contributor verification, start from the repository root with Node 22 or later and install both locked dependency sets explicitly:
+```
+npm ci
+npm --prefix service ci
+```
+The root dependencies supply the CLI, Markdown renderer, public-site tooling and test runner inputs. The separate service package supplies its pinned signature-verification library for the backend and integration tests. Root `npm ci` does not install it. If tests cannot find `service/node_modules/@noble/curves`, run the service install, not an import workaround. Tests and package-install hooks never install these dependencies for you. This is source-checkout setup, not a prerequisite for a site owner using the packaged CLI. The [human contributor guide](https://github.com/haeinej/ohm-content-layer/blob/main/README.md#work-on-this-repository) explains the same boundary.
+Then verify the implementation:
 ```
 npm run capabilities
 python3 public/docs/build.py
 npm test
 git diff --check
 ```
-The capability reference must match its registered tables. The docs build checks page links and anchors; docs tests check request/tool coverage, duplicate IDs and in-page targets. The broader tests exercise service boundaries, member isolation, versions and tool composition using local fixtures. Passing them is not evidence of a successful live member sign-in or deployment.
+The capability reference must match its registered tables. The docs build checks HTML page links and anchors; tests also check Markdown/LLM outbound fragments, static-page IDs, the six-route SEO contract, offline script routing and MCP initialization from an extracted package with only locked runtime dependencies. The broader tests exercise service boundaries, member isolation, versions and tool composition using local fixtures. Passing them is not evidence of a successful live member sign-in or deployment.
+For a local public-site preview, run `npm run home:dev`, `npm run docs:dev` or `npm run home-draft:dev` from the root (loopback ports 8790, 8791 and 8792). Run `npm run home:seo -- http://127.0.0.1:8790` against the home preview, not production, to check this checkout. [Public site ownership](https://github.com/haeinej/ohm-content-layer/blob/main/public/README.md) explains why the draft is retained. Edit this generator rather than its HTML, Markdown and LLM outputs; regenerate, inspect the diff, and fix the source then rerun if generation stops partway. Existing HTML bookmarks and the header-free docs layout must remain stable.
 Use the bundled `document-work` skill for each coherent completed outcome. Update the canonical human guide with purpose, dependency reasons and recognizable first use; update this guide or the precise reference with contracts and recovery. Regenerate outputs from their source. Use synthetic examples and keep private member material out of public docs. Report implementation, local test evidence and live verification separately. [Status and limits](/docs/limits) records the remaining product boundaries.
 """)
 
@@ -1917,6 +1924,11 @@ def md_body(body):
         if line.startswith("{{figure:"):
             now, line = "figure", figure_text(line.strip()[9:-2])
         elif line.startswith("#"):
+            anchor = re.search(r" \{#([\w-]+)\}$", line)
+            if anchor:
+                if out:
+                    out.append("")
+                out.append(f'<a id="{anchor.group(1)}"></a>')
             now, line = "heading", re.sub(r" \{#[\w-]+\}$", "", line)
         elif line.startswith("|"):
             now = "table"

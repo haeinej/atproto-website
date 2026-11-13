@@ -2,6 +2,8 @@
 
 Every post is marked private, for friends, or public. Public sharing happens only through Publish. Friends-only delivery is planned; marking a post for friends currently keeps it in your working vault.
 
+<a id="three"></a>
+
 ## The three choices
 
 | | Who can read it | Where it is published |
@@ -12,19 +14,27 @@ Every post is marked private, for friends, or public. Public sharing happens onl
 
 A new post is private. A post that comes in from a folder is private unless its file says otherwise.
 
+<a id="marks"></a>
+
 ## Changing it only marks the post
 
 Setting a post to friends or public does not share it. It marks the post, and the Publish button shows that something is waiting. A public post reaches other people when you press Publish and approve. [Publish](https://docs.ohmmmm.com/publish.md)
 
+<a id="friends"></a>
+
 ## Friends
 
 A friend is someone you follow who follows you back. There is no separate request to approve: following back is the approval. [Friends](https://docs.ohmmmm.com/friends.md)
+
+<a id="narrowing"></a>
 
 ## Making a post less visible
 
 You can move a public post back to friends or private, and a friends post back to private. At the next Publish it is removed from where it was.
 
 That is not a recall. Copies of a public post that other services made stay where they are, and a friend who already read a post has read it.
+
+<a id="private"></a>
 
 ## What private means
 

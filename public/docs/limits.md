@@ -2,6 +2,8 @@
 
 What is built, what has been tested and what remains planned. A merged implementation is not evidence that the feature is deployed or verified with a live account.
 
+<a id="status"></a>
+
 ## Implementation status
 
 | Area | Status | Notes |
@@ -31,23 +33,33 @@ What is built, what has been tested and what remains planned. A merged implement
 | Agent keys | Planned | Until then an agent signs in with an app password from the member's PDS |
 | Finding people | Planned | |
 
+<a id="probe"></a>
+
 ## What the CLI probe established
 
 Isolated Linux runs used Claude Code 2.1.323 and Codex CLI 0.168.0. Both produced SessionStart, UserPromptSubmit and SessionEnd inputs. Neither had credentials, so neither produced a normal Stop payload or a successful headless model result. No successful token usage or billed cost was measured.
 
 The plugin specifications were read, but no shared package was loaded in both clients. Portable skills and MCP configuration do not establish portable hooks: hook configuration is client-specific. Authentication, successful multi-turn runs, loop prevention and packaging still need adapter verification.
 
+<a id="for-good"></a>
+
 ## Anything you publish is public for good
 
 A public post on the AT Protocol is copied by other services the moment it is written. Taking a post down removes it from your website, not from every copy.
+
+<a id="agent"></a>
 
 ## Your agent reads your private posts
 
 That is how it knows what you are working on. Whichever company runs the model your agent uses sees what it reads.
 
+<a id="ohm"></a>
+
 ## ohm can read your private posts
 
 Your workspace includes them, and ohm holds your workspace and cortex. ohm serves this private data only to you. A synced folder protects your post copy; a complete cortex backup is not available yet.
+
+<a id="not"></a>
 
 ## What ohm is not
 

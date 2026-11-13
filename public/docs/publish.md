@@ -2,9 +2,13 @@
 
 Publish makes what other people see match your workspace. It is the only thing in ohm that shares anything, and it always shows you what will change first.
 
+<a id="status"></a>
+
 ## Before you publish
 
 A mark on the Publish button means something is waiting: posts you marked public, published posts you edited, and published posts you made private or removed.
+
+<a id="steps"></a>
 
 ## The steps
 
@@ -12,9 +16,13 @@ A mark on the Publish button means something is waiting: posts you marked public
 2. **You approve at your own server.** With an app password typed on ohm's page, or with a passkey at your server's own screen.
 3. **The changes are made,** all of them or none.
 
+<a id="who"></a>
+
 ## Who makes the changes
 
 You do. ohm works out what would change, and holds no standing permission to write to your account. The changes are made from your browser, or by your agent, signed in at your own server for as long as publishing takes and no longer.
+
+<a id="does"></a>
 
 ## What Publish does to each post
 
@@ -28,11 +36,15 @@ You do. ohm works out what would change, and holds no standing permission to wri
 
 Editing a published post does not change what readers see. They see the last version you published until you publish again.
 
+<a id="safe"></a>
+
 ## What Publish never touches
 
 - **Anything that is not a post.** Only the shared post type in your account is ever written or removed.
 - **A published post your workspace does not know.** Something published from elsewhere is left where it is and named, so you can bring it in first.
 - **Your folder.** Sync does not publish, and Publish does not sync.
+
+<a id="where"></a>
 
 ## Where a public post goes
 
@@ -42,9 +54,13 @@ A public post is written to your own account on the AT Protocol, in the reposito
 - **Other applications can read it.** Every public post has the same shape on every site, so other software can find and read it.
 - **You can move it.** The repository goes with your account to another host.
 
+<a id="for-good"></a>
+
 ## Public is for good
 
 Other services copy a public post the moment it is written. Making it private later removes it from your account. It does not remove it from every copy. You are told this each time, before you approve.
+
+<a id="addresses"></a>
 
 ## Addresses
 
