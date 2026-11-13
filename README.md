@@ -313,6 +313,8 @@ java -jar importer/target/x-archive-importer.jar \
 
 Maven builds the executable JAR and runs the importer's unit tests. The final command previews offline without signing in or publishing. The preview reports the replies, reposts, quote posts, and entries with missing media that it leaves out.
 
+Jackson reads the archive, and ICU4J 78.3 supplies Unicode 17 normalization, character categories and contextual lowercase for label folders. This keeps the Java tool independent of the JDK's older Unicode tables. Its Unicode data adds about 14.45 MiB before shading and is confined to this standalone tool; the Node CLI does not depend on Java. The path fixtures were compared with Node 24.22.2 / ICU 78.3; a different JavaScript runtime can use different Unicode tables.
+
 Imports use `other` when no label is supplied. `--label 'Tweets'` files them under the author's name: labels are trimmed and limited to 100 characters, retaining their authored casing in the record. The URL folder is Unicode NFC-normalized, lowercased and percent-encoded, such as `/posts/tweets/x-123` for X post `123`. The record key stays `x-123` regardless of the label. [Labels and addresses](docs/labels.md)
 
 After the owner approves a reviewed selection, add `--publish --pds https://pds.example.com --handle example.com --did did:web:pds.example.com`, and `--id YOUR_X_POST_ID` once for each post, or leave `--id` out to import everything eligible. `--also-bluesky` also posts compatible text and images to Bluesky.
@@ -392,6 +394,8 @@ The root dependencies run the CLI, renderer, public-site tooling and tests. The 
 
 This contributor setup is not required to use the packaged CLI in your own site's folder. [Run your own PDS and site](#run-your-own-pds-and-site) has the separate Cirrus prerequisites. [Public sites](public/README.md) lists local preview commands; the [agent working guide](https://docs.ohmmmm.com/agent-guide#verify) gives verification and recovery contracts.
 
+Use the [human repository guide](docs/repository-map.md) to understand where a change belongs and how to recover when a check refuses it. The [agent repository map](docs/agents/repository-map.md) records entry points, state transitions, ownership and the checks for those boundaries.
+
 ## In this repository
 
 | Path | What it is |
@@ -406,7 +410,7 @@ This contributor setup is not required to use the packaged CLI in your own site'
 | [scripts/](scripts/) and [bin/](bin/) | The commands |
 | [lexicons/](lexicons/) | The shared post schema, [com/ohmmmm/post.json](lexicons/com/ohmmmm/post.json), and under [com/haeinjung/](lexicons/com/haeinjung/) the templates for a site's own schemas: the profile and the optional ones |
 | [importer/](importer/) | The X archive importer |
-| [skills/](skills/) and [AGENTS.md](AGENTS.md) | What a coding agent reads: the purpose, the rules, and the five skills |
+| [skills/](skills/) and [AGENTS.md](AGENTS.md) | What a coding agent reads: the purpose, the rules, and the bundled skills |
 | [docs/](docs/) | The guides linked above |
 | [test/](test/) | Tests. Run them with `npm test` |
 
@@ -431,7 +435,7 @@ Not yet:
 - **Private posts and the profile command have not been run against Cloudflare.** Private posts are tested with stand-ins for Cloudflare Access and its storage.
 - **The X importer's deployed behavior and authenticated publishing are unverified.** Its Java 21 Maven build, unit tests, packaged `--help` command and synthetic offline preview have been verified locally.
 - **The migrate command has only been previewed.** It has read a live repository and its converted records pass the schema, but it has not written to a PDS.
-- **There is no command to change a published post.** Changing a label, moving a private post to public, or deleting one is done by hand.
+- **Legacy CLI public publication is create-only.** Updating, refiling or removing published content uses the vault's reviewed Publish plan; that path has local fixture coverage, with live end-to-end verification still outstanding.
 - **The site renderer stops on quotations, code, and captions.** A page that uses one is reported as not done.
 - **Embeds do not play.** An embed is shown as a card that links out.
 - **Connections are stored, not shown.** They are in the record and in `/notes/graph.json`. There is no graph view.

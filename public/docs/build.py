@@ -813,6 +813,7 @@ These are the authoritative sources in [haeinej/ohm-content-layer](https://githu
 - [public/docs/build.py](https://github.com/haeinej/ohm-content-layer/blob/main/public/docs/build.py): authored public documentation and generated HTML, Markdown and LLM outputs.
 
 ## Verify and document a change {#verify}
+For module ownership, dependency reasons and state transitions, read the [human repository guide](https://github.com/haeinej/ohm-content-layer/blob/main/docs/repository-map.md) and [agent repository map](https://github.com/haeinej/ohm-content-layer/blob/main/docs/agents/repository-map.md). They explain retained compatibility paths, account and draft guards, mirror checkpoints, renderer sidecars and recovery at each boundary.
 For contributor verification, start from the repository root with Node 22 or later and install both locked dependency sets explicitly:
 ```
 npm ci
