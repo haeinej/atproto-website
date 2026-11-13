@@ -48,6 +48,7 @@ test('a feed in any of the three common formats reads the same', async () => {
 // A stand-in for the owner's PDS and the platforms the mirror reads.
 function world() {
   const records = new Map();
+  const versions = new Map();
   const blobs = [];
   const kv = new Map();
   const feeds = {
@@ -65,11 +66,19 @@ function world() {
       blobs.push(options.headers['Content-Type']);
       return Response.json({ blob: { $type: 'blob', mimeType: options.headers['Content-Type'], size: options.body.length, ref: { $link: `bafk${blobs.length}` } } });
     }
-    if (address.endsWith('/xrpc/com.atproto.repo.putRecord')) {
+    if (/\/com.atproto.repo\.(putRecord|createRecord)$/.test(address)) {
       if (options.headers.Authorization !== 'Bearer pds-token') return Response.json({}, { status: 401 });
-      const { rkey, record } = JSON.parse(options.body);
+      const { rkey, record, swapRecord } = JSON.parse(options.body);
+      if (address.endsWith('createRecord') && records.has(rkey)) return Response.json({ error: 'RecordAlreadyExists' }, { status: 400 });
+      if (address.endsWith('putRecord') && swapRecord !== versions.get(rkey)) return Response.json({ error: 'InvalidSwap' }, { status: 400 });
       records.set(rkey, record);
-      return Response.json({ uri: `at://did:web:pds.example.test/com.ohmmmm.post/${rkey}` });
+      const cid = `cid-${versions.size}-${JSON.stringify(record).length}`;
+      versions.set(rkey, cid);
+      return Response.json({ uri: `at://did:web:pds.example.test/com.ohmmmm.post/${rkey}`, cid });
+    }
+    if (address.includes('/xrpc/com.atproto.repo.getRecord')) {
+      const key = new URL(address).searchParams.get('rkey');
+      return records.has(key) ? Response.json({ uri: `at://did:web:pds.example.test/com.ohmmmm.post/${key}`, cid: versions.get(key), value: records.get(key) }) : Response.json({ error: 'RecordNotFound' }, { status: 400 });
     }
     if (address === 'https://example.com/media/street.jpg') return new Response(new Uint8Array([1, 2, 3]), { headers: { 'Content-Type': 'image/jpeg' } });
     if (address in feeds) return typeof feeds[address] === 'string' ? new Response(feeds[address]) : Response.json(feeds[address]);
@@ -84,7 +93,7 @@ function world() {
     ]),
     MIRROR: { get: async key => (kv.has(key) ? JSON.parse(kv.get(key)) : null), put: async (key, value) => { kv.set(key, value); } },
   };
-  return { records, blobs, feeds, get, env };
+  return { records, versions, blobs, feeds, get, env, kv };
 }
 
 test('one run mirrors every connected platform, and the next run writes only what changed', async () => {
@@ -108,14 +117,13 @@ test('one run mirrors every connected platform, and the next run writes only wha
   ]);
 
   // Nothing changed: nothing is written, and no image is fetched again.
-  records.clear();
   const second = await mirror(env, { get });
-  assert.deepEqual([second.sources.map(source => source.unchanged), records.size, blobs.length], [[2, 1], 0, 1]);
+  assert.deepEqual([second.sources.map(source => source.unchanged), records.size, blobs.length], [[2, 1], 3, 1]);
 
   // One post is edited on the website: only that record is replaced.
   feeds['https://example.com/feed.json'].items[1].content_html = '<p>More, revised.</p>';
   const third = await mirror(env, { get });
-  assert.deepEqual([third.sources[0].written.map(post => post.key), [...records.keys()], records.get('second').body], [['second'], ['second'], 'More, revised.']);
+  assert.deepEqual([third.sources[0].written.map(post => post.key), records.size, records.get('second').body], [['second'], 3, 'More, revised.']);
   // A record written again because its source changed says when.
   assert.equal(records.get('second').updatedAt, third.at);
 
@@ -156,4 +164,85 @@ test('the mirror page and its button answer only the owner', async () => {
   assert.deepEqual([(await run.json()).sources.map(source => source.written.length), records.size], [[2, 1], 3]);
   assert.match(await (await ask('/mirror/', owner)).text(), /2 seen · 2 written · 0 unchanged/);
   assert.equal((await (await ask('/mirror/status.json', owner)).json()).sources.length, 2);
+});
+
+test('distinct same-basename items get stable separate keys and cannot overwrite unowned records', async () => {
+  const { env, get, feeds, records, versions } = world();
+  const feed = feeds['https://example.com/feed.json'];
+  feed.items = [feed.items[1], { ...feed.items[1], id: 'c', url: 'https://example.com/other/second.html', content_html: '<p>Different.</p>' }];
+  records.set('second', { body: 'Owner content' }); versions.set('second', 'owner-cid');
+  const first = await mirror(env, { get });
+  const written = first.sources[0].written.map(item => item.key);
+  assert.equal(new Set(written).size, 2); assert.ok(written.every(key => key.startsWith('second-')));
+  assert.deepEqual(records.get('second'), { body: 'Owner content' });
+  const second = await mirror(env, { get }); assert.equal(second.sources[0].unchanged, 2);
+});
+
+test('checkpoints bind the owner, PDS, site and feed instead of skipping another destination', async () => {
+  for (const [field, value] of [['ATPROTO_DID', 'did:web:other.example.test'], ['ATPROTO_PDS_ORIGIN', 'https://other-pds.example.test'], ['SITE_ORIGIN', 'https://other-site.example.test']]) {
+    const w = world(); await mirror(w.env, { get: w.get });
+    let calls = 0;
+    const report = await mirror({ ...w.env, [field]: value }, { get: async (...args) => { if (String(args[0]).includes('com.atproto.repo.getRecord')) calls++; return w.get(...args); } });
+    assert.ok(calls > 0, field); assert.equal(report.sources[0].unchanged, 0, field);
+  }
+  const w = world(); await mirror(w.env, { get: w.get });
+  w.feeds['https://elsewhere.example.test/feed'] = w.feeds['https://example.com/feed.json'];
+  const sources = JSON.parse(w.env.MIRROR_SOURCES); sources[0].feed = 'https://elsewhere.example.test/feed';
+  const report = await mirror({ ...w.env, MIRROR_SOURCES: JSON.stringify(sources) }, { get: w.get });
+  assert.equal(report.sources[0].unchanged, 0);
+});
+
+test('material dates and image metadata changes are mirrored with a read CID; owner edits are refused', async () => {
+  const w = world(); await mirror(w.env, { get: w.get });
+  w.feeds['https://example.com/feed.json'].items[1].date_published = '2026-06-09T00:00:00Z';
+  let swap;
+  const report = await mirror(w.env, { get: async (url, options) => {
+    if (String(url).endsWith('putRecord')) swap = JSON.parse(options.body).swapRecord;
+    return w.get(url, options);
+  } });
+  assert.ok(swap); assert.deepEqual(report.sources[0].written.map(item => item.key), ['second']);
+  assert.equal(w.records.get('second').publishedAt, '2026-06-09T00:00:00.000Z');
+  const edited = { ...w.records.get('second'), body: 'An owner edit.' }; w.records.set('second', edited);
+  w.feeds['https://example.com/feed.json'].items[1].content_html = '<p>Source edited.</p>';
+  const refused = await mirror(w.env, { get: w.get });
+  assert.ok(refused.sources[0].problems.some(text => text.includes('outside the mirror')));
+  assert.deepEqual(w.records.get('second'), edited);
+});
+
+test('malformed URL escapes do not stop healthy items and a failed first item cannot starve later sources', async () => {
+  const w = world();
+  w.feeds['https://example.com/feed.json'].items.unshift({ id: 'bad', url: 'https://example.com/%GG.html', date_published: '2026-01-01', content_text: 'Bad.' });
+  const get = (url, options) => String(url) === 'https://example.com/media/street.jpg' ? new Response('', { status: 503 }) : w.get(url, options);
+  const first = await mirror(w.env, { get, budget: 1 });
+  assert.equal(first.sources[0].problems.length, 2); assert.equal(w.records.size, 0);
+  const second = await mirror(w.env, { get, budget: 1 }); assert.ok(w.records.has('second')); assert.equal(second.sources[0].waiting, 1);
+  assert.ok(second.sources[0].problems.some(text => text.includes('waiting to retry')));
+  await mirror(w.env, { get, budget: 1 }); assert.ok(w.records.has('substack-a-letter'));
+});
+
+test('a PDS write followed by a failed checkpoint is reconciled without creating a second record', async () => {
+  const w = world();
+  const original = w.env.MIRROR.put; let fail = true;
+  w.env.MIRROR.put = async (key, value) => {
+    if (fail && key.startsWith('mirror:v2:') && JSON.parse(value).phase === 'complete') { fail = false; throw Error('checkpoint unavailable'); }
+    return original(key, value);
+  };
+  const first = await mirror(w.env, { get: w.get }); assert.ok(first.sources[0].problems.some(text => text.includes('checkpoint unavailable')));
+  const second = await mirror(w.env, { get: w.get }); assert.equal(w.records.size, 3); assert.deepEqual(second.sources[0].problems, []);
+  assert.equal(second.sources[0].unchanged, 2);
+});
+
+test('unambiguous legacy mappings retain their keys; legacy collisions refuse migration', async () => {
+  const w = world(); await mirror(w.env, { get: w.get });
+  const hash = async value => [...new Uint8Array(await crypto.subtle.digest('SHA-256', new TextEncoder().encode(JSON.stringify(value))))].map(byte => byte.toString(16).padStart(2, '0')).join('');
+  const record = w.records.get('second');
+  for (const key of [...w.kv.keys()]) if (key.startsWith('mirror:v2:')) w.kv.delete(key);
+  w.kv.set('mirror:website:second', JSON.stringify({ hash: await hash([record.title, record.body, [], record.label, '', []]), collection: record.$type }));
+  const kept = await mirror(w.env, { get: w.get }); assert.ok(kept.sources[0].written.some(item => item.key === 'second'));
+  for (const key of [...w.kv.keys()]) if (key.startsWith('mirror:v2:')) w.kv.delete(key);
+  w.feeds['https://example.com/feed.json'].items.push({ ...w.feeds['https://example.com/feed.json'].items[1], id: 'other', url: 'https://example.com/other/second.html' });
+  const before = structuredClone(w.records.get('second'));
+  const refused = await mirror(w.env, { get: w.get });
+  assert.equal(refused.sources[0].problems.filter(text => text.includes('ambiguous legacy')).length, 2);
+  assert.deepEqual(w.records.get('second'), before);
 });
