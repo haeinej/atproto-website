@@ -270,6 +270,46 @@ test('settlement refuses nonexistent targets, missing versions, duplicate outcom
   assert.equal((await call('cortex_recall', { name: 'plain-titles' })).version, first.version);
 });
 
+test('service compare-and-swap still refuses races after a tool preflight read', async t => {
+  const { call, note, cortex, client } = await running(t);
+  const otherSession = client();
+  let first = await call('cortex_remember', { memory: memory() });
+  const racing = action => createCortexTools({ cortex: { call: async (name, request) => {
+    if (name === action) {
+      await otherSession.call('putMemory', { body: { memory: memory({ body: `Concurrent ${action}` }), replaces: first.version } });
+    }
+    return cortex.call(name, request);
+  } } });
+  await assert.rejects(racing('putMemory').call('cortex_remember', { memory: memory({ body: 'Losing edit' }), version: first.version }), refusal('Changed'));
+  first = await call('cortex_recall', { name: 'plain-titles' });
+  const deleting = racing('deleteMemory');
+  const shown = await deleting.call('cortex_forget', { name: 'plain-titles' });
+  await assert.rejects(deleting.call('cortex_forget', { name: 'plain-titles', confirm: shown.confirm }), refusal('Changed'));
+  first = await call('cortex_recall', { name: 'plain-titles' });
+  await note('racing');
+  await assert.rejects(racing('settleNotes').call('cortex_settle', { notes: [{ id: 'racing', outcome: 'plain-titles', version: first.version }] }), refusal('Changed'));
+  assert.equal((await call('cortex_recall', { name: 'plain-titles' })).memory.body, 'Concurrent settleNotes');
+  assert.deepEqual((await call('cortex_settle')).notes.map(each => each.id), ['racing']);
+});
+
+test('a failed settlement leaves its semantic write visible for explicit reconciliation, never hides pending notes', async t => {
+  const { call, note } = await running(t);
+  await note('one', { session: 'only-one-session' });
+  await assert.rejects(call('cortex_settle', {
+    changes: [{ memory: memory({ stated: false, notes: ['one'] }) }], notes: [{ id: 'one', outcome: 'plain-titles' }],
+  }), refusal('InvalidMemory'));
+  const held = await call('cortex_recall', { name: 'plain-titles' });
+  assert.deepEqual(held.memory.notes, ['one']);
+  assert.equal(held.memory.seen.count, 0);
+  assert.deepEqual((await call('cortex_settle')).notes.map(each => each.id), ['one']);
+  await note('two', { session: 'a-later-session' });
+  const result = await call('cortex_settle', { notes: [
+    { id: 'one', outcome: 'plain-titles', version: held.version }, { id: 'two', outcome: 'plain-titles', version: held.version },
+  ] });
+  assert.equal(result.complete, true);
+  assert.equal(result.memories[0].memory.seen.count, 2);
+});
+
 test('unapproved skills remain unreadable yet proposals can be revised with a receipt; approval is exact-version', async t => {
   const { call, approve } = await running(t);
   const first = await call('cortex_propose_skill', { skill: skill() });
@@ -317,7 +357,8 @@ test('actual signed-token authentication errors propagate through all nine tools
   };
   for (const auth of [{ token: null }, { token: 'invalid' }, { claims: { aud: 'did:web:wrong.test' } }, { claims: { lxm: 'com.ohmmmm.vault.getPost' } }, { claims: { exp: 1 } }]) {
     const tools = createCortexTools({ cortex: client(mine, auth) });
-    for (const [name, args] of Object.entries(valid)) await assert.rejects(tools.call(name, args), error => error.code === 'AuthRequired' && error.status === 401);
+    const expected = auth.token === null ? 'SignInRequired' : 'AuthRequired';
+    for (const [name, args] of Object.entries(valid)) await assert.rejects(tools.call(name, args), error => error.code === expected && error.status === 401);
   }
 });
 
