@@ -63,6 +63,12 @@
         <li><a href="/files">Posts as files</a></li>
         <li><a href="/export">Export and leaving</a></li>
       </ul>
+      <p class="sidebar-group">Cortex</p>
+      <ul>
+        <li><a href="/cortex">Your cortex</a></li>
+        <li><a href="/memory">Memory and notes</a></li>
+        <li><a href="/skills-tools">Skills and tools</a></li>
+      </ul>
       <p class="sidebar-group">Agent</p>
       <ul>
         <li><a href="/agent">Connect your agent</a></li>
@@ -90,12 +96,12 @@
           <p class="group">Architecture</p>
           <h1 id="title">Agent integration</h1>
           <p class="introduction">An agent reaches a vault through an MCP server that runs on the member's own machine. The server authenticates as the member, composes its tools from service requests, and requires confirmation for every change that others could see.</p>
-          <p class="alert" role="note">ohm is still in production, and these pages are its architecture document: they describe how it is meant to work, not a finished product.</p>
+          <p class="alert" role="note">ohm is in development. These docs cover the implementation and the work still planned. Built does not mean verified on the live service; see Status and limits.</p>
         </header>
 
         <section aria-labelledby="overview">
           <h2 id="overview">Overview</h2>
-          <p>ohm does not run an agent. It ships a Model Context Protocol (MCP) server, <code>ohm-vault</code>, that a member runs on their own machine and connects to the agent they already use. The server exposes ten tools, and each tool is a composition of vault service requests made as the member.</p>
+          <p>ohm does not run a background agent. It ships a Model Context Protocol (MCP) server, <code>ohm-vault</code>, that a member runs on their own machine and connects to the agent they already use. The server exposes 19 vault and cortex tools, composed from authenticated service requests made as that member.</p>
           <figure class="figure">
             <div class="figure-scroll"><svg viewBox="0 0 640 322" width="640" height="322" role="img" aria-labelledby="figure-mcp"><title id="figure-mcp">The path of one tool call</title><defs><marker id="head-mcp" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path class="d-head" d="M0 0 10 5 0 10z"/></marker></defs><path class="d-life" d="M80 40L80 316"/><rect class="d-box" x="8.0" y="0" width="144.0" height="40" rx="10"/><text class="d-title" x="80" y="25" text-anchor="middle">Agent</text><path class="d-life" d="M240 40L240 316"/><rect class="d-box" x="168.0" y="0" width="144.0" height="40" rx="10"/><text class="d-title" x="240" y="25" text-anchor="middle">MCP server</text><path class="d-life" d="M400 40L400 316"/><rect class="d-box" x="328.0" y="0" width="144.0" height="40" rx="10"/><text class="d-title" x="400" y="25" text-anchor="middle">Member's PDS</text><path class="d-life" d="M560 40L560 316"/><rect class="d-box" x="488.0" y="0" width="144.0" height="40" rx="10"/><text class="d-title" x="560" y="25" text-anchor="middle">Vault service</text><path class="d-arrow" d="M81 78L238 78" marker-end="url(#head-mcp)"/><text class="d-step" x="160.0" y="70" text-anchor="middle">1  tools/call</text><path class="d-arrow" d="M241 120L398 120" marker-end="url(#head-mcp)"/><text class="d-step" x="320.0" y="112" text-anchor="middle">2  getServiceAuth</text><path class="d-arrow d-dashed" d="M399 162L242 162" marker-end="url(#head-mcp)"/><text class="d-step" x="320.0" y="154" text-anchor="middle">3  Signed token</text><path class="d-arrow" d="M241 204L558 204" marker-end="url(#head-mcp)"/><text class="d-step" x="400.0" y="196" text-anchor="middle">4  Request with the token</text><path class="d-arrow d-dashed" d="M559 246L242 246" marker-end="url(#head-mcp)"/><text class="d-step" x="400.0" y="238" text-anchor="middle">5  Response</text><path class="d-arrow d-dashed" d="M239 288L82 288" marker-end="url(#head-mcp)"/><text class="d-step" x="160.0" y="280" text-anchor="middle">6  Tool result</text></svg></div>
             <figcaption>The MCP server runs on the member's machine and acts as the member. Dashed lines are responses.</figcaption>
@@ -113,14 +119,17 @@
 
         <section aria-labelledby="model">
           <h2 id="model">What an agent should know</h2>
-          <p>An agent that reads only this section can work in a vault correctly.</p>
+          <p>Start with these rules, then use the supplied cortex settlement skill for learning decisions.</p>
           <ul>
+            <li>**Call <code>cortex_start</code> first.** Read standing memories and the description indexes. Settle pending notes before continuing; recall full memories and approved skills when needed.</li>
             <li><strong>The vault is one person's work,</strong> as posts filed under labels and sublabels. Start with <code>vault_tree</code> to see its shape, then <code>vault_read</code> or <code>vault_search</code>.</li>
             <li><strong>Every post is private, for friends, or public.</strong> Private posts are context for helping the member. Nothing from one belongs in anything another person can see.</li>
             <li><strong>A new post is saved private.</strong> <code>vault_save</code> never shares anything. To change who a post is for, use <code>vault_set_visibility</code>, which always asks first.</li>
             <li><strong>Saving is not publishing.</strong> A post marked public reaches the member's website and the network only through <code>vault_publish</code>. <code>vault_status</code> says what is waiting.</li>
             <li><strong>Changes are made from a version.</strong> <code>vault_read</code> returns it, and <code>vault_save</code> passes it back. If the post changed in between, read it again.</li>
-            <li><strong>A two-call tool is asking for the member's decision.</strong> Show the member what the first call returned, and make the second call only if they agree.</li>
+            <li><strong>A two-call tool is asking for the member's decision.</strong> Show the member what the first call returned, and make the second call only if they agree. <code>cortex_forget</code> removes a memory from current Context, not its preserved history.</li>
+            <li><strong>Learning is private.</strong> Record observations with their real session and scope. Save explicit statements as stated; do not invent corroboration or counters. Memory writes need no review queue.</li>
+            <li><strong>Proposals are inert.</strong> An agent cannot approve a skill or switch a tool on. Do not read or follow unapproved skill instructions.</li>
             <li><strong>Publishing cannot be recalled.</strong> Other services copy a public post as soon as it is written.</li>
           </ul>
         </section>
@@ -140,7 +149,7 @@
                 <tr><th scope="row">Server name</th><td><code>ohm-vault</code></td></tr>
                 <tr><th scope="row">Ordering</th><td>Calls are handled one at a time, in the order received, so two changes to the same post cannot cross</td></tr>
                 <tr><th scope="row">Results</th><td>A tool's result is JSON, returned as text content. A refusal is a result marked <code>isError</code> with a message the agent can read and act on</td></tr>
-                <tr><th scope="row">Annotations</th><td>Tools that only read carry <code>readOnlyHint</code>. <code>vault_delete</code> carries <code>destructiveHint</code></td></tr>
+                <tr><th scope="row">Annotations</th><td>Tools that only read carry <code>readOnlyHint</code>. <code>vault_delete</code> and <code>cortex_forget</code> carry <code>destructiveHint</code></td></tr>
                 <tr><th scope="row">Instructions</th><td>On <code>initialize</code>, the server states the rules of the vault to the agent: what private means, and that any change other people can see is shown to the member first</td></tr>
               </tbody>
             </table>
@@ -162,8 +171,9 @@
               </tbody>
             </table>
           </div>
-          <p>The server is started by the ohm plugin for agents that load it, or directly:</p>
+          <p>Start the server directly, or through a client configuration that loads it:</p>
           <pre>npx github:haeinej/ohm-content-layer mcp</pre>
+          <p>This exposes the MCP tools. It does not install Claude Code or Codex session hooks. One unchanged plugin package working in both clients remains unverified.</p>
         </section>
 
         <section aria-labelledby="authentication">
@@ -185,6 +195,15 @@
                 <tr><th>Tool</th><th>Effect</th><th>Confirmation</th><th>Requests used</th></tr>
               </thead>
               <tbody>
+                <tr><th scope="row"><code>cortex_start</code></th><td>Read</td><td>None</td><td><code>com.ohmmmm.cortex.getContext</code></td></tr>
+                <tr><th scope="row"><code>cortex_note</code></th><td>Change</td><td>None</td><td><code>com.ohmmmm.cortex.addNote</code></td></tr>
+                <tr><th scope="row"><code>cortex_settle</code></th><td>Change</td><td>None</td><td><code>com.ohmmmm.cortex.listNotes</code>, <code>com.ohmmmm.cortex.getMemory</code>, <code>com.ohmmmm.cortex.putMemory</code>, <code>com.ohmmmm.cortex.settleNotes</code></td></tr>
+                <tr><th scope="row"><code>cortex_recall</code></th><td>Read</td><td>None</td><td><code>com.ohmmmm.cortex.searchMemories</code>, <code>com.ohmmmm.cortex.getMemory</code></td></tr>
+                <tr><th scope="row"><code>cortex_remember</code></th><td>Change</td><td>None</td><td><code>com.ohmmmm.cortex.getMemory</code>, <code>com.ohmmmm.cortex.putMemory</code></td></tr>
+                <tr><th scope="row"><code>cortex_forget</code></th><td>Change</td><td>Always; single-use confirmation of this memory version</td><td><code>com.ohmmmm.cortex.getMemory</code>, <code>com.ohmmmm.cortex.deleteMemory</code></td></tr>
+                <tr><th scope="row"><code>cortex_skill</code></th><td>Read</td><td>None</td><td><code>com.ohmmmm.cortex.getSkill</code></td></tr>
+                <tr><th scope="row"><code>cortex_propose_skill</code></th><td>Change</td><td>None</td><td><code>com.ohmmmm.cortex.getSkill</code>, <code>com.ohmmmm.cortex.putSkill</code></td></tr>
+                <tr><th scope="row"><code>cortex_propose_tool</code></th><td>Change</td><td>None</td><td><code>com.ohmmmm.cortex.proposeTool</code></td></tr>
                 <tr><th scope="row"><code>vault_tree</code></th><td>Read</td><td>None</td><td><code>getTree</code></td></tr>
                 <tr><th scope="row"><code>vault_list</code></th><td>Read</td><td>None</td><td><code>getTree</code></td></tr>
                 <tr><th scope="row"><code>vault_read</code></th><td>Read</td><td>None</td><td><code>getTree</code>, <code>getPost</code></td></tr>
@@ -203,13 +222,21 @@
 
         <section aria-labelledby="confirmation">
           <h2 id="confirmation">Confirmation</h2>
-          <p>A tool that changes something other people can see, or removes something, takes two calls.</p>
+          <p>A vault tool that changes something other people can see, or removes a post, takes two calls.</p>
           <ol>
             <li><strong>The first call changes nothing.</strong> It returns <code>done: false</code>, a description of exactly what would happen in <code>willHappen</code>, and a <code>confirm</code> value.</li>
             <li><strong>The agent shows that description to the member.</strong></li>
             <li>**The second call repeats the request with the <code>confirm</code> value,** and only then does the change happen.</li>
           </ol>
-          <p>The <code>confirm</code> value is a digest of the request and of the state it was computed from: the post's current version, or the publish plan. If either has changed between the two calls, the value no longer matches and the call is refused. The server keeps no state between calls, so a confirmation cannot be replayed against a different change.</p>
+          <p>The <code>confirm</code> value is a digest of the request and of the state it was computed from: the post's current version, or the publish plan. If either has changed between the two calls, the value no longer matches and the call is refused. Vault confirmations need no server-side state and cannot authorize a different change.</p>
+          <p><code>cortex_forget</code> uses a different confirmation: an opaque single-use token held by the running server and bound to the memory name and version. Show the returned memory before confirming. Memory saves, notes and proposals do not use this review flow; approving a skill and changing tool settings require the member's linked ohm session.</p>
+        </section>
+
+        <section aria-labelledby="settlement">
+          <h2 id="settlement">Cortex settlement</h2>
+          <p>Use <code>cortex_settle</code> without arguments to read pending observations and immutable receipt history. Submit judged memory rewrites and explicit note outcomes in batches, keeping current versions and project scope. Use fresh returned versions after settlement, because evidence updates advance memory revisions too.</p>
+          <p>The service checks the supplied evidence and versions; it performs no model calls. The tool is not one transaction: memory saves can succeed before note settlement fails. On failure, reread both memories and receipts before deciding what to retry. Process remaining pending notes rather than treating one successful batch as the end.</p>
+          <p>The tool <code>cortex_recall</code> already reads named memories or searches them. It does not use the reserved service request <code>com.ohmmmm.cortex.recall</code>, which is planned for automatic prompt recall.</p>
         </section>
 
         <section aria-labelledby="safety">
@@ -225,11 +252,13 @@
                 <tr><th scope="row">Something is published without the member knowing</th><td>Saving never publishes. <code>vault_publish</code> always requires confirmation of the exact plan</td></tr>
                 <tr><th scope="row">A post is overwritten</th><td>Every save names the version that was read. A stale save is refused</td></tr>
                 <tr><th scope="row">A post is lost</th><td><code>vault_delete</code> always requires confirmation</td></tr>
-                <tr><th scope="row">Content leaves the vault another way</th><td>No tool sends content to any destination other than the member's own vault and repository</td></tr>
+                <tr><th scope="row">Unapproved instructions reach the agent</th><td>Token reads of unapproved skills are refused; Context indexes approved versions only</td></tr>
+                <tr><th scope="row">A proposal grants access</th><td>Skill approval and tool settings require the linked member's ohm session; tool proposals are inert</td></tr>
+                <tr><th scope="row">Content leaves through an ohm tool</th><td>The tools target the member's own vault, cortex and repository; tool settings do not connect servers</td></tr>
               </tbody>
             </table>
           </div>
-          <p>One exposure is outside these controls: whatever the agent reads is also processed by the provider of the model it runs on.</p>
+          <p>These controls do not govern other tools available to the coding agent. Whatever it reads is also processed by its model provider.</p>
         </section>
 
         <section aria-labelledby="excluded">
@@ -245,6 +274,8 @@
                 <tr><th scope="row"><code>exportFiles</code></th><td>Export is for the command line and the workspace</td></tr>
                 <tr><th scope="row"><code>account.get</code>, <code>account.connect</code>, <code>account.disconnect</code></th><td>They require an ohm session, which an agent does not have</td></tr>
                 <tr><th scope="row"><code>identity.findAccount</code>, <code>identity.whoAmI</code></th><td>They are steps of signing in</td></tr>
+                <tr><th scope="row"><code>approveSkill</code>, <code>deleteSkill</code>, <code>putTool</code>, <code>deleteTool</code></th><td>Member decisions, requiring the linked ohm session</td></tr>
+                <tr><th scope="row">Cortex <code>recall</code>, Turns and cortex <code>exportFiles</code></th><td>Reserved, authenticated requests that return <code>NotBuiltYet</code></td></tr>
               </tbody>
             </table>
           </div>
@@ -267,6 +298,7 @@
         <li><a href="#authentication">Authentication</a></li>
         <li><a href="#tools">Tools</a></li>
         <li><a href="#confirmation">Confirmation</a></li>
+        <li><a href="#settlement">Cortex settlement</a></li>
         <li><a href="#safety">Safety model</a></li>
         <li><a href="#excluded">Requests without a tool</a></li>
       </ul>

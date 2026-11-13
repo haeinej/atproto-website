@@ -4,12 +4,12 @@
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <meta name="theme-color" content="#fafaf9">
-    <meta name="description" content="Connect a folder of your own and your posts live there as Markdown files. Sync brings the folder and your workspace into line, in both directions.">
+    <meta name="description" content="The command-line sync brings your posts and a local folder of Markdown files into line. It does not sync the cortex. Browser and direct cloud-storage sync are planned.">
     <link rel="canonical" href="https://docs.ohmmmm.com/sync">
     <meta property="og:type" content="website">
     <meta property="og:site_name" content="ohm">
     <meta property="og:title" content="Sync with a folder · ohm docs">
-    <meta property="og:description" content="Connect a folder of your own and your posts live there as Markdown files. Sync brings the folder and your workspace into line, in both directions.">
+    <meta property="og:description" content="The command-line sync brings your posts and a local folder of Markdown files into line. It does not sync the cortex. Browser and direct cloud-storage sync are planned.">
     <meta property="og:url" content="https://docs.ohmmmm.com/sync">
     <meta property="og:image" content="https://ohmmmm.com/assets/og-image.png">
     <meta property="og:image:width" content="1200">
@@ -63,6 +63,12 @@
         <li><a href="/files">Posts as files</a></li>
         <li><a href="/export">Export and leaving</a></li>
       </ul>
+      <p class="sidebar-group">Cortex</p>
+      <ul>
+        <li><a href="/cortex">Your cortex</a></li>
+        <li><a href="/memory">Memory and notes</a></li>
+        <li><a href="/skills-tools">Skills and tools</a></li>
+      </ul>
       <p class="sidebar-group">Agent</p>
       <ul>
         <li><a href="/agent">Connect your agent</a></li>
@@ -89,8 +95,8 @@
         <header>
           <p class="group">Folder</p>
           <h1 id="title">Sync with a folder</h1>
-          <p class="introduction">Connect a folder of your own and your posts live there as Markdown files. Sync brings the folder and your workspace into line, in both directions.</p>
-          <p class="alert" role="note">ohm is still in production, and these pages are its architecture document: they describe how it is meant to work, not a finished product.</p>
+          <p class="introduction">The command-line sync brings your posts and a local folder of Markdown files into line. It does not sync the cortex. Browser and direct cloud-storage sync are planned.</p>
+          <p class="alert" role="note">ohm is in development. These docs cover the implementation and the work still planned. Built does not mean verified on the live service; see Status and limits.</p>
         </header>
 
         <section aria-labelledby="why">
@@ -105,8 +111,8 @@
 
         <section aria-labelledby="connect">
           <h2 id="connect">Connect one</h2>
-          <p>Choose a folder, connect it, and press Sync. The first sync writes every post into it, filed in folders named for your labels. <a href="/files">How posts look as files</a></p>
-          <p>The folder can be on your computer, or in any cloud storage that keeps a folder in sync.</p>
+          <p>Use the ohm command-line sync with a folder on your computer. It writes posts as Markdown files under their labels. Run it again to exchange edits. <a href="/files">How posts look as files</a></p>
+          <p>A locally synced cloud-storage folder is still a local folder to this command. Choosing a folder and pressing Sync in the workspace is a planned flow.</p>
         </section>
 
         <section aria-labelledby="does">

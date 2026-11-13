@@ -1,6 +1,6 @@
 # Data model
 
-The unit of ohm is the post. It exists in three forms that map onto each other exactly: a row in the vault, a `com.ohmmmm.post` record in the member's repository when it is public, and a Markdown file in the member's folder.
+Posts and cortex knowledge are separate data. A post maps to a vault row, a public repository record and a Markdown file. Memories, notes, skills and tools have private, member-scoped storage of their own.
 
 ## A post in the vault
 
@@ -77,15 +77,29 @@ In the vault, a post references its attachments by address. The copy in the repo
 
 ## Storage
 
-The vault service stores two tables.
+The service stores posts, account links and cortex data. Every cortex table is scoped by the member's DID; a memory name, skill name or observation ID is never a cross-member address.
 
 | Table | Key | Holds |
 | --- | --- | --- |
 | `posts` | Account DID and post ID | The post as JSON, its version and sequence, and indexed copies of the fields the repository tree is drawn from |
 | `links` | ohm user ID, with the DID unique | Which AT Protocol account an ohm account works in, and when its published posts were first mirrored |
+| `cortex_memories` | DID and memory name | Current JSON, revision, sequence and removal state |
+| `cortex_memory_versions` | DID, name and earlier version | Preserved memory text; rewrites and removals retain the prior row atomically |
+| `cortex_notes` | DID and note ID | Observation, originating session, project, authenticated author and immutable outcome receipt |
+| `cortex_skills` | DID and skill name | Instructions and supporting files; approval names one exact version |
+| `cortex_tools` | DID and tool name | Settings or inert proposals; no credentials or executable configuration |
+| `cortex_turns`, `cortex_turn_receipts` | DID and turn ID | Reserved storage for the unbuilt turn-capture adapter |
 
-The database enforces two invariants itself: a slug is used once within a vault, and a write succeeds only against the version it names.
+The database enforces unique keys and conditional updates. Memory history is preserved by a trigger in the same statement as a rewrite or removal. Restoring earlier text creates a new revision, so an old concurrency token does not become current again.
+
+## Context
+
+`getContext` seeds `identity`, `vault-map` and `working-style`. Its `always` array contains full `{memory, version}` entries; `vault-map` also includes current service-derived vault structure and recent posts. Other memories are indexed by name, description and kind.
+
+Approved skill descriptions, enabled non-proposed tool descriptions, pending notes and the waiting-turn count complete Context. Its version changes with its inputs. A project field records scope, but the planned automatic prompt-recall request is not implemented; callers must not assume automatic project filtering or a context budget.
+
+The post schema and profile schema are unchanged by cortex data. Nothing in these private tables is published as `com.ohmmmm.post`.
 
 ---
-ohm is still in production, and these pages are its architecture document: they describe how it is meant to work, not a finished product.
+ohm is in development. These docs cover the implementation and the work still planned. Built does not mean verified on the live service; see Status and limits.
 All pages: https://docs.ohmmmm.com/llms.txt

@@ -1,6 +1,6 @@
 # Who sees a post
 
-Every post is private, for friends, or public. You choose for each post, and you can change your mind in any direction.
+Every post is marked private, for friends, or public. Public sharing happens only through Publish. Friends-only delivery is planned; marking a post for friends currently keeps it in your working vault.
 
 ## The three choices
 
@@ -36,5 +36,5 @@ Private means private from other people. Two things still read a private post.
 [Where your things live](https://docs.ohmmmm.com/where-things-live.md)
 
 ---
-ohm is still in production, and these pages are its architecture document: they describe how it is meant to work, not a finished product.
+ohm is in development. These docs cover the implementation and the work still planned. Built does not mean verified on the live service; see Status and limits.
 All pages: https://docs.ohmmmm.com/llms.txt

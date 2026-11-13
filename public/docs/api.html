@@ -4,12 +4,12 @@
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <meta name="theme-color" content="#fafaf9">
-    <meta name="description" content="The vault service exposes fifteen requests in eight capabilities. This reference is generated from the same tables the service runs on.">
+    <meta name="description" content="The vault and cortex service registers 38 requests in 15 capabilities. This reference includes authenticated placeholders and is generated from the tables the service runs on.">
     <link rel="canonical" href="https://docs.ohmmmm.com/api">
     <meta property="og:type" content="website">
     <meta property="og:site_name" content="ohm">
     <meta property="og:title" content="Service API · ohm docs">
-    <meta property="og:description" content="The vault service exposes fifteen requests in eight capabilities. This reference is generated from the same tables the service runs on.">
+    <meta property="og:description" content="The vault and cortex service registers 38 requests in 15 capabilities. This reference includes authenticated placeholders and is generated from the tables the service runs on.">
     <meta property="og:url" content="https://docs.ohmmmm.com/api">
     <meta property="og:image" content="https://ohmmmm.com/assets/og-image.png">
     <meta property="og:image:width" content="1200">
@@ -63,6 +63,12 @@
         <li><a href="/files">Posts as files</a></li>
         <li><a href="/export">Export and leaving</a></li>
       </ul>
+      <p class="sidebar-group">Cortex</p>
+      <ul>
+        <li><a href="/cortex">Your cortex</a></li>
+        <li><a href="/memory">Memory and notes</a></li>
+        <li><a href="/skills-tools">Skills and tools</a></li>
+      </ul>
       <p class="sidebar-group">Agent</p>
       <ul>
         <li><a href="/agent">Connect your agent</a></li>
@@ -89,13 +95,13 @@
         <header>
           <p class="group">Architecture</p>
           <h1 id="title">Service API</h1>
-          <p class="introduction">The vault service exposes fifteen requests in eight capabilities. This reference is generated from the same tables the service runs on.</p>
-          <p class="alert" role="note">ohm is still in production, and these pages are its architecture document: they describe how it is meant to work, not a finished product.</p>
+          <p class="introduction">The vault and cortex service registers 38 requests in 15 capabilities. This reference includes authenticated placeholders and is generated from the tables the service runs on.</p>
+          <p class="alert" role="note">ohm is in development. These docs cover the implementation and the work still planned. Built does not mean verified on the live service; see Status and limits.</p>
         </header>
 
         <section aria-labelledby="conventions">
           <h2 id="conventions">Conventions</h2>
-          <p>The vault service speaks XRPC, the request convention of the AT Protocol. Every request has a namespaced name and is sent to <code>/xrpc/</code> followed by that name.</p>
+          <p>The vault and cortex service speaks XRPC, the request convention of the AT Protocol. Every request has a namespaced name and is sent to <code>/xrpc/</code> followed by that name. Cortex requests are private; a registered request can still be an authenticated <code>NotBuiltYet</code> placeholder.</p>
           <div class="table">
             <table class="facts">
               <thead>
@@ -106,7 +112,7 @@
                 <tr><th scope="row">Reads</th><td><code>GET</code>, with parameters in the query string</td></tr>
                 <tr><th scope="row">Changes</th><td><code>POST</code>, with parameters as a JSON body</td></tr>
                 <tr><th scope="row">Responses</th><td>JSON, sent with <code>Cache-Control: private, no-store</code>. <code>getAttachment</code> answers with the file itself</td></tr>
-                <tr><th scope="row">Idempotency</th><td>Every request can be repeated safely. A change names the version it replaces, and a repeat of a change already made reports <code>unchanged</code></td></tr>
+                <tr><th scope="row">Idempotency</th><td>Versioned writes name the version replaced; identical retries are safe. Notes reuse client-made IDs and retain settlement receipts. A multi-request tool can partially complete, so reread state before retrying after a failure</td></tr>
                 <tr><th scope="row">Authentication</th><td>A service token from the member's PDS in <code>Authorization: Bearer</code>, or an ohm session. <a href="/identity">Identity and access</a></td></tr>
               </tbody>
             </table>
@@ -392,6 +398,386 @@
           </div>
         </section>
 
+        <section aria-labelledby="context">
+          <h2 id="context">Context</h2>
+          <p>The private cortex at session start: always memories in full, an index of the rest, approved skills, enabled tools and work waiting to be settled.</p>
+          <h3><code>com.ohmmmm.cortex.getContext</code></h3>
+          <p>Get the three initial memories without inventing identity or preferences. The vault-map entry includes a current, service-derived vault structure beside its editable memory. The version changes with the context.</p>
+          <div class="table">
+            <table class="facts">
+              <thead>
+                <tr><td></td><td></td></tr>
+              </thead>
+              <tbody>
+                <tr><th scope="row">Method</th><td><code>GET</code></td></tr>
+                <tr><th scope="row">Access</th><td>Member</td></tr>
+                <tr><th scope="row">Parameters</th><td>None</td></tr>
+                <tr><th scope="row">Returns</th><td><code>always</code> ({memory, version}, with current <code>vault</code> on vault-map), <code>memories</code> (name, description, kind), <code>skills</code>, <code>tools</code>, <code>notes</code>, <code>turns</code> (waiting count), <code>version</code></td></tr>
+              </tbody>
+            </table>
+          </div>
+          <h3><code>com.ohmmmm.cortex.recall</code></h3>
+          <p>Not built yet. Prompt recall will use project isolation and a character budget.</p>
+          <div class="table">
+            <table class="facts">
+              <thead>
+                <tr><td></td><td></td></tr>
+              </thead>
+              <tbody>
+                <tr><th scope="row">Method</th><td><code>GET</code></td></tr>
+                <tr><th scope="row">Access</th><td>Member</td></tr>
+                <tr><th scope="row">Parameters</th><td><code>q</code>: the prompt<br><code>project</code>: optional: the repository<br><code>budget</code>: optional: 1,500 characters unless said</td></tr>
+                <tr><th scope="row">Returns</th><td><code>memories</code> (name, description, passage), <code>skills</code> (name, description), within the budget</td></tr>
+              </tbody>
+            </table>
+          </div>
+        </section>
+
+        <section aria-labelledby="memory">
+          <h2 id="memory">Memory</h2>
+          <p>Private memories for the authenticated member. Every rewrite names the version it replaces and preserves that earlier version.</p>
+          <h3><code>com.ohmmmm.cortex.listMemories</code></h3>
+          <p>List memory descriptions and versions, with a stable cursor. With since, include changes and removals.</p>
+          <div class="table">
+            <table class="facts">
+              <thead>
+                <tr><td></td><td></td></tr>
+              </thead>
+              <tbody>
+                <tr><th scope="row">Method</th><td><code>GET</code></td></tr>
+                <tr><th scope="row">Access</th><td>Member</td></tr>
+                <tr><th scope="row">Parameters</th><td><code>since</code>: optional: an earlier cursor<br><code>kind</code>: optional: person, preference, project or reference</td></tr>
+                <tr><th scope="row">Returns</th><td><code>memories</code> (name, version, description, kind, writtenBy, when), <code>cursor</code>, and optionally <code>more</code></td></tr>
+              </tbody>
+            </table>
+          </div>
+          <h3><code>com.ohmmmm.cortex.getMemory</code></h3>
+          <p>Read a memory in full. An optional version reads a preserved earlier version; putMemory can restore it with the current replaces value.</p>
+          <div class="table">
+            <table class="facts">
+              <thead>
+                <tr><td></td><td></td></tr>
+              </thead>
+              <tbody>
+                <tr><th scope="row">Method</th><td><code>GET</code></td></tr>
+                <tr><th scope="row">Access</th><td>Member</td></tr>
+                <tr><th scope="row">Parameters</th><td><code>name</code>: the memory name<br><code>version</code>: optional: a preserved earlier version<br><code>history</code>: optional: 1 to list earlier versions and their authors and times</td></tr>
+                <tr><th scope="row">Returns</th><td><code>memory</code>, <code>version</code>, and with history=1, <code>earlier</code> (version, writtenBy, when, replacedAt)</td></tr>
+              </tbody>
+            </table>
+          </div>
+          <h3><code>com.ohmmmm.cortex.putMemory</code></h3>
+          <p>Save the whole memory, naming the version it replaces. The service sets writtenBy from the authenticated principal and retains its own seen counters. Repeated writes are safe.</p>
+          <div class="table">
+            <table class="facts">
+              <thead>
+                <tr><td></td><td></td></tr>
+              </thead>
+              <tbody>
+                <tr><th scope="row">Method</th><td><code>POST</code></td></tr>
+                <tr><th scope="row">Access</th><td>Member</td></tr>
+                <tr><th scope="row">Parameters</th><td><code>memory</code>: the whole memory<br><code>replaces</code>: optional: the version it replaces</td></tr>
+                <tr><th scope="row">Returns</th><td><code>name</code>, <code>version</code>, and <code>unchanged</code> when nothing differed</td></tr>
+              </tbody>
+            </table>
+          </div>
+          <h3><code>com.ohmmmm.cortex.deleteMemory</code></h3>
+          <p>Remove a memory, naming its current version. Earlier text remains private in history; the removal is included in the next incremental list.</p>
+          <div class="table">
+            <table class="facts">
+              <thead>
+                <tr><td></td><td></td></tr>
+              </thead>
+              <tbody>
+                <tr><th scope="row">Method</th><td><code>POST</code></td></tr>
+                <tr><th scope="row">Access</th><td>Member</td></tr>
+                <tr><th scope="row">Parameters</th><td><code>name</code>: the memory name<br><code>replaces</code>: the version being removed</td></tr>
+                <tr><th scope="row">Returns</th><td><code>name</code>, <code>removed</code></td></tr>
+              </tbody>
+            </table>
+          </div>
+          <h3><code>com.ohmmmm.cortex.searchMemories</code></h3>
+          <p>Find memories mentioning every word of q. A description counts more than the body. Ties are ordered by name.</p>
+          <div class="table">
+            <table class="facts">
+              <thead>
+                <tr><td></td><td></td></tr>
+              </thead>
+              <tbody>
+                <tr><th scope="row">Method</th><td><code>GET</code></td></tr>
+                <tr><th scope="row">Access</th><td>Member</td></tr>
+                <tr><th scope="row">Parameters</th><td><code>q</code>: words to find<br><code>limit</code>: optional: 10 unless said, at most 50</td></tr>
+                <tr><th scope="row">Returns</th><td><code>memories</code> (name, description, kind, passage), best first</td></tr>
+              </tbody>
+            </table>
+          </div>
+        </section>
+
+        <section aria-labelledby="notes">
+          <h2 id="notes">Notes</h2>
+          <p>Private observations with client-made IDs and immutable explicit settlement receipts. The member’s agent judges; the service makes no model calls.</p>
+          <h3><code>com.ohmmmm.cortex.addNote</code></h3>
+          <p>Record one observation without changing memory. The service records the authenticated author and time. Retrying the same ID and content is safe; reusing an ID for different content is refused.</p>
+          <div class="table">
+            <table class="facts">
+              <thead>
+                <tr><td></td><td></td></tr>
+              </thead>
+              <tbody>
+                <tr><th scope="row">Method</th><td><code>POST</code></td></tr>
+                <tr><th scope="row">Access</th><td>Member</td></tr>
+                <tr><th scope="row">Parameters</th><td><code>id</code>: a client-made ID, at most 200 characters<br><code>note</code>: one nonempty line, at most 500 characters<br><code>session</code>: the originating session, at most 200 characters<br><code>project</code>: optional: repository, at most 2,000 characters</td></tr>
+                <tr><th scope="row">Returns</th><td><code>id</code></td></tr>
+              </tbody>
+            </table>
+          </div>
+          <h3><code>com.ohmmmm.cortex.listNotes</code></h3>
+          <p>List unsettled observations, oldest first. With settled=1, include immutable receipts and kept observations to compare across sessions.</p>
+          <div class="table">
+            <table class="facts">
+              <thead>
+                <tr><td></td><td></td></tr>
+              </thead>
+              <tbody>
+                <tr><th scope="row">Method</th><td><code>GET</code></td></tr>
+                <tr><th scope="row">Access</th><td>Member</td></tr>
+                <tr><th scope="row">Parameters</th><td><code>settled</code>: optional: 1 or true to include settled notes</td></tr>
+                <tr><th scope="row">Returns</th><td><code>notes</code> (id, text, session, project, writtenBy, when, and if settled, settledAt and outcome)</td></tr>
+              </tbody>
+            </table>
+          </div>
+          <h3><code>com.ohmmmm.cortex.settleNotes</code></h3>
+          <p>Atomically record from 1 to 100 explicit outcomes: kept, dropped or a memory name with its current version. Each note is settled once. Memory evidence counts distinct originating sessions and preserves earlier memory versions; retries do not count twice.</p>
+          <div class="table">
+            <table class="facts">
+              <thead>
+                <tr><td></td><td></td></tr>
+              </thead>
+              <tbody>
+                <tr><th scope="row">Method</th><td><code>POST</code></td></tr>
+                <tr><th scope="row">Access</th><td>Member</td></tr>
+                <tr><th scope="row">Parameters</th><td><code>notes</code>: 1–100 distinct {id, outcome, version?}; a memory outcome requires the current memory version</td></tr>
+                <tr><th scope="row">Returns</th><td><code>settled</code> (the note IDs acknowledged)</td></tr>
+              </tbody>
+            </table>
+          </div>
+        </section>
+
+        <section aria-labelledby="turns">
+          <h2 id="turns">Turns</h2>
+          <p>Private cortex turns. Not built yet.</p>
+          <h3><code>com.ohmmmm.cortex.addTurns</code></h3>
+          <p>This cortex request is not built yet.</p>
+          <div class="table">
+            <table class="facts">
+              <thead>
+                <tr><td></td><td></td></tr>
+              </thead>
+              <tbody>
+                <tr><th scope="row">Method</th><td><code>POST</code></td></tr>
+                <tr><th scope="row">Access</th><td>Member</td></tr>
+                <tr><th scope="row">Parameters</th><td><code>turns</code>: up to 50 client-identified turns</td></tr>
+                <tr><th scope="row">Returns</th><td><code>kept</code></td></tr>
+              </tbody>
+            </table>
+          </div>
+          <h3><code>com.ohmmmm.cortex.listTurns</code></h3>
+          <p>This cortex request is not built yet.</p>
+          <div class="table">
+            <table class="facts">
+              <thead>
+                <tr><td></td><td></td></tr>
+              </thead>
+              <tbody>
+                <tr><th scope="row">Method</th><td><code>GET</code></td></tr>
+                <tr><th scope="row">Access</th><td>Member</td></tr>
+                <tr><th scope="row">Parameters</th><td><code>limit</code>: optional: 40 unless said</td></tr>
+                <tr><th scope="row">Returns</th><td><code>turns</code>, <code>waiting</code></td></tr>
+              </tbody>
+            </table>
+          </div>
+          <h3><code>com.ohmmmm.cortex.settleTurns</code></h3>
+          <p>This cortex request is not built yet.</p>
+          <div class="table">
+            <table class="facts">
+              <thead>
+                <tr><td></td><td></td></tr>
+              </thead>
+              <tbody>
+                <tr><th scope="row">Method</th><td><code>POST</code></td></tr>
+                <tr><th scope="row">Access</th><td>Member</td></tr>
+                <tr><th scope="row">Parameters</th><td><code>turns</code>: each turn ID and its outcome</td></tr>
+                <tr><th scope="row">Returns</th><td><code>settled</code></td></tr>
+              </tbody>
+            </table>
+          </div>
+        </section>
+
+        <section aria-labelledby="skills">
+          <h2 id="skills">Skills</h2>
+          <p>Private skills with member approval tied to the exact saved version. Supporting files stay inside the skill.</p>
+          <h3><code>com.ohmmmm.cortex.listSkills</code></h3>
+          <p>List descriptions and approval state; this index never exposes supporting files or skill instructions.</p>
+          <div class="table">
+            <table class="facts">
+              <thead>
+                <tr><td></td><td></td></tr>
+              </thead>
+              <tbody>
+                <tr><th scope="row">Method</th><td><code>GET</code></td></tr>
+                <tr><th scope="row">Access</th><td>Member</td></tr>
+                <tr><th scope="row">Parameters</th><td>None</td></tr>
+                <tr><th scope="row">Returns</th><td><code>skills</code> (name, version, description, writtenBy, approved)</td></tr>
+              </tbody>
+            </table>
+          </div>
+          <h3><code>com.ohmmmm.cortex.getSkill</code></h3>
+          <p>Read SKILL.md and supporting text files. A token cannot read an unapproved skill; the linked member can review it in ohm.</p>
+          <div class="table">
+            <table class="facts">
+              <thead>
+                <tr><td></td><td></td></tr>
+              </thead>
+              <tbody>
+                <tr><th scope="row">Method</th><td><code>GET</code></td></tr>
+                <tr><th scope="row">Access</th><td>Member</td></tr>
+                <tr><th scope="row">Parameters</th><td><code>name</code>: the skill name</td></tr>
+                <tr><th scope="row">Returns</th><td><code>skill</code> ({text, files: [{path, text}]}), <code>version</code></td></tr>
+              </tbody>
+            </table>
+          </div>
+          <h3><code>com.ohmmmm.cortex.putSkill</code></h3>
+          <p>Save SKILL.md with name and description in YAML and optional supporting files. Token-authored changes lose approval; identical retries preserve the current approval.</p>
+          <div class="table">
+            <table class="facts">
+              <thead>
+                <tr><td></td><td></td></tr>
+              </thead>
+              <tbody>
+                <tr><th scope="row">Method</th><td><code>POST</code></td></tr>
+                <tr><th scope="row">Access</th><td>Member</td></tr>
+                <tr><th scope="row">Parameters</th><td><code>skill</code>: {text, files: [{path, text}]}; name and description are read from SKILL.md<br><code>replaces</code>: optional: the version being replaced</td></tr>
+                <tr><th scope="row">Returns</th><td><code>name</code>, <code>version</code>, <code>approved</code>, optionally <code>unchanged</code></td></tr>
+              </tbody>
+            </table>
+          </div>
+          <h3><code>com.ohmmmm.cortex.approveSkill</code></h3>
+          <p>Approve exactly the named current version from the linked member’s ohm session. A later edit needs new approval.</p>
+          <div class="table">
+            <table class="facts">
+              <thead>
+                <tr><td></td><td></td></tr>
+              </thead>
+              <tbody>
+                <tr><th scope="row">Method</th><td><code>POST</code></td></tr>
+                <tr><th scope="row">Access</th><td>Member, with an ohm session</td></tr>
+                <tr><th scope="row">Parameters</th><td><code>name</code>: the skill name<br><code>version</code>: exactly the current version to approve</td></tr>
+                <tr><th scope="row">Returns</th><td><code>name</code>, <code>approved</code></td></tr>
+              </tbody>
+            </table>
+          </div>
+          <h3><code>com.ohmmmm.cortex.deleteSkill</code></h3>
+          <p>Remove a skill from the linked member’s ohm session, naming its current version. Repeating a completed removal is safe.</p>
+          <div class="table">
+            <table class="facts">
+              <thead>
+                <tr><td></td><td></td></tr>
+              </thead>
+              <tbody>
+                <tr><th scope="row">Method</th><td><code>POST</code></td></tr>
+                <tr><th scope="row">Access</th><td>Member, with an ohm session</td></tr>
+                <tr><th scope="row">Parameters</th><td><code>name</code>: the skill name<br><code>replaces</code>: the current version</td></tr>
+                <tr><th scope="row">Returns</th><td><code>name</code>, <code>removed</code></td></tr>
+              </tbody>
+            </table>
+          </div>
+        </section>
+
+        <section aria-labelledby="tools">
+          <h2 id="tools">Tools</h2>
+          <p>The member’s private tool settings and inert proposals. Only an ohm session changes tool settings. Server addresses are metadata; this capability never connects to a server or keeps credentials.</p>
+          <h3><code>com.ohmmmm.cortex.listTools</code></h3>
+          <p>List tool settings with versions, and proposals marked proposed and off. Context exposes only enabled tools that are not proposals.</p>
+          <div class="table">
+            <table class="facts">
+              <thead>
+                <tr><td></td><td></td></tr>
+              </thead>
+              <tbody>
+                <tr><th scope="row">Method</th><td><code>GET</code></td></tr>
+                <tr><th scope="row">Access</th><td>Member</td></tr>
+                <tr><th scope="row">Parameters</th><td>None</td></tr>
+                <tr><th scope="row">Returns</th><td><code>tools</code> (name, description, on, address when given, version, proposed, writtenBy; inputs and outputs on proposals)</td></tr>
+              </tbody>
+            </table>
+          </div>
+          <h3><code>com.ohmmmm.cortex.putTool</code></h3>
+          <p>Save or switch a tool from the linked member’s ohm session, naming the version replaced. A proposal cannot be switched on. No credentials or executable configuration is accepted.</p>
+          <div class="table">
+            <table class="facts">
+              <thead>
+                <tr><td></td><td></td></tr>
+              </thead>
+              <tbody>
+                <tr><th scope="row">Method</th><td><code>POST</code></td></tr>
+                <tr><th scope="row">Access</th><td>Member, with an ohm session</td></tr>
+                <tr><th scope="row">Parameters</th><td><code>tool</code>: {name, description, on, address?}; optional address is credential-free HTTPS metadata only<br><code>replaces</code>: optional: the version being replaced</td></tr>
+                <tr><th scope="row">Returns</th><td><code>name</code>, <code>version</code>, optionally <code>unchanged</code></td></tr>
+              </tbody>
+            </table>
+          </div>
+          <h3><code>com.ohmmmm.cortex.deleteTool</code></h3>
+          <p>Remove a tool setting or proposal from the linked member’s ohm session, naming its current version. Repeating a completed removal is safe.</p>
+          <div class="table">
+            <table class="facts">
+              <thead>
+                <tr><td></td><td></td></tr>
+              </thead>
+              <tbody>
+                <tr><th scope="row">Method</th><td><code>POST</code></td></tr>
+                <tr><th scope="row">Access</th><td>Member, with an ohm session</td></tr>
+                <tr><th scope="row">Parameters</th><td><code>name</code>: the tool name<br><code>replaces</code>: the current version</td></tr>
+                <tr><th scope="row">Returns</th><td><code>name</code>, <code>removed</code></td></tr>
+              </tbody>
+            </table>
+          </div>
+          <h3><code>com.ohmmmm.cortex.proposeTool</code></h3>
+          <p>Record a tool to be built, with its inputs and outputs. It is always off and proposed, cannot overwrite a tool, and identical retries keep one proposal.</p>
+          <div class="table">
+            <table class="facts">
+              <thead>
+                <tr><td></td><td></td></tr>
+              </thead>
+              <tbody>
+                <tr><th scope="row">Method</th><td><code>POST</code></td></tr>
+                <tr><th scope="row">Access</th><td>Member</td></tr>
+                <tr><th scope="row">Parameters</th><td><code>tool</code>: {name, description, inputs, outputs}; inputs and outputs are text</td></tr>
+                <tr><th scope="row">Returns</th><td><code>name</code>, <code>proposed</code>, optionally <code>unchanged</code></td></tr>
+              </tbody>
+            </table>
+          </div>
+        </section>
+
+        <section aria-labelledby="cortex-export">
+          <h2 id="cortex-export">Cortex Export</h2>
+          <p>Private cortex cortex export. Not built yet.</p>
+          <h3><code>com.ohmmmm.cortex.exportFiles</code></h3>
+          <p>This cortex request is not built yet.</p>
+          <div class="table">
+            <table class="facts">
+              <thead>
+                <tr><td></td><td></td></tr>
+              </thead>
+              <tbody>
+                <tr><th scope="row">Method</th><td><code>GET</code></td></tr>
+                <tr><th scope="row">Access</th><td>Member</td></tr>
+                <tr><th scope="row">Parameters</th><td>None</td></tr>
+                <tr><th scope="row">Returns</th><td><code>files</code> (path, text)</td></tr>
+              </tbody>
+            </table>
+          </div>
+        </section>
+
         <section aria-labelledby="errors">
           <h2 id="errors">Errors</h2>
           <p>A refusal is JSON with an <code>error</code> code from the table below and a <code>message</code> written to be shown to a person as it is.</p>
@@ -402,6 +788,7 @@
               </thead>
               <tbody>
                 <tr><th scope="row"><code>SignInRequired</code></th><td>401</td><td>The request rides on an ohm session, and there is none</td></tr>
+                <tr><th scope="row"><code>AccountChanged</code></th><td>409</td><td>The authenticated DID differs from X-Ohm-Did, the member displayed by the editor. Reopen before reading or changing content</td></tr>
                 <tr><th scope="row"><code>AuthRequired</code></th><td>401</td><td>The token is missing, cannot be read, was issued for another request or service, has run out, or its signature does not match</td></tr>
                 <tr><th scope="row"><code>NotAMember</code></th><td>403</td><td>The account has not been let in yet</td></tr>
                 <tr><th scope="row"><code>WrongOrigin</code></th><td>403</td><td>A request that changes something came with a session but not from ohm's own pages</td></tr>
@@ -413,10 +800,16 @@
                 <tr><th scope="row"><code>WrongMethod</code></th><td>405</td><td>The request is the other of GET and POST</td></tr>
                 <tr><th scope="row"><code>InvalidRequest</code></th><td>400</td><td>The request is not JSON, or something it says is not what that request takes</td></tr>
                 <tr><th scope="row"><code>InvalidPost</code></th><td>400</td><td>The post is not one the vault can hold. The message lists every reason</td></tr>
+                <tr><th scope="row"><code>InvalidMemory</code></th><td>400</td><td>The memory is not one the cortex can hold, or its source notes do not belong to this member. The message says why</td></tr>
+                <tr><th scope="row"><code>InvalidSkill</code></th><td>400</td><td>The skill or its supporting text files do not fit the cortex rules. The message says why</td></tr>
+                <tr><th scope="row"><code>SkillNotApproved</code></th><td>403</td><td>An agent asked for skill instructions whose current version the member has not approved</td></tr>
+                <tr><th scope="row"><code>InvalidTool</code></th><td>400</td><td>The tool setting or proposal is not valid. Credentials and executable configuration stay outside the cortex</td></tr>
                 <tr><th scope="row"><code>InvalidCursor</code></th><td>400</td><td><code>since</code> is not a value an earlier list returned</td></tr>
-                <tr><th scope="row"><code>NotFound</code></th><td>404</td><td>There is no such post</td></tr>
-                <tr><th scope="row"><code>Changed</code></th><td>409</td><td>The post has changed since the version the request names. The answer carries the current version</td></tr>
+                <tr><th scope="row"><code>NotFound</code></th><td>404</td><td>There is no such post, cortex item or saved version</td></tr>
+                <tr><th scope="row"><code>Changed</code></th><td>409</td><td>The post or cortex item has changed since the version the request names. The answer carries the current version</td></tr>
                 <tr><th scope="row"><code>SlugTaken</code></th><td>409</td><td>Another post in the vault already has that slug</td></tr>
+                <tr><th scope="row"><code>NameTaken</code></th><td>409</td><td>A cortex item already has that name; read it and name its version to replace it. A tool proposal cannot replace an existing tool</td></tr>
+                <tr><th scope="row"><code>NotBuiltYet</code></th><td>501</td><td>The cortex request is registered and authenticated, but its implementation has not been built yet</td></tr>
                 <tr><th scope="row"><code>TooLarge</code></th><td>413</td><td>The post is more than 600 KB of text, or a file it places is empty or larger than 25 MB</td></tr>
                 <tr><th scope="row"><code>FileUnreachable</code></th><td>502</td><td>A file a post places could not be fetched from where the post says it is</td></tr>
                 <tr><th scope="row"><code>AccountNotFound</code></th><td>404</td><td>No AT Protocol account answers to that handle or DID</td></tr>
@@ -437,6 +830,15 @@
                 <tr><th>Tool</th><th>Effect</th><th>Requests used</th></tr>
               </thead>
               <tbody>
+                <tr><th scope="row"><code>cortex_start</code></th><td>Read</td><td><code>com.ohmmmm.cortex.getContext</code></td></tr>
+                <tr><th scope="row"><code>cortex_note</code></th><td>Change</td><td><code>com.ohmmmm.cortex.addNote</code></td></tr>
+                <tr><th scope="row"><code>cortex_settle</code></th><td>Change</td><td><code>com.ohmmmm.cortex.listNotes</code>, <code>com.ohmmmm.cortex.getMemory</code>, <code>com.ohmmmm.cortex.putMemory</code>, <code>com.ohmmmm.cortex.settleNotes</code></td></tr>
+                <tr><th scope="row"><code>cortex_recall</code></th><td>Read</td><td><code>com.ohmmmm.cortex.searchMemories</code>, <code>com.ohmmmm.cortex.getMemory</code></td></tr>
+                <tr><th scope="row"><code>cortex_remember</code></th><td>Change</td><td><code>com.ohmmmm.cortex.getMemory</code>, <code>com.ohmmmm.cortex.putMemory</code></td></tr>
+                <tr><th scope="row"><code>cortex_forget</code></th><td>Change</td><td><code>com.ohmmmm.cortex.getMemory</code>, <code>com.ohmmmm.cortex.deleteMemory</code></td></tr>
+                <tr><th scope="row"><code>cortex_skill</code></th><td>Read</td><td><code>com.ohmmmm.cortex.getSkill</code></td></tr>
+                <tr><th scope="row"><code>cortex_propose_skill</code></th><td>Change</td><td><code>com.ohmmmm.cortex.getSkill</code>, <code>com.ohmmmm.cortex.putSkill</code></td></tr>
+                <tr><th scope="row"><code>cortex_propose_tool</code></th><td>Change</td><td><code>com.ohmmmm.cortex.proposeTool</code></td></tr>
                 <tr><th scope="row"><code>vault_tree</code></th><td>Read</td><td><code>getTree</code></td></tr>
                 <tr><th scope="row"><code>vault_list</code></th><td>Read</td><td><code>getTree</code></td></tr>
                 <tr><th scope="row"><code>vault_read</code></th><td>Read</td><td><code>getTree</code>, <code>getPost</code></td></tr>
@@ -450,12 +852,13 @@
               </tbody>
             </table>
           </div>
-          <p>The server that offers these tools is described in <a href="/mcp">Agent integration</a>. Three rules hold for every tool that changes something.</p>
+          <p>The server that offers these tools is described in <a href="/mcp">Agent integration</a>. Vault tools follow these rules.</p>
           <ol>
             <li><strong>A new post is private.</strong> Marking it for anyone else is a separate, confirmed step.</li>
             <li><strong>Changes that others can see take two calls.</strong> The first returns what would happen and a <code>confirm</code> value bound to exactly that outcome. Only a second call carrying the value proceeds.</li>
             <li><strong>A post is changed from the version that was read.</strong> If it has changed since, nothing is saved.</li>
           </ol>
+          <p>Cortex memory and note writes need no approval queue. Forgetting uses its own single-use confirmation. Agents can propose skills and tools, but approval and tool settings require the linked member's ohm session.</p>
         </section>
 
         <nav class="page-pager" aria-label="Docs pages">
@@ -477,6 +880,13 @@
         <li><a href="#export">Export</a></li>
         <li><a href="#account">Account</a></li>
         <li><a href="#identity">Identity</a></li>
+        <li><a href="#context">Context</a></li>
+        <li><a href="#memory">Memory</a></li>
+        <li><a href="#notes">Notes</a></li>
+        <li><a href="#turns">Turns</a></li>
+        <li><a href="#skills">Skills</a></li>
+        <li><a href="#tools">Tools</a></li>
+        <li><a href="#cortex-export">Cortex Export</a></li>
         <li><a href="#errors">Errors</a></li>
         <li><a href="#tools">Agent tools</a></li>
       </ul>

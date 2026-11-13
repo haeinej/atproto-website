@@ -63,6 +63,12 @@
         <li><a href="/files">Posts as files</a></li>
         <li><a href="/export">Export and leaving</a></li>
       </ul>
+      <p class="sidebar-group">Cortex</p>
+      <ul>
+        <li><a href="/cortex">Your cortex</a></li>
+        <li><a href="/memory">Memory and notes</a></li>
+        <li><a href="/skills-tools">Skills and tools</a></li>
+      </ul>
       <p class="sidebar-group">Agent</p>
       <ul>
         <li><a href="/agent">Connect your agent</a></li>
@@ -90,7 +96,7 @@
           <p class="group">Architecture</p>
           <h1 id="title">Identity and access</h1>
           <p class="introduction">A member has two identities: an ohm account, which says who is signed in, and an AT Protocol account, which owns their posts. Every request to the vault service is authenticated by one of them, and resolved to exactly one AT Protocol account before any data is read.</p>
-          <p class="alert" role="note">ohm is still in production, and these pages are its architecture document: they describe how it is meant to work, not a finished product.</p>
+          <p class="alert" role="note">ohm is in development. These docs cover the implementation and the work still planned. Built does not mean verified on the live service; see Status and limits.</p>
         </header>
 
         <section aria-labelledby="two">
@@ -165,7 +171,8 @@
               </tbody>
             </table>
           </div>
-          <p>A member's vault is served to that member and to nobody else.</p>
+          <p>A member's vault and cortex are served to that member and to nobody else. The authenticated DID determines the scope; callers do not choose another member's store.</p>
+          <p>Approving or removing skills and changing tool settings require the linked member's ohm session. A PDS token can propose a skill or tool, but cannot grant itself these permissions. The editor binds requests to the account displayed and discards private state when that account changes.</p>
         </section>
 
         <section aria-labelledby="pds">

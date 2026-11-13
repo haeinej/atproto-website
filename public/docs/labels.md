@@ -49,5 +49,5 @@ A post you have not filed sits under `other`. It is a last resort, not a section
 Ask your agent: "Look at my posts and suggest how to label them." It starts from a plain default, `Writing`, `Photos` and `Projects`, and asks you questions until the structure is yours. The names are always your decision. [Your agent](https://docs.ohmmmm.com/agent.md)
 
 ---
-ohm is still in production, and these pages are its architecture document: they describe how it is meant to work, not a finished product.
+ohm is in development. These docs cover the implementation and the work still planned. Built does not mean verified on the live service; see Status and limits.
 All pages: https://docs.ohmmmm.com/llms.txt
