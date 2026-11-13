@@ -20,7 +20,7 @@ This page is the whole list. It is written from the same tables the service and 
 | **Identity** | The first steps of signing in: finding an account from its handle, and saying who a token from a PDS names. Neither touches a vault. | `findAccount`, `whoAmI` | [identity.mjs](src/capabilities/identity.mjs) |
 | **Context** | The private cortex at session start: always memories in full, an index of the rest, approved skills, enabled tools and work waiting to be settled. | `getContext`, `recall` | [context.mjs](src/capabilities/context.mjs) |
 | **Memory** | Private memories for the authenticated member. Every rewrite names the version it replaces and preserves that earlier version. | `listMemories`, `getMemory`, `putMemory`, `deleteMemory`, `searchMemories` | [memory.mjs](src/capabilities/memory.mjs) |
-| **Notes** | Private cortex notes. Not built yet. | `addNote`, `listNotes`, `settleNotes` | [notes.mjs](src/capabilities/notes.mjs) |
+| **Notes** | Private observations with client-made IDs and immutable explicit settlement receipts. The member’s agent judges; the service makes no model calls. | `addNote`, `listNotes`, `settleNotes` | [notes.mjs](src/capabilities/notes.mjs) |
 | **Turns** | Private cortex turns. Not built yet. | `addTurns`, `listTurns`, `settleTurns` | [pending.mjs](../cortex/pending.mjs) |
 | **Skills** | Private skills with member approval tied to the exact saved version. Supporting files stay inside the skill. | `listSkills`, `getSkill`, `putSkill`, `approveSkill`, `deleteSkill` | [skills.mjs](src/capabilities/skills.mjs) |
 | **Tools** | The member’s private tool settings and inert proposals. Only an ohm session changes tool settings. Server addresses are metadata; this capability never connects to a server or keeps credentials. | `listTools`, `putTool`, `deleteTool`, `proposeTool` | [tools.mjs](src/capabilities/tools.mjs) |
@@ -327,40 +327,40 @@ Find memories mentioning every word of q. A description counts more than the bod
 
 ## Notes
 
-Private cortex notes. Not built yet.
+Private observations with client-made IDs and immutable explicit settlement receipts. The member’s agent judges; the service makes no model calls.
 
 ### `com.ohmmmm.cortex.addNote`
 
-This cortex request is not built yet.
+Record one observation without changing memory. The service records the authenticated author and time. Retrying the same ID and content is safe; reusing an ID for different content is refused.
 
 | | |
 | --- | --- |
 | Reads or changes | Changes (`POST`) |
 | Who may ask | The member |
-| Takes | `id`: a client-made ID<br>`note`: one line, at most 500 characters<br>`session`: the session<br>`project`: optional: repository |
+| Takes | `id`: a client-made ID, at most 200 characters<br>`note`: one nonempty line, at most 500 characters<br>`session`: the originating session, at most 200 characters<br>`project`: optional: repository, at most 2,000 characters |
 | Gives | `id` |
 
 ### `com.ohmmmm.cortex.listNotes`
 
-This cortex request is not built yet.
+List unsettled observations, oldest first. With settled=1, include immutable receipts and kept observations to compare across sessions.
 
 | | |
 | --- | --- |
 | Reads or changes | Reads only (`GET`) |
 | Who may ask | The member |
-| Takes | `settled`: optional: include settled notes |
-| Gives | `notes` |
+| Takes | `settled`: optional: 1 or true to include settled notes |
+| Gives | `notes` (id, text, session, project, writtenBy, when, and if settled, settledAt and outcome) |
 
 ### `com.ohmmmm.cortex.settleNotes`
 
-This cortex request is not built yet.
+Atomically record from 1 to 100 explicit outcomes: kept, dropped or a memory name with its current version. Each note is settled once. Memory evidence counts distinct originating sessions and preserves earlier memory versions; retries do not count twice.
 
 | | |
 | --- | --- |
 | Reads or changes | Changes (`POST`) |
 | Who may ask | The member |
-| Takes | `notes`: each note ID and its outcome |
-| Gives | `settled` |
+| Takes | `notes`: 1–100 distinct {id, outcome, version?}; a memory outcome requires the current memory version |
+| Gives | `settled` (the note IDs acknowledged) |
 
 ## Turns
 
@@ -599,9 +599,9 @@ An agent cannot ask for these. They are for the editor, for the command line, or
 | `putMemory` | Memory | The Memory API is built; cortex tools will expose it in a later step |
 | `deleteMemory` | Memory | The Memory API is built; cortex tools will expose it in a later step |
 | `searchMemories` | Memory | The Memory API is built; cortex tools will expose it in a later step |
-| `addNote` | Notes | The authenticated request is reserved and is not built yet |
-| `listNotes` | Notes | The authenticated request is reserved and is not built yet |
-| `settleNotes` | Notes | The authenticated request is reserved and is not built yet |
+| `addNote` | Notes | Cortex tools will record and settle notes in a later step; the editor can read their receipts |
+| `listNotes` | Notes | Cortex tools will record and settle notes in a later step; the editor can read their receipts |
+| `settleNotes` | Notes | Cortex tools will record and settle notes in a later step; the editor can read their receipts |
 | `addTurns` | Turns | The authenticated request is reserved for the adapter and is not built yet |
 | `listTurns` | Turns | The authenticated request is reserved for the adapter and is not built yet |
 | `settleTurns` | Turns | The authenticated request is reserved for the adapter and is not built yet |

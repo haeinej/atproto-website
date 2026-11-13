@@ -355,6 +355,7 @@ test('all 23 cortex requests are registered and later agents get authenticated e
   const requests = Object.values(REQUESTS).filter(request => request.name.startsWith('com.ohmmmm.cortex.'));
   assert.equal(requests.length, 23);
   const built = ['getContext', 'listMemories', 'getMemory', 'putMemory', 'deleteMemory', 'searchMemories',
+    'addNote', 'listNotes', 'settleNotes',
     'listSkills', 'getSkill', 'putSkill', 'approveSkill', 'deleteSkill',
     'listTools', 'putTool', 'deleteTool', 'proposeTool'];
   for (const request of requests.filter(request => !built.includes(request.name.split('.').at(-1)))) {

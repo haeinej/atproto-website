@@ -149,7 +149,7 @@ const NO_TOOL = {
   Identity: 'It is part of signing in',
   Context: 'Cortex tools are not built yet; prompt recall is also reserved for the adapter',
   Memory: 'The Memory API is built; cortex tools will expose it in a later step',
-  Notes: 'The authenticated request is reserved and is not built yet',
+  Notes: 'Cortex tools will record and settle notes in a later step; the editor can read their receipts',
   Turns: 'The authenticated request is reserved for the adapter and is not built yet',
   Skills: 'Cortex tools will read and propose skills in a later step. Approval and removal stay with the member in the editor',
   Tools: 'Tool settings belong to the member in the editor. A later cortex tool may propose something to be built, but cannot switch it on',
