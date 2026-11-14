@@ -85,6 +85,10 @@
         <li><a href="/where-things-live">Where your things live</a></li>
         <li><a href="/limits">Status and limits</a></li>
       </ul>
+      <p class="sidebar-group">Source</p>
+      <ul>
+        <li><a href="https://github.com/haeinej/ohm-content-layer">GitHub</a></li>
+      </ul>
     </nav>
 
     <main id="content">
@@ -114,6 +118,24 @@
             </table>
           </div>
           <p>This is private working context. It is not used to find other people, and Publish and Mirror never read it.</p>
+        </section>
+
+        <section aria-labelledby="how">
+          <h2 id="how">How it works</h2>
+          <p>The cortex is a private store that ohm keeps for your account, beside your vault. Your agent reaches it through nine tools, and you reach it through the workspace. Nothing in it acts on its own: every change is a call that you or your agent made.</p>
+          <figure class="figure">
+            <div class="figure-scroll"><svg viewBox="0 0 640 442" width="640" height="442" role="img" aria-labelledby="figure-cortex"><title id="figure-cortex">How the cortex works: who calls what</title><defs><marker id="head-cortex" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path class="d-head" d="M0 0 10 5 0 10z"/></marker></defs><rect class="d-box" x="0" y="38" width="120" height="388" rx="10"/><text class="d-title" x="14" y="64">Your agent</text><text class="d-sub" x="14" y="83">Cortex tools</text><rect class="d-group" x="268" y="0" width="200" height="442" rx="14"/><text class="d-caption" x="284" y="24">YOUR CORTEX</text><rect class="d-box" x="540" y="216" width="100" height="134" rx="10"/><text class="d-title" x="554" y="242">You</text><text class="d-sub" x="554" y="261">Workspace</text><rect class="d-box" x="284" y="38" width="168" height="58" rx="10"/><text class="d-title" x="298" y="64">Context</text><text class="d-sub" x="298" y="83">Start of every session</text><path class="d-arrow" d="M120 67L282 67" marker-end="url(#head-cortex)"/><text class="d-label" x="202.0" y="59" text-anchor="middle">cortex_start</text><rect class="d-box" x="284" y="114" width="168" height="58" rx="10"/><text class="d-title" x="298" y="140">Notes</text><text class="d-sub" x="298" y="159">Awaiting a decision</text><path class="d-arrow" d="M120 143L282 143" marker-end="url(#head-cortex)"/><text class="d-label" x="202.0" y="135" text-anchor="middle">cortex_note</text><rect class="d-box" x="284" y="216" width="168" height="58" rx="10"/><text class="d-title" x="298" y="242">Memories</text><text class="d-sub" x="298" y="261">Versioned learning</text><path class="d-arrow" d="M120 245L282 245" marker-end="url(#head-cortex)"/><text class="d-label" x="202.0" y="237" text-anchor="middle">cortex_remember</text><rect class="d-box" x="284" y="292" width="168" height="58" rx="10"/><text class="d-title" x="298" y="318">Skills</text><text class="d-sub" x="298" y="337">Used once approved</text><path class="d-arrow" d="M120 321L282 321" marker-end="url(#head-cortex)"/><text class="d-label" x="202.0" y="313" text-anchor="middle">cortex_propose_skill</text><rect class="d-box" x="284" y="368" width="168" height="58" rx="10"/><text class="d-title" x="298" y="394">Tools</text><text class="d-sub" x="298" y="413">Described, on or off</text><path class="d-arrow" d="M120 397L282 397" marker-end="url(#head-cortex)"/><text class="d-label" x="202.0" y="389" text-anchor="middle">cortex_propose_tool</text><path class="d-arrow" d="M368 172L368 214" marker-end="url(#head-cortex)"/><text class="d-label" x="378" y="198" text-anchor="start">cortex_settle</text><path class="d-arrow" d="M540 245L454 245" marker-end="url(#head-cortex)"/><text class="d-label" x="496.0" y="237" text-anchor="middle">edit</text><path class="d-arrow" d="M540 321L454 321" marker-end="url(#head-cortex)"/><text class="d-label" x="496.0" y="313" text-anchor="middle">approve</text></svg></div>
+            <figcaption>Each arrow is a call. The agent reads Context, records notes, saves memories and proposes skills and tools. Settling attaches a note to a memory as evidence. Only you approve a skill.</figcaption>
+          </figure>
+          <ol>
+            <li><strong>A session starts by reading.</strong> The agent calls <code>cortex_start</code> and receives Context: your standing memories in full, one-line descriptions of the rest, the skills you approved, the tools that are on, and the notes still waiting. It reads a whole memory or skill only when its description fits the task. <a href="/cortex#context">What a session starts with</a></li>
+            <li><strong>What you say is saved at once.</strong> When you tell the agent something to carry forward, it saves the whole memory with <code>cortex_remember</code>, marked as stated by you. There is no approval queue for memories; you correct them afterwards in the workspace.</li>
+            <li><strong>What the agent notices waits.</strong> A guess about your preferences is recorded with <code>cortex_note</code>. A note is one line with its originating session. Recording it changes no memory.</li>
+            <li><strong>Settling turns notes into evidence.</strong> With <code>cortex_settle</code> the agent gives every waiting note an outcome: kept for comparison with later sessions, dropped, or attached to a named memory as evidence. The agent does the judging. The service checks whose note it is, its project and the versions involved; it never calls a model. <a href="/memory#settlement">Memory and notes</a></li>
+            <li><strong>Instructions wait for you.</strong> The agent can propose a skill or describe a tool it would like, but a proposal is inert. A skill reaches Context only after you approve the exact version you read, signed in to the workspace. The agent's own credentials cannot approve it. <a href="/skills-tools#approval">Skills and tools</a></li>
+          </ol>
+          <p>Two rules hold the loop together. Every replacement names the version that was read, so a stale edit is refused instead of overwriting a newer one. And every request is authenticated as one member before any data is read, so the loop only ever touches your own cortex.</p>
+          <p>The code is open: the store and Context are in <a href="https://github.com/haeinej/ohm-content-layer/tree/main/cortex">cortex/</a> and the nine tools are in <a href="https://github.com/haeinej/ohm-content-layer/blob/main/mcp/cortex-tools.mjs">mcp/cortex-tools.mjs</a>, both in <a href="https://github.com/haeinej/ohm-content-layer">haeinej/ohm-content-layer on GitHub</a>.</p>
         </section>
 
         <section aria-labelledby="workspace">
@@ -186,6 +208,7 @@
       <p id="toc-title">On this page</p>
       <ul>
         <li><a href="#beside">Beside your posts</a></li>
+        <li><a href="#how">How it works</a></li>
         <li><a href="#workspace">Open it in the workspace</a></li>
         <li><a href="#need">What you need, and why</a></li>
         <li><a href="#first-use">Try one preference</a></li>
