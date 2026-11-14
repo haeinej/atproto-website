@@ -1,15 +1,17 @@
 # ohmmmm.com search setup
 
-Configured and deployed November 10, 2026 (Asia/Seoul).
+Public search and link-preview maintenance. Historical Search Console observations below are dated evidence.
+
+For the cross-site contract, see [the agent reference](../../../../docs/agents/public-sites-seo.md).
 
 ## Production
 
 - Canonical origin: https://ohmmmm.com
 - Cloudflare Worker: `ohm-web`
-- Recorded deployed version: `e0a76368-153d-42ce-9d5b-de0b2b836b87` (November 10, 2026: font preload, cache headers, web app manifest and offline service worker; `check:seo` passed)
-- Homepage search title: `ohm — An agentic social network`
+- Historical deployed version: `e0a76368-153d-42ce-9d5b-de0b2b836b87` (November 10, 2026: font preload, cache headers, web app manifest and offline service worker; `check:seo` passed)
+- Homepage search title: `ohm — Your home on the web, connected`
 - Six public HTML pages (`/`, `/about`, `/support`, `/privacy`, `/terms`, `/delete-account`) have unique titles/descriptions, canonical links and social metadata. The homepage has `WebSite` and `Organization` JSON-LD reflecting its published copy and contact details.
-- Social image: `/assets/og-image.png`, 1200 × 630, using the site's existing Coconat typeface and colours.
+- Social image: `/assets/og-home-v2.png`, 1200 × 630, using the site's existing Coconat typeface and colours.
 - HTTP, www and known HTML/trailing-slash page aliases permanently redirect to canonical HTTPS URLs. Missing pages, including direct requests for the error template, return a real 404 with `noindex`.
 - Existing `robots.txt` allows crawling; `/sitemap.xml` lists all six public canonical pages. The deployment and Search Console observations below are dated evidence, not verification of the current checkout or live version.
 
@@ -34,3 +36,15 @@ When adding a real public page, give it original useful content, a descriptive t
 Use Search Console's Pages and Performance reports to check indexing and actual search queries once Google processes the new property. Indexing timing and rankings are controlled by Google.
 
 References: [Google SEO Starter Guide](https://developers.google.com/search/docs/fundamentals/seo-starter-guide), [site name structured data](https://developers.google.com/search/docs/appearance/site-names), [organization structured data](https://developers.google.com/search/docs/appearance/structured-data/organization).
+
+## Sharing the current sites
+
+Copy a public page address into a message to share it. The homepage, documentation and design system now have separate 1200 × 630 cards, so a guide or component does not appear to be the landing page. Each page supplies its own title and description without needing JavaScript. The homepage describes the workspace and its restricted testing status.
+
+The docs at https://docs.ohmmmm.com and gallery at https://design.ohmmmm.com each have their own sitemap. Cloudflare Always Use HTTPS covers the zone, and their HTTP addresses redirect to HTTPS, and missing pages return a real 404. The signed-in app and vault remain outside the public search sitemaps and keep their existing noindex directives. A noindex directive is search guidance; account permissions protect private work.
+
+A messaging service may retain a preview it already fetched. New image filenames help it fetch the new artwork; an existing message may need to be shared again or refreshed in that service. Search engines decide when to recrawl and index pages. DNS changes alone do not refresh a link preview.
+
+Cloudflare must route each hostname to its existing Worker and supply its HTTPS certificate for these pages to work. Check the account before changing records. Keep mail, identity and provider verification records unless their owner confirms they are obsolete. CLI deployment access does not imply DNS or zone-settings access.
+
+The Google verification CNAME is DNS-only, as required for Google to resolve the verification target; website records remain proxied through their Workers. Run `npm run sites:seo` for a read-only production crawl of all three public sites.

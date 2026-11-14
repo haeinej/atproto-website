@@ -1,13 +1,16 @@
-// docs.ohmmmm.com: static pages, no Worker script. Headers are in _headers.
+// docs.ohmmmm.com: static pages with a canonical HTTPS/error-response Worker. Headers are in _headers.
 // Deploy: npm run docs:deploy (or, from this folder, npx wrangler deploy)
 {
   "name": "ohm-docs",
+  "main": "../seo-worker.mjs",
   "account_id": "bf82067932bd22931840d77dd338d57f",
   "compatibility_date": "2026-10-30",
   "workers_dev": false,
   "preview_urls": false,
   "assets": {
     "directory": ".",
+    "binding": "ASSETS",
+    "run_worker_first": true,
     "html_handling": "drop-trailing-slash",
     "not_found_handling": "404-page"
   },

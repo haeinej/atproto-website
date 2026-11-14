@@ -68,9 +68,13 @@ for (const [from, to] of aliases) {
 }
 if (origin === canonicalOrigin) {
   for (const url of ['http://ohmmmm.com/support.html', 'https://www.ohmmmm.com/support.html']) {
-    const response = await fetch(url, {redirect: 'manual'});
-    assert.equal(response.status, 308, url);
-    assert.equal(response.headers.get('location'), canonicalOrigin + '/support');
+    let current = url;
+    for (let hop = 0; hop < 3 && current !== canonicalOrigin + '/support'; hop++) {
+      const response = await fetch(current, {redirect: 'manual'});
+      assert.ok([301, 308].includes(response.status), `${current}: permanent redirect`);
+      current = new URL(response.headers.get('location'), current).href;
+    }
+    assert.equal(current, canonicalOrigin + '/support');
   }
 }
 console.log(`PASS sitemap, robots, ${resources.size} linked resources, 404s and ${aliases.length} canonical redirects`);

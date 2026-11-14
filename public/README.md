@@ -16,3 +16,5 @@ Every site ohm serves to the public, one folder to a site. This repository is wh
 Run these commands from the repository root after the [source-checkout setup](../README.md#work-on-this-repository). They serve only on loopback; no private launcher file, Cloudflare login or deployment is needed. Build docs before previewing an authored change. The draft remains a separate, undeployed design preview, including its own assets; the docs build deliberately updates its shared shell, not the live home.
 
 `home/` came from the app repository (haeinej/ohm, `website/`) on 13 November 2026.
+
+Search and sharing: [human guide](home/docs/seo.md) · [agent reference](../docs/agents/public-sites-seo.md).

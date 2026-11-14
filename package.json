@@ -48,6 +48,7 @@
     "home:check": "node --check public/home/src/worker.js && node --check public/home/public/sw.js && node --check public/home/public/sw-register.js && wrangler deploy --config public/home/wrangler.jsonc --dry-run",
     "home:deploy": "wrangler deploy --config public/home/wrangler.jsonc",
     "home:seo": "node public/home/scripts/check-seo.mjs",
+    "sites:seo": "npm run home:seo && node public/check-seo.mjs",
     "home:joiners": "node public/home/scripts/joiners.mjs",
     "home-draft:dev": "wrangler dev --assets public/home-draft --ip 127.0.0.1 --port 8792 --compatibility-date 2026-10-30",
     "docs:dev": "wrangler dev --config public/docs/wrangler.jsonc --ip 127.0.0.1 --port 8791",

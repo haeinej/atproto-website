@@ -3,3 +3,6 @@ wrangler.jsonc
 .wrangler
 .gitignore
 build.py
+
+.DS_Store
+**/.DS_Store

@@ -1760,11 +1760,16 @@ def head(path, title, description):
     <meta property="og:title" content="{title}">
     <meta property="og:description" content="{description}">
     <meta property="og:url" content="{DOCS_ORIGIN}{path}">
-    <meta property="og:image" content="{HOME_ORIGIN}/assets/og-image.png">
+    <meta property="og:image" content="{DOCS_ORIGIN}/assets/og-docs-v2.png">
     <meta property="og:image:width" content="1200">
     <meta property="og:image:height" content="630">
-    <meta property="og:image:alt" content="ohm — An agentic social network">
+    <meta property="og:image:alt" content="ohm docs — Your workspace, step by step">
     <meta name="twitter:card" content="summary_large_image">
+    <meta name="twitter:title" content="{title}">
+    <meta name="twitter:description" content="{description}">
+    <meta name="twitter:image" content="{DOCS_ORIGIN}/assets/og-docs-v2.png">
+    <meta name="twitter:image:alt" content="ohm docs — Your workspace, step by step">
+    <meta property="og:image:type" content="image/png">
     <link rel="icon" href="/assets/favicon.svg" type="image/svg+xml">
     <link rel="apple-touch-icon" href="/assets/apple-touch-icon.png">
     <link rel="preload" href="/assets/fonts/coconat-regular.woff2" as="font" type="font/woff2" crossorigin>

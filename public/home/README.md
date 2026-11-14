@@ -93,8 +93,8 @@ Rules:
 
 ### Search and sharing
 
-- The homepage title is `ohm — An agentic social network`; other pages use `Page · ohm`. The share card carries the same line, so a new title needs a new `assets/og-image.png`.
-- Every indexable page has a unique description, an absolute canonical URL, Open Graph metadata and a large-image share card. The shared card is `assets/og-image.png` (1200 × 630).
+- The homepage title is `ohm — Your home on the web, connected`; other pages use `Page · ohm`. The share card carries the same line, so a new title needs a new `assets/og-home-v2.png`.
+- Every indexable page has a unique description, an absolute canonical URL, Open Graph metadata and a large-image share card. The shared card is `assets/og-home-v2.png` (1200 × 630).
 - Homepage JSON-LD identifies `WebSite` and `Organization`. Keep it consistent with visible copy and published contact details; do not add ratings, prices or unavailable features.
 - Keep the homepage's `google-site-verification` meta tag: it maintains the owner's verified Search Console property.
 - `robots.txt` allows crawling and points to the sitemap. Include only canonical, public, successful pages in `sitemap.xml`; do not add invented modification dates.
