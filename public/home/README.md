@@ -2,7 +2,7 @@
 
 Static site served by Worker `ohm-web` (`src/worker.js`, config `wrangler.jsonc`). Everything in `public/` is public. This file is the map: read it before adding or moving any information.
 
-Run locally: `npm run home:dev` (or the `ohmmmm-home` entry in `.claude/launch.json`). This folder is `public/home` in ohm-content-layer; paths below are relative to it.
+Run locally from the repository root: `npm run home:dev` (loopback port 8790). Follow the [source-checkout setup](../../README.md#work-on-this-repository) first; no private launcher configuration is needed. This folder is `public/home` in ohm-content-layer; paths below are relative to it.
 
 ## 1. Information hierarchy
 

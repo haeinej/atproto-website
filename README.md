@@ -43,7 +43,7 @@ The commands run from any folder, so you can work inside your own website's fold
 npx github:haeinej/ohm-content-layer
 ```
 
-That lists the commands. Every command previews by default and changes nothing until you pass `--publish`.
+That lists the commands. Public publishing commands preview until you pass `--publish`; show the preview to the owner and get approval first. Private imports use `--save`, folder sync uses `--apply`, and renderer commands write local output. Those writes do not publish anything.
 
 ```sh
 npx github:haeinej/ohm-content-layer identity example.com
@@ -306,11 +306,18 @@ Extract your X export and keep `data/tweets.js`, any `tweets-partN.js` files, an
 
 ```sh
 mvn -f importer/pom.xml package
+java -jar importer/target/x-archive-importer.jar --help
 java -jar importer/target/x-archive-importer.jar \
   --archive /path/to/extracted-archive --site https://example.com
 ```
 
-That previews offline. To publish a reviewed selection, add `--publish --pds https://pds.example.com --handle example.com --did did:web:pds.example.com`, and `--id YOUR_X_POST_ID` once for each post, or leave `--id` out to import everything eligible. Imported posts are notes; `--label 'Tweets'` files them under a name. The preview reports the replies, reposts, quote posts, and entries with missing media that it leaves out. `--also-bluesky` also posts compatible text and images to Bluesky.
+Maven builds the executable JAR and runs the importer's unit tests. The final command previews offline without signing in or publishing. The preview reports the replies, reposts, quote posts, and entries with missing media that it leaves out.
+
+Jackson reads the archive, and ICU4J 78.3 supplies Unicode 17 normalization, character categories and contextual lowercase for label folders. This keeps the Java tool independent of the JDK's older Unicode tables. Its Unicode data adds about 14.45 MiB before shading and is confined to this standalone tool; the Node CLI does not depend on Java. The path fixtures were compared with Node 24.22.2 / ICU 78.3; a different JavaScript runtime can use different Unicode tables.
+
+Imports use `other` when no label is supplied. `--label 'Tweets'` files them under the author's name: labels are trimmed and limited to 100 characters, retaining their authored casing in the record. The URL folder is Unicode NFC-normalized, lowercased and percent-encoded, such as `/posts/tweets/x-123` for X post `123`. The record key stays `x-123` regardless of the label. [Labels and addresses](docs/labels.md)
+
+After the owner approves a reviewed selection, add `--publish --pds https://pds.example.com --handle example.com --did did:web:pds.example.com`, and `--id YOUR_X_POST_ID` once for each post, or leave `--id` out to import everything eligible. `--also-bluesky` also posts compatible text and images to Bluesky.
 
 ## Run your own PDS and site
 
@@ -373,6 +380,22 @@ rm -f "$snapshot_file"
 
 Set `INCLUDE_BLUESKY_POSTS=true` in the Worker's configuration to list native Bluesky posts from the same account, and `INCLUDE_LEGACY_NOTES=true` for older `com.haeinjung.note` entries.
 
+## Work on this repository
+
+For a source checkout, use Node.js 22 or newer and install both locked dependency sets from the repository root:
+
+```sh
+npm ci
+npm --prefix service ci
+npm test
+```
+
+The root dependencies run the CLI, renderer, public-site tooling and tests. The separate service package supplies the pinned signature-verification library used by the vault service and integration tests; root `npm ci` does not install it. If tests cannot find `service/node_modules/@noble/curves`, run the service install above rather than changing imports or fetching packages from a test. Neither tests nor package installation automatically installs service dependencies.
+
+This contributor setup is not required to use the packaged CLI in your own site's folder. [Run your own PDS and site](#run-your-own-pds-and-site) has the separate Cirrus prerequisites. [Public sites](public/README.md) lists local preview commands; the [agent working guide](https://docs.ohmmmm.com/agent-guide#verify) gives verification and recovery contracts.
+
+Use the [human repository guide](docs/repository-map.md) to understand where a change belongs and how to recover when a check refuses it. The [agent repository map](docs/agents/repository-map.md) records entry points, state transitions, ownership and the checks for those boundaries.
+
 ## In this repository
 
 | Path | What it is |
@@ -387,7 +410,7 @@ Set `INCLUDE_BLUESKY_POSTS=true` in the Worker's configuration to list native Bl
 | [scripts/](scripts/) and [bin/](bin/) | The commands |
 | [lexicons/](lexicons/) | The shared post schema, [com/ohmmmm/post.json](lexicons/com/ohmmmm/post.json), and under [com/haeinjung/](lexicons/com/haeinjung/) the templates for a site's own schemas: the profile and the optional ones |
 | [importer/](importer/) | The X archive importer |
-| [skills/](skills/) and [AGENTS.md](AGENTS.md) | What a coding agent reads: the purpose, the rules, and the five skills |
+| [skills/](skills/) and [AGENTS.md](AGENTS.md) | What a coding agent reads: the purpose, the rules, and the bundled skills |
 | [docs/](docs/) | The guides linked above |
 | [test/](test/) | Tests. Run them with `npm test` |
 
@@ -410,9 +433,9 @@ Not yet:
 - **The vault holds no files.** A picture or file is placed in a post by its address, and a copy is sent to your PDS when the post is published.
 - **Syncing a folder has not been run against the deployed service.**
 - **Private posts and the profile command have not been run against Cloudflare.** Private posts are tested with stand-ins for Cloudflare Access and its storage.
-- **The X importer has changes that are not compiled.** It now saves each post's form and a single label, and writes `com.ohmmmm.post` records.
+- **The X importer's deployed behavior and authenticated publishing are unverified.** Its Java 21 Maven build, unit tests, packaged `--help` command and synthetic offline preview have been verified locally.
 - **The migrate command has only been previewed.** It has read a live repository and its converted records pass the schema, but it has not written to a PDS.
-- **There is no command to change a published post.** Changing a label, moving a private post to public, or deleting one is done by hand.
+- **Legacy CLI public publication is create-only.** Updating, refiling or removing published content uses the vault's reviewed Publish plan; that path has local fixture coverage, with live end-to-end verification still outstanding.
 - **The site renderer stops on quotations, code, and captions.** A page that uses one is reported as not done.
 - **Embeds do not play.** An embed is shown as a card that links out.
 - **Connections are stored, not shown.** They are in the record and in `/notes/graph.json`. There is no graph view.

@@ -14,7 +14,7 @@ const next = '(SELECT COALESCE(MAX(seq), 0) + 1 FROM cortex_skills WHERE did = ?
 const atKeyboard = context => Boolean(context.user && !context.request.headers.has('Authorization'));
 async function member(context) {
   if (!atKeyboard(context)) throw new Refused(401, 'SignInRequired', 'Sign in to ohm to manage skill approval or remove a skill');
-  const did = await context.linked.didOf(context.user.id);
+  const did = context.did;
   if (!did) throw new Refused(409, 'NotConnected', 'Connect your AT Protocol account first');
   return did;
 }

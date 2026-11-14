@@ -2,6 +2,8 @@
 
 In your folder, each post is one Markdown file. A label is a folder, a sublabel is a folder inside it, and everything else about the post is written at the top of the file.
 
+<a id="folder"></a>
+
 ## The folder
 
 ```
@@ -15,6 +17,8 @@ vault/
 │       └── lisboa-12.md
 └── loose-thought.md              no folder: filed under other
 ```
+
+<a id="file"></a>
 
 ## One file
 
@@ -32,6 +36,8 @@ The body, in Markdown.
 
 The part between the two lines of dashes holds the post's properties, as plain YAML. Obsidian shows it in its own properties panel, and you can edit it there.
 
+<a id="mapping"></a>
+
 ## What maps to what
 
 | In the file | In your workspace |
@@ -47,6 +53,8 @@ The part between the two lines of dashes holds the post's properties, as plain Y
 
 Each file also carries the post's permanent ID as a property. Leave it as it is: it is how a renamed or moved file is known to be the same post.
 
+<a id="links"></a>
+
 ## Links and pictures
 
 Both ways of writing them are read, and each file keeps whichever it was written in.
@@ -55,6 +63,8 @@ Both ways of writing them are read, and each file keeps whichever it was written
 | --- | --- | --- |
 | A link to another post | `[the first essay](first-essay.md)` | `[[first-essay]]` |
 | A picture | `![A wet street](street.jpg)` | `![[street.jpg]]` |
+
+<a id="exact"></a>
 
 ## Nothing is lost on the way
 

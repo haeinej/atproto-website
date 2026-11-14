@@ -11,7 +11,7 @@ const next = '(SELECT COALESCE(MAX(seq), 0) + 1 FROM cortex_tools WHERE did = ?1
 
 async function member(context) {
   if (!context.user || context.request.headers.has('Authorization')) throw new Refused(401, 'SignInRequired', 'Sign in to ohm to change the list of tools');
-  const did = await context.linked.didOf(context.user.id);
+  const did = context.did;
   if (!did) throw new Refused(409, 'NotConnected', 'Connect your AT Protocol account first');
   return did;
 }

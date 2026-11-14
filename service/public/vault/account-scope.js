@@ -8,9 +8,10 @@ export function createAccountScope({ member, changed }) {
     async run(send) {
       if (invalid) throw stale();
       const ticket = generation, did = member();
+      const current = () => { if (invalid || ticket !== generation || did !== member()) throw stale(); };
       try {
-        const answer = await send(did ? { 'X-Ohm-Did': did } : {});
-        if (ticket !== generation || did !== member()) throw stale();
+        const answer = await send(did ? { 'X-Ohm-Did': did } : {}, current);
+        current();
         return answer;
       } catch (problem) {
         if (ticket !== generation || did !== member()) throw stale();

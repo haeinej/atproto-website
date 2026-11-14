@@ -2,8 +2,13 @@ package com.atprotowebsite;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ObjectNode;
+import com.ibm.icu.lang.UCharacter;
+import com.ibm.icu.text.Normalizer2;
+import com.ibm.icu.text.UnicodeSet;
+import com.ibm.icu.text.UnicodeSetSpanner;
 import java.io.IOException;
 import java.net.URI;
+import java.net.URLEncoder;
 import java.nio.ByteBuffer;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
@@ -13,12 +18,17 @@ import java.security.NoSuchAlgorithmException;
 import java.time.Instant;
 import java.util.Arrays;
 import java.util.List;
+import java.util.Locale;
 import java.util.regex.Pattern;
 
 record Post(String id, Instant createdAt, String text, String body, List<Post.Media> media) {
     static final String COLLECTION = "com.ohmmmm.post";
     static final String BLUESKY_COLLECTION = "app.bsky.feed.post";
     private static final ObjectMapper JSON = new ObjectMapper();
+    // Unicode 17 folder rules must not depend on the JDK's Unicode version.
+    private static final Normalizer2 NFC = Normalizer2.getNFCInstance();
+    private static final UnicodeSetSpanner FOLDER_SEPARATORS = new UnicodeSetSpanner(
+            new UnicodeSet("[^[:L:][:N:][:M:]]").freeze());
     private static final long X_EPOCH = 1_288_834_974_657L;
     private static final long TID_SLOTS_PER_MILLISECOND = 1_000 * 1_024L;
     private static final String TID_ALPHABET = "234567abcdefghijklmnopqrstuvwxyz";
@@ -48,13 +58,22 @@ record Post(String id, Instant createdAt, String text, String body, List<Post.Me
 
     ObjectNode archiveRecord(URI site, String collection, String label) {
         String publishedAt = createdAt.toString();
+        // Match cleanName in feed/forms.mjs and postPath in feed/pds.mjs. Keep the
+        // author's label while deriving the same normalized, encoded URL folder.
+        String filedUnder = label.replaceAll("^[\\s\\p{Z}\\uFEFF]+|[\\s\\p{Z}\\uFEFF]+$", "");
+        filedUnder = filedUnder.isEmpty() ? "other" : filedUnder.substring(0, Math.min(100, filedUnder.length()));
+        String folder = FOLDER_SEPARATORS.replaceFrom(
+                UCharacter.toLowerCase(Locale.ROOT, NFC.normalize(filedUnder)), "-",
+                UnicodeSetSpanner.CountMethod.WHOLE_SPAN).replaceAll("^-|-$", "");
+        String path = "/posts/" + (folder.isEmpty() ? "" : URLEncoder.encode(folder, StandardCharsets.UTF_8) + "/")
+                + recordKey();
         var record = JSON.createObjectNode().put("$type", collection).put("body", body)
-                .put("publishedAt", publishedAt).put("canonicalUrl", site.resolve("/posts/" + recordKey()).toString());
+                .put("publishedAt", publishedAt).put("canonicalUrl", site.resolve(path).toASCIIString());
         record.putObject("source").put("platform", "x").put("id", id)
                 .put("uri", "https://x.com/i/web/status/" + id).put("publishedAt", publishedAt);
         // An imported post is a note. The label is the author's own name for where it is filed.
         record.put("form", "note");
-        if (!label.isEmpty()) record.put("label", label);
+        record.put("label", filedUnder);
         if (!media.isEmpty()) {
             var attachments = record.putArray("media");
             for (Media attachment : media) attachments.add(attachment.archiveEntry(collection));

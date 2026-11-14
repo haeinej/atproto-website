@@ -2,6 +2,8 @@
 
 Posts and cortex knowledge are separate data. A post maps to a vault row, a public repository record and a Markdown file. Memories, notes, skills and tools have private, member-scoped storage of their own.
 
+<a id="post"></a>
+
 ## A post in the vault
 
 | Field | Type | Meaning |
@@ -19,6 +21,8 @@ Posts and cortex knowledge are separate data. A post maps to a vault row, a publ
 | `site` | Object, optional | Fields of the author's own site, outside the shared schema |
 | `properties` | Object | Anything else the author gave it. Stored, and never published |
 
+<a id="identifiers"></a>
+
 ## Identifiers and versions
 
 | | Form | Purpose |
@@ -28,6 +32,8 @@ Posts and cortex knowledge are separate data. A post maps to a vault row, a publ
 | Sequence | A counter per vault, advanced by every change | Incremental sync. `listPosts` with `since` returns only what changed after a cursor, removals included |
 
 A removed post keeps its row with no version, so a client that asks what changed is told that it went.
+
+<a id="record"></a>
 
 ## The published record
 
@@ -51,6 +57,8 @@ A public post is one record of type `com.ohmmmm.post` in the member's repository
 
 `visibility` and `properties` are not part of the record. A post that is not public has no record.
 
+<a id="attachments"></a>
+
 ## Attachments
 
 An entry in `media` is an image, a video, an audio recording or a file. Each carries a `file`, which is a blob stored in the member's repository, and may carry `sourceUrl`, the address the original came from.
@@ -64,6 +72,8 @@ An entry in `media` is an image, a video, an audio recording or a file. Each car
 
 In the vault, a post references its attachments by address. The copy in the repository is made when the post is published. [Mirror and publish](https://docs.ohmmmm.com/protocols.md#attachments)
 
+<a id="mapping"></a>
+
 ## From vault to record
 
 | In the vault | In the record |
@@ -74,6 +84,8 @@ In the vault, a post references its attachments by address. The copy in the repo
 | The content of `body` | `form`, derived |
 | A link to another post | An entry in `connect`, as that post's address. Only a public post can be linked from a published one |
 | `visibility`, `properties` | Not published |
+
+<a id="storage"></a>
 
 ## Storage
 
@@ -91,6 +103,8 @@ The service stores posts, account links and cortex data. Every cortex table is s
 | `cortex_turns`, `cortex_turn_receipts` | DID and turn ID | Reserved storage for the unbuilt turn-capture adapter |
 
 The database enforces unique keys and conditional updates. Memory history is preserved by a trigger in the same statement as a rewrite or removal. Restoring earlier text creates a new revision, so an old concurrency token does not become current again.
+
+<a id="context"></a>
 
 ## Context
 

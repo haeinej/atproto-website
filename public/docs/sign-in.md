@@ -2,11 +2,15 @@
 
 You sign in to ohm with an ohm account, made with Google, Microsoft or Bluesky. Your posts belong to an account on the open network, the same kind Bluesky uses, and you say once which one is yours.
 
+<a id="why"></a>
+
 ## Why there are two accounts
 
 Your ohm sign-in answers who is using the workspace. Your AT Protocol account answers whose public records and private working copy it should open. Connecting them lets you return with a familiar sign-in while keeping your identity and published posts with the host you chose.
 
 You need to prove that you control the connected account because its name alone is public: anyone could type it. An app password or approval at your server supplies that proof. Signing in with Bluesky can answer both questions in one flow.
+
+<a id="steps"></a>
 
 ## Two steps
 
@@ -14,6 +18,8 @@ You need to prove that you control the connected account because its name alone 
 2. **Say where your posts live,** once. This is your account on the open network: it is where your published posts are kept, and it is yours whether or not you use ohm.
 
 If you sign in with Bluesky, the second step is already answered: your Bluesky account is where your posts live.
+
+<a id="where"></a>
 
 ## Where your posts live
 
@@ -25,6 +31,8 @@ If you sign in with Bluesky, the second step is already answered: your Bluesky a
 
 All three give you the same workspace. They differ only in where your account is hosted.
 
+<a id="proof"></a>
+
 ## Proving the account is yours
 
 ohm never takes your word for which account is yours. The server that holds the account says so.
@@ -34,11 +42,15 @@ ohm never takes your word for which account is yours. The server that holds the 
 
 Either way the sign-in at your server is let go as soon as ohm knows the account is yours. What stays is your ohm session.
 
+<a id="identity"></a>
+
 ## Your handle and your identity
 
 Your handle is your name on the open network and the address of your site. It can be a domain you own.
 
 Behind the handle is a permanent identifier that does not change when the handle does. It names the server that hosts your account, so you can move the account to another host and keep your posts, your followers and your name.
+
+<a id="first"></a>
 
 ## What you see the first time
 
@@ -48,9 +60,13 @@ What comes in is already public, and it stays public. Nothing new is shared by s
 
 A post that comes in with no label sits under `other` until you file it.
 
+<a id="one"></a>
+
 ## One account, one account
 
 An ohm account works in one account on the open network, and that account belongs to one ohm account. If you sign in with Bluesky after connecting the same Bluesky account another way, you arrive in the same place.
+
+<a id="leaving"></a>
 
 ## Leaving
 

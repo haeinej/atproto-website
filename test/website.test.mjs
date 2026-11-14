@@ -47,12 +47,13 @@ test('an individual post resolves its record and escapes untrusted content', asy
   const request = new Request('https://example.test/posts/other/test-post');
   const filed = new Request('https://example.test/posts/things-i-make/script/test-post');
   const result = await servePost(filed, config, 'test-post', async url => {
-    assert.equal(url.searchParams.get('rkey'), 'test-post');
-    return Response.json({ uri, value: {
+    assert.equal(url.searchParams.get('collection'), POST);
+    const record = { uri, value: {
       ...example, title: '<script>alert(1)</script>', subtitle: 'einmal ist <keinmal>', form: 'writing', label: 'Things I make',
       sublabel: '<script>', body: example.body + '\n\n' +
         '<img src=x onerror=alert(1)> [link](javascript:alert(1)) ![External](https://other.example/pixel.png)',
-    } });
+    } };
+    return Response.json(url.pathname.endsWith('listRecords') ? { records: [record] } : record);
   });
   const html = await result.text();
   assert.equal(result.status, 200);
@@ -62,22 +63,24 @@ test('an individual post resolves its record and escapes untrusted content', asy
   assert.match(html, /<\/h1><p class="post-subtitle">einmal ist &lt;keinmal&gt;<\/p>/);
   assert.match(html, /<link rel="alternate" href="at:\/\/did:web:pds\.example\.test\/com\.ohmmmm\.post\/test-post">/);
   assert.doesNotMatch(html, /<script|<img src=x|href="javascript:|src="https:\/\/other\.example/);
-  const linked = await servePost(request, config, 'test-post', async () => Response.json({ uri, value: {
+  const linkedRecord = { uri, value: {
     ...example, media: [], body: '<https://example.org/a>', form: 'link',
     link: { uri: 'https://www.example.org/a', title: 'A <b>page</b>', description: 'About it.', image: example.media[0].file },
-  } }));
+  } };
+  const linked = await servePost(request, config, 'test-post', async url => Response.json(url.pathname.endsWith('listRecords') ? { records: [linkedRecord] } : linkedRecord));
   const card = await linked.text();
   assert.match(card, /<title>A &lt;b&gt;page&lt;\/b&gt;<\/title>/);
   assert.match(card, /class="link-card" href="https:\/\/www\.example\.org\/a"><img src="https:\/\/pds\.example\.test\/xrpc\/com\.atproto\.sync\.getBlob[^"]*" alt=""/);
   assert.match(card, /<strong>A &lt;b&gt;page&lt;\/b&gt;<\/strong><span>About it\.<\/span><small>example\.org<\/small>/);
-  const noted = await servePost(request, config, 'test-post', async () => Response.json({ uri, value: {
+  const notedRecord = { uri, value: {
     ...example, media: [], body: 'Discovery[^1] demands disclosure[^2].\n\n[^1]: Testing whether alignment exists.\n[^2]: Revealing private context.',
-  } }));
+  } };
+  const noted = await servePost(request, config, 'test-post', async url => Response.json(url.pathname.endsWith('listRecords') ? { records: [notedRecord] } : notedRecord));
   const footnoted = await noted.text();
   assert.match(footnoted, /Discovery<sup class="footnote-ref"><a href="#fn-test-post-1" id="fnref-test-post-1">1<\/a><\/sup>/);
   assert.match(footnoted, /<li id="fn-test-post-2" class="footnote-item"><p>Revealing private context\.\s*<\/p>/);
-  const missing = await servePost(request, config, 'test-post', async () =>
-    Response.json({ error: 'RecordNotFound' }, { status: 400 }));
+  const missing = await servePost(request, config, 'test-post', async url =>
+    url.pathname.endsWith('listRecords') ? Response.json({ records: [] }) : Response.json({ error: 'RecordNotFound' }, { status: 400 }));
   assert.equal(missing.status, 404);
 });
 
@@ -145,7 +148,7 @@ test('every site reads the one shared post type, whatever an older configuration
 
   const page = await servePost(new Request('https://example.test/posts/other/test-post'), env, 'test-post', async url => {
     assert.equal(url.searchParams.get('collection'), POST);
-    return Response.json({ uri, value });
+    return Response.json(url.pathname.endsWith('listRecords') ? { records: [{ uri, value }] } : { uri, value });
   });
   assert.equal(page.status, 200);
   assert.match(await page.text(), /<img.*href="\/posts\/earlier"/s);
@@ -244,8 +247,8 @@ test('connections stay off the pages and shape the tree view', async () => {
     },
   });
 
-  const open = (path, key = path.split('/').at(-1)) => servePost(new Request(`https://example.test${path}`), env, key, async () =>
-    Response.json(records.find(record => record.uri.endsWith(`/${key}`))));
+  const open = (path, key = path.split('/').at(-1)) => servePost(new Request(`https://example.test${path}`), env, key, async url =>
+    Response.json(url.pathname.endsWith('listRecords') ? { records } : records.find(record => record.uri.endsWith(`/${key}`))));
   const page = path => open(path).then(response => response.text());
   // A post's address follows its label. The short address and a stale one are sent on to it.
   for (const path of ['/posts/earlier', '/posts/an-old-label/earlier']) {
@@ -523,8 +526,10 @@ test('the post schema is fixed, and a site adds its own fields only through its 
   const get = async path => (await worker.fetch(new Request(`https://example.test${path}`), env)).text();
   assert.deepEqual(JSON.parse(await get('/notes.json')).notes[0].site, own);
   assert.doesNotMatch(await get('/notes/graph.json'), /eyebrow|ep\.01/);
-  const page = await servePost(new Request('https://example.test/posts/other/test-post'), config, 'test-post', async () =>
-    Response.json({ uri, value: { ...example, media: [], site: own } }));
+  const record = { uri, value: { ...example, media: [], site: own } };
+  const page = await servePost(new Request('https://example.test/posts/other/test-post'), config, 'test-post', async url =>
+    Response.json(url.pathname.endsWith('listRecords') ? { records: [record] } : record));
+  assert.equal(page.status, 200);
   assert.doesNotMatch(await page.text(), /eyebrow|ep\.01/);
 
   const folder = await mkdtemp(join(tmpdir(), 'site-layer-'));
@@ -619,7 +624,7 @@ test('a post with no title and no words is named by its folder and a number', as
   const names = Object.fromEntries(Object.entries(graph).map(([address, post]) => [address.split('/').at(-1), post.name]));
   // Numbered oldest first within each folder; posts on the same day keep a fixed order.
   assert.deepEqual(names, { a: 'Lisboa 1', b: 'Lisboa 2', c: 'Lisboa 3', d: '서울 1', e: 'photographs 1', f: 'A tram at dusk' });
-  const page = await servePost(new Request('https://example.test/posts/photographs/lisboa/c'), env, 'c', async () => Response.json(records[2]));
+  const page = await servePost(new Request('https://example.test/posts/photographs/lisboa/c'), env, 'c', async url => Response.json(url.pathname.endsWith('listRecords') ? { records } : records[2]));
   assert.match(await page.text(), /<title>Lisboa 3<\/title>/);
 });
 

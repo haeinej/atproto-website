@@ -2,6 +2,8 @@
 
 Two exchanges connect a vault to its member's repository. Mirror reads what is published into the vault. Publish makes what is published match the vault. The service reads the repository in both, and writes to it in neither.
 
+<a id="mirror"></a>
+
 ## Mirror
 
 Mirror brings what a member has already published into their vault. It needs no credential at the PDS, because a repository's records are public.
@@ -13,6 +15,8 @@ Mirror brings what a member has already published into their vault. It needs no 
 5. **Apply.** On request, it saves the posts. Each save is conditional on the post's version, so a post the member has since changed in the vault is never overwritten.
 
 Mirror runs once automatically when an account is first connected, and on demand afterwards. Mirrored posts are already public and remain public. Nothing new is shared.
+
+<a id="publish"></a>
 
 ## Publish
 
@@ -41,6 +45,8 @@ Diagram: the sequence of a publish.
 
 The code that carries out a plan is the same in the workspace and in an agent's tools, so a post published from either is the same record.
 
+<a id="rules"></a>
+
 ## Plan rules
 
 Three rules keep the plan safe in a repository that other software also writes to.
@@ -58,6 +64,8 @@ Three rules keep the plan safe in a repository that other software also writes t
 | `cannot` | Public in the vault, but not valid as a record. The reasons are listed |
 | `notInVault` | Published under the shared type, and unknown to the vault |
 
+<a id="attachments"></a>
+
 ## Attachments
 
 A post in the vault references its files by address. Publishing gives the repository a copy of each.
@@ -68,12 +76,16 @@ A post in the vault references its files by address. Publishing gives the reposi
 
 A file that cannot be fetched stops that post from publishing and is reported. Other posts are unaffected.
 
+<a id="consistency"></a>
+
 ## Consistency and consent
 
 - **Writes are atomic.** `applyWrites` applies a batch entirely or not at all. A plan is sent as one batch up to 200 changes.
 - **Approval is bound to the plan.** The plan's name is a digest of its writes. An agent's confirmation carries that name, so approval of one plan cannot be used for another.
 - **Publishing is repeatable.** A plan is computed from current state each time. Running it again after a partial failure produces only the changes still outstanding.
 - **Records keep their keys.** A record is stored under the post's permanent ID. A record published before posts had IDs is moved to its ID in the same batch that removes the old one.
+
+<a id="consequences"></a>
 
 ## Consequences
 

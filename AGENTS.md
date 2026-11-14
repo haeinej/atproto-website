@@ -37,6 +37,7 @@ Keep member content private and use synthetic examples in public documentation.
 
 ## Where to start
 
+- Maintaining this repository: [human purpose and recovery](docs/repository-map.md), [agent ownership and state contracts](docs/agents/repository-map.md)
 - Someone setting this up: [docs/set-up-with-an-agent.md](docs/set-up-with-an-agent.md)
 - Moving a site in: [skills/migrate-site/SKILL.md](skills/migrate-site/SKILL.md)
 - Reading, saving, or changing the owner's notes, or who can see one: [skills/vault/SKILL.md](skills/vault/SKILL.md)

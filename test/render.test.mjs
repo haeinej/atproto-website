@@ -53,7 +53,7 @@ test('an adopted page builds back byte for byte, quirks included', () => {
   const adopted = adoptPage();
   assert.deepEqual(adopted.findings, []);
   assert.deepEqual(adopted.repeated, []);
-  assert.deepEqual(adopted.blocks, ['p', 'p', 'image', 'hr', 'image', 'p']);
+  assert.deepEqual(adopted.blocks.map(block => block.type), ['p', 'p', 'image', 'hr', 'image', 'p']);
   // The design stays in the template: a stray space before </p>, the line break between two
   // blocks, each image's own class and attributes, and a link's target.
   assert.match(adopted.template, /<p>\{\{b\.0\}\} <\/p><p>\{\{b\.1\}\}<\/p>\n<figure class="wide">/);
@@ -175,7 +175,7 @@ test('headings and lists inside section wrappers are cut and built back', () => 
   const paperRules = { slots: [{ name: 'title', pattern: '(<h1>)(.*?)(</h1>)' }, { name: 'body', pattern: '(<div class="body">)(.*?)(</div></article>)' }] };
   const adopted = adopt(paper, post, paperRules, { images: 'page' }, context);
   assert.deepEqual(adopted.findings, []);
-  assert.deepEqual(adopted.blocks, ['h2', 'p', 'ul', 'h3', 'ol']);
+  assert.deepEqual(adopted.blocks.map(block => block.type), ['h2', 'p', 'ul', 'h3', 'ol']);
   // The section wrappers, the heading's id, and the list's own line breaks are design and stay.
   assert.match(adopted.template, /<section class="part" aria-labelledby="one">\n<h2 id="one">\{\{b\.0\}\}<\/h2>/);
   assert.match(adopted.template, /<ul>\n  <li>\{\{b\.2\.i\.0\}\}<\/li>\n  <li>\{\{b\.2\.i\.1\}\}<\/li>\n<\/ul>/);
@@ -224,7 +224,7 @@ test('a paper: an attached file in the header, footnotes, quotes written as refe
   const where = { ...context, did: 'did:web:pds.example.com', collection: 'com.ohmmmm.post' };
   const adopted = adopt(paper, post, paperRules, { images: 'page' }, where);
   assert.deepEqual(adopted.findings, []);
-  assert.deepEqual(adopted.blocks, ['image', 'p', 'h2', 'ol']);
+  assert.deepEqual(adopted.blocks.map(block => block.type), ['image', 'p', 'h2', 'ol']);
   assert.match(adopted.template, /<p><a href="\/media\/paper\.pdf" target="_blank" rel="noopener">\{\{b\.0\.label\}\}<\/a><\/p>/);
   assert.match(adopted.template, /<li id="note-2" value="2">\{\{b\.3\.i\.1\}\}<\/li>/);
   assert.equal(build(adopted.template, post, paperRules, { images: 'page' }, where, adopted.blocks), paper);
@@ -286,7 +286,7 @@ test('several posts on one page, with the site\'s own language and a row of link
   const gallery = '<main><h1>T</h1><div class="b"><div class="set"><a class="photo" href="/media/full.png"><img src="/media/a.png" alt="A wall"></a></div></div></article></main>';
   const pictured = adopt(gallery, { title: 'T', publishedAt: '2026-01-01T00:00:00Z', body: '[![A wall](media:a)](</media/full.png>)', media: [{ id: 'a', file: { ref: { $link: 'b' } } }] },
     { slots: [{ name: 'title', pattern: '(<h1>)(.*?)(</h1>)' }, { name: 'body', pattern: '(<div class="b">)(.*?)(</div></article>)' }] }, { images: 'page' }, context);
-  assert.deepEqual([pictured.findings, pictured.blocks], [[], ['image']]);
+  assert.deepEqual([pictured.findings, pictured.blocks.map(block => block.type)], [[], ['image']]);
   // Addresses in the page's own folder can be written without the folder.
   assert.equal(recordBlocks('[a](<https://example.com/work/media/a.png>)', { inline: { ownLinksRelative: true, linksRelativeTo: '/work/' } }, context)[0].html, '<a href="media/a.png">a</a>');
 });

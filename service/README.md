@@ -19,7 +19,7 @@ A member's vault: their posts, reached with a handful of requests. Every request
 
 ## What it can do
 
-The service does eight things, each kept apart in a file of its own under [src/capabilities/](src/capabilities/): posts, structure, search, mirror, publish, export, account and identity. **[CAPABILITIES.md](CAPABILITIES.md) is the reference**: every request, what it takes and gives, who may ask it, every way the service says no, and which requests each of an agent's tools is made of. That page is written from the same tables the service runs on (`npm run capabilities`), and a test fails if the two differ.
+The service groups requests into capabilities under [src/capabilities/](src/capabilities/): posts, structure, search, mirror, publish, export, account, identity and the private Cortex. **[CAPABILITIES.md](CAPABILITIES.md) is the reference**: every request, what it takes and gives, who may ask it, every way the service says no, and which requests each of an agent's tools is made of. That page is written from the same tables the service runs on (`npm run capabilities`), and a test fails if the two differ.
 
 A request sent twice ends the same as sent once. Saving a post, whatever it says about who may see it, changes only this copy.
 
@@ -43,6 +43,10 @@ Where ohm's sign-in does not take AT Protocol accounts yet (`/api/account/config
 **Once it is open, the app's screen.** A rail of icons (the vault, and you at the foot), a side panel that lists, and the main screen, laid out as the app lays out its own. The side panel is the repository, and is always its content, drawn as folders that open and close with the posts under them, each with an icon for who can see it. Pills at its top choose what the folders are: the member's labels, the platforms the posts first appeared on, or who can see them. The filter beside them leaves out any label, platform or audience. The main screen is one post.
 
 **Publish is a button above the tree.** A mark on it says something is waiting. Pressing it shows what would be published for the first time, replaced and taken down, and nothing changes until the member approves at their own PDS: with an app password typed on the page, or a passkey at the PDS's own screen. The sign-in made for it is let go when it is done.
+
+**Unsaved writing stays in the form.** Opening another post, making a new one, going back, opening Publish, switching pages or signing out asks before discarding a changed post. Cancelling keeps both the writing and its saved version. Save keeps any text typed while it was waiting; that newer text still needs another save. A failed save leaves the draft available to retry. Unsaved text lives only in this page, so save before closing it; the browser is asked to warn before leaving a changed post.
+
+Attachment downloads use the same sign-in and displayed-account check as other vault requests. A changed account stops pending bytes before upload. A sign-in that finishes refreshing after logout or replacement cannot restore the old session, including after logout in another tab. Older stored OAuth sign-ins without the new ownership marker need signing in again; posts are unaffected.
 
 **A new account's vault fills itself.** The first time a connected account's vault opens, the page asks the service to mirror what the account has published on its PDS, and the posts appear in the side panel. The service remembers that it has been done (`mirrored` in `com.ohmmmm.account.get`). The arrows in the side panel's heading bring in whatever is new since. Taking the vault away as files is in the menu under your picture. On a phone the side panel is the screen, the rail is a bar at its foot, and opening a post makes the post the screen.
 
@@ -70,7 +74,11 @@ One ohm account works in one AT Protocol account, and one AT Protocol account be
 
 `GET /xrpc/com.ohmmmm.identity.whoAmI`, sent with such a token issued for that request, answers with the DID the token names, and with the account's handle when the handle points back to it. ohm's sign-in asks it, over a binding, to sign a member in with their AT Protocol account; it gives nothing away, since only the holder of a token can ask whom it names.
 
-Either way, `MEMBERS` lists the DIDs let in and is checked before any document is fetched; `*` lets anyone in.
+Either way, `MEMBERS` lists the DIDs let in; `*` lets anyone in. Private vault/Cortex data and keyboard mutations require membership. Account discovery, connection and disconnection remain available for onboarding or recovery after membership is removed; connecting still verifies the new account's PDS token. Each request pins the connected DID before checking `X-Ohm-Did`, so a concurrent reconnect cannot retarget that request to the new account.
+
+Repository reads require a complete, valid listing. Failed pages, repeated cursors, duplicate/foreign record keys and a cursor remaining after the page limit refuse the operation rather than treating a partial listing as the repository. The first-mirror completion flag belongs to the original ohm user and DID; reconnecting during import cannot mark the new DID complete.
+
+An agent's `vault_mirror` approval covers the displayed counts and conversion caveats, not an exact body snapshot. `importPublished` previews return `summary`; an apply may pass `expectedSummary` to require the same counts/caveats against the posts already read for that apply, before any saves. The MCP tool sends it automatically. A changed summary refuses with `Changed`; preview and confirm again. Clean body or record-key changes with the same displayed summary remain allowed. Callers that omit the optional field retain the direct apply behavior used for first onboarding.
 
 ## Where things are
 
@@ -85,6 +93,8 @@ Either way, `MEMBERS` lists the DIDs let in and is checked before any document i
 | [schema.sql](schema.sql) | The database's tables |
 
 Tests are in [../test/service.test.mjs](../test/service.test.mjs), [../test/identity.test.mjs](../test/identity.test.mjs) and, for the page's app-password sign-in, [../test/signin.test.mjs](../test/signin.test.mjs), and run against the SQLite built into Node, which is what Cloudflare D1 is.
+
+Account/reconnect regressions are in [../test/workspace-service.test.mjs](../test/workspace-service.test.mjs), complete listing checks in [../test/member.test.mjs](../test/member.test.mjs), and shell tests of the page's actual handlers with DOM/network doubles in [../test/vault-browser.test.mjs](../test/vault-browser.test.mjs). These test state and transport, not browser layout or a live PDS. [../test/mcp.test.mjs](../test/mcp.test.mjs) also checks mirror approval interleavings and malformed-request recovery on the ordered stdio queue.
 
 ## Deploying
 

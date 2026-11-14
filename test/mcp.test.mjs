@@ -1,7 +1,8 @@
 import assert from 'node:assert/strict';
 import { spawn } from 'node:child_process';
+import { Readable } from 'node:stream';
 import test from 'node:test';
-import { createServer } from '../mcp/protocol.mjs';
+import { createServer, serve } from '../mcp/protocol.mjs';
 import { createTools, OFFERED, TOOLS } from '../mcp/tools.mjs';
 import { REQUESTS } from '../service/src/capabilities/index.mjs';
 import { createService } from '../service/src/worker.mjs';
@@ -10,7 +11,7 @@ import { testDatabase } from './d1.mjs';
 // The tools, against the vault service itself: the real service, on a database in memory, asked
 // the way the tools ask it. Only who is asking is stood in for.
 const did = 'did:web:pds.example.test';
-async function toolsOf() {
+async function toolsOf({ beforeApply = () => {} } = {}) {
   const env = { DB: await testDatabase(), SERVICE_DID: 'did:web:vault.example.test' };
   // What the person has published, as their own PDS lists it: a type of their own from before the
   // shared one. A test changes `published` to change what is there.
@@ -48,7 +49,10 @@ async function toolsOf() {
   const vault = {
     tree: () => ask('getTree'), search: query => ask('searchPosts', { query }), get: id => ask('getPost', { query: { id } }),
     put: (post, replaces) => ask('putPost', { body: { post, ...(replaces ? { replaces } : {}) } }), remove: (id, replaces) => ask('deletePost', { body: { id, replaces } }),
-    mirror: ({ apply = false } = {}) => ask('importPublished', { body: { apply } }),
+    mirror: ({ apply = false, expectedSummary } = {}) => {
+      if (apply) beforeApply(published);
+      return ask('importPublished', { body: { apply, ...(expectedSummary ? { expectedSummary } : {}) } });
+    },
     publishPlan: ({ prepare = false } = {}) => ask('getPublishPlan', prepare ? { query: { prepare: '1' } } : {}),
     async attachment(id, attachment) {
       asked.push('getAttachment');
@@ -209,6 +213,49 @@ test('an agent brings in what the person has published: it looks first, and brin
   const before = await tools.call('vault_mirror');
   published.push(['second', { $type: 'com.example.post', body: 'Newer.', publishedAt: '2025-01-01T00:00:00.000Z' }]);
   await assert.rejects(tools.call('vault_mirror', { confirm: before.confirm }), /has changed since it was shown/);
+});
+
+test('mirror apply rechecks approved counts/losses on the same source read it saves', async () => {
+  for (const change of ['body', 'key', 'count', 'loss']) {
+    const { tools, published } = await toolsOf({ beforeApply(records) {
+      if (change === 'body') records[0][1].body = 'Current published body';
+      if (change === 'key') records[0][0] = 'other-key';
+      if (change === 'count') records.push(['second', { ...records[0][1], title: 'Second' }]);
+      if (change === 'loss') records[0][1].body = '![Missing](media:missing)';
+    } });
+    published[0][1].canonicalUrl = 'https://example.test/entry';
+    const looked = await tools.call('vault_mirror');
+    assert.equal(looked.willHappen.posts, 1);
+    assert.equal(looked.willHappen.couldNotBeKept, undefined);
+    if (change === 'count' || change === 'loss') {
+      await assert.rejects(tools.call('vault_mirror', { confirm: looked.confirm }), /Call vault_mirror again without confirm/);
+      assert.equal((await tools.call('vault_tree')).posts, 0);
+    } else {
+      const done = await tools.call('vault_mirror', { confirm: looked.confirm });
+      assert.equal(done.done, true);
+      const read = await tools.call('vault_read', { key: change === 'key' ? 'other-key' : 'hello-world' });
+      assert.equal(read.body, change === 'body' ? 'Current published body' : 'Published long ago.');
+    }
+  }
+});
+
+test('invalid protocol params and unexpected handlers do not poison the ordered queue', async () => {
+  const handle = createServer({ tools: { call: async () => ({ ok: true }) }, list: [] });
+  const messages = [
+    { id: 1, method: 'initialize', params: null },
+    { id: 2, method: 'initialize', params: [] },
+    { id: 3, method: 'tools/call', params: { name: 'example', arguments: null } },
+    { id: 4, method: 'tools/call', params: {} },
+    { id: 5, method: 'broken' },
+    { id: 6, method: 'ping' },
+    { id: 7, method: 'tools/call', params: { name: 'example', arguments: {} } },
+  ].map(message => ({ jsonrpc: '2.0', ...message }));
+  const responses = [];
+  await serve(message => { if (message.method === 'broken') throw new Error('unexpected'); return handle(message); }, Readable.from(messages.map(message => `${JSON.stringify(message)}\n`)), { write: line => responses.push(JSON.parse(line)) });
+  assert.deepEqual(responses.map(response => response.id), [1,2,3,4,5,6,7]);
+  assert.deepEqual(responses.slice(0,5).map(response => response.error.code), [-32602,-32602,-32602,-32602,-32603]);
+  assert.deepEqual(responses[5].result, {});
+  assert.equal(responses[6].result.isError, undefined);
 });
 
 test('an agent publishes: it shows what would change first, and the repository changes only on the second call', async () => {

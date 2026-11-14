@@ -26,7 +26,7 @@ export function createVault({ stores, collection = POST, now = () => new Date() 
       if (held) found.push({ key, visibility, ...held });
     }
     if (found.length > 1) {
-      refuse(`"${key}" is stored as ${found.map(note => note.visibility).join(' and ')}. Remove one before going on.`);
+      refuse(`"${key}" is stored as ${found.map(note => note.visibility).join(' and ')}. Both copies are preserved. Use operator access to compare the stores and remove only the unwanted copy using its current version; normal vault operations cannot reconcile duplicate keys.`);
     }
     return found[0] ?? null;
   }
@@ -88,7 +88,7 @@ export function createVault({ stores, collection = POST, now = () => new Date() 
     try {
       await source.remove(key, { version: existing.version });
     } catch (problem) {
-      refuse(`"${key}" is now ${to}, but its ${existing.visibility} copy could not be removed (${problem.message}). Remove it before going on.`);
+      refuse(`"${key}" was copied to ${to}, but its ${existing.visibility} copy could not be removed (${problem.message}). Both copies were preserved. Normal vault operations refuse duplicate keys: inspect both stores with operator access, choose which copy to keep, and remove only the other copy using that store's current version before retrying.`);
     }
     return { key, visibility: to, record: existing.record, version: written.version };
   }

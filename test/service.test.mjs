@@ -183,7 +183,7 @@ async function running() {
   const documents = Object.fromEntries([haein, jun, stranger].map(each => [documentAddress(each.did), each.document]));
   for (const each of [haein, jun, stranger]) each.document.service = [{ id: '#atproto_pds', type: 'AtprotoPersonalDataServer', serviceEndpoint: `https://${each.did.slice('did:web:'.length)}` }];
   const whoIs = createIdentity({ audience, members: `${haein.did},${jun.did}`, get: async url => Response.json(documents[String(url)]) });
-  const env = { DB: await testDatabase(), OHM_APP_ORIGIN: 'https://app.ohmmmm.test', SERVICE_DID: audience };
+  const env = { DB: await testDatabase(), MEMBERS: '*', OHM_APP_ORIGIN: 'https://app.ohmmmm.test', SERVICE_DID: audience };
   // Who is signed in to ohm, by the session cookie their browser sends.
   const sessions = new Map();
   // What each member has published, as their own PDS would list it.

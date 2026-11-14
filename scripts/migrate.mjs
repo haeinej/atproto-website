@@ -8,32 +8,19 @@
 // --from defaults to the post type an older site configuration names (ATPROTO_POST_COLLECTION).
 // --key prints one post's new record in full.
 import { parseArgs } from 'node:util';
-import { isRecordKey, normalizeArchivePost, pdsConfig, POST } from '../feed/pds.mjs';
+import { normalizeArchivePost, pdsConfig, POST } from '../feed/pds.mjs';
 import { upgradePost } from '../feed/upgrade.mjs';
 import { siteVars } from './config.mjs';
 import { rpc, signIn } from './rpc.mjs';
+import { listRecords } from '../feed/repository.mjs';
 
 const graphemes = text => [...new Intl.Segmenter().segment(text)].length;
 const LIMITS = { title: 300, subtitle: 300, label: 100, sublabel: 100 };
 
 // Every record of one type, by key. A PDS may repeat a record across a page boundary.
 async function list(pds, collection) {
-  const records = new Map();
-  const prefix = `at://${pds.did}/${collection}/`;
-  let cursor;
-  for (let page = 0; page < 500; page++) {
-    const { response, data } = await rpc(pds.origin, 'com.atproto.repo.listRecords', {
-      query: { repo: pds.did, collection, limit: '100', ...(cursor ? { cursor } : {}) },
-    });
-    if (!response.ok) throw new Error(`Listing ${collection} failed (HTTP ${response.status})`);
-    for (const record of data.records ?? []) {
-      const key = String(record.uri).startsWith(prefix) ? record.uri.slice(prefix.length) : '';
-      if (isRecordKey(key)) records.set(key, record.value);
-    }
-    if (!data.cursor || data.cursor === cursor) return records;
-    cursor = data.cursor;
-  }
-  throw new Error(`${collection} has more records than this command reads`);
+  const { records } = await listRecords({ ...pds, collection, maxPages: 500 });
+  return new Map(records.map(record => [record.uri.split('/').at(-1), record.value]));
 }
 
 // How many posts hold each name in one of their lists. An attachment's own ID is left out of the

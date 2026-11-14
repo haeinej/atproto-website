@@ -248,8 +248,8 @@
               <tbody>
                 <tr><th scope="row">Method</th><td><code>POST</code></td></tr>
                 <tr><th scope="row">Access</th><td>Member</td></tr>
-                <tr><th scope="row">Parameters</th><td><code>apply</code>: optional: save the posts<br><code>site</code>: optional: the member's website, when it is not the one their handle names<br><code>from</code>: optional: one older post type to read, when it should not be found</td></tr>
-                <tr><th scope="row">Returns</th><td><code>site</code>, <code>types</code>, <code>records</code>, <code>posts</code>, <code>sameAsPublished</code>, <code>differs</code>, <code>lost</code>, <code>cannotBePublishedYet</code>, <code>skipped</code>, <code>applied</code>; and with <code>apply</code>, <code>saved</code>, <code>unchanged</code>, <code>changedThere</code>, <code>refused</code></td></tr>
+                <tr><th scope="row">Parameters</th><td><code>apply</code>: optional: save the posts<br><code>site</code>: optional: the member's website, when it is not the one their handle names<br><code>from</code>: optional: one older post type to read, when it should not be found<br><code>expectedSummary</code>: optional: the preview summary to require before saving; changed counts or caveats refuse the whole apply</td></tr>
+                <tr><th scope="row">Returns</th><td><code>site</code>, <code>types</code>, <code>records</code>, <code>posts</code>, <code>sameAsPublished</code>, <code>differs</code>, <code>lost</code>, <code>cannotBePublishedYet</code>, <code>skipped</code>, <code>summary</code>, <code>applied</code>; and with <code>apply</code>, <code>saved</code>, <code>unchanged</code>, <code>changedThere</code>, <code>refused</code></td></tr>
               </tbody>
             </table>
           </div>

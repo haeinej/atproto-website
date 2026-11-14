@@ -11,7 +11,7 @@
 //      now stays as it is.
 import { OTHER } from '../feed/forms.mjs';
 import { POST, postPath } from '../feed/pds.mjs';
-import { postRecord, slugOf } from './file.mjs';
+import { mediaLayout, postRecord, slugOf } from './file.mjs';
 import { differences } from './import.mjs';
 
 const told = post => ({ id: post.id, slug: post.slug, ...(post.title ? { title: post.title } : {}) });
@@ -19,10 +19,26 @@ const same = (a, b) => JSON.stringify(a ?? null) === JSON.stringify(b ?? null);
 
 // What differs between the record that is published and the one the vault would publish, in
 // plain words. An attachment counts by where it is placed, not by the name it is placed under.
-function changes(before, after) {
+function changes(before, after, attachments, { did, origin }) {
   const found = differences(before, after).map(line => line.split(':')[0]);
   if ((before.slug ?? null) !== (after.slug ?? null) && before.slug !== undefined) found.push('slug');
   if (!same(before.connect ?? [], after.connect ?? [])) found.push('what it connects to');
+  const earlier = new Map((before.media ?? []).map(item => [item.id, item]));
+  const wanted = new Map(attachments.map(item => [item.id, item]));
+  const was = mediaLayout(before.body).placements, now = mediaLayout(after.body).placements;
+  const matches = (old, next) => {
+    if (!old || !next) return false;
+    let sameFile = old.sourceUrl === next.address;
+    if (!sameFile && origin && URL.canParse(next.address)) {
+      const address = new URL(next.address);
+      sameFile = address.origin === new URL(origin).origin && address.pathname === '/xrpc/com.atproto.sync.getBlob' &&
+        address.searchParams.get('did') === did && address.searchParams.get('cid') === old.file?.ref?.$link;
+    }
+    // Only images store alt metadata; every embed's descriptive text is compared in the body.
+    const sameAlt = old.$type !== `${after.$type}#image` || (old.alt ?? '') === (next.alt ?? '');
+    return sameFile && (!next.kind || old.$type === `${after.$type}#${next.kind}`) && sameAlt;
+  };
+  if (was.length !== now.length || now.some((id, index) => !matches(earlier.get(was[index]), wanted.get(id)))) found.push('attachments');
   return [...new Set(found)];
 }
 
@@ -31,7 +47,7 @@ function changes(before, after) {
 //   published  the records of the shared post type in the member's repository, by their key
 // Returns the summary a person reads (create, replace, remove, unchanged, cannot, notInVault) and
 // `writes`: the changes themselves, each with the record to write and the attachments it places.
-export function publishPlan({ did, site, collection = POST, posts, removed = [], published = new Map(), now = new Date() }) {
+export function publishPlan({ did, site, origin, collection = POST, posts, removed = [], published = new Map(), now = new Date() }) {
   const byId = new Map(posts.map(post => [post.id, post]));
   const bySlug = new Map(posts.map(post => [post.slug, post]));
   const everyone = posts.filter(post => post.visibility === 'public');
@@ -59,14 +75,14 @@ export function publishPlan({ did, site, collection = POST, posts, removed = [],
     }
     const write = { rkey: post.id, slug: post.slug, record: made.record, attachments: made.attachments, ...(before ? { before } : {}) };
     if (there) {
-      const differs = changes(there, made.record);
+      const differs = changes(there, made.record, made.attachments, { did, origin });
       if (!differs.length) { plan.unchanged++; continue; }
       plan.replace.push({ ...told(post), changes: differs });
       plan.writes.push({ action: 'update', ...write });
     } else if (legacy) {
       // The same post, published before posts had IDs: it moves to a record under its ID.
       moved.add(post.slug);
-      plan.replace.push({ ...told(post), changes: [...changes(legacy, made.record), 'its record moves to its permanent key'] });
+      plan.replace.push({ ...told(post), changes: [...changes(legacy, made.record, made.attachments, { did, origin }), 'its record moves to its permanent key'] });
       plan.writes.push({ action: 'create', ...write }, { action: 'delete', rkey: post.slug, slug: post.slug });
     } else {
       plan.create.push({ ...told(post), address: made.record.canonicalUrl });

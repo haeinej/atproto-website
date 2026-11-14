@@ -19,7 +19,9 @@ const [name] = process.argv.splice(2, 1);
 if (!Object.hasOwn(commands, name ?? '')) {
   console.log('Usage: ohm <command> [options]\n');
   for (const [command, [, summary]] of Object.entries(commands)) console.log(`  ${command.padEnd(10)} ${summary}`);
-  console.log('\nCommands preview by default and change nothing until you pass --publish.');
+  console.log('\nWrite flags: import --save; sync --apply; profile, publish and migrate --publish.');
+  console.log('render adopt/build writes the named local template, sidecar or output files.');
+  console.log('mcp serves tools with their own save and publication confirmation boundaries.');
   process.exitCode = name && !['help', '--help', '-h'].includes(name) ? 1 : 0;
 } else {
   await import(new URL(commands[name][0].includes('/') ? `../${commands[name][0]}` : `../scripts/${commands[name][0]}`, import.meta.url));

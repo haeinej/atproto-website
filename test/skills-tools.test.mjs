@@ -50,7 +50,7 @@ async function running() {
   const linked = links(db);
   await linked.connect('member', me);
   await linked.connect('other', other);
-  const env = { DB: db, OHM_APP_ORIGIN: 'https://app.test', SERVICE_DID: audience };
+  const env = { DB: db, MEMBERS: '*', OHM_APP_ORIGIN: 'https://app.test', SERVICE_DID: audience };
   const service = createService({ whoIs: createIdentity({ audience, members: `${me},${other}`, get }), get });
   const ask = async (name, { as = 'agent', body, query = {}, token, origin = 'https://app.test', cookie, under = '' } = {}) => {
     const full = name.includes('.') ? name : `com.ohmmmm.cortex.${name}`;

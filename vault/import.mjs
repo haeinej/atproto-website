@@ -5,7 +5,7 @@
 import { filing, isRecordKey, POST, postPath, webUrl } from '../feed/pds.mjs';
 import { upgradePost } from '../feed/upgrade.mjs';
 import { FILE_TYPES, isSlug } from './core.mjs';
-import { addressKind, isPostId, newPostId, postProblems, postRecord, slugOf } from './file.mjs';
+import { addressKind, isPostId, mediaLayout, newPostId, postProblems, postRecord, slugOf } from './file.mjs';
 
 // A number worked out from text, the same every time.
 function hashOf(text) {
@@ -103,7 +103,7 @@ export function differences(before, after) {
   const found = [];
   const say = (what, was, now) => { if (JSON.stringify(was) !== JSON.stringify(now)) found.push(`${what}: was ${JSON.stringify(was ?? null)}, would be ${JSON.stringify(now ?? null)}`); };
   if (!after) return ['it could not be turned back into a record'];
-  const places = body => String(body ?? '').replace(/\]\(media:[A-Za-z0-9_-]+\)/g, '](media)').trim();
+  const places = body => mediaLayout(body).body;
   say('body', places(before.body), places(after.body));
   for (const field of ['title', 'subtitle', 'sublabel']) say(field, before[field]?.trim?.() || undefined, after[field]);
   // The same moment written two ways is the same date.

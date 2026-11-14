@@ -2,44 +2,33 @@
 // current label and sublabel, and how it opens. Reads the PDS; changes nothing.
 import { normalizeArchivePost, pdsConfig } from '../feed/pds.mjs';
 import { renderArchivePost } from '../feed/render.mjs';
-import { siteVars } from './config.mjs';
+import { siteVars, commandConfig } from './config.mjs';
+import { listRecords } from '../feed/repository.mjs';
 
 try {
-  const vars = await siteVars(process.argv[2]);
+  const vars = await siteVars(commandConfig());
   const pds = pdsConfig(vars);
-  const url = new URL('/xrpc/com.atproto.repo.listRecords', pds.origin);
-  url.search = new URLSearchParams({ repo: pds.did, collection: pds.collection, limit: '100' });
   const posts = [];
-  // A PDS may repeat the record at a page boundary on the next page, so each address is taken once.
-  const seen = new Set();
-  for (let page = 0; page < 200; page++) {
-    const response = await fetch(url, { redirect: 'error', signal: AbortSignal.timeout(30_000) });
-    if (!response.ok) throw new Error(`Listing posts failed (HTTP ${response.status})`);
-    const data = await response.json();
-    for (const record of data.records ?? []) {
-      if (seen.has(record.uri)) continue;
-      seen.add(record.uri);
-      const slug = String(record.uri).split('/').at(-1);
-      const normal = normalizeArchivePost(record.value, slug, pds);
-      if (!normal) continue;
-      const post = renderArchivePost(normal, pds);
-      const attachments = {};
-      for (const { kind } of normal.media.values()) attachments[kind] = (attachments[kind] ?? 0) + 1;
-      posts.push({
-        slug,
-        date: post.createdAt.slice(0, 10),
-        form: post.form,
-        label: post.label ?? null,
-        sublabel: post.sublabel ?? null,
-        platform: post.platform,
-        name: post.name || null,
-        opening: post.text.replace(/\s+/g, ' ').slice(0, 240),
-        characters: post.text.length,
-        attachments,
-      });
-    }
-    if (!data.cursor) break;
-    url.searchParams.set('cursor', data.cursor);
+  const { records } = await listRecords({ ...pds, maxPages: 200 });
+  for (const record of records) {
+    const key = record.uri.split('/').at(-1);
+    const normal = normalizeArchivePost(record.value, key, pds);
+    if (!normal) continue;
+    const post = renderArchivePost(normal, pds);
+    const attachments = {};
+    for (const { kind } of normal.media.values()) attachments[kind] = (attachments[kind] ?? 0) + 1;
+    posts.push({
+      key, slug: record.value.slug ?? key,
+      date: post.createdAt.slice(0, 10),
+      form: post.form,
+      label: post.label ?? null,
+      sublabel: post.sublabel ?? null,
+      platform: post.platform,
+      name: post.name || null,
+      opening: post.text.replace(/\s+/g, ' ').slice(0, 240),
+      characters: post.text.length,
+      attachments,
+    });
   }
   posts.sort((a, b) => a.date.localeCompare(b.date));
   console.log(JSON.stringify(posts, null, 2));

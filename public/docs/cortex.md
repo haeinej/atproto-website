@@ -2,6 +2,8 @@
 
 Give your agent a place to keep what it learns about your work, so you do not have to explain the same preferences every session. You can inspect and correct that knowledge without making it a post.
 
+<a id="beside"></a>
+
 ## Beside your posts
 
 A memory about how you work is not a post. Neither is a skill that tells an agent how to help you. They live in the cortex so that your working knowledge can carry between agent sessions without becoming part of your published work.
@@ -16,6 +18,8 @@ A memory about how you work is not a post. Neither is a skill that tells an agen
 
 This is private working context. It is not used to find other people, and Publish and Mirror never read it.
 
+<a id="workspace"></a>
+
 ## Open it in the workspace
 
 Choose Cortex in the rail, then Memories, Notes or Skills.
@@ -26,11 +30,15 @@ Choose Cortex in the rail, then Memories, Notes or Skills.
 
 Tool settings are currently available through the service API. There is no tool-settings panel in this view.
 
+<a id="need"></a>
+
 ## What you need, and why
 
 Your connected account identifies whose private knowledge this is. Your agent needs the ohm MCP connection to read or save it; opening a new chat alone does not bring that knowledge into the conversation. [Connect your agent](https://docs.ohmmmm.com/agent.md)
 
 The browser is where you inspect the result and review proposed skills. To approve a skill, use your linked ohm sign-in: the agent's credentials intentionally cannot approve its own instructions.
+
+<a id="first-use"></a>
 
 ## Try one preference
 
@@ -40,6 +48,8 @@ The browser is where you inspect the result and review proposed skills. To appro
 4. In a later session, ask the agent to start with your cortex and read the relevant memory before drafting.
 
 The visible result is a memory you can inspect and reuse. Whether a later draft follows it also depends on the agent reading it and following your current request. Automatic recall into every prompt is not built.
+
+<a id="context"></a>
 
 ## What a session starts with
 
@@ -55,11 +65,15 @@ Three standing memories are created at the start.
 
 The memories are editable. A description index is not the same as every memory being loaded into every prompt. Automatic prompt recall and session adapters are still planned.
 
+<a id="privacy"></a>
+
 ## Yours, and private
 
 The service authenticates every cortex request as one member before reading any data. Another member cannot select your cortex by naming your DID or a memory name. Signing out or switching accounts clears the editor's cortex state.
 
 ohm can read the copy it stores. The provider of an agent's model processes whatever the agent reads. Private here means kept out of public records and other members' access; it does not mean end-to-end encryption.
+
+<a id="copy"></a>
 
 ## Keeping a copy
 

@@ -6,6 +6,7 @@ import { OTHER } from './forms.mjs';
 import { isDid, resolveIdentity } from './identity.mjs';
 import { servePrivate } from './private.mjs';
 import { plainName, postPage, renderArchivePost } from './render.mjs';
+import { listRecords, recordByKey, recordBySlug } from './repository.mjs';
 
 const SNAPSHOT_KEY = 'latest';
 const MAX_AGE = 48 * 60 * 60;
@@ -66,34 +67,15 @@ async function loadProfile(pds, request) {
 }
 
 async function listNotes(env, pds, collection, normalize, maxPages, request) {
-  const { did, origin } = pds;
-  const url = new URL('/xrpc/com.atproto.repo.listRecords', origin);
-  url.search = new URLSearchParams({ repo: did, collection, limit: '100' });
-  const notes = new Map();
-  const cursors = new Set();
-  const prefix = `at://${did}/${collection}/`;
-
-  for (let page = 0; page < maxPages; page++) {
-    const response = await request(url, { redirect: 'manual', signal: AbortSignal.timeout(10_000) });
-    if ([400, 401, 403, 404, 410].includes(response.status)) await env.NOTES.delete(SNAPSHOT_KEY);
-    if (!response.ok) throw new Error(`PDS returned HTTP ${response.status}`);
-    const data = await response.json();
-    if (!Array.isArray(data.records)) throw new Error('PDS returned an invalid record list');
-
-    for (const record of data.records) {
-      if (typeof record?.uri !== 'string' || !record.uri.startsWith(prefix)) continue;
-      const key = record.uri.slice(prefix.length);
-      if (!isRecordKey(key)) continue;
-      const note = normalize(record.value, key, pds);
-      if (note) notes.set(record.uri, { uri: record.uri, ...note });
-    }
-
-    if (!data.cursor) return { records: [...notes.values()], pages: page + 1 };
-    if (typeof data.cursor !== 'string' || cursors.has(data.cursor)) throw new Error('PDS returned an invalid cursor');
-    cursors.add(data.cursor);
-    url.searchParams.set('cursor', data.cursor);
-  }
-  throw new Error(`${collection} exceeds the ${maxPages}-page refresh limit`);
+  const { records, pages } = await listRecords({ ...pds, collection, maxPages, get: request,
+    onResponse: async response => {
+      if ([400, 401, 403, 404, 410].includes(response.status)) await env.NOTES.delete(SNAPSHOT_KEY);
+    },
+  });
+  return { pages, records: records.flatMap(record => {
+    const note = normalize(record.value, record.uri.split('/').at(-1), pds);
+    return note ? [{ uri: record.uri, ...note }] : [];
+  }) };
 }
 
 export async function refreshNotes(env, request = fetch, now = new Date()) {
@@ -132,23 +114,6 @@ export async function refreshNotes(env, request = fetch, now = new Date()) {
   return snapshot;
 }
 
-// The key of the record whose address ends in this slug, from the list the site last built.
-async function keyForSlug(env, pds, slug) {
-  const graph = (await env.NOTES?.get(SNAPSHOT_KEY, 'json').catch(() => null))?.graph ?? {};
-  const prefix = `at://${pds.did}/${pds.collection}/`;
-  for (const [uri, post] of Object.entries(graph)) {
-    if (!uri.startsWith(prefix) || typeof post?.href !== 'string' || !post.href.startsWith('/posts/')) continue;
-    let last;
-    try {
-      last = decodeURIComponent(post.href.split('/').at(-1));
-    } catch {
-      continue;
-    }
-    if (last === slug) return uri.slice(prefix.length);
-  }
-  return null;
-}
-
 // `name` is the last step of the address asked for. It is a post's slug, or the key of its record:
 // the two are the same for a post published before posts had IDs, and the key still works as a
 // short address for any post.
@@ -159,29 +124,20 @@ export async function servePost(request, env, name, get = fetch) {
   if (!isRecordKey(name)) return new Response('Post not found', { status: 404 });
   try {
     const pds = pdsConfig(env);
-    const read = async key => {
-      const url = new URL('/xrpc/com.atproto.repo.getRecord', pds.origin);
-      url.search = new URLSearchParams({ repo: pds.did, collection: pds.collection, rkey: key });
-      const response = await get(url, { redirect: 'manual', signal: AbortSignal.timeout(10_000) });
-      const data = response.status === 404 ? {} : await response.json();
-      return { response, data, missing: response.status === 404 || (response.status === 400 && data.error === 'RecordNotFound') };
-    };
-    let key = name;
-    let { response, data, missing } = await read(key);
-    if (missing) {
-      // No record is kept under that name, so it is looked for as a slug.
-      key = await keyForSlug(env, pds, name);
-      if (!key || !isRecordKey(key)) return new Response('Post not found', { status: 404 });
-      ({ response, data, missing } = await read(key));
-      if (missing) return new Response('Post not found', { status: 404 });
-    }
-    if (!response.ok) throw new Error(`PDS returned HTTP ${response.status}`);
+    const asked = new URL(request.url).pathname;
+    // Qualified paths name public slugs first; bare paths keep permanent-key priority.
+    // Only a complete, unambiguous inventory can establish a qualified-key fallback.
+    const qualified = asked.startsWith('/posts/') && asked.slice('/posts/'.length).includes('/');
+    const data = qualified
+      ? await recordBySlug(pds, name, get) ?? await recordByKey(pds, name, get)
+      : await recordByKey(pds, name, get) ?? await recordBySlug(pds, name, get);
+    if (!data) return new Response('Post not found', { status: 404 });
+    const { key } = data;
     const post = data.uri === `at://${pds.did}/${pds.collection}/${key}` &&
       normalizeArchivePost(data.value, key, pds);
     if (!post) return new Response('Post not found', { status: 404 });
-    // A post has one address, which follows its label and sublabel. The short address, an old one
-    // from before it was refiled, or any other path ending in its key is sent on to it.
-    const asked = new URL(request.url).pathname;
+    // The resolved post has one address, following its label and sublabel. Short addresses and
+    // stale filing paths redirect there.
     if (asked.startsWith('/posts/') && decodeURIComponent(asked) !== decodeURIComponent(post.permalink)) {
       return Response.redirect(new URL(post.permalink, request.url), 308);
     }

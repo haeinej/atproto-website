@@ -46,6 +46,6 @@ npx github:haeinej/ohm-content-layer publish --file ./post.md --slug hello --tit
 
 The owner's existing site is the specification for how it is built: reproduce it identically and change only where content is read from, without asking how.
 
-Every command previews by default and changes nothing until it is given `--publish`. A record on a PDS is public the moment it is written, so preview, show the owner, and publish only when they say so.
+Public publishing commands preview until given `--publish`. A record on a PDS is public the moment it is written, so preview, show the owner, and publish only when they say so. Other writes have different gates: import uses `--save` to save privately, folder sync uses `--apply` and never publishes, and renderer adopt/build commands write local output. Configuration redirected to a file also writes locally. Do not treat these private/local operations as public publication, or a local write flag as permission to publish.
 
 Deploying the site Worker and running the PDS still need a clone of the repository; `README.md` has the steps.

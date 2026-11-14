@@ -70,7 +70,7 @@ async function running(t) {
     throw new Error(`Unexpected external request: ${url}`);
   };
   const service = createService({ whoIs: createIdentity({ audience, members: `${me},${other}`, get }), get });
-  const env = { DB: db, OHM_APP_ORIGIN: 'https://app.test', SERVICE_DID: audience };
+  const env = { DB: db, MEMBERS: `${me},${other}`, OHM_APP_ORIGIN: 'https://app.test', SERVICE_DID: audience };
   const http = async (as, name, { query = {}, body, token, cookie, claims } = {}) => {
     const url = new URL(`https://vault.test/xrpc/${name}`);
     url.search = new URLSearchParams(query);

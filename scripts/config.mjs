@@ -2,6 +2,14 @@
 // the usual places in the folder the command is run from.
 import { existsSync } from 'node:fs';
 import { readFile } from 'node:fs/promises';
+import { parseArgs } from 'node:util';
+
+// Keep the original positional filename while accepting the common explicit selector.
+export function commandConfig() {
+  const { values, positionals } = parseArgs({ options: { config: { type: 'string' } }, allowPositionals: true });
+  if (positionals.length > 1 || (values.config && positionals.length)) throw new Error('Use --config PATH or one positional configuration path');
+  return values.config ?? positionals[0];
+}
 
 // 'ohm-content-layer.jsonc' is the name the configuration had before the project was renamed.
 const PLACES = ['feed/wrangler.site.jsonc', 'wrangler.site.jsonc', 'ohm.jsonc', 'ohm-content-layer.jsonc'];

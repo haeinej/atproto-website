@@ -131,6 +131,68 @@ test('a post changed in both places is not overwritten on either side until the 
   assert.match(folder.held.get('a.md'), /Changed in ohm again\./);
 });
 
+test('a refused ohm resolution preserves its comparison copy and baseline until a rename collision is cleared', async () => {
+  const folder = memoryFolder({ 'a.md': note('A') });
+  const vault = await workingCopy();
+  await run(folder, vault);
+  const id = filePost('a.md', folder.held.get('a.md')).post.id;
+  const held = await vault.get(id);
+  const changed = await vault.put({ ...held.post, slug: 'renamed', body: 'Changed in ohm.' }, held.version);
+  folder.held.set('a.md', folder.held.get('a.md').replace('Words about A.', 'Changed in my folder.'));
+  folder.held.set('renamed.md', '---\ntitle: |\n  Unrelated draft\n---\n\nKeep this file.');
+  await run(folder, vault);
+  assert.match(folder.held.get('a.md.from-ohm'), /Changed in ohm/);
+  const before = [...folder.held], baseline = structuredClone(await folder.state());
+  const refused = await run(folder, vault, { take: { [id]: 'ohm' } });
+  assert.ok(refused.problems.some(each => each.problems.some(text => text.includes('occupied'))));
+  assert.deepEqual(refused.toFolder, []);
+  assert.deepEqual([...folder.held], before);
+  assert.deepEqual(await folder.state(), baseline);
+  assert.equal((await vault.get(id)).version, changed.version);
+
+  folder.held.delete('renamed.md');
+  const settled = await run(folder, vault, { take: { [id]: 'ohm' } });
+  assert.deepEqual([settled.conflicts, settled.problems], [[], []]);
+  assert.match(folder.held.get('renamed.md'), /Changed in ohm/);
+  assert.equal(folder.held.has('a.md'), false);
+  assert.equal(folder.held.has('a.md.from-ohm'), false);
+  assert.deepEqual((await folder.state())[id], { version: changed.version, path: 'renamed.md' });
+  assert.equal((await run(folder, vault)).same, 1);
+});
+
+test('a failed folder resolution keeps the comparison copy for a successful retry', async () => {
+  const folder = memoryFolder({ 'a.md': note('A') });
+  const vault = await workingCopy();
+  await run(folder, vault);
+  const id = filePost('a.md', folder.held.get('a.md')).post.id;
+  const held = await vault.get(id);
+  await vault.put({ ...held.post, body: 'Changed in ohm.' }, held.version);
+  folder.held.set('a.md', folder.held.get('a.md').replace('Words about A.', 'Changed in my folder.'));
+  await run(folder, vault);
+  const before = [...folder.held], baseline = structuredClone(await folder.state());
+  const refused = await run(folder, { ...vault, put: async () => { throw Error('Version changed before save'); } }, { take: { [id]: 'folder' } });
+  assert.match(refused.problems[0].problems.join(' '), /Version changed/);
+  assert.deepEqual(refused.toOhm, []);
+  assert.deepEqual([...folder.held], before);
+  assert.deepEqual(await folder.state(), baseline);
+
+  const settled = await run(folder, vault, { take: { [id]: 'folder' } });
+  assert.deepEqual([settled.conflicts, settled.problems], [[], []]);
+  assert.equal((await vault.get(id)).post.body, 'Changed in my folder.');
+  assert.equal(folder.held.has('a.md.from-ohm'), false);
+});
+
+test('settling one post does not authorize cleanup of another post or an unowned comparison file', async () => {
+  const folder = memoryFolder({ 'a.md': note('A') });
+  const vault = await workingCopy();
+  await run(folder, vault);
+  for (const text of [setProperty(note('An older post'), 'id', '3bbbbbbbbbbbb'), 'Unrecognized comparison text.']) {
+    folder.held.set('a.md.from-ohm', text);
+    assert.equal((await run(folder, vault)).same, 1);
+    assert.equal(folder.held.get('a.md.from-ohm'), text);
+  }
+});
+
 test('a missing file is never taken as an instruction to remove a post, nor a removed post to remove a file', async () => {
   const folder = memoryFolder({ 'keep.md': note('Keep'), 'gone-here.md': note('Gone here'), 'gone-there.md': note('Gone there') });
   const vault = await workingCopy();

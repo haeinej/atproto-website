@@ -1,6 +1,7 @@
 // The stores a vault keeps its notes in. Public notes are records on the person's PDS. Friends-only
 // and private notes are in the person's own key-value store, which only they can read.
 import { blobCid, recordVersion, VaultProblem } from './core.mjs';
+import { listRecords } from '../feed/repository.mjs';
 
 const refuse = message => { throw new VaultProblem(message); };
 
@@ -118,15 +119,8 @@ export function pdsStore({ did, origin, collection, token, get = fetch }) {
       return failed(`Reading "${key}"`, result);
     },
     async list() {
-      const notes = [];
-      let cursor;
-      do {
-        const result = await call('com.atproto.repo.listRecords', { query: { repo: did, collection, limit: '100', ...(cursor ? { cursor } : {}) } });
-        if (!result.response.ok) failed('Listing the public notes', result);
-        for (const { uri, cid, value } of result.data.records ?? []) notes.push({ key: uri.split('/').at(-1), record: value, version: cid });
-        cursor = result.data.records?.length ? result.data.cursor : undefined;
-      } while (cursor);
-      return notes;
+      const { records } = await listRecords({ did, origin, collection, get, maxPages: 500 });
+      return records.map(({ uri, cid, value }) => ({ key: uri.split('/').at(-1), record: value, version: cid }));
     },
     // Creating fails when the key is taken, and replacing fails unless the version is still the
     // one that was read. The PDS makes both checks itself.

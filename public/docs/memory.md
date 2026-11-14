@@ -2,6 +2,8 @@
 
 Keep useful knowledge without turning every passing observation into a fact about you. Memories carry learning forward; notes give an agent somewhere to put an uncertain observation until there is enough reason to use it.
 
+<a id="memory"></a>
+
 ## A memory
 
 Every memory has a name, a one-line description and Markdown text. The description lets an agent decide whether to read the whole memory.
@@ -16,6 +18,8 @@ Every memory has a name, a one-line description and Markdown text. The descripti
 
 Memory is prior learning, not an instruction that overrides what you say now. An agent must preserve uncertainty and project scope rather than turn a guess into a fact.
 
+<a id="first-use"></a>
+
 ## Try it, then check the result
 
 You need a connected agent to record learning through the tools, and the Cortex view to inspect it. [Your cortex](https://docs.ohmmmm.com/cortex.md#first-use) walks through the first connection and preference.
@@ -24,6 +28,8 @@ Tell the agent something you want carried forward, such as: "For this project, r
 
 If the agent merely notices a possible preference, it can record a note instead. Open Notes to see the observation and where it came from. Recording a note alone has not changed your memories.
 
+<a id="learning"></a>
+
 ## What you say, and what an agent notices
 
 When you explicitly tell an agent something worth remembering, it can save the whole memory with `cortex_remember`, marked as stated. Memory saves do not wait for an approval queue.
@@ -31,6 +37,8 @@ When you explicitly tell an agent something worth remembering, it can save the w
 For an observation, the agent uses `cortex_note`: one line, up to 500 characters, with an ID, its real originating session and an optional project. Recording it does not change any memory. Retrying the same ID and content records one note; reusing the ID for different content is refused.
 
 An observation note is not a private vault post. It stays in the cortex.
+
+<a id="settlement"></a>
 
 ## Settling observations
 
@@ -46,11 +54,15 @@ The supplied settlement policy keeps a single sighting as an observation. A new 
 
 If an agent reports that settlement failed, some memory changes may already have been saved. Ask it to reread the memory and waiting notes before trying again. The [agent guide](https://docs.ohmmmm.com/agent-guide.md#recovery) explains the partial-completion contract.
 
+<a id="versions"></a>
+
 ## Read before replacing
 
 The editor and the agent use the version they read when replacing or removing a memory. If it has changed since, the service refuses the stale write. The right response is to read again and reconsider the edit, not overwrite the new version.
 
 Earlier versions are preserved privately. In Cortex, open a memory's history, read an earlier version and choose Restore this version. The restore creates a fresh version and keeps the version it replaced in history.
+
+<a id="forgetting"></a>
 
 ## Forgetting
 

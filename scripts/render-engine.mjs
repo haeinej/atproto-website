@@ -418,15 +418,28 @@ export function adopt(page, record, rules, options, context) {
   }
   const title = record.title ? escapeText(record.title, rules) : '';
   const titleLines = title ? template.split('\n').filter(line => line.includes(title)).length : 0;
-  return { template, slots, blocks: blocks.map(block => block.type), findings, repeated, kept, titleLines };
+  return { template, slots, blocks: blockShape(blocks), findings, repeated, kept, titleLines };
+}
+
+// Structural sidecars include every slotted cardinality. Old type-only sidecars cannot prove
+// that all items have slots; re-adoption is explicit recovery rather than a lossy guess.
+function blockShape(blocks) {
+  return blocks.map(block => ({ type: block.type, ...(block.items ? { items: block.items.length } : {}),
+    ...(block.links ? { links: block.links.map(link => ({ href: link.href !== undefined, media: link.media !== undefined })) } : {}),
+    ...(block.type === 'image' ? { linked: Boolean(block.href) } : {}),
+  }));
 }
 
 // ---------------------------------------------------------------------------------------------
 // build: fill a template from a record.
 // ---------------------------------------------------------------------------------------------
 export function build(template, record, rules, options, context, expected) {
+  for (const name of options.tokens ?? []) {
+    if (!template.includes(`{{${name}}}`)) stop(`The template no longer has the slot "${name}". Adopt the page again before building; nothing was written.`);
+  }
   const blocks = recordBlocks(record.body, rules, context);
-  if (expected && JSON.stringify(expected) !== JSON.stringify(blocks.map(block => block.type))) {
+  if (expected?.some(block => typeof block === 'string')) stop('This template has an older type-only sidecar. Adopt the page again before building; nothing was written.');
+  if (expected && JSON.stringify(expected) !== JSON.stringify(blockShape(blocks))) {
     stop('The post\'s body no longer has the shape this template was cut for. Adopt the page again.');
   }
   const media = new Map((record.media ?? []).map(item => [item.id, item]));

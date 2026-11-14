@@ -51,6 +51,12 @@ async function read({ get, did }, { pds, site, types }) {
   return { records: found.size, posts, skipped };
 }
 
+// Approval covers the counts and conversion caveats shown to the member, not body bytes.
+async function summaryOf({ site, types, records, posts, differs, lost, cannotBePublishedYet, skipped }) {
+  const bytes = new TextEncoder().encode(JSON.stringify({ site, types, records, posts, differs, lost, cannotBePublishedYet, skipped }));
+  return Array.from(new Uint8Array(await crypto.subtle.digest('SHA-256', bytes)), byte => byte.toString(16).padStart(2, '0')).join('');
+}
+
 export default {
   name: 'Mirror',
   about: 'Bring what the member has already published on their PDS into the vault. It only reads the PDS, and it never changes a post the member has since changed in the vault.',
@@ -58,10 +64,11 @@ export default {
     'com.ohmmmm.vault.importPublished': {
       verb: 'POST', asks: 'member', changes: true,
       about: 'Reads the member\'s repository and says what it holds as posts: how many, which would differ from what is published, and what could not be kept. With `apply`, saves them. Without it, changes nothing.',
-      takes: { apply: 'optional: save the posts', site: 'optional: the member\'s website, when it is not the one their handle names', from: 'optional: one older post type to read, when it should not be found' },
-      gives: '`site`, `types`, `records`, `posts`, `sameAsPublished`, `differs`, `lost`, `cannotBePublishedYet`, `skipped`, `applied`; and with `apply`, `saved`, `unchanged`, `changedThere`, `refused`',
+      takes: { apply: 'optional: save the posts', site: 'optional: the member\'s website, when it is not the one their handle names', from: 'optional: one older post type to read, when it should not be found', expectedSummary: 'optional: the preview summary to require before saving; changed counts or caveats refuse the whole apply' },
+      gives: '`site`, `types`, `records`, `posts`, `sameAsPublished`, `differs`, `lost`, `cannotBePublishedYet`, `skipped`, `summary`, `applied`; and with `apply`, `saved`, `unchanged`, `changedThere`, `refused`',
       run: async context => {
-        const { site, from, apply = false } = await context.body();
+        const { site, from, apply = false, expectedSummary } = await context.body();
+        if (expectedSummary !== undefined && (typeof expectedSummary !== 'string' || !/^[a-f0-9]{64}$/.test(expectedSummary))) throw new Refused(400, 'InvalidRequest', 'expectedSummary is the summary returned by a mirror preview');
         const where = await source(context, { site, from });
         const { records, posts: found, skipped } = await read(context, where);
         const noted = name => found.filter(each => each[name].length).map(each => ({ key: each.key, slug: each.post.slug, [name]: each[name] }));
@@ -69,13 +76,15 @@ export default {
           site: where.site, types: where.types, records, posts: found.length, sameAsPublished: found.filter(each => !each.differs.length).length,
           differs: noted('differs'), lost: noted('lost'), cannotBePublishedYet: noted('problems'), skipped, applied: Boolean(apply),
         };
+        report.summary = await summaryOf(report);
         if (!apply) return report;
+        if (expectedSummary !== undefined && expectedSummary !== report.summary) throw new Refused(409, 'Changed', 'What would be brought in changed; preview the mirror again before confirming');
         const { posts, did, user, linked } = context;
         const send = post => posts.write(did, post).then(body => ({ status: 200, body }),
           problem => (problem instanceof Refused ? { status: problem.status, body: { error: problem.code, message: problem.message } } : Promise.reject(problem)));
         const saved = await saveImported(found, send);
         // The first time is remembered, so the page brings a new account's posts in once, on its own.
-        if (user) await linked.mirrored(user.id);
+        if (user) await linked.mirrored(user.id, did);
         return { ...report, ...saved };
       },
     },

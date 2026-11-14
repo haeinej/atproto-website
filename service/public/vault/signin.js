@@ -24,13 +24,53 @@ function database() {
     opening.onerror = () => reject(opening.error);
   });
 }
-async function kept(name, value) {
+async function kept(name) {
   const db = await database();
   return new Promise((resolve, reject) => {
-    const store = db.transaction('kept', value === undefined ? 'readonly' : 'readwrite').objectStore('kept');
-    const asked = value === undefined ? store.get(name) : value === null ? store.delete(name) : store.put(value, name);
+    const store = db.transaction('kept', 'readonly').objectStore('kept');
+    const asked = store.get(name);
     asked.onsuccess = () => resolve(asked.result ?? null);
     asked.onerror = () => reject(asked.error);
+  }).finally(() => db.close());
+}
+
+// Ownership survives reloads/tabs. Check and write in one IndexedDB transaction so logout or a
+// new sign-in (even the same DID) cannot be undone by an old network completion.
+async function changing(act) {
+  const db = await database();
+  return new Promise((resolve, reject) => {
+    const transaction = db.transaction('kept', 'readwrite');
+    let result, problem;
+    transaction.oncomplete = () => { db.close(); resolve(result); };
+    transaction.onabort = transaction.onerror = () => { db.close(); reject(problem ?? transaction.error); };
+    act(transaction.objectStore('kept'), value => { result = value; }, error => { problem = error; transaction.abort(); });
+  });
+}
+const changedSession = () => new Error('Your PDS sign-in changed. Sign in again before continuing.');
+let generation = 0;
+async function startSession() {
+  generation++;
+  brief = null;
+  const id = random(24);
+  await changing(store => {
+    store.put(id, 'owner');
+    store.delete('session');
+    store.delete('pending');
+  });
+  return id;
+}
+async function owned(id, name, value, replaces) {
+  return changing((store, done, fail) => {
+    store.get('owner').onsuccess = event => {
+      if (!id || event.target.result !== id) return fail(changedSession());
+      const write = () => { store.put(value, name); done(value); };
+      if (!replaces) return write();
+      store.get('session').onsuccess = event => {
+        const held = event.target.result;
+        if (!held || held.id !== id || held.accessToken !== replaces.accessToken || held.refreshToken !== replaces.refreshToken) return fail(changedSession());
+        write();
+      };
+    };
   });
 }
 
@@ -77,6 +117,7 @@ async function form(keys, address, fields) {
 // Step one: find the account, ask its PDS to start a sign-in, and send the member there.
 // `purpose` is what the sign-in is for, and comes back with the account when it is done.
 export async function begin(typed, purpose = 'sign-in') {
+  const id = await startSession();
   const account = await readJson(await fetch(new URL(`./xrpc/com.ohmmmm.identity.findAccount?${new URLSearchParams({ account: typed })}`, document.baseURI)), 'Finding your account');
   const resource = await readJson(await fetch(`${account.pds}/.well-known/oauth-protected-resource`), 'Asking your PDS how to sign in');
   const issuer = resource.authorization_servers?.[0];
@@ -93,17 +134,18 @@ export async function begin(typed, purpose = 'sign-in') {
     client_id: clientId(), redirect_uri: redirectUri(), response_type: 'code', scope: SCOPE, state,
     code_challenge: await sha256(verifier), code_challenge_method: 'S256', login_hint: account.handle ?? account.did,
   }), 'Starting the sign-in at your PDS');
-  await kept('pending', { state, verifier, keys, issuer, tokenEndpoint: server.token_endpoint, revocationEndpoint: server.revocation_endpoint ?? null, account, purpose });
+  await owned(id, 'pending', { id, state, verifier, keys, issuer, tokenEndpoint: server.token_endpoint, revocationEndpoint: server.revocation_endpoint ?? null, account, purpose });
   const next = new URL(server.authorization_endpoint);
   next.search = new URLSearchParams({ client_id: clientId(), request_uri: pushed.request_uri });
   location.assign(next);
 }
 
-function save(pending, tokens) {
-  return kept('session', {
+function save(pending, tokens, replaces) {
+  return owned(pending.id, 'session', {
+    id: pending.id,
     account: pending.account, purpose: pending.purpose, keys: pending.keys, issuer: pending.issuer, tokenEndpoint: pending.tokenEndpoint, revocationEndpoint: pending.revocationEndpoint,
     accessToken: tokens.access_token, refreshToken: tokens.refresh_token ?? null, expiresAt: Date.now() + (tokens.expires_in ?? 300) * 1000,
-  });
+  }, replaces);
 }
 
 // Step two, on coming back from the PDS: swap what it sent for a sign-in, and keep it.
@@ -113,8 +155,14 @@ export async function finish() {
   if (!came.has('state') || (!came.has('code') && !came.has('error'))) return null;
   // What the PDS sent is taken out of the address at once, so it is not left in the history.
   history.replaceState(null, '', redirectUri());
-  const pending = await kept('pending');
-  await kept('pending', null);
+  const pending = await changing((store, done) => {
+    store.get('pending').onsuccess = event => {
+      const held = event.target.result;
+      if (held?.state !== came.get('state')) return done(null);
+      store.delete('pending');
+      done(held);
+    };
+  });
   if (!pending || came.get('state') !== pending.state) throw new Error('This sign-in was not started here, or was started too long ago. Try again.');
   if (came.has('error')) throw new Error(came.get('error') === 'access_denied' ? 'The sign-in was not approved' : (came.get('error_description') || came.get('error')));
   if (came.get('iss') !== pending.issuer) throw new Error('The answer came from a different server than the one asked');
@@ -135,6 +183,10 @@ export async function finish() {
 // member in. Neither it nor the password is kept anywhere.
 let brief = null;
 export async function beginWithPassword(typed, password, purpose = 'sign-in') {
+  const leaving = leave();
+  const ticket = generation;
+  await leaving;
+  if (ticket !== generation) throw changedSession();
   const account = await readJson(await fetch(new URL(`./xrpc/com.ohmmmm.identity.findAccount?${new URLSearchParams({ account: typed })}`, document.baseURI)), 'Finding your account');
   const response = await fetch(`${account.pds}/xrpc/com.atproto.server.createSession`, {
     method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ identifier: account.did, password }),
@@ -145,6 +197,7 @@ export async function beginWithPassword(typed, password, purpose = 'sign-in') {
   if (!response.ok) throw new Error(`Your PDS: ${data.message || data.error || `HTTP ${response.status}`}`);
   // The PDS says whose sign-in this is. It has to be the account that was asked for.
   if (data.did !== account.did || typeof data.accessJwt !== 'string') throw new Error('Your PDS signed in a different account than the one you typed');
+  if (ticket !== generation || await kept('owner')) throw changedSession();
   brief = { account, purpose, accessJwt: data.accessJwt, refreshJwt: data.refreshJwt ?? null };
   return { ...account, purpose };
 }
@@ -153,23 +206,23 @@ export async function beginWithPassword(typed, password, purpose = 'sign-in') {
 export async function restore() {
   if (brief) return { ...brief.account, purpose: brief.purpose };
   const session = await kept('session');
-  return session ? { ...session.account, purpose: session.purpose } : null;
+  return session?.id && await kept('owner') === session.id ? { ...session.account, purpose: session.purpose } : null;
 }
 
 // A sign-in is renewed a little before it runs out. Each renewal replaces the one before, so two
 // requests that find it stale at the same moment share one renewal and do not spoil each other's.
-let renewing = null;
+const renewing = new Map();
 async function fresh(session) {
+  if (!session.id || await kept('owner') !== session.id) throw changedSession();
   if (session.expiresAt - Date.now() > 30_000) return session;
   if (!session.refreshToken) throw new Error('Your sign-in has run out. Sign in again.');
-  renewing ??= (async () => {
+  if (!renewing.has(session.id)) renewing.set(session.id, (async () => {
     const tokens = await readJson(await form(session.keys, session.tokenEndpoint, {
       grant_type: 'refresh_token', refresh_token: session.refreshToken, client_id: clientId(),
     }), 'Renewing your sign-in');
-    await save(session, tokens);
-    return kept('session');
-  })().finally(() => { renewing = null; });
-  return renewing;
+    return save(session, tokens, session);
+  })().finally(() => { renewing.delete(session.id); }));
+  return renewing.get(session.id);
 }
 
 // One request to the member's own PDS, as the member.
@@ -209,21 +262,28 @@ export async function askPds(method, query) {
 // their repository. Publishing is the only thing that uses it. `sent` is `{ json }` or
 // `{ bytes, mime }`.
 export async function sendPds(method, sent) {
+  const expectedDid = sent?.expectedDid;
   const body = sent.json !== undefined ? JSON.stringify(sent.json) : sent.bytes;
   const type = sent.json !== undefined ? 'application/json' : sent.mime;
   if (brief) {
+    if (expectedDid !== undefined && brief.account.did !== expectedDid) throw changedSession();
+    sent.current?.();
     const url = new URL(`/xrpc/${method}`, brief.account.pds);
     return readJson(await fetch(url, { method: 'POST', headers: { Authorization: `Bearer ${brief.accessJwt}`, 'Content-Type': type }, body }), 'Your PDS');
   }
   let session = await kept('session');
   if (!session) throw new Error('You are not signed in at your PDS');
+  if (expectedDid !== undefined && session.account.did !== expectedDid) throw changedSession();
   for (let renewed = false, again = false; ;) {
     session = await fresh(session);
     const url = new URL(`/xrpc/${method}`, session.account.pds);
     const before = nonces.get(url.origin);
+    const dpop = await proof(session.keys, 'POST', url, session.accessToken);
+    if (await kept('owner') !== session.id) throw changedSession();
+    sent.current?.();
     const response = await fetch(url, {
       method: 'POST', body,
-      headers: { Authorization: `DPoP ${session.accessToken}`, DPoP: await proof(session.keys, 'POST', url, session.accessToken), 'Content-Type': type },
+      headers: { Authorization: `DPoP ${session.accessToken}`, DPoP: dpop, 'Content-Type': type },
     });
     // A PDS that wanted a fresh value in the proof has just given it: ask once more with it.
     const given = noted(url, response);
@@ -242,14 +302,19 @@ export async function sendPds(method, sent) {
 
 // Sign out: tell the PDS the sign-in is over, and forget it here.
 export async function leave() {
-  if (brief) {
-    const { account, refreshJwt } = brief;
-    brief = null;
+  generation++;
+  const oldBrief = brief;
+  brief = null;
+  const session = await changing((store, done) => {
+    store.get('session').onsuccess = event => done(event.target.result);
+    store.delete('owner');
+    store.delete('session');
+    store.delete('pending');
+  });
+  if (oldBrief) {
+    const { account, refreshJwt } = oldBrief;
     if (refreshJwt) await fetch(`${account.pds}/xrpc/com.atproto.server.deleteSession`, { method: 'POST', headers: { Authorization: `Bearer ${refreshJwt}` } }).catch(() => {});
   }
-  const session = await kept('session');
-  await kept('session', null);
-  await kept('pending', null);
   if (!session?.revocationEndpoint) return;
   await form(session.keys, session.revocationEndpoint, { token: session.refreshToken ?? session.accessToken, client_id: clientId() }).catch(() => {});
 }

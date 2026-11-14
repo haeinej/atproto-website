@@ -35,7 +35,7 @@ async function withAttachments(write, { get, pds, did, collection }) {
     const kept = cid ? earlier.get(cid) : undefined;
     if (kept) {
       // The same file as is published now: its entry is kept whole, with what it says of the file.
-      media.push({ ...kept, id: item.id, ...(item.alt && kept.$type === `${collection}#image` ? { alt: item.alt } : {}) });
+      media.push({ ...kept, id: item.id, ...(kept.$type === `${collection}#image` ? { alt: item.alt ?? '' } : {}) });
     } else if (cid) {
       const look = await get(new URL(item.address.split('#')[0]), { method: 'HEAD', redirect: 'manual', signal: AbortSignal.timeout(20_000) }).catch(() => null);
       const mime = look?.ok ? (look.headers.get('Content-Type') ?? '').split(';')[0].trim() : '';
@@ -63,7 +63,7 @@ export default {
         const { url, get, did, posts } = context;
         const { pds, site } = await whereabouts(context);
         const plan = publishPlan({
-          did, site, collection: POST, posts: await posts.all(did), removed: await posts.removed(did), published: await published(get, pds, did, POST),
+          did, site, origin: pds, collection: POST, posts: await posts.all(did), removed: await posts.removed(did), published: await published(get, pds, did, POST),
         });
         const { writes, ...summary } = plan;
         const answer = { repository: did, pds, collection: POST, ...summary, changes: plan.create.length + plan.replace.length + plan.remove.length };
