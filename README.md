@@ -392,6 +392,15 @@ npm test
 
 The root dependencies run the CLI, renderer, public-site tooling and tests. The separate service package supplies the pinned signature-verification library used by the vault service and integration tests; root `npm ci` does not install it. If tests cannot find `service/node_modules/@noble/curves`, run the service install above rather than changing imports or fetching packages from a test. Neither tests nor package installation automatically installs service dependencies.
 
+For routine maintenance in an existing checkout, keep the installed dependencies and use incremental installs from the repository root:
+
+```sh
+npm install --no-audit --no-fund
+npm install --prefix service --no-audit --no-fund
+```
+
+Both commands use their package's committed lockfile. Review any manifest or lockfile changes before committing. The [Devin blueprint](.devin/blueprint.yaml) versions this maintenance setup so contributors can review it with the code. It loads the base image's nvm environment before installing; it requires Node.js 22 or newer and does not install Node itself. Cirrus's frozen pnpm install/build and the Java importer's JDK21/Maven checks stay separate and are needed only when working on those components. For future blueprint edits, merge the reviewed file, sync it in Devin's environment settings, then build a new snapshot; see [Git-backed blueprints](https://docs.devin.ai/onboard-devin/environment/git-backed-blueprints).
+
 This contributor setup is not required to use the packaged CLI in your own site's folder. [Run your own PDS and site](#run-your-own-pds-and-site) has the separate Cirrus prerequisites. [Public sites](public/README.md) lists local preview commands; the [agent working guide](https://docs.ohmmmm.com/agent-guide#verify) gives verification and recovery contracts.
 
 Use the [human repository guide](docs/repository-map.md) to understand where a change belongs and how to recover when a check refuses it. The [agent repository map](docs/agents/repository-map.md) records entry points, state transitions, ownership and the checks for those boundaries.
