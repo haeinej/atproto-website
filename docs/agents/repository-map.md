@@ -30,6 +30,7 @@ current ID-keyed paths.
 
 | Boundary | Entry/source | Loading reason and ownership |
 | --- | --- | --- |
+| Devin environment | [blueprint](../../.devin/blueprint.yaml), [contributor setup](../../README.md#work-on-this-repository) | Root-relative, incremental npm maintenance for root and service with package locks enabled. The base image supplies nvm and Node22+; optional Cirrus and Java verification is separate. Sync the merged file in environment settings before building a snapshot from Git changes. |
 | npm CLI | [bin/ohm.mjs](../../bin/ohm.mjs), [package.json](../../package.json) | npm `bin` dispatches commands into `scripts/`; package `files` is the distribution boundary. Check an extracted tarball, not only source imports. |
 | MCP stdio | [mcp/server.mjs](../../mcp/server.mjs), [protocol](../../mcp/protocol.mjs), [tools](../../mcp/tools.mjs), [Cortex tools](../../mcp/cortex-tools.mjs) | Serialized JSON-RPC; lazy member authentication; nineteen interfaces. `service/public/vault/publish.js` is intentionally shared with member-side publication and must be packed. |
 | Hosted member service | [worker](../../service/src/worker.mjs), [capability registry](../../service/src/capabilities/index.mjs), [schema](../../service/schema.sql) | Registry dispatch and D1 state, with browser assets under `service/public/vault/`; service dependencies have their own lock. |
@@ -128,6 +129,15 @@ python3 public/docs/build.py
 npm test
 git diff --check
 ```
+
+For routine maintenance, use the incremental installs in
+[the blueprint](../../.devin/blueprint.yaml) instead of the clean-install commands
+above. Its `maintenance` block runs during snapshot builds and is surfaced, not
+automatically executed, at session start. Keep package locks enabled, inspect any
+lockfile changes, and keep builds/tests out of dependency maintenance. A pushed
+blueprint requires merge and sync before Git changes affect snapshot builds;
+the existing saved settings remain separate until configured to use Git. See the
+[sync workflow](https://docs.devin.ai/onboard-devin/environment/git-backed-blueprints).
 
 The suite covers schema/registry parity, member isolation, CAS, queue recovery,
 OAuth races, DOM-handler interleavings, pagination, mirror recovery, renderer

@@ -69,6 +69,8 @@ does not need to install the backend. If tests cannot find the service's
 `@noble/curves`, run its install command instead of changing imports. Test and
 package-install hooks do not download missing service dependencies for you.
 
+When returning to an installed checkout, use the [incremental maintenance commands](../README.md#work-on-this-repository) to reuse existing dependencies while respecting both lockfiles. The [Devin blueprint](../.devin/blueprint.yaml) keeps those commands in Git for review. A new checkout still needs both installs; Cirrus and Java remain optional component checks described below.
+
 A small first change is a documentation correction. Edit the authored text in
 `public/docs/build.py`, then run:
 
