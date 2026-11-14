@@ -4,7 +4,7 @@
 
 ohm is in development. These docs cover the implementation and the work still planned. Built does not mean verified on the live service; see Status and limits.
 
-Start with [Agent working guide](https://docs.ohmmmm.com/agent-guide.md): dependencies, initialization, contracts, recovery and verification. For the member's experience, read [Quick start](https://docs.ohmmmm.com/quick-start.md). Everything in one file: [https://docs.ohmmmm.com/llms-full.txt](https://docs.ohmmmm.com/llms-full.txt)
+Start with [Agent working guide](https://docs.ohmmmm.com/agent-guide.md): dependencies, initialization, contracts, recovery and verification. For the member's experience, read [Quick start](https://docs.ohmmmm.com/quick-start.md). Everything in one file: [https://docs.ohmmmm.com/llms-full.txt](https://docs.ohmmmm.com/llms-full.txt). Source: [https://github.com/haeinej/ohm-content-layer](https://github.com/haeinej/ohm-content-layer)
 
 ## For agents
 
