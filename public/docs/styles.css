@@ -1,8 +1,10 @@
-/* docs.ohmmmm.com: the same ink, paper and type as ohmmmm.com (DESIGN.md), laid out for reading
-   and finding your place. Values live in these custom properties; the rules use them.
+/* docs.ohmmmm.com, in the ohm design system (design.ohmmmm.com): white paper and ink, Coconat
+   for the page and section titles only, Helvetica Neue at reading size for everything else, the
+   forest green kept for focus and diagrams, and no edges: columns and blocks are set apart by
+   tone and space. The values below are the design system's tokens (ohm-ui, tokens.css).
 
    Page shell, the same on every page:
-     .site-sidebar  left column: every page, in its group, the current one marked
+     .site-sidebar  left column, on its own tone: every page, in its group, the current one marked
      main           middle column: the page itself (one <article>)
      .site-toc      right column, on wide screens: the reader, this page's sections, the one being read marked
    On narrow screens: a menu control in document flow opens the sidebar above the page. */
@@ -18,45 +20,49 @@
   color-scheme: light;
   --ohm-font-serif: "Coconat", Georgia, "Times New Roman", serif;
   --ohm-font-sans: "Helvetica Neue", Helvetica, Arial, sans-serif;
-  --ohm-font-mono: ui-monospace, "SF Mono", Menlo, Consolas, monospace;
+  --ohm-font-mono: ui-monospace, SFMono-Regular, Menlo, monospace;
 
-  /* One ink, like a printed page: the Fatale forest green on warm paper. */
-  --ohm-forest: #013220;
-  --ohm-danger: #a13535; /* a warning's text, as in the app */
-  --ohm-danger-wash: #fdecea; /* and what it sits on */
-  --ohm-paper-editorial: #fafaf9;
-  --ohm-ink-quiet: #4c6e61; /* forest at 70% on paper, 5.4:1 */
-  --ohm-line: rgb(1 50 32 / 0.14); /* the reader's rail */
-  --ohm-selection: rgb(161 214 174 / 0.42);
-  --ohm-tint: rgb(161 214 174 / 0.3); /* behind the current page in the sidebar */
-  --ohm-tint-soft: rgb(161 214 174 / 0.14); /* behind a sidebar row under the pointer */
-  --ohm-figure: #eef5ef; /* the panel a diagram sits on: the soft tint, as a solid colour */
+  /* Colour: one neutral set, the forest green, and red for the one warning. */
+  --ohm-paper: #fff;
+  --ohm-menu: #fafafa;     /* the sidebar's tone */
+  --ohm-wash: #f5f5f5;     /* hover, code, figures, alternate table rows */
+  --ohm-muted: #6b6b6b;    /* secondary text */
+  --ohm-ink: #242424;      /* text */
+  --ohm-forest: #013220;   /* focus, diagram marks */
+  --ohm-red: #e5484d;
+  --ohm-red-wash: color-mix(in oklab, var(--ohm-red) 9%, var(--ohm-paper));
+  --ohm-current: rgb(36 36 36 / 0.08); /* the row you are on */
+  --ohm-selection: rgb(1 50 32 / 0.14);
 
+  /* Type: reading sizes of the five roles. */
   --ohm-size: 16px;
-  --ohm-size-small: 14px; /* the sidebar and the reader */
-  --ohm-leading: 1.65;
-  --ohm-size-section: 24px; /* a section's heading */
-  --ohm-size-part: 18px; /* a heading inside a section */
+  --ohm-leading: 1.6;
+  --ohm-size-small: 14px;  /* the sidebar and the reader */
+  --ohm-size-label: 12px;  /* group labels */
   --ohm-text: 400 var(--ohm-size)/var(--ohm-leading) var(--ohm-font-sans);
-  --ohm-tracking: -0.015em;
+  --ohm-tracking: -0.011em;
   --ohm-strong: 600;
-  --ohm-title: 400 clamp(40px, 5vw, 52px)/1.05 var(--ohm-font-serif); /* Coconat has one weight */
-  --ohm-title-tracking: -0.02em;
+  --ohm-title: 400 clamp(36px, 5vw, 48px)/1.1 var(--ohm-font-serif);  /* h1, Coconat has one weight */
+  --ohm-title-tracking: -0.03em;
+  --ohm-section: 400 24px/32px var(--ohm-font-serif);                 /* h2 */
+  --ohm-section-tracking: -0.02em;
 
+  /* Shape and space. */
+  --ohm-radius-item: 12px;
+  --ohm-radius-field: 16px;
+  --ohm-radius-card: 24px;
   --ohm-measure: 680px;
-  --ohm-frame: 40px;
-  --ohm-rail: 220px;
+  --ohm-rail: 248px;
   --ohm-toc: 220px;
   --ohm-gap: clamp(32px, 4vw, 64px);
-  --ohm-top: 32px; /* between the viewport edge and the columns */
-  --ohm-item-inset: 12px; /* a sidebar row's padding; pulled back so its text lines up with the dot */
+  --ohm-top: 40px;
   --ohm-paragraph: 1em;
 
   font-family: var(--ohm-font-sans);
   font-synthesis: none;
   -webkit-font-smoothing: antialiased;
-  background: var(--ohm-paper-editorial);
-  color: var(--ohm-forest);
+  background: var(--ohm-paper);
+  color: var(--ohm-ink);
 }
 
 * { box-sizing: border-box; }
@@ -77,28 +83,28 @@ h1 {
 }
 
 h2 {
-  font-size: var(--ohm-size-section);
-  font-weight: var(--ohm-strong);
-  line-height: 1.3;
-  letter-spacing: -0.02em;
+  font: var(--ohm-section);
+  letter-spacing: var(--ohm-section-tracking);
 }
 
 h3 {
-  font-size: var(--ohm-size-part);
   font-weight: var(--ohm-strong);
-  line-height: 1.4;
+  line-height: 1.5;
 }
 
 a {
   color: inherit;
   text-underline-offset: 3px;
   text-decoration-thickness: 1px;
+  text-decoration-color: rgb(36 36 36 / 0.3);
 }
 
+a:hover { text-decoration-color: currentColor; }
+
 a:focus-visible {
-  outline: 2px solid currentColor;
-  outline-offset: 4px;
-  border-radius: 2px;
+  outline: 2px solid var(--ohm-forest);
+  outline-offset: 3px;
+  border-radius: 4px;
 }
 
 /* Icons are Lucide, drawn in the ink of the text around them. */
@@ -113,7 +119,6 @@ body {
   margin: 0;
   min-height: 100vh;
   min-height: 100dvh;
-  padding: 0 var(--ohm-frame);
   display: grid;
   grid-template-columns: var(--ohm-rail) minmax(0, 1fr);
   grid-template-rows: 1fr;
@@ -122,20 +127,24 @@ body {
 
 .skip {
   position: absolute;
-  left: var(--ohm-frame);
+  left: 16px;
   top: 8px;
   z-index: 3;
+  padding: 6px 12px;
+  border-radius: var(--ohm-radius-item);
   transform: translateY(-200%);
-  background: var(--ohm-paper-editorial);
+  background: var(--ohm-paper);
 }
 
 .skip:focus { transform: none; }
 
+/* The sidebar is a column of its own tone, full height, with no edge. */
 .site-sidebar {
   grid-column: 1;
   grid-row: 1;
-  align-self: start;
-  padding-top: var(--ohm-top);
+  align-self: stretch;
+  padding: var(--ohm-top) 12px var(--ohm-top);
+  background: var(--ohm-menu);
 }
 
 main {
@@ -143,7 +152,7 @@ main {
   grid-row: 1;
   justify-self: center;
   width: min(100%, var(--ohm-measure));
-  padding: var(--ohm-top) 0 96px;
+  padding: calc(var(--ohm-top) + 16px) 0 96px;
 }
 
 .site-toc { display: none; }
@@ -157,17 +166,13 @@ main {
   .site-toc {
     position: sticky;
     top: 0;
+    height: 100dvh;
     max-height: 100dvh;
     overflow-y: auto;
     scrollbar-width: thin;
   }
 
-  /* Room for a row's tint to the left of its text. */
-  .site-sidebar {
-    padding-left: var(--ohm-item-inset);
-    margin-left: calc(var(--ohm-item-inset) * -1);
-    padding-bottom: var(--ohm-top);
-  }
+  .site-toc { height: auto; }
 }
 
 /* The reader gets a third column when there is room for it. */
@@ -179,7 +184,7 @@ main {
     grid-column: 3;
     grid-row: 1;
     align-self: start;
-    padding-top: var(--ohm-top);
+    padding: calc(var(--ohm-top) + 16px) 24px 0 0;
   }
 }
 
@@ -191,118 +196,149 @@ main {
   padding: 0;
 }
 
+/* A group's name: small and quiet, lined up with the rows' text. */
 .sidebar-group {
-  font-size: var(--ohm-size-small);
-  font-weight: var(--ohm-strong);
+  padding: 0 12px;
+  color: var(--ohm-muted);
+  font-size: var(--ohm-size-label);
+  line-height: 16px;
+  letter-spacing: 0;
 }
 
-.site-sidebar ul { margin-top: 4px; }
+.site-sidebar ul { margin-top: 6px; }
 
-.site-sidebar ul + .sidebar-group { margin-top: 28px; }
+.site-sidebar ul + .sidebar-group { margin-top: 24px; }
 
-.site-sidebar li + li { margin-top: 2px; }
+.site-sidebar li + li { margin-top: 1px; }
 
-/* Each page is a row; the current one sits on a tint. */
+/* Each page is a row; the one you are on sits on a tone. Rows highlight with tone, never a line. */
 .site-sidebar a {
   display: block;
-  margin-left: calc(var(--ohm-item-inset) * -1);
-  padding: 3px var(--ohm-item-inset);
-  border-radius: 8px;
-  color: var(--ohm-ink-quiet);
+  padding: 6px 12px;
+  border-radius: var(--ohm-radius-item);
+  color: var(--ohm-muted);
   font-size: var(--ohm-size-small);
-  line-height: 1.5;
+  line-height: 20px;
+  letter-spacing: -0.01em;
   text-decoration: none;
+  transition: background-color 180ms cubic-bezier(.23, 1, .32, 1), color 180ms cubic-bezier(.23, 1, .32, 1);
 }
 
 .site-sidebar a:hover {
-  background: var(--ohm-tint-soft);
-  color: var(--ohm-forest);
+  background: var(--ohm-wash);
+  color: var(--ohm-ink);
 }
 
 .site-sidebar a[aria-current="page"] {
-  background: var(--ohm-tint);
-  color: var(--ohm-forest);
-  font-weight: var(--ohm-strong);
+  background: var(--ohm-current);
+  color: var(--ohm-ink);
+  font-weight: 500;
+}
+
+/* The first row is the docs' name, set like the design system's sidebar heading. */
+.site-sidebar > ul:first-child a {
+  padding-block: 4px 12px;
+  background: none;
+  color: var(--ohm-ink);
+  font: 400 24px/1 var(--ohm-font-serif);
+  letter-spacing: -0.02em;
+}
+
+.site-sidebar > ul:first-child a::before {
+  content: "";
+  display: inline-block;
+  width: 10px;
+  height: 10px;
+  margin-right: 8px;
+  border-radius: 50%;
+  background: var(--ohm-forest);
+  vertical-align: 0.12em;
 }
 
 /* ---------- The reader: On this page ---------- */
 
 .site-toc > p {
-  color: var(--ohm-ink-quiet);
-  font-size: var(--ohm-size-small);
+  color: var(--ohm-muted);
+  font-size: var(--ohm-size-label);
+  line-height: 16px;
+  letter-spacing: 0;
 }
 
-/* A thin rail down the left; the section being read is marked on it in full ink. */
-.site-toc > ul {
-  margin-top: 12px;
-  border-left: 1px solid var(--ohm-line);
-}
+.site-toc > ul { margin-top: 10px; }
 
-.site-toc ul ul { padding-left: 14px; }
+.site-toc ul ul { padding-left: 12px; }
 
+/* The section being read is marked by its ink and weight, not by a rail. */
 .site-toc a {
-  position: relative;
   display: block;
-  padding: 5px 0 5px 16px;
-  color: var(--ohm-ink-quiet);
+  padding: 4px 0;
+  color: var(--ohm-muted);
   font-size: var(--ohm-size-small);
-  line-height: 1.4;
+  line-height: 20px;
+  letter-spacing: -0.01em;
   text-decoration: none;
   /* one line each, as on the page's own headings; the full heading shows on hover */
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
+  transition: color 180ms cubic-bezier(.23, 1, .32, 1);
 }
 
-.site-toc a:hover { color: var(--ohm-forest); }
+.site-toc a:hover { color: var(--ohm-ink); }
 
-.site-toc a[aria-current] { color: var(--ohm-forest); }
-
-.site-toc a[aria-current]::before {
-  content: "";
-  position: absolute;
-  left: -1px;
-  top: 4px;
-  bottom: 4px;
-  width: 2px;
-  border-radius: 1px;
-  background: var(--ohm-forest);
+.site-toc a[aria-current] {
+  color: var(--ohm-ink);
+  font-weight: 500;
 }
 
 /* ---------- The page ---------- */
 
-.group { color: var(--ohm-ink-quiet); }
+.group { color: var(--ohm-muted); }
 
 /* The notice on every page: ohm is still being made, and these pages say how it is meant to
-   work. It is a warning, so it is set in the red ohm keeps for warnings: a wash with no edge. */
+   work. It is a warning, so it sits on the red's wash, with no edge; its words stay in ink. */
 .alert {
   margin-block: var(--ohm-top) 0;
   padding: 14px 18px;
-  border-radius: 16px;
-  background: var(--ohm-danger-wash);
-  color: var(--ohm-danger);
+  border-radius: var(--ohm-radius-field);
+  background: var(--ohm-red-wash);
+  color: var(--ohm-ink);
   font-size: var(--ohm-size-small);
+  line-height: 1.55;
 }
+
+.alert::before {
+  content: "";
+  display: inline-block;
+  width: 8px;
+  height: 8px;
+  margin-right: 8px;
+  border-radius: 50%;
+  background: var(--ohm-red);
+  vertical-align: 0.1em;
+}
+
 .alert a { color: inherit; }
 
 /* The group a page is in, above its title. */
 article > header > .group {
   font-size: var(--ohm-size-small);
-  font-weight: var(--ohm-strong);
 }
 
-article > header > .group + h1 { margin-top: 10px; }
+article > header > .group + h1 { margin-top: 8px; }
 
 article > header > h1 + * { margin-top: 20px; }
 
 article > header > * + * { margin-top: var(--ohm-paragraph); }
 
+.introduction { color: var(--ohm-ink); }
+
 section {
-  margin-top: 3em;
-  scroll-margin-top: 16px;
+  margin-top: 3.25em;
+  scroll-margin-top: 24px;
 }
 
-section :is(h2, h3) { scroll-margin-top: 16px; }
+section :is(h2, h3) { scroll-margin-top: 24px; }
 
 section > * + * { margin-top: var(--ohm-paragraph); }
 
@@ -326,18 +362,31 @@ section ul.pages {
   padding-left: 0;
 }
 
+section ul.pages a { font-weight: 500; }
+
 code, pre { font-family: var(--ohm-font-mono); }
 
-code { font-size: 0.92em; }
+code {
+  padding: 0.1em 0.35em;
+  border-radius: 6px;
+  background: var(--ohm-wash);
+  font-size: 0.88em;
+}
 
 pre {
   margin: 0;
-  padding: 14px 16px;
-  border-radius: 10px;
-  background: var(--ohm-tint-soft);
+  padding: 16px 18px;
+  border-radius: var(--ohm-radius-field);
+  background: var(--ohm-wash);
   font-size: var(--ohm-size-small);
   line-height: 1.6;
   overflow-x: auto;
+}
+
+pre code {
+  padding: 0;
+  background: none;
+  font-size: inherit;
 }
 
 /* A diagram: drawn by build.py as SVG with a class on every shape, and set on a quiet panel. On a
@@ -347,8 +396,8 @@ section > .figure { margin-block: 1.5em; }
 
 .figure-scroll {
   padding: 24px;
-  border-radius: 16px;
-  background: var(--ohm-figure);
+  border-radius: var(--ohm-radius-card);
+  background: var(--ohm-wash);
   overflow-x: auto;
 }
 
@@ -362,38 +411,40 @@ section > .figure { margin-block: 1.5em; }
 
 .figure figcaption {
   margin-top: 10px;
-  color: var(--ohm-ink-quiet);
+  color: var(--ohm-muted);
   font-size: var(--ohm-size-small);
 }
 
-.d-group { fill: rgb(1 50 32 / 0.05); }
-.d-box { fill: var(--ohm-paper-editorial); }
-.d-outside { fill: none; stroke: var(--ohm-line); stroke-width: 1.5; stroke-dasharray: 4 4; }
+.d-group { fill: rgb(36 36 36 / 0.04); }
+.d-box { fill: var(--ohm-paper); }
+.d-outside { fill: none; stroke: rgb(36 36 36 / 0.18); stroke-width: 1.5; stroke-dasharray: 4 4; }
 .d-note { fill: var(--ohm-forest); }
-.d-title { fill: var(--ohm-forest); font-size: 13.5px; font-weight: 600; letter-spacing: -0.01em; }
-.d-sub { fill: var(--ohm-ink-quiet); font-size: 12px; }
-.d-caption { fill: var(--ohm-ink-quiet); font-size: 10.5px; font-weight: 600; letter-spacing: 0.08em; }
-.d-label { fill: var(--ohm-ink-quiet); font-size: 12px; }
+.d-title { fill: var(--ohm-ink); font-size: 13.5px; font-weight: 600; letter-spacing: -0.01em; }
+.d-sub { fill: var(--ohm-muted); font-size: 12px; }
+.d-caption { fill: var(--ohm-muted); font-size: 10.5px; font-weight: 600; letter-spacing: 0.08em; }
+.d-label { fill: var(--ohm-muted); font-size: 12px; }
 /* A step's words can sit across another part's line, so they carry the panel's colour behind them. */
-.d-step { fill: var(--ohm-forest); font-size: 12.5px; paint-order: stroke; stroke: var(--ohm-figure); stroke-width: 6px; stroke-linejoin: round; }
-.d-note + .d-step { fill: var(--ohm-paper-editorial); stroke: none; }
+.d-step { fill: var(--ohm-ink); font-size: 12.5px; paint-order: stroke; stroke: var(--ohm-wash); stroke-width: 6px; stroke-linejoin: round; }
+.d-note + .d-step { fill: var(--ohm-paper); stroke: none; }
 .d-arrow { fill: none; stroke: var(--ohm-forest); stroke-width: 1.5; }
 .d-dashed { stroke-dasharray: 5 4; }
 .d-head { fill: var(--ohm-forest); }
-.d-life { fill: none; stroke: var(--ohm-line); stroke-width: 1.5; }
+.d-life { fill: none; stroke: rgb(36 36 36 / 0.18); stroke-width: 1.5; }
 
-/* A table is set apart by space alone: no rules, the first column in the heading weight. */
+/* A table is set apart by tone alone: no rules, alternate rows on the wash, the heading in weight. */
 .table { overflow-x: auto; }
 
 table {
   width: 100%;
-  border-collapse: collapse;
+  border-collapse: separate;
+  border-spacing: 0;
 }
 
 th, td {
   min-width: 7em;
-  padding: 5px 24px 5px 0;
+  padding: 8px 16px;
   font: var(--ohm-text);
+  font-size: 15px;
   letter-spacing: var(--ohm-tracking);
   text-align: left;
   vertical-align: top;
@@ -401,17 +452,21 @@ th, td {
 
 th { font-weight: var(--ohm-strong); }
 
-:is(th, td):last-child { padding-right: 0; }
+thead th { color: var(--ohm-muted); font-size: var(--ohm-size-small); font-weight: 500; }
+
+tbody tr:nth-child(odd) > * { background: var(--ohm-wash); }
+tbody tr > :first-child { border-radius: var(--ohm-radius-item) 0 0 var(--ohm-radius-item); }
+tbody tr > :last-child { border-radius: 0 var(--ohm-radius-item) var(--ohm-radius-item) 0; }
 
 /* A list of facts has no heading row, and its names keep one width down a page of such lists. */
 .facts thead { display: none; }
 .facts th { width: 8.5em; }
 
-/* The page before and the page after. */
+/* The page before and the page after: two quiet buttons. */
 .page-pager {
   display: flex;
   justify-content: space-between;
-  gap: 24px;
+  gap: 16px;
   margin-top: 4em;
 }
 
@@ -419,21 +474,24 @@ th { font-weight: var(--ohm-strong); }
   display: flex;
   align-items: center;
   gap: 8px;
+  padding: 10px 16px;
+  border-radius: 999px;
+  background: var(--ohm-wash);
+  font-size: var(--ohm-size-small);
+  font-weight: 500;
   text-decoration: none;
+  transition: background-color 180ms cubic-bezier(.23, 1, .32, 1), scale 130ms cubic-bezier(.23, 1, .32, 1);
 }
 
-.page-pager a:hover { text-decoration: underline; }
+.page-pager a:hover { background: #ebebeb; }
+.page-pager a:active { scale: 0.97; }
 
 .page-pager a[rel="next"] { margin-left: auto; }
 
 /* ---------- Narrow screens ---------- */
 
 @media (max-width: 760px) {
-  :root {
-    --ohm-frame: 24px;
-  }
-
-  body { display: block; }
+  body { display: block; padding: 0 20px; }
 
   main { padding: 24px 0 56px; }
 
@@ -457,20 +515,20 @@ th { font-weight: var(--ohm-strong); }
   }
 
   .menu-toggle:focus-visible + .menu-button {
-    outline: 2px solid currentColor;
+    outline: 2px solid var(--ohm-forest);
     outline-offset: 4px;
-    border-radius: 2px;
+    border-radius: 4px;
   }
 
   .site-sidebar {
     display: none;
-    padding: 8px 0 24px;
+    margin: 8px -20px 0;
+    padding: 16px 12px 24px;
   }
 
   .menu-toggle:checked ~ .site-sidebar { display: block; }
 
   .site-sidebar a {
-    margin-left: 0;
     padding-block: 10px;
     font-size: var(--ohm-size);
   }
