@@ -14,3 +14,5 @@ tweets*.js
 tweets_media/
 .DS_Store
 feed/wrangler.site.jsonc
+service/wrangler.deploy.jsonc
+.claude/

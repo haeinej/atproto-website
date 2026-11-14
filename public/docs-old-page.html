@@ -1,0 +1,139 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta name="theme-color" content="#fafaf9">
+    <meta name="description" content="How ohm works: a first session from sign-in to publishing, where your things live, and what to know before you rely on it.">
+    <link rel="canonical" href="https://ohmmmm.com/docs">
+    <meta property="og:type" content="website">
+    <meta property="og:site_name" content="ohm">
+    <meta property="og:title" content="Docs · ohm">
+    <meta property="og:description" content="How ohm works: a first session from sign-in to publishing, where your things live, and what to know before you rely on it.">
+    <meta property="og:url" content="https://ohmmmm.com/docs">
+    <meta property="og:image" content="https://ohmmmm.com/assets/og-image.png">
+    <meta property="og:image:width" content="1200">
+    <meta property="og:image:height" content="630">
+    <meta property="og:image:alt" content="ohm — An agentic social network">
+    <meta name="twitter:card" content="summary_large_image">
+    <link rel="icon" href="/favicon.ico?v=2" sizes="32x32">
+    <link rel="icon" href="/assets/favicon.svg?v=2" type="image/svg+xml">
+    <link rel="apple-touch-icon" href="/assets/apple-touch-icon.png?v=2">
+    <link rel="manifest" href="/manifest.webmanifest">
+    <link rel="preload" href="/assets/fonts/coconat-regular.woff2" as="font" type="font/woff2" crossorigin>
+    <link rel="stylesheet" href="/styles.css">
+    <script src="/sw-register.js" defer></script>
+    <title>Docs · ohm</title>
+  </head>
+  <body>
+    <a class="skip" href="#content">Skip to content</a>
+
+    <!-- Site shell: identical on every page except aria-current in the directory.
+         Structure and where information goes: website/README.md -->
+    <header class="site-header">
+      <a class="site-mark" href="/"><img src="/assets/favicon.svg?v=2" alt="ohm" width="20" height="20"></a>
+      <nav class="site-pages" aria-label="Pages">
+        <a href="/docs" aria-current="page">Docs</a>
+      </nav>
+    </header>
+
+    <main id="content">
+      <article aria-labelledby="title">
+        <header>
+          <h1 id="title">Docs</h1>
+          <p class="introduction">How ohm works: a first session from sign-in to publishing, where your things live, and what to know before you rely on it.</p>
+        </header>
+
+        <section aria-labelledby="quick-start">
+          <h2 id="quick-start">Quick start</h2>
+          <p>Your first session in ohm: sign in, write a post, decide who sees it, and publish. Then connect a folder of your own and bring in your agent.</p>
+          <p>This describes ohm as it is planned. The workspace in the browser is not open yet.</p>
+          <h3 id="sign-in">1. Sign in</h3>
+          <p>There are three ways in. Pick the one that matches what you already have.</p>
+          <ul>
+            <li><strong>Get an ohm account.</strong> Choose this if you are starting from nothing.</li>
+            <li><strong>Sign up with Bluesky.</strong> Your posts and the people you follow come with you.</li>
+            <li><strong>Connect your own.</strong> If your account lives on a server you run, enter your handle.</li>
+          </ul>
+          <p>Whichever you choose, the account is yours and can be moved later.</p>
+          <h3 id="workspace">2. Look around your workspace</h3>
+          <p>The workspace has three parts.</p>
+          <ul>
+            <li><strong>On the left, your labels.</strong> They are the sections of your work, in your own words: Writings, Photographs, Things I make. A label can hold sublabels, such as a series or an album.</li>
+            <li><strong>In the middle, the post you have open.</strong></li>
+            <li><strong>On the right, what the post says about itself:</strong> its title, its label, its address, and who can see it.</li>
+          </ul>
+          <p>If you signed up with Bluesky or connected your own account, what you have already published is here.</p>
+          <h3 id="write">3. Write a post</h3>
+          <p>Start a new post and write. A post is Markdown, and it can be one sentence.</p>
+          <p>You do not say what kind of thing it is. A post with a title is a writing, one without is a note, and one that only shows a photograph is an image. ohm reads that from the post.</p>
+          <p>To add a picture, drop in a file or paste the address of one that is already on the web.</p>
+          <p>A new post is private. Nobody else can see it.</p>
+          <h3 id="who">4. Decide who sees it</h3>
+          <p>Every post is one of three things.</p>
+          <ul>
+            <li><strong>Private.</strong> Only you.</li>
+            <li><strong>Friends.</strong> The people you follow who follow you back.</li>
+            <li><strong>Public.</strong> Everyone, on your website and anywhere else your published layer is read.</li>
+          </ul>
+          <p>Changing this does not share anything yet. It marks the post, and the status line shows what is waiting to be published.</p>
+          <h3 id="publish">5. Publish</h3>
+          <p>Press Publish. Before anything happens, you see exactly what will change: which posts will become visible, to whom, and at what address. Say yes, and it is done.</p>
+          <p>A public post is now part of your published layer and on your website. Anything published is public for good: other services copy it the moment it is written. Taking it down later removes it from your site, not from every copy.</p>
+          <h3 id="folder">6. Connect a folder of your own</h3>
+          <p>Connect a folder on your computer or in the cloud storage you already use, and press Sync. Each post appears there as a Markdown file, filed in a folder named for its label.</p>
+          <p>From then on your originals live with you, and ohm holds a working copy. Edit a file in the folder and sync, and the change arrives in your workspace. Syncing never publishes.</p>
+          <p>Until you connect a folder, ohm holds the only copy of your private and friends-only posts.</p>
+          <h3 id="agent">7. Bring in your agent</h3>
+          <p>Connect the coding agent you already use, and it can read and write in your workspace. It reads your private posts too, which is how it knows what you are working on.</p>
+          <p>It cannot publish or share for you. Anything that changes what other people see is shown to you first.</p>
+          <h3 id="next">Things to ask your agent first</h3>
+          <ul>
+            <li>"What have I written about this before?"</li>
+            <li>"Save this as a private note under Writings."</li>
+            <li>"Look at my posts and suggest how to label them."</li>
+            <li>"I'm stuck on this. Who among my friends has thought about it?"</li>
+          </ul>
+        </section>
+
+        <section aria-labelledby="where-things-live">
+          <h2 id="where-things-live">Where your things live</h2>
+          <p>The working repository is ohm's copy of your posts, private ones included, so that you and your agent can work from anywhere. Your originals live with you.</p>
+          <ul>
+            <li>Public posts are in your published layer, which other applications can read and which you can move to another host.</li>
+            <li>Everything else is in a folder of your own, on your machine or in any cloud that keeps a folder in sync, once you connect one.</li>
+            <li>Your identity is your own. It is an AT Protocol account, and its name can be your domain.</li>
+          </ul>
+          <p>With a folder connected, deleting ohm's copy loses nothing. Until you connect one, ohm holds the only copy of your private and friends-only posts.</p>
+        </section>
+
+        <section aria-labelledby="what-it-is-not">
+          <h2 id="what-it-is-not">What ohm is not</h2>
+          <p>ohm is not a place to build an audience. There is no count of followers to grow and no feed built to keep you scrolling.</p>
+          <p>ohm is not a replacement for talking to people. The agent's job ends at the introduction.</p>
+          <p>ohm is not only an editor. The editor is what you see. The working repository under it, and your say over where each post goes, are the point.</p>
+          <p>ohm is not a vault we cannot read. The working repository includes your private posts, and we can read it. We show private posts to nobody.</p>
+          <p>ohm is not a Bluesky competitor. Your account, your follows and your public posts are part of the same network.</p>
+        </section>
+
+        <section aria-labelledby="reasons-not">
+          <h2 id="reasons-not">Reasons not to use it yet</h2>
+          <p><strong>It is early.</strong> Parts of what this page describes are built and parts are not. Friends reading each other's posts, the agent finding people, and syncing with a folder are still being made.</p>
+          <p><strong>Anything you publish is public for good.</strong> A record on the AT Protocol is copied by other services the moment it is written. Taking a post down removes it from your website, not from every copy.</p>
+          <p><strong>Your agent reads your private posts.</strong> That is how it knows what you are working on. Whichever company runs the model your agent uses sees what it reads.</p>
+        </section>
+      </article>
+    </main>
+
+    <footer class="site-footer">
+      <nav aria-label="Company">
+        <ul>
+          <li><a href="mailto:support@collisions.co">Contact</a></li>
+          <li><a href="/support">Support</a></li>
+          <li><a href="/terms">Terms</a></li>
+          <li><a href="/privacy">Privacy</a></li>
+        </ul>
+      </nav>
+    </footer>
+  </body>
+</html>
